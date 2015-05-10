@@ -1,0 +1,72 @@
+#
+# Makefile for trigger/
+#
+
+#-----------------------------
+# mandatory definitions: MAIN
+#-----------------------------
+MAIN = monitor
+
+
+#------------------
+# generic Makefile
+#------------------
+include $(CODA)/src/Makefile.include
+include $(CODA)/src/Makefile.arch
+
+#-----------------------
+# customize definitions
+#-----------------------
+CLON_FLAGS += -I./src.s -I$(CODA)/common/include
+
+ifneq ("$(OSTYPE)","VXWORKS")
+  LIBNAMES += $(CODA)/$(OSTYPE_MACHINE)/lib/librol.a
+  LIBNAMES += $(CODA)/$(OSTYPE_MACHINE)/lib/libmysql4.1.20.a
+  LIBNAMES += $(CODA)/src/rol/jvme/libjvme.so
+
+  LIBNAMES += $(ROOTGLIBS)
+#  LIBNAMES += $(SYSLIBS)
+endif
+
+
+#-------------------
+# customize targets
+#-------------------
+install: install_lib install_bin
+#	rm -rf tmp
+#	mkdir tmp
+###	cp src.s/tt.h tmp
+#	chmod 664 tmp/*
+#	-mkdir -p $(CODA)/common/include
+#	cp tmp/* $(CODA)/common/include
+#	rm -rf tmp
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -48,7 +48,7 @@
 #include <TDatime.h>
 
 #include "TriggerBoardRegs.h"
-#include "guipcal.h"
+#include "guifc.h"
 
 #include "vmeclient.h"
 #include "libtcp.h"
@@ -56,6 +56,8 @@
 
 #include "scope.h"
 #include "ttfc.h"
+
+#include "CrateMsgClient.h"
 
 VMEClient *tcpvme; //sergey: global for now, will find appropriate place later
 
@@ -76,6 +78,8 @@ Int_t nlr[3]={1,1,2};
 Int_t npmt[3][6]={{36,36,36,36,36,36},{68,62,62,0,0,0},{62,62,23,23,0,0}};
 
 UInt_t addr[3][14];
+
+CrateMsgClient *crate_fc;
 
 const char *htit1[3][6]={{"ECAL Ui SCALERS vs STRIP","ECAL Vi SCALERS vs STRIP","ECAL Wi SCALERS vs STRIP",
 			  "ECAL Uo SCALERS vs STRIP","ECAL Vo SCALERS vs STRIP","ECAL Wo SCALERS vs STRIP"},
@@ -104,9 +108,9 @@ const char *filetypes[] = { "All files",     "*",
 /********************************/
 /* MyTimer class implementation */
 
-MyTimer::MyTimer(PCALMainFrame *m, Long_t ms) : TTimer(ms, kTRUE)
+MyTimer::MyTimer(FCMainFrame *m, Long_t ms) : TTimer(ms, kTRUE)
 {
-  fPCALMainFrame = m;
+  fFCMainFrame = m;
   gSystem->AddTimer(this);
 }
 
@@ -115,8 +119,8 @@ Bool_t MyTimer::Notify()
   // This function will be called in case of timeout INSTEAD OF
   // standard Notify() function from TTimer class
 
-  if(fPCALMainFrame->fDsc2Dlg)    fPCALMainFrame->fDsc2Dlg->ReadVME();
-  if(fPCALMainFrame->fDelaysDlg)  fPCALMainFrame->fDelaysDlg->ReadVME();
+  if(fFCMainFrame->fDsc2Dlg)    fFCMainFrame->fDsc2Dlg->ReadVME();
+  if(fFCMainFrame->fDelaysDlg)  fFCMainFrame->fDelaysDlg->ReadVME();
   this->Reset();
 
   return kTRUE;
@@ -176,9 +180,9 @@ Bool_t TileFrame::HandleButton(Event_t *event)
 
 
 /**************************************/
-/* PCALMainFrame class implementation */
+/* FCMainFrame class implementation */
 
-PCALMainFrame::PCALMainFrame(const TGWindow *p, UInt_t w, UInt_t h, char *host) : TGMainFrame(p, w, h)
+FCMainFrame::FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h, char *host) : TGMainFrame(p, w, h)
 {
 
    // create VME communication
@@ -321,7 +325,7 @@ PCALMainFrame::PCALMainFrame(const TGWindow *p, UInt_t w, UInt_t h, char *host) 
    tt = new MyTimer(this, 1000);
 }
 
-PCALMainFrame::~PCALMainFrame()
+FCMainFrame::~FCMainFrame()
 {
    // Delete all created widgets.
 
@@ -332,7 +336,7 @@ PCALMainFrame::~PCALMainFrame()
    delete fContainer;
 }
 
-void PCALMainFrame::CloseWindow()
+void FCMainFrame::CloseWindow()
 {
    // Got close message for this MainFrame. Terminate the application
    // or returns from the TApplication event loop (depending on the
@@ -341,10 +345,15 @@ void PCALMainFrame::CloseWindow()
    gApplication->Terminate(0);
 }
 
-Bool_t PCALMainFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
+int FCMainFrame::connect_to_server()
 {
-   // Handle messages send to the PCALMainFrame object. E.g. all menu button
-   // messages.
+    const char *det[] = {"1","2","3","4","5","6","ecal","pcal","ftof"};
+    char buf[100];
+    crate = new CrateMsgClient(buf,6102)
+}
+
+Bool_t FCMainFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
+{
    const char *det[] = {"1","2","3","4","5","6","ecal","pcal","ftof"};
    UInt_t board_addr[2];
    board_addr[0] = PCAL_BOARD_ADDRESS_1;
@@ -381,12 +390,12 @@ Bool_t PCALMainFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
      case kCM_BUTTON:
 
      if(parm1 == 11) // Connect
-       {
-	 printf("Connect reached\n");
-	 Bool_t res = tcpvme->ConnectVME(hostname,0);
+        {
+         printf("Connect reached\n");
+         Bool_t res = tcpvme->ConnectVME(hostname,0);
 	 if(res)
 	   {
-	     btConnect->SetEnabled(kFALSE);
+         btConnect->SetEnabled(kFALSE);
 	     btDisconnect->SetEnabled(kTRUE);
 	   }
 	 if(fDsc2Dlg)
@@ -516,7 +525,7 @@ Bool_t PCALMainFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
 /***********************************/
 /* Dsc2Dlg class implementation */
 
-Dsc2Dlg::Dsc2Dlg(const TGWindow *p, PCALMainFrame *main,
+Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
 					   UInt_t w, UInt_t h, UInt_t options) : TGTransientFrame(p, main, w, h, options)
 {
 
@@ -972,7 +981,7 @@ main(int argc, char **argv)
 
    printf("Trying to connect to >%s<\n",argv[1]);
 
-   PCALMainFrame mainWindow(gClient->GetRoot(), 200, 200, argv[1]);
+   FCMainFrame mainWindow(gClient->GetRoot(), 200, 200, argv[1]);
 
    theApp.Run();
 

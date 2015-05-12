@@ -55,13 +55,15 @@
 Double_t ttt;
 Float_t  bintime;
 Float_t  norm=0.;
-int ksec=4,kdet=8,kcrt=0;
+unsigned int ksec=4,kdet=8,kcrt=0;
 Int_t  idet,ifirst;
 
 UInt_t scal1[12][16],scal2[6][2][68];
 Int_t map[14]={3,4,5,6,7,8,9,10,13,14,15,16,17,18};
 
 const char *det[] = {"tdc","adc","ecal","pcal","ftof","1","2","3","4","5","6"};
+const char *mod[] = {"DSC2","FADC"};
+
 Int_t ndsc[3]={14,12,12};
 Int_t nlay[3]={6,3,2};
 Int_t nlr[3]={1,1,2};
@@ -318,7 +320,7 @@ int FCMainFrame::get_crate_map()
       }
       delete [] map;
       
-      printf("Found %d %s slots for %s\n",nslots,det[kcrt],hostname);
+      printf("Found %d %s slots for %s\n",nslots,mod[kcrt],hostname);
 
     return nslots;
 }
@@ -830,7 +832,7 @@ void Dsc2Dlg::ReadVME()
 {
   Int_t ii, jj, i=0, j=0, k=0;
   unsigned int *buf;
-  int len,slot;
+  int len,slot,off[2][2]={{68,16},{51,0}};
 
   if (norm==0.) ifirst=3;
   if (ifirst>0) ifirst--;
@@ -841,11 +843,11 @@ void Dsc2Dlg::ReadVME()
       {
 	slot=fc_crate_slots[ii]; 
 	fc_crate->ScalerReadBoard(slot, &buf, &len);
-	ref[ii]=buf[68];
+	ref[ii]=buf[off[0][kcrt]];
 	norm = 125000000./((Float_t)ref[ii]);
 	for(jj=0; jj<16; jj++)
 	  {
-	    scal1[ii][jj]=buf[51+jj];
+	    scal1[ii][jj]=buf[off[1][kcrt]+jj];
 	    switch (idet){
 	    case 0: i=adclayerecal[map[ii]][jj]-1 ; j=0                        ; k=adcstripecal[map[ii]][jj]-1 ;break;
 	    case 1: i=adclayerpcal[map[ii]][jj]-1 ; j=0                        ; k=adcstrippcal[map[ii]][jj]-1 ;break;

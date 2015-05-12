@@ -50,25 +50,25 @@
 #include "TriggerBoardRegs.h"
 #include "guifc.h"
 
-#include "vmeclient.h"
-#include "libtcp.h"
-#include "libdb.h"
+//#include "vmeclient.h"
+//#include "libtcp.h"
+//#include "libdb.h"
 
 #include "scope.h"
 #include "ttfc.h"
 
 #include "CrateMsgClient.h"
 
-VMEClient *tcpvme; //sergey: global for now, will find appropriate place later
+//VMEClient *tcpvme; //sergey: global for now, will find appropriate place later
 
 Double_t ttt;
 Float_t  bintime;
 Float_t  norm=0.;
-int ksec=4,kdet=8;
+int ksec=4,kdet=8,kcrt=10;
 Int_t  idet,ifirst;
 
 UInt_t scal1[12][16],scal2[6][2][68];
-Int_t map[12]={3,4,5,6,7,8,9,10,13,14,15,16};
+Int_t map[14]={3,4,5,6,7,8,9,10,13,14,15,16,17,18};
 Int_t dsc2map[3][14]={{3,4,5,6,7,8,9,10,13,14,15,16,17,18},
 		      {3,4,5,6,7,8,9,10,13,14,15,16,0,0},
 		      {2,4,5,7,8,10,12,14,15,17,18,20,0,0}};
@@ -79,7 +79,7 @@ Int_t npmt[3][6]={{36,36,36,36,36,36},{68,62,62,0,0,0},{62,62,23,23,0,0}};
 
 UInt_t addr[3][14];
 
-CrateMsgClient *crate_fc;
+CrateMsgClient *fc_crate;
 
 const char *htit1[3][6]={{"ECAL Ui SCALERS vs STRIP","ECAL Vi SCALERS vs STRIP","ECAL Wi SCALERS vs STRIP",
 			  "ECAL Uo SCALERS vs STRIP","ECAL Vo SCALERS vs STRIP","ECAL Wo SCALERS vs STRIP"},
@@ -186,10 +186,9 @@ FCMainFrame::FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h, char *host) : TG
 {
 
    // create VME communication
-   tcpvme     = new VMEClient();
+   //tcpvme     = new VMEClient();
    //   strcpy(hostname,host);
    sprintf(hostname,"tdcpcal5");
-
 
    fDsc2Dlg   = NULL;
    fDelaysDlg = NULL;
@@ -292,18 +291,29 @@ FCMainFrame::FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h, char *host) : TG
    fRadiob2[0]   = new TGRadioButton(fButtonGroup2, "ECAL",6);
    fRadiob2[1]   = new TGRadioButton(fButtonGroup2, "PCAL",7);
    fRadiob2[2]   = new TGRadioButton(fButtonGroup2, "FTOF",8);
+   
+   fButtonGroup3 = new TGVButtonGroup(fControlFrame,"Crate");
+   fRadiob3[0]   = new TGRadioButton(fButtonGroup3, "FADC",9);
+   fRadiob3[1]   = new TGRadioButton(fButtonGroup3, "DSC2",10);
+   
    fRadiob1[4]->SetOn();
    fRadiob2[2]->SetOn();
-
+   fRadiob3[1]->SetOn();
+   
    fButtonGroup1->Show();
    fButtonGroup2->Show();
+   fButtonGroup3->Show();
    
    fControlFrame->AddFrame(fButtonGroup1, new TGLayoutHints(kLHintsCenterX|kLHintsCenterY,
                                                   1, 1, 1, 1));
    fControlFrame->AddFrame(fButtonGroup2, new TGLayoutHints(kLHintsTop|kLHintsCenterX,
                                                   1, 1, 1, 1));
+   fControlFrame->AddFrame(fButtonGroup3, new TGLayoutHints(kLHintsTop|kLHintsCenterX,
+                                                  1, 1, 1, 1));
+   
    for (int i=0;i<6;i++) {fRadiob1[i]->Associate(this);}
    for (int i=0;i<3;i++) {fRadiob2[i]->Associate(this);}
+   for (int i=0;i<2;i++) {fRadiob3[i]->Associate(this);}
 
    fActionFrame = new TGHorizontalFrame(this,100,50);
    AddFrame(fActionFrame,fL10);
@@ -347,14 +357,14 @@ void FCMainFrame::CloseWindow()
 
 int FCMainFrame::connect_to_server()
 {
-    const char *det[] = {"1","2","3","4","5","6","ecal","pcal","ftof"};
     char buf[100];
     crate = new CrateMsgClient(buf,6102)
 }
 
 Bool_t FCMainFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
 {
-   const char *det[] = {"1","2","3","4","5","6","ecal","pcal","ftof"};
+   const char *det[] = {"1","2","3","4","5","6","ecal","pcal","ftof","adc","tdc"};
+   char hostname[80];
    UInt_t board_addr[2];
    board_addr[0] = PCAL_BOARD_ADDRESS_1;
    if(PCAL_BOARD_ADDRESS_1 != PCAL_BOARD_ADDRESS_2) board_addr[1] = PCAL_BOARD_ADDRESS_2;
@@ -381,21 +391,21 @@ Bool_t FCMainFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
    case kC_COMMAND:
      switch (GET_SUBMSG(msg)) {
      case kCM_RADIOBUTTON:
-       if (parm1<6) ksec=parm1;
+       if (parm1<6)          ksec=parm1;
        if (parm1>5&&parm1<9) kdet=parm1;
-       sprintf(hostname,"tdc%s%s",det[kdet],det[ksec]);
-       printf("hostname=%s\n",hostname);
+       if (parm1>9)          kcrt=parm1;
+       sprintf(hostname,"%s%s%s",det[kcrt],det[kdet],det[ksec]);
        idet=kdet-6;
        printf("idet=%d\n",idet);
      case kCM_BUTTON:
-
      if(parm1 == 11) // Connect
         {
-         printf("Connect reached\n");
-         Bool_t res = tcpvme->ConnectVME(hostname,0);
-	 if(res)
+         printf("Trying to connect to >%s<\n",hostname);
+	 fc_crate = new CrateMsgClient(hostname,6102);
+	   //         Bool_t res = tcpvme->ConnectVME(hostname,0);
+	   if(fc_crate->IsValid())
 	   {
-         btConnect->SetEnabled(kFALSE);
+	     btConnect->SetEnabled(kFALSE);
 	     btDisconnect->SetEnabled(kTRUE);
 	   }
 	 if(fDsc2Dlg)
@@ -406,8 +416,9 @@ Bool_t FCMainFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
        }
      else if(parm1 == 12) // Disconnect
        {
-	 printf("Disconnect reached\n");
-	 Bool_t res = tcpvme->DisconnectVME();
+	 printf("Closing connection to %s\n",hostname);
+	 //Bool_t res = tcpvme->DisconnectVME();
+	 fc_crate->Close();
 	 if(res)
 	   {
 	     btConnect->SetEnabled(kTRUE);
@@ -689,7 +700,8 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
    //fClient->WaitFor(this);    // otherwise canvas contextmenu does not work
    HistAccumulate = 0;
 
-   if(tcpvme->m_bConnected) {Init() ; ReadVME(); UpdateGUI();}
+   //   if(tcpvme->m_bConnected) {Init() ; ReadVME(); UpdateGUI();}
+   if(fc_crate->IsValid()) {ReadVME(); UpdateGUI();}
 
 }
 
@@ -914,9 +926,61 @@ void Dsc2Dlg::Init()
   addr[2][8]  = FTOF_DSC2_ADDRESS_SLOT15;
   addr[2][9]  = FTOF_DSC2_ADDRESS_SLOT17;
   addr[2][10] = FTOF_DSC2_ADDRESS_SLOT18;
-  addr[2][11] = FTOF_DSC2_ADDRESS_SLOT20; 
+  addr[2][11] = FTOF_DSC2_ADDRESS_SLOT20;
 }
 
+int Dsc2Dlg::get_crate_map()
+{
+    unsigned int *map;
+    int len;
+
+    if(!fc_crate->GetCrateMap(&map, &len)) return -4;
+    if(len > 22) return -5;
+    for(int slot = 0; slot < len; slot++)
+      {
+	fc_crate_map[slot] = map[slot];
+        printf("crate %d, slot %d, type %d\n", crate, slot, map[slot]);
+      }
+      delete [] map;
+      
+    return 0;
+}
+
+void Dsc2Dlg::ReadVME()
+{
+  Int_t ii, jj, i=0, j=0, k=0;
+  unsigned int *buf;
+  int len,slot;
+
+  if (norm==0.) ifirst=3;
+  if (ifirst>0) ifirst--;
+
+  if(fc_crate->IsValid())
+  {
+    for(ii=0; ii<ndsc[idet]; ii++) 
+      {
+	slot=dsc2map[idet][ii];
+	fc_crate->ScalerReadBoard(slot, &buf, &len);
+	ref[ii]=buf[68];
+	norm = 125000000./((Float_t)ref[ii]);
+	for(jj=0; jj<16; jj++)
+	  {
+	    scal1[ii][jj]=buf[51+jj];
+	    switch (idet){
+	    case 0: i=adclayerecal[map[ii]][jj]-1 ; j=0                        ; k=adcstripecal[map[ii]][jj]-1 ;break;
+	    case 1: i=adclayerpcal[map[ii]][jj]-1 ; j=0                        ; k=adcstrippcal[map[ii]][jj]-1 ;break;
+	    case 2: i=adclayerftof[map[ii]][jj]-1 ; j=adclrftof[map[ii]][jj]-1 ; k=adcslabftof[map[ii]][jj]-1  ;break;
+	    }
+	    scal1[ii][jj]=(Int_t)(((Float_t)scal1[ii][jj])*norm) ; scal2[i][j][k]=scal1[ii][jj];
+	  }
+	delete [] buf;
+      }
+    UpdateGUI();
+    FillHistos();
+  }
+}
+
+/*
 void Dsc2Dlg::ReadVME()
 {
   Int_t ii, jj, i=0, j=0, k=0;
@@ -951,6 +1015,7 @@ void Dsc2Dlg::ReadVME()
   }
 
 }
+*/
 
 void Dsc2Dlg::UpdateGUI()
 {
@@ -973,15 +1038,7 @@ main(int argc, char **argv)
      return(1);
    }
 
-   if(argc != 2)
-   {
-     fprintf(stderr, "error: have to specify hostname\n");
-     return(1);     
-   }
-
-   printf("Trying to connect to >%s<\n",argv[1]);
-
-   FCMainFrame mainWindow(gClient->GetRoot(), 200, 200, argv[1]);
+   FCMainFrame mainWindow(gClient->GetRoot(), 200, 200);
 
    theApp.Run();
 

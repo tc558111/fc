@@ -49,29 +49,19 @@
 
 #include "TriggerBoardRegs.h"
 #include "guifc.h"
-
-//#include "vmeclient.h"
-//#include "libtcp.h"
-//#include "libdb.h"
-
-#include "scope.h"
 #include "ttfc.h"
-
 #include "CrateMsgClient.h"
-
-//VMEClient *tcpvme; //sergey: global for now, will find appropriate place later
 
 Double_t ttt;
 Float_t  bintime;
 Float_t  norm=0.;
-int ksec=4,kdet=8,kcrt=10;
+int ksec=4,kdet=8,kcrt=0;
 Int_t  idet,ifirst;
 
 UInt_t scal1[12][16],scal2[6][2][68];
 Int_t map[14]={3,4,5,6,7,8,9,10,13,14,15,16,17,18};
-Int_t dsc2map[3][14]={{3,4,5,6,7,8,9,10,13,14,15,16,17,18},
-		      {3,4,5,6,7,8,9,10,13,14,15,16,0,0},
-		      {2,4,5,7,8,10,12,14,15,17,18,20,0,0}};
+
+const char *det[] = {"tdc","adc","ecal","pcal","ftof","1","2","3","4","5","6"};
 Int_t ndsc[3]={14,12,12};
 Int_t nlay[3]={6,3,2};
 Int_t nlr[3]={1,1,2};
@@ -79,7 +69,10 @@ Int_t npmt[3][6]={{36,36,36,36,36,36},{68,62,62,0,0,0},{62,62,23,23,0,0}};
 
 UInt_t addr[3][14];
 
+char hostname[80];
 CrateMsgClient *fc_crate;
+int fc_crate_slots[22];
+
 
 const char *htit1[3][6]={{"ECAL Ui SCALERS vs STRIP","ECAL Vi SCALERS vs STRIP","ECAL Wi SCALERS vs STRIP",
 			  "ECAL Uo SCALERS vs STRIP","ECAL Vo SCALERS vs STRIP","ECAL Wo SCALERS vs STRIP"},
@@ -105,7 +98,6 @@ const char *filetypes[] = { "All files",     "*",
                             "ROOT macros",   "*.C",
                             0,               0 };
 
-/********************************/
 /* MyTimer class implementation */
 
 MyTimer::MyTimer(FCMainFrame *m, Long_t ms) : TTimer(ms, kTRUE)
@@ -125,11 +117,7 @@ Bool_t MyTimer::Notify()
 
   return kTRUE;
 }
-//------------------------------------------------------------------------------
 
-
-
-/**********************************/
 /* TileFrame class implementation */
 
 TileFrame::TileFrame(const TGWindow *p) : TGCompositeFrame(p, 10, 10, kHorizontalFrame, GetWhitePixel())
@@ -150,8 +138,7 @@ TileFrame::TileFrame(const TGWindow *p) : TGCompositeFrame(p, 10, 10, kHorizonta
 
 Bool_t TileFrame::HandleButton(Event_t *event)
 {
-   // Handle wheel mouse to scroll.
-
+  // Handle wheel mouse to scroll.
    Int_t page = 0;
    if (event->fCode == kButton4 || event->fCode == kButton5) {
       if (!fCanvas) return kTRUE;
@@ -177,39 +164,21 @@ Bool_t TileFrame::HandleButton(Event_t *event)
    return kTRUE;
 }
 
-
-
-/**************************************/
-/* FCMainFrame class implementation */
-
-FCMainFrame::FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h, char *host) : TGMainFrame(p, w, h)
+FCMainFrame::FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h) : TGMainFrame(p, w, h)
 {
-
-   // create VME communication
-   //tcpvme     = new VMEClient();
-   //   strcpy(hostname,host);
-   sprintf(hostname,"tdcpcal5");
-
    fDsc2Dlg   = NULL;
    fDelaysDlg = NULL;
 
-   // Create main frame. A TGMainFrame is a top level window.
-
-   // use hierarchical cleaning
    SetCleanup(kDeepCleanup);
 
-   // Create menubar and popup menus. The hint objects are used to place
-   // and group the different menu widgets with respect to each other.
-   fMenuDock     = new TGDockableFrame(this); // create menu dock (upper horizontal bar for 'File' etc)
-   AddFrame(fMenuDock, new TGLayoutHints(kLHintsExpandX, 0, 0, 1, 0)); // add menu dock to the main window
+   fMenuDock     = new TGDockableFrame(this); 
+   AddFrame(fMenuDock, new TGLayoutHints(kLHintsExpandX, 0, 0, 1, 0)); 
    fMenuDock->SetWindowName("GUIPCAL Menu"); 
 
-   // create several layouts 
    fMenuBarLayout     = new TGLayoutHints(kLHintsTop | kLHintsExpandX);
    fMenuBarItemLayout = new TGLayoutHints(kLHintsTop | kLHintsLeft, 0, 4, 0, 0);
    fMenuBarHelpLayout = new TGLayoutHints(kLHintsTop | kLHintsRight);
 
-   // menu item 'File'
    fMenuFile = new TGPopupMenu(fClient->GetRoot());
    fMenuFile->AddEntry("&Open...", M_FILE_OPEN);
    fMenuFile->AddEntry("&Save", M_FILE_SAVE);
@@ -224,16 +193,11 @@ FCMainFrame::FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h, char *host) : TG
    fMenuFile->DisableEntry(M_FILE_SAVEAS);
    fMenuFile->HideEntry(M_FILE_PRINT);
    
-
-   // menu item 'DISPLAY'
    fMenuPCAL = new TGPopupMenu(fClient->GetRoot());
    fMenuPCAL->AddLabel("Monitoring and Control");
    fMenuPCAL->AddSeparator();
    fMenuPCAL->AddEntry("&Dsc2", M_DSC2);
-   fMenuPCAL->AddEntry("&Scope (ASCII)", M_SCOPE_ASCII);
-   fMenuPCAL->AddEntry("&Scope (Canvas)", M_SCOPE_CANVAS);
 
-   // menu item 'View'
    fMenuView = new TGPopupMenu(gClient->GetRoot());
    fMenuView->AddEntry("&Dock", M_VIEW_DOCK);
    fMenuView->AddEntry("&Undock", M_VIEW_UNDOCK);
@@ -247,7 +211,6 @@ FCMainFrame::FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h, char *host) : TG
    fMenuView->CheckEntry(M_VIEW_ENBL_DOCK);
    fMenuView->CheckEntry(M_VIEW_ENBL_HIDE);
 
-   // 'menu item 'Help'
    fMenuHelp = new TGPopupMenu(fClient->GetRoot());
    fMenuHelp->AddEntry("&Contents", M_HELP_CONTENTS);
    fMenuHelp->AddEntry("&Search...", M_HELP_SEARCH);
@@ -260,17 +223,14 @@ FCMainFrame::FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h, char *host) : TG
    fMenuView->Associate(this);
    fMenuHelp->Associate(this);
 
-   // create menu bar and actually add created above menus to it
    fMenuBar = new TGMenuBar(fMenuDock, 1, 1, kHorizontalFrame);
    fMenuBar->AddPopup("&File",    fMenuFile, fMenuBarItemLayout);
    fMenuBar->AddPopup("&Monitor", fMenuPCAL, fMenuBarItemLayout);
    fMenuBar->AddPopup("&View",    fMenuView, fMenuBarItemLayout);
    fMenuBar->AddPopup("&Help",    fMenuHelp, fMenuBarHelpLayout);
 
-   // add menu bar to the dock
    fMenuDock->AddFrame(fMenuBar, fMenuBarLayout);
 
-   //main frame is control frame
 
    fL10 = new TGLayoutHints(kLHintsTop|kLHintsCenterX|kLHintsExpandX,2,2,2,2);
    fL0  = new TGLayoutHints(kLHintsLeft|kLHintsCenterY|kLHintsExpandY,5,5,5,5);
@@ -280,21 +240,21 @@ FCMainFrame::FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h, char *host) : TG
    AddFrame(fControlFrame, fL10);
  
    fButtonGroup1 = new TGVButtonGroup(fControlFrame,"Sector");
-   fRadiob1[0]   = new TGRadioButton(fButtonGroup1, "S1",0);
-   fRadiob1[1]   = new TGRadioButton(fButtonGroup1, "S2",1);
-   fRadiob1[2]   = new TGRadioButton(fButtonGroup1, "S3",2);
-   fRadiob1[3]   = new TGRadioButton(fButtonGroup1, "S4",3);
-   fRadiob1[4]   = new TGRadioButton(fButtonGroup1, "S5",4);
-   fRadiob1[5]   = new TGRadioButton(fButtonGroup1, "S6",5);
+   fRadiob1[0]   = new TGRadioButton(fButtonGroup1, "S1",5);
+   fRadiob1[1]   = new TGRadioButton(fButtonGroup1, "S2",6);
+   fRadiob1[2]   = new TGRadioButton(fButtonGroup1, "S3",7);
+   fRadiob1[3]   = new TGRadioButton(fButtonGroup1, "S4",8);
+   fRadiob1[4]   = new TGRadioButton(fButtonGroup1, "S5",9);
+   fRadiob1[5]   = new TGRadioButton(fButtonGroup1, "S6",10);
 
    fButtonGroup2 = new TGVButtonGroup(fControlFrame,"Detector");
-   fRadiob2[0]   = new TGRadioButton(fButtonGroup2, "ECAL",6);
-   fRadiob2[1]   = new TGRadioButton(fButtonGroup2, "PCAL",7);
-   fRadiob2[2]   = new TGRadioButton(fButtonGroup2, "FTOF",8);
+   fRadiob2[0]   = new TGRadioButton(fButtonGroup2, "ECAL",2);
+   fRadiob2[1]   = new TGRadioButton(fButtonGroup2, "PCAL",3);
+   fRadiob2[2]   = new TGRadioButton(fButtonGroup2, "FTOF",4);
    
    fButtonGroup3 = new TGVButtonGroup(fControlFrame,"Crate");
-   fRadiob3[0]   = new TGRadioButton(fButtonGroup3, "FADC",9);
-   fRadiob3[1]   = new TGRadioButton(fButtonGroup3, "DSC2",10);
+   fRadiob3[0]   = new TGRadioButton(fButtonGroup3, "DSC2",0);
+   fRadiob3[1]   = new TGRadioButton(fButtonGroup3, "FADC",1);
    
    fRadiob1[4]->SetOn();
    fRadiob2[2]->SetOn();
@@ -324,13 +284,10 @@ FCMainFrame::FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h, char *host) : TG
    btDisconnect->Associate(this);
 
    SetWindowName("FCMON");
-   MapSubwindows();  // force drawing of all created subwindows; actual drawing is done by MapWindow()
-   Resize(GetDefaultSize());   // resize to default size
-   MapWindow(); // actual window drawing
-
-   //   fButtonGroup1->SetState(kTRUE);
-
-   Print();
+   MapSubwindows(); 
+   Resize(GetDefaultSize()); 
+   MapWindow();
+   //Print();
 
    tt = new MyTimer(this, 1000);
 }
@@ -346,6 +303,26 @@ FCMainFrame::~FCMainFrame()
    delete fContainer;
 }
 
+int FCMainFrame::get_crate_map()
+{
+    unsigned int *map;
+    int len,nslots;
+
+    if(!fc_crate->GetCrateMap(&map, &len)) return -4;
+    if(len > 22) return -5;
+    nslots=0;
+    for(int slot = 0; slot < len; slot++)
+      {
+	if (map[slot]==kcrt) {fc_crate_slots[nslots] = slot;nslots++;}
+        printf("host %s slot %d, type %d\n", hostname, slot, map[slot]);
+      }
+      delete [] map;
+      
+      printf("Found %d %s slots for %s\n",nslots,det[kcrt],hostname);
+
+    return nslots;
+}
+
 void FCMainFrame::CloseWindow()
 {
    // Got close message for this MainFrame. Terminate the application
@@ -355,58 +332,39 @@ void FCMainFrame::CloseWindow()
    gApplication->Terminate(0);
 }
 
-int FCMainFrame::connect_to_server()
+void FCMainFrame::connect_to_server()
 {
     char buf[100];
-    crate = new CrateMsgClient(buf,6102)
+    fc_crate = new CrateMsgClient(buf,6102);
 }
 
 Bool_t FCMainFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
 {
-   const char *det[] = {"1","2","3","4","5","6","ecal","pcal","ftof","adc","tdc"};
-   char hostname[80];
-   UInt_t board_addr[2];
-   board_addr[0] = PCAL_BOARD_ADDRESS_1;
-   if(PCAL_BOARD_ADDRESS_1 != PCAL_BOARD_ADDRESS_2) board_addr[1] = PCAL_BOARD_ADDRESS_2;
-   else                                             board_addr[1] = 0;
-
-   char SignalNames0[SCOPE_CHANNELCOUNT][20];
-   char SignalNames1[SCOPE_CHANNELCOUNT][20];
-   int i, sig;
-
-   sig = 0;
-   for(i=1; i<=12; i++) sprintf(SignalNames0[sig++],"TRIG%02d", i);
-   for(i=1; i<=NU; i++) sprintf(SignalNames0[sig++],"U__%02d", i);
-   for(i=1; i<=NV; i++) sprintf(SignalNames0[sig++],"V__%02d", i);
-   while(sig<SCOPE_CHANNELCOUNT) sprintf(SignalNames0[sig++],"unused");
-   printf("sig0=%d\n",sig);
-
-   sig = 0;
-   for(i=1; i<=NW; i++) sprintf(SignalNames1[sig++],"W__%02d", i);
-   while(sig<SCOPE_CHANNELCOUNT) sprintf(SignalNames1[sig++],"unused");
-   printf("sig1=%d\n",sig);
-
-
    switch (GET_MSG(msg)) {
    case kC_COMMAND:
+
      switch (GET_SUBMSG(msg)) {
      case kCM_RADIOBUTTON:
-       if (parm1<6)          ksec=parm1;
-       if (parm1>5&&parm1<9) kdet=parm1;
-       if (parm1>9)          kcrt=parm1;
+
+       if (parm1<2)           kcrt=parm1;
+       if (parm1>1&&parm1<5 ) kdet=parm1;
+       if (parm1>4&&parm1<11) ksec=parm1;
        sprintf(hostname,"%s%s%s",det[kcrt],det[kdet],det[ksec]);
-       idet=kdet-6;
+       idet=kdet-2;
        printf("idet=%d\n",idet);
+
      case kCM_BUTTON:
-     if(parm1 == 11) // Connect
+
+     if(parm1 == 11) 
         {
          printf("Trying to connect to >%s<\n",hostname);
 	 fc_crate = new CrateMsgClient(hostname,6102);
-	   //         Bool_t res = tcpvme->ConnectVME(hostname,0);
+
 	   if(fc_crate->IsValid())
 	   {
 	     btConnect->SetEnabled(kFALSE);
 	     btDisconnect->SetEnabled(kTRUE);
+	     get_crate_map();
 	   }
 	 if(fDsc2Dlg)
 	   {
@@ -414,12 +372,12 @@ Bool_t FCMainFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
 	     fDsc2Dlg->UpdateGUI();
 	   }
        }
-     else if(parm1 == 12) // Disconnect
+     else if(parm1 == 12) 
        {
 	 printf("Closing connection to %s\n",hostname);
-	 //Bool_t res = tcpvme->DisconnectVME();
 	 fc_crate->Close();
-	 if(res)
+
+	 if(!fc_crate->IsValid())
 	   {
 	     btConnect->SetEnabled(kTRUE);
 	     btDisconnect->SetEnabled(kFALSE);
@@ -428,7 +386,7 @@ Bool_t FCMainFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
      break;
 
      case kCM_MENUSELECT:
-       //printf("Pointer over menu entry, id=%ld\n", parm1);
+
                break;
 
             case kCM_MENU:
@@ -467,17 +425,8 @@ Bool_t FCMainFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
                      CloseWindow();   // this also terminates theApp
                      break;
 
-
                   case M_DSC2:
                      fDsc2Dlg = new Dsc2Dlg(fClient->GetRoot(), this, 600, 300);
-                     break;
-
-                  case M_SCOPE_ASCII:
-					fScopeDlg = new ScopeDlg(fClient->GetRoot(), this, 800, 800, board_addr, SignalNames0, SignalNames1, 0);
-                     break;
-
-                  case M_SCOPE_CANVAS:
-					fScopeDlg = new ScopeDlg(fClient->GetRoot(), this, 800, 800, board_addr, SignalNames0, SignalNames1, 1);
                      break;
 
                   case M_VIEW_ENBL_DOCK:
@@ -539,7 +488,6 @@ Bool_t FCMainFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
 Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
 					   UInt_t w, UInt_t h, UInt_t options) : TGTransientFrame(p, main, w, h, options)
 {
-
    fMain = main; // remember mainframe
    SetCleanup(kDeepCleanup);
 
@@ -549,7 +497,6 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
    fL4 = new TGLayoutHints(kLHintsTop    | kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 5, 5, 5, 5);
    fL5 = new TGLayoutHints(kLHintsBottom | kLHintsExpandX | kLHintsExpandY, 2, 2, 5, 1);
 
-   /* Ok Cancel Buttons */
    AddFrame(fFrame1=new TGHorizontalFrame(this, 60, 20, kFixedWidth), fL2);
    fFrame1->AddFrame(fOkButton=new TGTextButton(fFrame1, "&Ok", 1),fL1);
    fFrame1->AddFrame(fCancelButton=new TGTextButton(fFrame1, "&Cancel", 2), fL1);
@@ -571,7 +518,7 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
 
    for (nsl=0;nsl<ndsc[idet];nsl++) 
      {
-       imap=dsc2map[idet][nsl];
+       imap=fc_crate_slots[nsl];
        sprintf(sln,"Slot %d",imap); fF6[nsl] = new TGGroupFrame(tf,sln, kVerticalFrame);
        fF6[nsl]->SetLayoutManager(new TGMatrixLayout(fF6[nsl], 0, 2, 5));
        fF6[nsl]->SetTitlePos(TGGroupFrame::kLeft);
@@ -700,9 +647,7 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
    //fClient->WaitFor(this);    // otherwise canvas contextmenu does not work
    HistAccumulate = 0;
 
-   //   if(tcpvme->m_bConnected) {Init() ; ReadVME(); UpdateGUI();}
    if(fc_crate->IsValid()) {ReadVME(); UpdateGUI();}
-
 }
 
 void Dsc2Dlg::DoSlider()
@@ -726,8 +671,6 @@ void Dsc2Dlg::HandleMotion()
 
 Dsc2Dlg::~Dsc2Dlg()
 {
-   // Delete Dsc2Dlg widgets.
-
 }
 
 void Dsc2Dlg::MakeHistos()
@@ -764,7 +707,6 @@ void Dsc2Dlg::MakeHistos()
 
 void Dsc2Dlg::FillHistos()
 {
-   // Fill histograms till user clicks "Stop Filling" button.
   TCanvas *c[6];
   Int_t nplot,np;
 
@@ -831,10 +773,6 @@ void Dsc2Dlg::CloseWindow()
 
 Bool_t Dsc2Dlg::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
 {
-  //Int_t status;
-
-   // Process messages coming from widgets associated with the dialog.
-
    switch (GET_MSG(msg)) {
       case kC_COMMAND:
 
@@ -851,20 +789,7 @@ Bool_t Dsc2Dlg::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
                      break;
                }
                break;
-			   /*
-            case kCM_RADIOBUTTON:
-               switch (parm1) {
-                  case 81:
-		     printf("RADIOBUTTON 81: %d\n",fRad1->GetState());
-                     if(fRad1->GetState()) fRad1->SetState(kButtonUp);
-                     else fRad1->SetState(kButtonDown);
-                     break;
-                  case 82:
-                     fRad1->SetState(kButtonUp);
-                     break; 
-               }
-               break;
-			   */
+
 			   
             case kCM_CHECKBUTTON:
                switch (parm1) {
@@ -872,7 +797,6 @@ Bool_t Dsc2Dlg::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
 		     printf("CHECKBUTTON 71\n");
                      HistAccumulate = fChk1->GetState();
 		     printf("CHECKBUTTON 71: status=%d\n",HistAccumulate); 
-                     /*fListBox->SetMultipleSelections(fCheck1->GetState());*/
                      break;
 	          case 72:
 		     printf("CHECKBUTTON 72\n");
@@ -902,50 +826,6 @@ Bool_t Dsc2Dlg::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
    return kTRUE;
 }
 
-void Dsc2Dlg::Init()
-{
-  Int_t ii;
-
-  for(ii=0; ii<4; ii++) addr[0][ii]    = ECAL_DSC2_ADDRESS_1 + ii*0x00080000;
-  for(ii=0; ii<4; ii++) addr[0][ii+4]  = ECAL_DSC2_ADDRESS_2 + ii*0x00080000;
-  for(ii=0; ii<4; ii++) addr[0][ii+8]  = ECAL_DSC2_ADDRESS_3 + ii*0x00080000;
-  for(ii=0; ii<2; ii++) addr[0][ii+12] = ECAL_DSC2_ADDRESS_4 + ii*0x00080000;
-
-  for(ii=0; ii<4; ii++) addr[1][ii]    = PCAL_DSC2_ADDRESS_1 + ii*0x00080000;
-  for(ii=0; ii<4; ii++) addr[1][ii+4]  = PCAL_DSC2_ADDRESS_2 + ii*0x00080000;
-  for(ii=0; ii<4; ii++) addr[1][ii+8]  = PCAL_DSC2_ADDRESS_3 + ii*0x00080000;
-
-  addr[2][0]  = FTOF_DSC2_ADDRESS_SLOT2;
-  addr[2][1]  = FTOF_DSC2_ADDRESS_SLOT4;
-  addr[2][2]  = FTOF_DSC2_ADDRESS_SLOT5;
-  addr[2][3]  = FTOF_DSC2_ADDRESS_SLOT7;
-  addr[2][4]  = FTOF_DSC2_ADDRESS_SLOT8;
-  addr[2][5]  = FTOF_DSC2_ADDRESS_SLOT10;
-  addr[2][6]  = FTOF_DSC2_ADDRESS_SLOT12;
-  addr[2][7]  = FTOF_DSC2_ADDRESS_SLOT14;
-  addr[2][8]  = FTOF_DSC2_ADDRESS_SLOT15;
-  addr[2][9]  = FTOF_DSC2_ADDRESS_SLOT17;
-  addr[2][10] = FTOF_DSC2_ADDRESS_SLOT18;
-  addr[2][11] = FTOF_DSC2_ADDRESS_SLOT20;
-}
-
-int Dsc2Dlg::get_crate_map()
-{
-    unsigned int *map;
-    int len;
-
-    if(!fc_crate->GetCrateMap(&map, &len)) return -4;
-    if(len > 22) return -5;
-    for(int slot = 0; slot < len; slot++)
-      {
-	fc_crate_map[slot] = map[slot];
-        printf("crate %d, slot %d, type %d\n", crate, slot, map[slot]);
-      }
-      delete [] map;
-      
-    return 0;
-}
-
 void Dsc2Dlg::ReadVME()
 {
   Int_t ii, jj, i=0, j=0, k=0;
@@ -959,7 +839,7 @@ void Dsc2Dlg::ReadVME()
   {
     for(ii=0; ii<ndsc[idet]; ii++) 
       {
-	slot=dsc2map[idet][ii];
+	slot=fc_crate_slots[ii]; 
 	fc_crate->ScalerReadBoard(slot, &buf, &len);
 	ref[ii]=buf[68];
 	norm = 125000000./((Float_t)ref[ii]);
@@ -980,43 +860,6 @@ void Dsc2Dlg::ReadVME()
   }
 }
 
-/*
-void Dsc2Dlg::ReadVME()
-{
-  Int_t ii, jj, i=0, j=0, k=0;
-
-  if (norm==0.) ifirst=3;
-  if (ifirst>0) ifirst--;
-
-  if(tcpvme->m_bConnected)
-  {
-    for(ii=0; ii<ndsc[idet]; ii++) tcpvme->VMEWrite32(addr[idet][ii] + DSC2_SCALER_GATE, 0x0004, FALSE);
-    for(ii=0; ii<ndsc[idet]; ii++) tcpvme->VMEWrite32(addr[idet][ii] + DSC2_SCALER_LATCH,0x0000, FALSE);
-    for(ii=0; ii<ndsc[idet]; ii++) tcpvme->VMERead32(addr[idet][ii]  + DSC2_SCALER_REF, &ref[ii], FALSE);
-
-    if(ref[0]>0)
-      {
-	for(ii=0; ii<ndsc[idet]; ii++) 
-	  {
-	    norm = 125000000./((Float_t)ref[ii]);
-	    for(jj=0; jj<16; jj++) {
-	      tcpvme->VMERead32(addr[idet][ii]+DSC2_SCALER_BASE+jj*4,&scal1[ii][jj],FALSE);
-	      switch (idet){
-	      case 0: i=adclayerecal[map[ii]][jj]-1 ; j=0                        ; k=adcstripecal[map[ii]][jj]-1 ;break;
-	      case 1: i=adclayerpcal[map[ii]][jj]-1 ; j=0                        ; k=adcstrippcal[map[ii]][jj]-1 ;break;
-	      case 2: i=adclayerftof[map[ii]][jj]-1 ; j=adclrftof[map[ii]][jj]-1 ; k=adcslabftof[map[ii]][jj]-1  ;break;
-	      }
-	      scal1[ii][jj]=(Int_t)(((Float_t)scal1[ii][jj])*norm) ; scal2[i][j][k]=scal1[ii][jj];
-	    }
-	  }
-      }
-    UpdateGUI();
-    FillHistos();
-  }
-
-}
-*/
-
 void Dsc2Dlg::UpdateGUI()
 {
    Int_t ii,jj;
@@ -1024,11 +867,7 @@ void Dsc2Dlg::UpdateGUI()
    for(ii=0; ii<12; ii++) {for(jj=0; jj<16; jj++){sprintf(str,"%8d",scal1[ii][jj]);tentsc[ii][jj]->SetText(str);}}
 }
 
-/****************/
-/* Main program */
-
-int
-main(int argc, char **argv)
+int main(int argc, char **argv)
 {
    TApplication theApp("App", &argc, argv);
 

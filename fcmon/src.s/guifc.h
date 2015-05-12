@@ -86,8 +86,8 @@ private:
    TGGroupFrame       *fF6;
    TGLayoutHints      *fL3;
 
-   TGRadioButton      *fRadiob1[6],*fRadiob2[3]; 
-   TGVButtonGroup     *fButtonGroup1,*fButtonGroup2;
+   TGRadioButton      *fRadiob1[6],*fRadiob2[3],fRadiob3[2]; 
+   TGVButtonGroup     *fButtonGroup1,*fButtonGroup2,*fButtonGroup3;
    TGTextButton       *fWindowRatesButton;
    TGTextButton       *fWindowExitButton;
 
@@ -95,8 +95,6 @@ private:
 
    IDList              IDs;           // Widget IDs generator
    MyTimer             *tt;
-
-   char hostname[80];
 
 public:
 

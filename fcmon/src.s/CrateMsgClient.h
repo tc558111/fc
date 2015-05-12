@@ -8,33 +8,33 @@
 	#define __FUNCTION__ ""
 #endif
 
-#define DEBUG_NOCONNECTION						0
-#define DEBUG_PRINT								0
+#define DEBUG_NOCONNECTION					0
+#define DEBUG_PRINT							0
 
-#define CRATEMSG_LISTEN_PORT					6102
-#define MAX_MSG_SIZE								10000
+#define CRATEMSG_LISTEN_PORT				6102
+#define MAX_MSG_SIZE						10000
 
-#define CRATEMSG_HDR_ID							0x12345678
+#define CRATEMSG_HDR_ID						0x12345678
 
-#define CRATEMSG_TYPE_READ16					0x01
-#define CRATEMSG_TYPE_WRITE16					0x02
-#define CRATEMSG_TYPE_READ32					0x03
-#define CRATEMSG_TYPE_WRITE32					0x04
+#define CRATEMSG_TYPE_READ16				0x01
+#define CRATEMSG_TYPE_WRITE16				0x02
+#define CRATEMSG_TYPE_READ32				0x03
+#define CRATEMSG_TYPE_WRITE32				0x04
 #define CRATEMSG_TYPE_DELAY					0x05
 #define CRATEMSG_TYPE_READSCALERS			0x06
-#define SCALER_SERVER_READ_BOARD				0x100
+#define SCALER_SERVER_READ_BOARD		    0x100
 #define SCALER_SERVER_GET_CRATE_MAP			0x101
 #define SCALER_SERVER_GET_BOARD_PARAMS		0x102
 #define SCALER_SERVER_GET_CHANNEL_PARAMS	0x103
 #define SCALER_SERVER_SET_CHANNEL_PARAMS	0x104
 
-#define SCALER_TYPE_DSC2						0
+#define SCALER_TYPE_DSC2					0
 #define SCALER_TYPE_FADC250					1
-#define SCALER_TYPE_MAX							2   /* the maximum number of different board types */
+#define SCALER_TYPE_MAX						2   /* the maximum number of different board types */
 
-#define SCALER_PARTYPE_THRESHOLD				0
+#define SCALER_PARTYPE_THRESHOLD			0
 #define SCALER_PARTYPE_THRESHOLD2			1
-#define SCALER_PARTYPE_NCHANNELS				2
+#define SCALER_PARTYPE_NCHANNELS			2
 
 
 #define CMD_RSP(cmd)					(cmd | 0x80000000)

@@ -86,7 +86,7 @@ private:
    TGGroupFrame       *fF6;
    TGLayoutHints      *fL3;
 
-   TGRadioButton      *fRadiob1[6],*fRadiob2[3],fRadiob3[2]; 
+   TGRadioButton      *fRadiob1[6],*fRadiob2[3],*fRadiob3[2]; 
    TGVButtonGroup     *fButtonGroup1,*fButtonGroup2,*fButtonGroup3;
    TGTextButton       *fWindowRatesButton;
    TGTextButton       *fWindowExitButton;
@@ -102,12 +102,14 @@ public:
    DelaysDlg          *fDelaysDlg;
    ScopeDlg           *fScopeDlg;
 
-   FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h, char *host);
+   FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h);
    virtual ~FCMainFrame();
 
    virtual void CloseWindow();
    virtual Bool_t ProcessMessage(Long_t msg, Long_t parm1, Long_t);
+   virtual void connect_to_server();
 
+   int get_crate_map();
    void ClearDsc2Dlg() {fDsc2Dlg = NULL;}
    void ClearDelaysDlg() {fDelaysDlg = NULL;}
 
@@ -148,6 +150,7 @@ private:
 
    void FillHistos();
    void MakeHistos();
+   
    Int_t HistAccumulate;
    Int_t SetZlog, SetYlog;
 
@@ -159,7 +162,6 @@ public:
    virtual void CloseWindow();
    virtual Bool_t ProcessMessage(Long_t msg, Long_t parm1, Long_t parm2);
 
-   virtual void Init();
    virtual void ReadVME();
    virtual void UpdateGUI();
 
@@ -169,9 +171,6 @@ public:
    void DoSlider();
 
 };
-
-
-
 
 class DelaysDlg : public TGTransientFrame {
 

@@ -307,18 +307,18 @@ FCMainFrame::~FCMainFrame()
 
 int FCMainFrame::get_crate_map()
 {
-    unsigned int *map;
+    unsigned int *cmap;
     int len,nslots;
 
-    if(!fc_crate->GetCrateMap(&map, &len)) return -4;
+    if(!fc_crate->GetCrateMap(&cmap, &len)) return -4;
     if(len > 22) return -5;
     nslots=0;
     for(int slot = 0; slot < len; slot++)
       {
-	if (map[slot]==kcrt) {fc_crate_slots[nslots] = slot;nslots++;}
-        printf("host %s slot %d, type %d\n", hostname, slot, map[slot]);
+	if (cmap[slot]==kcrt) {fc_crate_slots[nslots] = slot;nslots++;}
+        printf("host %s slot %d, type %d\n", hostname, slot, cmap[slot]);
       }
-      delete [] map;
+      delete [] cmap;
       
       printf("Found %d %s slots for %s\n",nslots,mod[kcrt],hostname);
 

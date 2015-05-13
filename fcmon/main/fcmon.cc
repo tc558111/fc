@@ -63,6 +63,7 @@ Int_t map[14]={3,4,5,6,7,8,9,10,13,14,15,16,17,18};
 
 const char *det[] = {"tdc","adc","ecal","pcal","ftof","1","2","3","4","5","6"};
 const char *mod[] = {"DSC2","FADC"};
+Float_t clck[2]={125000000.,488281.25};
 
 Int_t ndsc[3]={14,12,12};
 Int_t nlay[3]={6,3,2};
@@ -844,7 +845,7 @@ void Dsc2Dlg::ReadVME()
 	slot=fc_crate_slots[ii]; 
 	fc_crate->ScalerReadBoard(slot, &buf, &len);
 	ref[ii]=buf[off[0][kcrt]];
-	norm = 125000000./((Float_t)ref[ii]);
+	norm = clck[idet]/((Float_t)ref[ii]);
 	for(jj=0; jj<16; jj++)
 	  {
 	    scal1[ii][jj]=buf[off[1][kcrt]+jj];
@@ -853,6 +854,7 @@ void Dsc2Dlg::ReadVME()
 	    case 1: i=adclayerpcal[map[ii]][jj]-1 ; j=0                        ; k=adcstrippcal[map[ii]][jj]-1 ;break;
 	    case 2: i=adclayerftof[map[ii]][jj]-1 ; j=adclrftof[map[ii]][jj]-1 ; k=adcslabftof[map[ii]][jj]-1  ;break;
 	    }
+	    printf("ii,jj,scal=%d,%d,%d,%d\n",ii,jj,ref[ii],scal1[ii][jj]);
 	    scal1[ii][jj]=(Int_t)(((Float_t)scal1[ii][jj])*norm) ; scal2[i][j][k]=scal1[ii][jj];
 	  }
 	delete [] buf;

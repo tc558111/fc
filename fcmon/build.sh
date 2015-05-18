@@ -1,5 +1,5 @@
 #!/bin/sh
-
+# For now this build shell script will only build on the clonpcxx where xx=11-19 (64-bit)
 rootcint -f guifc_Dict.cxx -c -p guifc.h guifc_LinkDef.h
 g++ -W -Wall -Wshadow -Wstrict-aliasing -pthread -m64 -I/home/hpsrun/apps/root_v5.34.21.Linux-slc6-amd64-gcc4.4/include -I/home/hpsrun/.root -c fcmon.cxx
 g++ -W -Wall -Wshadow -Wstrict-aliasing -pthread -m64 -I/home/hpsrun/apps/root_v5.34.21.Linux-slc6-amd64-gcc4.4/include -I/home/hpsrun/.root -c guifc_Dict.cxx

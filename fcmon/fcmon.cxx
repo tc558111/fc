@@ -29,26 +29,7 @@ UInt_t addr[3][14];
 char hostname[80];
 CrateMsgClient *fc_crate;
 int fc_crate_slots[22];
-
-
-const char *htit1[3][6]={{"ECAL Ui SCALERS vs STRIP","ECAL Vi SCALERS vs STRIP","ECAL Wi SCALERS vs STRIP",
-			  "ECAL Uo SCALERS vs STRIP","ECAL Vo SCALERS vs STRIP","ECAL Wo SCALERS vs STRIP"},
-			 {"PCAL U  SCALERS vs STRIP","PCAL V  SCALERS vs STRIP","PCAL W  SCALERS vs STRIP",
-			  " "," "," "},
-			 {"FTOF1B LEFT SCALERS vs BAR","FTOF1B RIGHT SCALERS vs BAR",
-			  "FTOF1A LEFT SCALERS vs BAR","FTOF1A RIGHT SCALERS vs BAR"," "," "}};
-
-const char *htit2[3][6]={{"ECAL Ui SCALERS vs TIME","ECAL Vi SCALERS vs TIME","ECAL Wi SCALERS vs TIME",
-			  "ECAL Uo SCALERS vs TIME","ECAL Vo SCALERS vs TIME","ECAL Wo SCALERS vs TIME"},
-			 {"PCAL U  SCALERS vs TIME","PCAL V  SCALERS vs TIME","PCAL W  SCALERS vs TIME",
-			  " "," "," "},
-			 {"FTOF1B LEFT SCALERS vs TIME","FTOF1B RIGHT SCALERS vs TIME",
-			  "FTOF1A LEFT SCALERS vs TIME","FTOF1A RIGHT SCALERS vs TIME"," "," "}};
-
-const char *htit3[3][6]={{"EC INNER U STRIP NUMBER","EC INNER V STRIP NUMBER","EC INNER W STRIP NUMBER",
-			  "EC OUTER V STRIP NUMBER","EC OUTER V STRIP NUMBER","EC OUTER W STRIP NUMBER"},
-			 {"PCAL U STRIP NUMBER","PCAL V STRIP NUMBER","PCAL W STRIP NUMBER"," "," "," "},
-			 {"FTOF1B LEFT BAR","FTOF1B RIGHT BAR","FTOF1A LEFT BAR","FTOF1A RIGHT BAR"," "," "}};					    
+				    
 
 const char *filetypes[] = { "All files",     "*",
                             "ROOT files",    "*.root",
@@ -597,21 +578,10 @@ void Dsc2Dlg::refresh_scalers()
 
 void Dsc2Dlg::DoSlider()
 {
-  char buf[32];
   Float_t zmin,zmax;
   zmin=fHSlid->GetMinPosition();
   zmax=fHSlid->GetMaxPosition();
   printf("zmin,zmax=%f,%f\n",zmin,zmax);
-
-  //  sprintf(buf,"%.3f", fHSlid->GetMinPosition());
-}
-
-void Dsc2Dlg::HandleButton()
-{
-}
-
-void Dsc2Dlg::HandleMotion()
-{
 }
 
 Dsc2Dlg::~Dsc2Dlg()
@@ -623,6 +593,25 @@ void Dsc2Dlg::MakeHistos()
   Char_t tit[10];  
   Int_t nplot,np;
 
+  const char *htit1[3][6]={{"ECAL Ui SCALERS vs STRIP","ECAL Vi SCALERS vs STRIP","ECAL Wi SCALERS vs STRIP",
+			    "ECAL Uo SCALERS vs STRIP","ECAL Vo SCALERS vs STRIP","ECAL Wo SCALERS vs STRIP"},
+			   {"PCAL U  SCALERS vs STRIP","PCAL V  SCALERS vs STRIP","PCAL W  SCALERS vs STRIP",
+			    " "," "," "},
+			   {"FTOF1B LEFT SCALERS vs BAR","FTOF1B RIGHT SCALERS vs BAR",
+			    "FTOF1A LEFT SCALERS vs BAR","FTOF1A RIGHT SCALERS vs BAR"," "," "}};
+
+  const char *htit2[3][6]={{"ECAL Ui SCALERS vs TIME","ECAL Vi SCALERS vs TIME","ECAL Wi SCALERS vs TIME",
+			    "ECAL Uo SCALERS vs TIME","ECAL Vo SCALERS vs TIME","ECAL Wo SCALERS vs TIME"},
+			   {"PCAL U  SCALERS vs TIME","PCAL V  SCALERS vs TIME","PCAL W  SCALERS vs TIME",
+			    " "," "," "},
+			   {"FTOF1B LEFT SCALERS vs TIME","FTOF1B RIGHT SCALERS vs TIME",
+			    "FTOF1A LEFT SCALERS vs TIME","FTOF1A RIGHT SCALERS vs TIME"," "," "}};
+
+  const char *htit3[3][6]={{"EC INNER U STRIP NUMBER","EC INNER V STRIP NUMBER","EC INNER W STRIP NUMBER",
+			    "EC OUTER V STRIP NUMBER","EC OUTER V STRIP NUMBER","EC OUTER W STRIP NUMBER"},
+			   {"PCAL U STRIP NUMBER","PCAL V STRIP NUMBER","PCAL W STRIP NUMBER"," "," "," "},
+			   {"FTOF1B LEFT BAR","FTOF1B RIGHT BAR","FTOF1A LEFT BAR","FTOF1A RIGHT BAR"," "," "}};
+ 
   gROOT->SetStyle("Plain");
   gStyle->SetPalette(53);
   gStyle->SetLabelSize(0.06,"Z") ; gStyle->SetLabelSize(0.05,"Y") ; gStyle->SetLabelSize(0.05,"X");

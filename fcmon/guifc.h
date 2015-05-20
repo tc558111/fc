@@ -179,6 +179,7 @@ class Dsc2Dlg : public TGTransientFrame
   void MakeHistos();
   void FillHistos();
   void DrawHistos();
+  void DeleteHistos();
    
   Int_t HistAccumulate;
   Int_t SetZlog, SetYlog;
@@ -195,7 +196,7 @@ class Dsc2Dlg : public TGTransientFrame
   virtual void UpdateGUI();
    
   // slots
-  void refresh_scalers(); 
+  int refresh_scalers(); 
   void DoSlider();       
   
   ClassDef(Dsc2Dlg,0) 

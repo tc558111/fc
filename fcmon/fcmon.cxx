@@ -247,7 +247,6 @@ void FCMainFrame::connect_to_server()
     sprintf(hostname,"%s%s%s",det[kcrt],det[kdet],det[ksec]);
     printf("Trying to connect to >%s<\n",hostname);
     fc_crate = new CrateMsgClient(hostname,6102);
-    get_crate_map();
     idet=kdet-2;
     if(fc_crate->IsValid())  {get_crate_map();}
     if(!fc_crate->IsValid()) {printf("Connection failed!\n");}

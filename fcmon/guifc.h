@@ -139,8 +139,7 @@ class FCMainFrame : public TGMainFrame
 
   virtual void CloseWindow();
   virtual Bool_t ProcessMessage(Long_t msg, Long_t parm1, Long_t);
-  virtual void connect_to_server();
-
+  void connect_to_server();
   int get_crate_map();
   void ClearDsc2Dlg() {fDsc2Dlg = NULL;}
 
@@ -180,6 +179,7 @@ class Dsc2Dlg : public TGTransientFrame
   void MakeHistos();
   void FillHistos();
   void DrawHistos();
+  void connect_to_server();
    
   Int_t HistAccumulate;
   Int_t SetZlog, SetYlog;

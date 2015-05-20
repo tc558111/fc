@@ -8,7 +8,7 @@ ClassImp(Dsc2Dlg);
 Double_t ttt;
 Float_t  bintime;
 Float_t  norm=0.;
-unsigned int ksec=4,kdet=8,kcrt=0;
+unsigned int ksec=5,kdet=3,kcrt=0;
 Int_t  idet,ifirst;
 
 UInt_t scal1[12][16],scal2[6][2][68];
@@ -111,7 +111,7 @@ FCMainFrame::FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h) : TGMainFrame(p,
    fMenuPCAL = new TGPopupMenu(fClient->GetRoot());
    fMenuPCAL->AddLabel("Monitoring and Control");
    fMenuPCAL->AddSeparator();
-   fMenuPCAL->AddEntry("&Dsc2", M_DSC2);
+   fMenuPCAL->AddEntry("&Scalers", M_DSC2);
 
    fMenuView = new TGPopupMenu(gClient->GetRoot());
    fMenuView->AddEntry("&Dock", M_VIEW_DOCK);
@@ -171,9 +171,9 @@ FCMainFrame::FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h) : TGMainFrame(p,
    fRadiob3[0]   = new TGRadioButton(fButtonGroup3, "DSC2",0);
    fRadiob3[1]   = new TGRadioButton(fButtonGroup3, "FADC",1);
    
-   fRadiob1[4]->SetOn();
-   fRadiob2[2]->SetOn();
-   fRadiob3[1]->SetOn();
+   fRadiob1[0]->SetOn();
+   fRadiob2[1]->SetOn();
+   fRadiob3[0]->SetOn();
    
    fButtonGroup1->Show();
    fButtonGroup2->Show();
@@ -244,8 +244,13 @@ void FCMainFrame::CloseWindow()
 
 void FCMainFrame::connect_to_server()
 {
-    char buf[100];
-    fc_crate = new CrateMsgClient(buf,6102);
+    sprintf(hostname,"%s%s%s",det[kcrt],det[kdet],det[ksec]);
+    printf("Trying to connect to >%s<\n",hostname);
+    fc_crate = new CrateMsgClient(hostname,6102);
+    get_crate_map();
+    idet=kdet-2;
+    if(fc_crate->IsValid())  {get_crate_map();}
+    if(!fc_crate->IsValid()) {printf("Connection failed!\n");}
 }
 
 Bool_t FCMainFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
@@ -259,26 +264,17 @@ Bool_t FCMainFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
        if (parm1<2)           kcrt=parm1;
        if (parm1>1&&parm1<5 ) kdet=parm1;
        if (parm1>4&&parm1<11) ksec=parm1;
-       sprintf(hostname,"%s%s%s",det[kcrt],det[kdet],det[ksec]);
-       idet=kdet-2;
 
      case kCM_BUTTON:
 
      if(parm1 == 11) 
         {
-         printf("Trying to connect to >%s<\n",hostname);
-	 fc_crate = new CrateMsgClient(hostname,6102);
+	  connect_to_server();
 
-	   if(fc_crate->IsValid())
+	  if(fc_crate->IsValid())
 	   {
 	     btConnect->SetEnabled(kFALSE);
 	     btDisconnect->SetEnabled(kTRUE);
-	     get_crate_map();
-	   }
-	 if(fDsc2Dlg)
-	   {
-	     fDsc2Dlg->ReadVME();
-	     fDsc2Dlg->UpdateGUI();
 	   }
        }
      else if(parm1 == 12) 
@@ -335,6 +331,7 @@ Bool_t FCMainFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
                      break;
 
                   case M_DSC2:
+		     connect_to_server();
                      fDsc2Dlg = new Dsc2Dlg(fClient->GetRoot(), this, 600, 300);
                      break;
 
@@ -553,7 +550,6 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
    CenterOnParent();            
    SetWindowName("Dialog");
    MapWindow();
-   //fClient->WaitFor(this);    // otherwise canvas contextmenu does not work
    HistAccumulate = 0;
 
    TTimer::SingleShot(scaler_update_period[idet],"Dsc2Dlg",this,"refresh_scalers()");
@@ -567,8 +563,8 @@ void Dsc2Dlg::refresh_scalers()
       UpdateGUI();
       FillHistos();
       DrawHistos();
-      TTimer::SingleShot(scaler_update_period[kcrt],"Dsc2Dlg",this,"refresh_scalers()");
     }
+  TTimer::SingleShot(scaler_update_period[kcrt],"Dsc2Dlg",this,"refresh_scalers()");
 }
 
 void Dsc2Dlg::DoSlider()
@@ -708,7 +704,8 @@ void Dsc2Dlg::CloseWindow()
    if (TVirtualPadEditor::GetPadEditor(kFALSE) != 0)
       TVirtualPadEditor::Terminate();
    DeleteWindow();
-
+   printf("Closing connection to %s\n",hostname);
+   fc_crate->Close();
    fMain->ClearDsc2Dlg(); // clear pointer to ourself, so MainFrame will stop reading scalers from VME
 }
 

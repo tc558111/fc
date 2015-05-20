@@ -8,6 +8,7 @@ ClassImp(Dsc2Dlg);
 Double_t ttt;
 Float_t  bintime;
 Float_t  norm=0.;
+Float_t  zmin=0.,zmax=2.;
 unsigned int ksec=5,kdet=3,kcrt=0;
 Int_t  idet,ifirst;
 
@@ -192,11 +193,11 @@ FCMainFrame::FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h) : TGMainFrame(p,
 
    fActionFrame = new TGHorizontalFrame(this,100,50);
    AddFrame(fActionFrame,fL10);
-   fActionFrame->AddFrame(btConnect    = new TGTextButton(fActionFrame, "Connect", 11),fL1);
-   fActionFrame->AddFrame(btDisconnect = new TGTextButton(fActionFrame,"Disconnect", 12),fL1);
-   btDisconnect->SetEnabled(kFALSE);
-   btConnect->Associate(this);
-   btDisconnect->Associate(this);
+//   fActionFrame->AddFrame(btConnect    = new TGTextButton(fActionFrame, "Connect", 11),fL1);
+//   fActionFrame->AddFrame(btDisconnect = new TGTextButton(fActionFrame,"Disconnect", 12),fL1);
+//   btDisconnect->SetEnabled(kFALSE);
+//   btConnect->Associate(this);
+//   btDisconnect->Associate(this);
 
    SetWindowName("FCMON");
    MapSubwindows(); 
@@ -554,8 +555,9 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
    TTimer::SingleShot(scaler_update_period[idet],"Dsc2Dlg",this,"refresh_scalers()");
 }
 
-void Dsc2Dlg::refresh_scalers()
+int Dsc2Dlg::refresh_scalers()
 {
+  printf("I am in refresh_scalers\n");
   if(fc_crate->IsValid())
     {
       ReadVME();
@@ -563,19 +565,31 @@ void Dsc2Dlg::refresh_scalers()
       FillHistos();
       DrawHistos();
     }
+  if(!fc_crate->IsValid()) {return 0;}
   TTimer::SingleShot(scaler_update_period[kcrt],"Dsc2Dlg",this,"refresh_scalers()");
+  return 0;
 }
 
 void Dsc2Dlg::DoSlider()
 {
-  Float_t zmin,zmax;
   zmin=fHSlid->GetMinPosition();
-  zmax=fHSlid->GetMaxPosition();
-  printf("zmin,zmax=%f,%f\n",zmin,zmax);
+  zmax=fHSlid->GetMaxPosition(); 
+  DrawHistos();
 }
 
 Dsc2Dlg::~Dsc2Dlg()
 {
+}
+
+void Dsc2Dlg::DeleteHistos()
+{
+  Int_t nplot,np; 
+  nplot=nlay[idet]*nlr[idet];
+  for(np=0; np<nplot; np++)
+    {
+      if (fHP1[np]) delete fHP1[np];
+      if (fHP2[np]) delete fHP2[np];
+    }
 }
 
 void Dsc2Dlg::MakeHistos()
@@ -613,13 +627,11 @@ void Dsc2Dlg::MakeHistos()
 
   for(np=0; np<nplot; np++)
     {
-      if (!fHP1[np]){
-	sprintf(tit,"hp1%d",np);
-	fHP1[np] = new TH1F(tit,htit1[idet][np],npmt[idet][np],1.,((Float_t)npmt[idet][np]+1.));
-	fHP1[np]->SetFillColor(kRed);fHP1[np]->SetStats(kFALSE);
-        fHP1[np]->SetNdivisions(npmt[idet][np]); fHP1[np]->GetYaxis()->SetTickLength(0.01);
-      }
-      if (fHP2[np]) delete fHP2[np];sprintf(tit,"hp2%d",np);
+      sprintf(tit,"hp1%d",np);
+      fHP1[np] = new TH1F(tit,htit1[idet][np],npmt[idet][np],1.,((Float_t)npmt[idet][np]+1.));
+      fHP1[np]->SetFillColor(kRed);fHP1[np]->SetStats(kFALSE);
+      fHP1[np]->SetNdivisions(npmt[idet][np]); fHP1[np]->GetYaxis()->SetTickLength(0.01);
+      sprintf(tit,"hp2%d",np);
       fHP2[np] = new TH2F(tit,htit2[idet][np],100,1.,101.*bintime,npmt[idet][np],1.,((Float_t)npmt[idet][np]+1.));
       fHP2[np]->SetStats(kFALSE);fHP2[np]->GetXaxis()->SetTimeDisplay(1); 
       fHP2[np]->GetZaxis()->SetRangeUser(1.,1500.); fHP2[np]->GetYaxis()->SetTitle(htit3[idet][np]);
@@ -671,13 +683,14 @@ void Dsc2Dlg::DrawHistos()
   
   nplot = nlay[idet]*nlr[idet];
   
-  if(fShowRates)  {for (np=0 ; np<nplot ; np++) {c[np] = fE1[np]->GetCanvas(); c[np]->SetLogy(SetYlog);}}
-  if(!fShowRates) {for (np=0 ; np<nplot ; np++) {c[np] = fE2[np]->GetCanvas(); c[np]->SetLogy(0); c[np]->SetLogz(SetZlog);}}
-
   for(np=0; np<nplot ; np++)
     {
-      c[np]->cd(); if(fShowRates) {fHP1[np]->Draw();}else{fHP2[np]->Draw("colz");}
-      c[np]->Modified(); c[np]->Update();
+      if(fShowRates)  {c[np] = fE1[np]->GetCanvas(); c[np]->SetLogy(SetYlog);
+	                       c[np]->cd(); fHP1[np]->Draw();}
+      if(!fShowRates) {c[np] = fE2[np]->GetCanvas(); c[np]->SetLogy(0); c[np]->SetLogz(SetZlog) ; 
+	                       fHP2[np]->GetZaxis()->SetRangeUser(pow(10.,zmin),pow(10.,zmax));
+			       c[np]->cd(); fHP2[np]->Draw("colz");}
+                               c[np]->Modified(); c[np]->Update();
     }
   
   if(!fShowRates)
@@ -704,7 +717,7 @@ void Dsc2Dlg::CloseWindow()
       TVirtualPadEditor::Terminate();
    DeleteWindow();
    printf("Closing connection to %s\n",hostname);
-   fc_crate->Close();
+   fc_crate->Close(); norm=0; DeleteHistos();
    fMain->ClearDsc2Dlg(); // clear pointer to ourself, so MainFrame will stop reading scalers from VME
 }
 

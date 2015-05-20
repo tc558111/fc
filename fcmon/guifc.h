@@ -179,7 +179,6 @@ class Dsc2Dlg : public TGTransientFrame
   void MakeHistos();
   void FillHistos();
   void DrawHistos();
-  void connect_to_server();
    
   Int_t HistAccumulate;
   Int_t SetZlog, SetYlog;

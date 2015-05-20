@@ -34,6 +34,7 @@
 #include <TColor.h>
 #include <TH1.h>
 #include <TH2.h>
+#include <TPaveText.h>
 #include <TRandom.h>
 #include <TStyle.h>
 #include <TSystem.h>
@@ -57,26 +58,25 @@
 #define NV 62
 #define NW 62
 
-enum ETestCommandIdentifiers {
-   M_FILE_OPEN,
-   M_FILE_SAVE,
-   M_FILE_SAVEAS,
-   M_FILE_PRINT,
-   M_FILE_PRINTSETUP,
-   M_FILE_EXIT,
+enum ETestCommandIdentifiers
+  {
+    M_FILE_OPEN,
+    M_FILE_SAVE,
+    M_FILE_SAVEAS,
+    M_FILE_PRINT,
+    M_FILE_PRINTSETUP,
+    M_FILE_EXIT,
+   
+    M_DSC2,
 
-   M_REGISTERS,
-   M_DELAYS,
-   M_DSC2,
+    M_VIEW_ENBL_DOCK,
+    M_VIEW_ENBL_HIDE,
+    M_VIEW_DOCK,
+    M_VIEW_UNDOCK,
 
-   M_VIEW_ENBL_DOCK,
-   M_VIEW_ENBL_HIDE,
-   M_VIEW_DOCK,
-   M_VIEW_UNDOCK,
-
-   M_HELP_CONTENTS,
-   M_HELP_SEARCH,
-   M_HELP_ABOUT
+    M_HELP_CONTENTS,
+    M_HELP_SEARCH,
+    M_HELP_ABOUT
 };
 
 
@@ -86,7 +86,6 @@ class ScopeDlg;
 
 class TileFrame : public TGCompositeFrame
 {
-
  private:
   TGCanvas *fCanvas;
 
@@ -144,7 +143,6 @@ class FCMainFrame : public TGMainFrame
 
   int get_crate_map();
   void ClearDsc2Dlg() {fDsc2Dlg = NULL;}
-  void ClearDelaysDlg() {fDelaysDlg = NULL;}
 
 };
 
@@ -179,8 +177,9 @@ class Dsc2Dlg : public TGTransientFrame
 
   UInt_t ref[16];
 
-  void FillHistos();
   void MakeHistos();
+  void FillHistos();
+  void DrawHistos();
    
   Int_t HistAccumulate;
   Int_t SetZlog, SetYlog;

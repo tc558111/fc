@@ -30,13 +30,10 @@ char hostname[80];
 CrateMsgClient *fc_crate;
 int fc_crate_slots[22];
 				    
-
 const char *filetypes[] = { "All files",     "*",
                             "ROOT files",    "*.root",
                             "ROOT macros",   "*.C",
                             0,               0 };
-
-/* TileFrame class implementation */
 
 TileFrame::TileFrame(const TGWindow *p) : TGCompositeFrame(p, 10, 10, kHorizontalFrame, GetWhitePixel())
 {
@@ -205,15 +202,10 @@ FCMainFrame::FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h) : TGMainFrame(p,
    MapSubwindows(); 
    Resize(GetDefaultSize()); 
    MapWindow();
-   //Print();
-
-   //tt = new MyTimer(this, 1000);
 }
 
 FCMainFrame::~FCMainFrame()
 {
-   // Delete all created widgets.
-
    delete fMenuFile;
    delete fMenuPCAL;
    delete fMenuView;
@@ -269,7 +261,6 @@ Bool_t FCMainFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
        if (parm1>4&&parm1<11) ksec=parm1;
        sprintf(hostname,"%s%s%s",det[kcrt],det[kdet],det[ksec]);
        idet=kdet-2;
-       printf("idet=%d\n",idet);
 
      case kCM_BUTTON:
 
@@ -570,10 +561,14 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
 
 void Dsc2Dlg::refresh_scalers()
 {
-  ReadVME();
-  UpdateGUI();
-  FillHistos();
-  TTimer::SingleShot(scaler_update_period[kcrt],"Dsc2Dlg",this,"refresh_scalers()");
+  if(fc_crate->IsValid())
+    {
+      ReadVME();
+      UpdateGUI();
+      FillHistos();
+      DrawHistos();
+      TTimer::SingleShot(scaler_update_period[kcrt],"Dsc2Dlg",this,"refresh_scalers()");
+    }
 }
 
 void Dsc2Dlg::DoSlider()
@@ -641,18 +636,13 @@ void Dsc2Dlg::MakeHistos()
 
 void Dsc2Dlg::FillHistos()
 {
-  TCanvas *c[6];
   Int_t nplot,np;
+  Int_t ii,jj,kk;
+  Double_t xx,ww;
 
   nplot = nlay[idet]*nlr[idet];
 
   if (ifirst>0) {MakeHistos();ttt=0.;}
-
-  if(fShowRates)  {for (np=0 ; np<nplot ; np++) {c[np] = fE1[np]->GetCanvas(); c[np]->SetLogy(SetYlog);}}
-  if(!fShowRates) {for (np=0 ; np<nplot ; np++) {c[np] = fE2[np]->GetCanvas(); c[np]->SetLogy(0); c[np]->SetLogz(SetZlog);}}
-
-  Int_t ii,jj,kk;
-  Double_t xx,ww;
 
   if(fShowRates && !HistAccumulate) {for (np=0 ; np<nplot ; np++) {fHP1[np]->Reset();}}
 
@@ -676,12 +666,34 @@ void Dsc2Dlg::FillHistos()
 	  np++;
 	}
     }
+}
+
+void Dsc2Dlg::DrawHistos()
+{
+  TPaveText tdatime(-5,-6.5,5,-5.8);
+  TCanvas *c[6];
+  Int_t nplot,np;
+  
+  nplot = nlay[idet]*nlr[idet];
+  
+  if(fShowRates)  {for (np=0 ; np<nplot ; np++) {c[np] = fE1[np]->GetCanvas(); c[np]->SetLogy(SetYlog);}}
+  if(!fShowRates) {for (np=0 ; np<nplot ; np++) {c[np] = fE2[np]->GetCanvas(); c[np]->SetLogy(0); c[np]->SetLogz(SetZlog);}}
 
   for(np=0; np<nplot ; np++)
     {
       c[np]->cd(); if(fShowRates) {fHP1[np]->Draw();}else{fHP2[np]->Draw("colz");}
       c[np]->Modified(); c[np]->Update();
     }
+  
+  if(!fShowRates)
+    {
+      TDatime datime;
+      tdatime.Clear();
+      tdatime.AddText(Form("%d/%d/%d %.2d:%.2d:%.2d",
+		datime.GetDay(),datime.GetMonth(),datime.GetYear(),
+                datime.GetHour(),datime.GetMinute(),datime.GetSecond()));
+      tdatime.Draw();
+    } 
 }
 
 void Dsc2Dlg::CloseWindow()
@@ -698,7 +710,6 @@ void Dsc2Dlg::CloseWindow()
    DeleteWindow();
 
    fMain->ClearDsc2Dlg(); // clear pointer to ourself, so MainFrame will stop reading scalers from VME
-
 }
 
 Bool_t Dsc2Dlg::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
@@ -724,16 +735,12 @@ Bool_t Dsc2Dlg::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
             case kCM_CHECKBUTTON:
                switch (parm1) {
                   case 71:
-		     printf("CHECKBUTTON 71\n");
                      HistAccumulate = fChk1->GetState();
-		     printf("CHECKBUTTON 71: status=%d\n",HistAccumulate); 
                      break;
 	          case 72:
-		     printf("CHECKBUTTON 72\n");
 		     SetZlog = fChk2->GetState();
 		     break;
 	          case 73:
-		     printf("CHECKBUTTON 73\n");
 		     SetYlog = fChk3->GetState();
 		     break;
                   default:
@@ -787,6 +794,8 @@ void Dsc2Dlg::ReadVME()
 	delete [] buf;
       }
   }
+
+  if(!fc_crate->IsValid()) {norm=1.0;}
 }
 
 void Dsc2Dlg::UpdateGUI()
@@ -799,16 +808,7 @@ void Dsc2Dlg::UpdateGUI()
 int main(int argc, char **argv)
 {
    TApplication theApp("App", &argc, argv);
-
-   if(gROOT->IsBatch())
-   {
-     fprintf(stderr, "%s: cannot run in batch mode\n", argv[0]);
-     return(1);
-   }
-
-   FCMainFrame mainWindow(gClient->GetRoot(), 200, 200);
-
+   FCMainFrame mainWindow(gClient->GetRoot(), 300, 300);
    theApp.Run();
-
    return 0;
 }

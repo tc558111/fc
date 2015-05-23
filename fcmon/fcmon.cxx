@@ -721,10 +721,10 @@ void Dsc2Dlg::CloseWindow()
    // ... and close the Ged editor if it was activated.
    if (TVirtualPadEditor::GetPadEditor(kFALSE) != 0)
       TVirtualPadEditor::Terminate();
+   DeleteWindow();
    printf("Closing connection to %s\n",hostname);
    if(fc_crate->IsValid()) {fc_crate->Close();}
    norm=-1.; DeleteHistos();
-   DeleteWindow();
    fMain->ClearDsc2Dlg(); // clear pointer to ourself, so MainFrame will stop reading scalers from VME
 }
 

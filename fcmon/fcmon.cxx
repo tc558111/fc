@@ -558,14 +558,17 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
 int Dsc2Dlg::refresh_scalers()
 {
   printf("I am in refresh_scalers\n");
-  if(fc_crate->IsValid())
-    {
-      ReadVME();
-      UpdateGUI();
-      FillHistos();
-      DrawHistos();
-    }
-  if(!fc_crate->IsValid()) {return 0;}
+
+  if (norm==0)   {ifirst=3;}
+  if (norm==-1.) {norm=0.;return 0;}
+  if (ifirst>0) ifirst--;
+
+  ReadVME();
+  UpdateGUI();
+  FillHistos();
+  DrawHistos();
+
+  //if(!fc_crate->IsValid()) {return 0;}
   TTimer::SingleShot(scaler_update_period[kcrt],"Dsc2Dlg",this,"refresh_scalers()");
   return 0;
 }
@@ -594,6 +597,8 @@ void Dsc2Dlg::DeleteHistos()
 
 void Dsc2Dlg::MakeHistos()
 {
+  printf("Making histos for idet=%d\n",idet);
+
   Char_t tit[10];  
   Int_t nplot,np;
 
@@ -685,12 +690,13 @@ void Dsc2Dlg::DrawHistos()
   
   for(np=0; np<nplot ; np++)
     {
-      if(fShowRates)  {c[np] = fE1[np]->GetCanvas(); c[np]->SetLogy(SetYlog);
-	                       c[np]->cd(); fHP1[np]->Draw();}
-      if(!fShowRates) {c[np] = fE2[np]->GetCanvas(); c[np]->SetLogy(0); c[np]->SetLogz(SetZlog) ; 
-	                       fHP2[np]->GetZaxis()->SetRangeUser(pow(10.,zmin),pow(10.,zmax));
-			       c[np]->cd(); fHP2[np]->Draw("colz");}
-                               c[np]->Modified(); c[np]->Update();
+      if(fShowRates)      {c[np] = fE1[np]->GetCanvas(); c[np]->SetLogy(SetYlog);
+	                   c[np]->cd(); fHP1[np]->Draw();}
+      if(fShowStripChart) {c[np] = fE2[np]->GetCanvas(); c[np]->SetLogy(0); c[np]->SetLogz(SetZlog) ; 
+	                           fHP2[np]->GetZaxis()->SetRangeUser(pow(10.,zmin),pow(10.,zmax));
+			   c[np]->cd(); fHP2[np]->Draw("colz");}
+      
+      c[np]->Modified(); c[np]->Update();
     }
   
   if(!fShowRates)
@@ -708,7 +714,7 @@ void Dsc2Dlg::CloseWindow()
 {
    // Called when window is closed (via the window manager or not).
    // Let's stop histogram filling...
-   fShowRates = kFALSE;
+   fShowRates = kFALSE; fShowStripChart = kFALSE;
    // Add protection against double-clicks
    fOkButton->SetState(kButtonDisabled);
    fCancelButton->SetState(kButtonDisabled);
@@ -717,7 +723,8 @@ void Dsc2Dlg::CloseWindow()
       TVirtualPadEditor::Terminate();
    DeleteWindow();
    printf("Closing connection to %s\n",hostname);
-   fc_crate->Close(); norm=0; DeleteHistos();
+   if(fc_crate->IsValid()) {fc_crate->Close();}
+   norm=-1.; DeleteHistos();
    fMain->ClearDsc2Dlg(); // clear pointer to ourself, so MainFrame will stop reading scalers from VME
 }
 
@@ -759,8 +766,8 @@ Bool_t Dsc2Dlg::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
 			   
             case kCM_TAB:
 	      switch(parm1) {
-	      case 1: fShowRates = kTRUE  ; break;
-	      case 2: fShowRates = kFALSE ; break;
+	      case 1: fShowRates = kTRUE  ; fShowStripChart = kFALSE ; break;
+	      case 2: fShowRates = kFALSE ; fShowStripChart = kTRUE  ; break;
             default:
                break;
          }
@@ -777,9 +784,6 @@ void Dsc2Dlg::ReadVME()
   Int_t ii, jj, i=0, j=0, k=0;
   unsigned int *buf;
   int len,slot,off[2][2]={{68,16},{51,0}};
-
-  if (norm==0.) ifirst=3;
-  if (ifirst>0) ifirst--;
 
   if(fc_crate->IsValid())
   {
@@ -803,7 +807,6 @@ void Dsc2Dlg::ReadVME()
 	delete [] buf;
       }
   }
-
   if(!fc_crate->IsValid()) {norm=1.0;}
 }
 

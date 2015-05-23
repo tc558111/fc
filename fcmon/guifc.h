@@ -167,7 +167,7 @@ class Dsc2Dlg : public TGTransientFrame
   TRootEmbeddedCanvas *fE1[6], *fE2[6];
   Int_t                fFirstEntry;
   Int_t                fLastEntry;
-  Bool_t               fShowRates;
+  Bool_t               fShowRates, fShowStripChart;
  
   TGTextBuffer        *tbufsc[12][16];
   TGTextEntry         *tentsc[12][16];

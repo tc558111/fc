@@ -12,7 +12,7 @@ Float_t  zmin=0.,zmax=2.;
 unsigned int ksec=5,kdet=3,kcrt=0;
 Int_t  idet,ifirst;
 
-UInt_t scal1[12][16],scal2[6][2][68];
+UInt_t scal1[14][16],scal2[6][2][68];
 Int_t map[14]={3,4,5,6,7,8,9,10,13,14,15,16,17,18};
 
 const char *det[] = {"tdc","adc","ecal","pcal","ftof","1","2","3","4","5","6"};

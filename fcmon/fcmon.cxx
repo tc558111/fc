@@ -816,7 +816,7 @@ void Dsc2Dlg::UpdateGUI()
 {
    Int_t ii,jj;
    Char_t str[10];
-   for(ii=0; ii<12; ii++) {for(jj=0; jj<16; jj++){sprintf(str,"%8d",scal1[ii][jj]);tentsc[ii][jj]->SetText(str);}}
+   for(ii=0; ii<ndsc[idet]; ii++) {for(jj=0; jj<16; jj++){sprintf(str,"%8d",scal1[ii][jj]);tentsc[ii][jj]->SetText(str);}}
 }
 
 int main(int argc, char **argv)

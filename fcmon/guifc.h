@@ -169,8 +169,8 @@ class Dsc2Dlg : public TGTransientFrame
   Int_t                fLastEntry;
   Bool_t               fShowRates, fShowStripChart;
  
-  TGTextBuffer        *tbufsc[12][16];
-  TGTextEntry         *tentsc[12][16];
+  TGTextBuffer        *tbufsc[14][16];
+  TGTextEntry         *tentsc[14][16];
   TH1F                *fHP1[68];
   TH2F                *fHP2[68];
 

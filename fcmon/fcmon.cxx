@@ -552,6 +552,7 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
    MapWindow();
    HistAccumulate = 0;
 
+   ifirst=3;
    TTimer::SingleShot(scaler_update_period[idet],"Dsc2Dlg",this,"refresh_scalers()");
 }
 
@@ -559,16 +560,19 @@ int Dsc2Dlg::refresh_scalers()
 {
   printf("I am in refresh_scalers\n");
 
-  if (norm==0)   {ifirst=3;}
   if (norm==-1.) {norm=0.;return 0;}
-  if (ifirst>0) ifirst--;
-
+  if (ifirst>0)  {ifirst--;}
+  
   ReadVME();
-  UpdateGUI();
-  FillHistos();
-  DrawHistos();
-
-  //if(!fc_crate->IsValid()) {return 0;}
+  
+  if (ifirst==1) {MakeHistos();}
+  if (ifirst==0)
+    {
+      UpdateGUI();
+      FillHistos();
+      DrawHistos();
+    }
+  
   TTimer::SingleShot(scaler_update_period[kcrt],"Dsc2Dlg",this,"refresh_scalers()");
   return 0;
 }
@@ -597,7 +601,7 @@ void Dsc2Dlg::DeleteHistos()
 
 void Dsc2Dlg::MakeHistos()
 {
-  printf("Making histos for idet=%d\n",idet);
+  printf("MakeHistos():Making histos for idet=%d\n",idet);
 
   Char_t tit[10];  
   Int_t nplot,np;
@@ -654,14 +658,12 @@ void Dsc2Dlg::FillHistos()
 
   nplot = nlay[idet]*nlr[idet];
 
-  if (ifirst>0) {MakeHistos();ttt=0.;}
-
   if(fShowRates && !HistAccumulate) {for (np=0 ; np<nplot ; np++) {fHP1[np]->Reset();}}
 
   ttt=ttt+bintime;
   printf("Here tt=%f\n",ttt);
   
-  if (ttt>bintime*100) {MakeHistos();ttt=bintime;}
+  if (ttt>bintime*100) {DeleteHistos();MakeHistos();ttt=bintime;}
 
   np=0;
   for(ii=0; ii<nlay[idet] ; ii++)
@@ -722,7 +724,7 @@ void Dsc2Dlg::CloseWindow()
    if (TVirtualPadEditor::GetPadEditor(kFALSE) != 0)
       TVirtualPadEditor::Terminate();
    DeleteWindow();
-   printf("Closing connection to %s\n",hostname);
+   printf("CloseWindow:Closing connection to %s\n",hostname);
    if(fc_crate->IsValid()) {fc_crate->Close();}
    norm=-1.; DeleteHistos();
    fMain->ClearDsc2Dlg(); // clear pointer to ourself, so MainFrame will stop reading scalers from VME
@@ -807,7 +809,7 @@ void Dsc2Dlg::ReadVME()
 	delete [] buf;
       }
   }
-  if(!fc_crate->IsValid()) {norm=1.0;}
+  if(!fc_crate->IsValid()) {printf("Setting norm to 1.0\n");norm=1.0;}
 }
 
 void Dsc2Dlg::UpdateGUI()

@@ -5,29 +5,31 @@
 
 ClassImp(Dsc2Dlg);
 
+Float_t  zmin=0.,zmax=2.;           // Stripchart slider initial settings
+unsigned int ksec=5,kdet=3,kcrt=0;  // Initial radio button settings
+Int_t ifirst;                       // initialized in Dsc2Dlg
+
+UInt_t scal1[14][16];               // Scaler readout in slot,chan
+UInt_t scal2[6][2][68];             // Scaler readout in sector,det,pmt
+
+Int_t map[14]={3,4,5,6,7,8,9,10,13,14,15,16,17,18}; //index into translation table ttfc.h
+
 Double_t ttt;
 Float_t  bintime;
-Float_t  norm=0.;
-Float_t  zmin=0.,zmax=2.;
-unsigned int ksec=5,kdet=3,kcrt=0;
-Int_t  idet,ifirst;
+Float_t  norm=0.;                       // clck/ref ref=Group 1 Ref Scaler
+Float_t clck[2]={125000000.,488281.25}; // Scaler clock DSC2,FADC
+int scaler_update_period[2]={1000,200}; // milliseconds
 
-UInt_t scal1[14][16],scal2[6][2][68];
-Int_t map[14]={3,4,5,6,7,8,9,10,13,14,15,16,17,18};
+Int_t idet;                // idet=0,1,2 (ECAL,PCAL,FTOF)
+Int_t ndsc[3]={14,12,12};  // Number of DSC2 slots for idet=0,1,2
+Int_t nlay[3]={6,3,2};     // Number of layers for idet=0,1,2
+Int_t nlr[3]={1,1,2};      // Number of subdivisions for idet=0,1,2
+Int_t npmt[3][6]={{36,36,36,36,36,36},{68,62,62,0,0,0},{62,62,23,23,0,0}}; // Number of pmts for each nlay*nlr
 
-const char *det[] = {"tdc","adc","ecal","pcal","ftof","1","2","3","4","5","6"};
+char hostname[80];         // Name of crate 
+const char *det[] = {"tdc","adc","ecal","pcal","ftof","1","2","3","4","5","6"}; //used to construct hostname
 const char *mod[] = {"DSC2","FADC"};
-Float_t clck[2]={125000000.,488281.25};
-int scaler_update_period[2]={1000,200};
 
-Int_t ndsc[3]={14,12,12};
-Int_t nlay[3]={6,3,2};
-Int_t nlr[3]={1,1,2};
-Int_t npmt[3][6]={{36,36,36,36,36,36},{68,62,62,0,0,0},{62,62,23,23,0,0}};
-
-UInt_t addr[3][14];
-
-char hostname[80];
 CrateMsgClient *fc_crate;
 int fc_crate_slots[22];
 				    
@@ -39,7 +41,6 @@ const char *filetypes[] = { "All files",     "*",
 TileFrame::TileFrame(const TGWindow *p) : TGCompositeFrame(p, 10, 10, kHorizontalFrame, GetWhitePixel())
 {
    // Create tile view container. Used to show colormap.
-
    fCanvas = 0;
    SetLayoutManager(new TGTileLayout(this, 8));
 
@@ -147,7 +148,6 @@ FCMainFrame::FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h) : TGMainFrame(p,
 
    fMenuDock->AddFrame(fMenuBar, fMenuBarLayout);
 
-
    fL10 = new TGLayoutHints(kLHintsTop|kLHintsCenterX|kLHintsExpandX,2,2,2,2);
    fL0  = new TGLayoutHints(kLHintsLeft|kLHintsCenterY|kLHintsExpandY,5,5,5,5);
    fL1  = new TGLayoutHints(kLHintsLeft|kLHintsCenterX|kLHintsExpandX,5,5,5,5);
@@ -193,11 +193,6 @@ FCMainFrame::FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h) : TGMainFrame(p,
 
    fActionFrame = new TGHorizontalFrame(this,100,50);
    AddFrame(fActionFrame,fL10);
-//   fActionFrame->AddFrame(btConnect    = new TGTextButton(fActionFrame, "Connect", 11),fL1);
-//   fActionFrame->AddFrame(btDisconnect = new TGTextButton(fActionFrame,"Disconnect", 12),fL1);
-//   btDisconnect->SetEnabled(kFALSE);
-//   btConnect->Associate(this);
-//   btDisconnect->Associate(this);
 
    SetWindowName("FCMON");
    MapSubwindows(); 
@@ -214,24 +209,96 @@ FCMainFrame::~FCMainFrame()
    delete fContainer;
 }
 
-int FCMainFrame::get_crate_map()
+Bool_t FCMainFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
 {
-    unsigned int *cmap;
-    int len,nslots;
+   switch (GET_MSG(msg)) {
+   case kC_COMMAND:
+     switch (GET_SUBMSG(msg)) {
+     case kCM_RADIOBUTTON:
+       if (parm1<2)           kcrt=parm1;
+       if (parm1>1&&parm1<5 ) kdet=parm1;
+       if (parm1>4&&parm1<11) ksec=parm1;
+     case kCM_MENUSELECT:
+       break;
+     case kCM_MENU:
+       switch (parm1) {
+       case M_FILE_OPEN:
+	 {
+	   static TString dir(".");
+	   TGFileInfo fi;
+	   fi.fFileTypes = filetypes;
+	   fi.fIniDir    = StrDup(dir);
+	   new TGFileDialog(fClient->GetRoot(), this, kFDOpen, &fi);
+	   printf("Open file: %s (dir: %s)\n", fi.fFilename,fi.fIniDir);
+	   dir = fi.fIniDir;
+	 }
+	 break;
+       case M_FILE_SAVE:
+	 printf("M_FILE_SAVE\n");
+	 break;
+       case M_FILE_PRINT:
+	 printf("M_FILE_PRINT\n");
+	 printf("Hiding itself, select \"Print Setup...\" to enable again\n");
+	 fMenuFile->HideEntry(M_FILE_PRINT);
+	 break;
+       case M_FILE_PRINTSETUP:
+	 printf("M_FILE_PRINTSETUP\n");
+	 printf("Enabling \"Print\"\n");
+	 fMenuFile->EnableEntry(M_FILE_PRINT);
+	 break;
+       case M_FILE_EXIT:
+	 CloseWindow();   // this also terminates theApp
+	 break;
+       case M_DSC2:
+	 connect_to_server();
+	 fDsc2Dlg = new Dsc2Dlg(fClient->GetRoot(), this, 600, 300);
+	 break;
+       case M_VIEW_ENBL_DOCK:
+	 fMenuDock->EnableUndock(!fMenuDock->EnableUndock());
+	 if (fMenuDock->EnableUndock()) {
+	   fMenuView->CheckEntry(M_VIEW_ENBL_DOCK);
+	   fMenuView->EnableEntry(M_VIEW_UNDOCK);
+	 } else {
+	   fMenuView->UnCheckEntry(M_VIEW_ENBL_DOCK);
+	   fMenuView->DisableEntry(M_VIEW_UNDOCK);
+	 }
+	 break;
+       case M_VIEW_ENBL_HIDE:
+	 fMenuDock->EnableHide(!fMenuDock->EnableHide());
+	 if (fMenuDock->EnableHide()) {
+	   fMenuView->CheckEntry(M_VIEW_ENBL_HIDE);
+	 } else {
+	   fMenuView->UnCheckEntry(M_VIEW_ENBL_HIDE);
+	 }
+	 break;
+       case M_VIEW_DOCK:
+	 fMenuDock->DockContainer();
+	 fMenuView->EnableEntry(M_VIEW_UNDOCK);
+	 fMenuView->DisableEntry(M_VIEW_DOCK);
+	 break;
+       case M_VIEW_UNDOCK:
+	 fMenuDock->UndockContainer();
+	 fMenuView->EnableEntry(M_VIEW_DOCK);
+	 fMenuView->DisableEntry(M_VIEW_UNDOCK);
+	 break;
+       default:
+	 break;
+       }
+     default:
+       break;
+     }
+   default:
+     break;
+   }
 
-    if(!fc_crate->GetCrateMap(&cmap, &len)) return -4;
-    if(len > 22) return -5;
-    nslots=0;
-    for(int slot = 0; slot < len; slot++)
-      {
-	if (cmap[slot]==kcrt) {fc_crate_slots[nslots] = slot;nslots++;}
-        printf("host %s slot %d, type %d\n", hostname, slot, cmap[slot]);
-      }
-      delete [] cmap;
-      
-      printf("Found %d %s slots for %s\n",nslots,mod[kcrt],hostname);
-
-    return nslots;
+   if(fMenuDock->IsUndocked()) {
+     fMenuView->EnableEntry(M_VIEW_DOCK);
+     fMenuView->DisableEntry(M_VIEW_UNDOCK);
+   } else {
+     fMenuView->EnableEntry(M_VIEW_UNDOCK);
+     fMenuView->DisableEntry(M_VIEW_DOCK);
+   }
+   return kTRUE;
 }
 
 void FCMainFrame::CloseWindow()
@@ -253,139 +320,24 @@ void FCMainFrame::connect_to_server()
     if(!fc_crate->IsValid()) {printf("Connection failed!\n");}
 }
 
-Bool_t FCMainFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
+int FCMainFrame::get_crate_map()
 {
-   switch (GET_MSG(msg)) {
-   case kC_COMMAND:
+    unsigned int *cmap;
+    int len,nslots;
 
-     switch (GET_SUBMSG(msg)) {
-     case kCM_RADIOBUTTON:
+    if(!fc_crate->GetCrateMap(&cmap, &len)) return -4;
+    if(len > 22) return -5;
+    nslots=0;
+    for(int slot = 0; slot < len; slot++)
+      {
+	if (cmap[slot]==kcrt) {fc_crate_slots[nslots] = slot;nslots++;}
+        printf("host %s slot %d, type %d\n", hostname, slot, cmap[slot]);
+      }
+      delete [] cmap;
+      
+      printf("Found %d %s slots for %s\n",nslots,mod[kcrt],hostname);
 
-       if (parm1<2)           kcrt=parm1;
-       if (parm1>1&&parm1<5 ) kdet=parm1;
-       if (parm1>4&&parm1<11) ksec=parm1;
-
-     case kCM_BUTTON:
-
-     if(parm1 == 11) 
-        {
-	  connect_to_server();
-
-	  if(fc_crate->IsValid())
-	   {
-	     btConnect->SetEnabled(kFALSE);
-	     btDisconnect->SetEnabled(kTRUE);
-	   }
-       }
-     else if(parm1 == 12) 
-       {
-	 printf("Closing connection to %s\n",hostname);
-	 fc_crate->Close();
-
-	 if(!fc_crate->IsValid())
-	   {
-	     btConnect->SetEnabled(kTRUE);
-	     btDisconnect->SetEnabled(kFALSE);
-	   }
-       }
-     break;
-
-     case kCM_MENUSELECT:
-
-               break;
-
-            case kCM_MENU:
-               switch (parm1) {
-
-                  case M_FILE_OPEN:
-                     {
-                        static TString dir(".");
-                        TGFileInfo fi;
-                        fi.fFileTypes = filetypes;
-                        fi.fIniDir    = StrDup(dir);
-                        new TGFileDialog(fClient->GetRoot(), this, kFDOpen, &fi);
-                        printf("Open file: %s (dir: %s)\n", fi.fFilename,
-                               fi.fIniDir);
-                        dir = fi.fIniDir;
-                     }
-                     break;
-
-                  case M_FILE_SAVE:
-                     printf("M_FILE_SAVE\n");
-                     break;
-
-                  case M_FILE_PRINT:
-                     printf("M_FILE_PRINT\n");
-                     printf("Hiding itself, select \"Print Setup...\" to enable again\n");
-                     fMenuFile->HideEntry(M_FILE_PRINT);
-                     break;
-
-                  case M_FILE_PRINTSETUP:
-                     printf("M_FILE_PRINTSETUP\n");
-                     printf("Enabling \"Print\"\n");
-                     fMenuFile->EnableEntry(M_FILE_PRINT);
-                     break;
-
-                  case M_FILE_EXIT:
-                     CloseWindow();   // this also terminates theApp
-                     break;
-
-                  case M_DSC2:
-		     connect_to_server();
-                     fDsc2Dlg = new Dsc2Dlg(fClient->GetRoot(), this, 600, 300);
-                     break;
-
-                  case M_VIEW_ENBL_DOCK:
-                     fMenuDock->EnableUndock(!fMenuDock->EnableUndock());
-                     if (fMenuDock->EnableUndock()) {
-                        fMenuView->CheckEntry(M_VIEW_ENBL_DOCK);
-                        fMenuView->EnableEntry(M_VIEW_UNDOCK);
-                     } else {
-                        fMenuView->UnCheckEntry(M_VIEW_ENBL_DOCK);
-                        fMenuView->DisableEntry(M_VIEW_UNDOCK);
-                     }
-                     break;
-
-                  case M_VIEW_ENBL_HIDE:
-                     fMenuDock->EnableHide(!fMenuDock->EnableHide());
-                     if (fMenuDock->EnableHide()) {
-                        fMenuView->CheckEntry(M_VIEW_ENBL_HIDE);
-                     } else {
-                        fMenuView->UnCheckEntry(M_VIEW_ENBL_HIDE);
-                     }
-                     break;
-
-                  case M_VIEW_DOCK:
-                     fMenuDock->DockContainer();
-                     fMenuView->EnableEntry(M_VIEW_UNDOCK);
-                     fMenuView->DisableEntry(M_VIEW_DOCK);
-                     break;
-
-                  case M_VIEW_UNDOCK:
-                     fMenuDock->UndockContainer();
-                     fMenuView->EnableEntry(M_VIEW_DOCK);
-                     fMenuView->DisableEntry(M_VIEW_UNDOCK);
-                     break;
-
-                  default:
-                     break;
-               }
-            default:
-               break;
-         }
-      default:
-         break;
-   }
-
-   if (fMenuDock->IsUndocked()) {
-      fMenuView->EnableEntry(M_VIEW_DOCK);
-      fMenuView->DisableEntry(M_VIEW_UNDOCK);
-   } else {
-      fMenuView->EnableEntry(M_VIEW_UNDOCK);
-      fMenuView->DisableEntry(M_VIEW_DOCK);
-   }
-
-   return kTRUE;
+    return nslots;
 }
 
 /***********************************/
@@ -556,6 +508,79 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
    TTimer::SingleShot(scaler_update_period[idet],"Dsc2Dlg",this,"refresh_scalers()");
 }
 
+Dsc2Dlg::~Dsc2Dlg()
+{
+}
+
+Bool_t Dsc2Dlg::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
+{
+   switch (GET_MSG(msg)) {
+      case kC_COMMAND:
+
+         switch (GET_SUBMSG(msg)) {
+            case kCM_BUTTON:
+               switch(parm1) {
+                  case 1:
+                  case 2:
+                     printf("\nTerminating dialog: %s pressed\n",
+                            (parm1 == 1) ? "OK" : "Cancel");
+                     CloseWindow();
+                     break;
+                 default:
+                     break;
+               }
+               break;
+			   
+            case kCM_CHECKBUTTON:
+               switch (parm1) {
+                  case 71:
+                     HistAccumulate = fChk1->GetState();
+                     break;
+	          case 72:
+		     SetZlog = fChk2->GetState();
+		     break;
+	          case 73:
+		     SetYlog = fChk3->GetState();
+		     break;
+                  default:
+                     break;
+               }
+               break;
+			   
+            case kCM_TAB:
+	      switch(parm1) {
+	      case 1: fShowRates = kTRUE  ; fShowStripChart = kFALSE ; break;
+	      case 2: fShowRates = kFALSE ; fShowStripChart = kTRUE  ; break;
+            default:
+               break;
+         }
+         break;
+	 }
+      default:
+         break;
+   }
+   return kTRUE;
+}
+
+void Dsc2Dlg::CloseWindow()
+{
+  fShowRates = kFALSE; fShowStripChart = kFALSE;         // Stop filling histos
+  fOkButton->SetState(kButtonDisabled);                  // no double-clicks
+  fCancelButton->SetState(kButtonDisabled);              // no double-clicks
+  if (TVirtualPadEditor::GetPadEditor(kFALSE) != 0)      // close Ged editor
+      TVirtualPadEditor::Terminate();
+  DeleteWindow();
+  disconnect_from_server();
+  norm=-1.; DeleteHistos();
+  fMain->ClearDsc2Dlg();                                 // clear pointer to ourself
+}
+
+void Dsc2Dlg::disconnect_from_server()
+{
+  printf("Closing connection to %s\n",hostname);
+  fc_crate->Close();
+}
+
 int Dsc2Dlg::refresh_scalers()
 {
   printf("I am in refresh_scalers\n");
@@ -584,19 +609,35 @@ void Dsc2Dlg::DoSlider()
   DrawHistos();
 }
 
-Dsc2Dlg::~Dsc2Dlg()
+void Dsc2Dlg::ReadVME()
 {
-}
+  Int_t ii, jj, i=0, j=0, k=0;
+  unsigned int *buf;
+  int len,slot,off[2][2]={{68,16},{51,0}};
 
-void Dsc2Dlg::DeleteHistos()
-{
-  Int_t nplot,np; 
-  nplot=nlay[idet]*nlr[idet];
-  for(np=0; np<nplot; np++)
-    {
-      if (fHP1[np]) delete fHP1[np];
-      if (fHP2[np]) delete fHP2[np];
-    }
+  if(fc_crate->IsValid())
+  {
+    for(ii=0; ii<ndsc[idet]; ii++) 
+      {
+	slot=fc_crate_slots[ii]; 
+	fc_crate->ScalerReadBoard(slot, &buf, &len);
+	ref[ii]=buf[off[0][kcrt]];
+	norm = clck[kcrt]/((Float_t)ref[ii]);
+	for(jj=0; jj<16; jj++)
+	  {
+	    scal1[ii][jj]=buf[off[1][kcrt]+jj];
+	    switch (idet){
+	    case 0: i=adclayerecal[map[ii]][jj]-1 ; j=0                        ; k=adcstripecal[map[ii]][jj]-1 ;break;
+	    case 1: i=adclayerpcal[map[ii]][jj]-1 ; j=0                        ; k=adcstrippcal[map[ii]][jj]-1 ;break;
+	    case 2: i=adclayerftof[map[ii]][jj]-1 ; j=adclrftof[map[ii]][jj]-1 ; k=adcslabftof[map[ii]][jj]-1  ;break;
+	    }
+	    printf("ii,jj,scal=%d,%d,%d,%d\n",ii,jj,ref[ii],scal1[ii][jj]);
+	    scal1[ii][jj]=(Int_t)(((Float_t)scal1[ii][jj])*norm) ; scal2[i][j][k]=scal1[ii][jj];
+	  }
+	delete [] buf;
+      }
+  }
+  if(!fc_crate->IsValid()) norm=1.0;
 }
 
 void Dsc2Dlg::MakeHistos()
@@ -650,6 +691,24 @@ void Dsc2Dlg::MakeHistos()
     }
 }
 
+void Dsc2Dlg::DeleteHistos()
+{
+  Int_t nplot,np; 
+  nplot=nlay[idet]*nlr[idet];
+  for(np=0; np<nplot; np++)
+    {
+      if (fHP1[np]) delete fHP1[np];
+      if (fHP2[np]) delete fHP2[np];
+    }
+}
+
+void Dsc2Dlg::UpdateGUI()
+{
+   Int_t ii,jj;
+   Char_t str[10];
+   for(ii=0; ii<ndsc[idet]; ii++) {for(jj=0; jj<16; jj++){sprintf(str,"%8d",scal1[ii][jj]);tentsc[ii][jj]->SetText(str);}}
+}
+
 void Dsc2Dlg::FillHistos()
 {
   Int_t nplot,np;
@@ -661,7 +720,7 @@ void Dsc2Dlg::FillHistos()
   if(fShowRates && !HistAccumulate) {for (np=0 ; np<nplot ; np++) {fHP1[np]->Reset();}}
 
   ttt=ttt+bintime;
-  printf("Here tt=%f\n",ttt);
+  printf("Here ttt=%f\n",ttt);
   
   if (ttt>bintime*100) {DeleteHistos();MakeHistos();ttt=bintime;}
 
@@ -670,7 +729,6 @@ void Dsc2Dlg::FillHistos()
     {
       for(jj=0; jj<nlr[idet]; jj++)
 	{
-	  printf("ii,,jj,np=%d,%d,%d\n",ii,jj,np);
 	  for(kk=0; kk<npmt[idet][np] ; kk++)
 	    {
 	      xx = (Double_t)kk+1; ww = (Double_t)scal2[ii][jj][kk];
@@ -710,113 +768,6 @@ void Dsc2Dlg::DrawHistos()
                 datime.GetHour(),datime.GetMinute(),datime.GetSecond()));
       tdatime.Draw();
     } 
-}
-
-void Dsc2Dlg::CloseWindow()
-{
-   // Called when window is closed (via the window manager or not).
-   // Let's stop histogram filling...
-   fShowRates = kFALSE; fShowStripChart = kFALSE;
-   // Add protection against double-clicks
-   fOkButton->SetState(kButtonDisabled);
-   fCancelButton->SetState(kButtonDisabled);
-   // ... and close the Ged editor if it was activated.
-   if (TVirtualPadEditor::GetPadEditor(kFALSE) != 0)
-      TVirtualPadEditor::Terminate();
-   DeleteWindow();
-   printf("CloseWindow:Closing connection to %s\n",hostname);
-   if(fc_crate->IsValid()) {fc_crate->Close();}
-   norm=-1.; DeleteHistos();
-   fMain->ClearDsc2Dlg(); // clear pointer to ourself, so MainFrame will stop reading scalers from VME
-}
-
-Bool_t Dsc2Dlg::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
-{
-   switch (GET_MSG(msg)) {
-      case kC_COMMAND:
-
-         switch (GET_SUBMSG(msg)) {
-            case kCM_BUTTON:
-               switch(parm1) {
-                  case 1:
-                  case 2:
-                     printf("\nTerminating dialog: %s pressed\n",
-                            (parm1 == 1) ? "OK" : "Cancel");
-                     CloseWindow();
-                     break;
-                 default:
-                     break;
-               }
-               break;
-
-			   
-            case kCM_CHECKBUTTON:
-               switch (parm1) {
-                  case 71:
-                     HistAccumulate = fChk1->GetState();
-                     break;
-	          case 72:
-		     SetZlog = fChk2->GetState();
-		     break;
-	          case 73:
-		     SetYlog = fChk3->GetState();
-		     break;
-                  default:
-                     break;
-               }
-               break;
-			   
-            case kCM_TAB:
-	      switch(parm1) {
-	      case 1: fShowRates = kTRUE  ; fShowStripChart = kFALSE ; break;
-	      case 2: fShowRates = kFALSE ; fShowStripChart = kTRUE  ; break;
-            default:
-               break;
-         }
-         break;
-	 }
-      default:
-         break;
-   }
-   return kTRUE;
-}
-
-void Dsc2Dlg::ReadVME()
-{
-  Int_t ii, jj, i=0, j=0, k=0;
-  unsigned int *buf;
-  int len,slot,off[2][2]={{68,16},{51,0}};
-
-  if(fc_crate->IsValid())
-  {
-    for(ii=0; ii<ndsc[idet]; ii++) 
-      {
-	slot=fc_crate_slots[ii]; 
-	fc_crate->ScalerReadBoard(slot, &buf, &len);
-	ref[ii]=buf[off[0][kcrt]];
-	norm = clck[kcrt]/((Float_t)ref[ii]);
-	for(jj=0; jj<16; jj++)
-	  {
-	    scal1[ii][jj]=buf[off[1][kcrt]+jj];
-	    switch (idet){
-	    case 0: i=adclayerecal[map[ii]][jj]-1 ; j=0                        ; k=adcstripecal[map[ii]][jj]-1 ;break;
-	    case 1: i=adclayerpcal[map[ii]][jj]-1 ; j=0                        ; k=adcstrippcal[map[ii]][jj]-1 ;break;
-	    case 2: i=adclayerftof[map[ii]][jj]-1 ; j=adclrftof[map[ii]][jj]-1 ; k=adcslabftof[map[ii]][jj]-1  ;break;
-	    }
-	    printf("ii,jj,scal=%d,%d,%d,%d\n",ii,jj,ref[ii],scal1[ii][jj]);
-	    scal1[ii][jj]=(Int_t)(((Float_t)scal1[ii][jj])*norm) ; scal2[i][j][k]=scal1[ii][jj];
-	  }
-	delete [] buf;
-      }
-  }
-  if(!fc_crate->IsValid()) {printf("Setting norm to 1.0\n");norm=1.0;}
-}
-
-void Dsc2Dlg::UpdateGUI()
-{
-   Int_t ii,jj;
-   Char_t str[10];
-   for(ii=0; ii<ndsc[idet]; ii++) {for(jj=0; jj<16; jj++){sprintf(str,"%8d",scal1[ii][jj]);tentsc[ii][jj]->SetText(str);}}
 }
 
 int main(int argc, char **argv)

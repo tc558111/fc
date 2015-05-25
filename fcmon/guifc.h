@@ -124,8 +124,6 @@ class FCMainFrame : public TGMainFrame
   TGRadioButton      *fRadiob1[6],*fRadiob2[3],*fRadiob3[2]; 
   TGVButtonGroup     *fButtonGroup1,*fButtonGroup2,*fButtonGroup3;
 
-  TGTextButton *btConnect, *btDisconnect;
-
   IDList              IDs;           // Widget IDs generator
 
  public:
@@ -194,6 +192,7 @@ class Dsc2Dlg : public TGTransientFrame
 
   virtual void ReadVME();
   virtual void UpdateGUI();
+  virtual void disconnect_from_server();
    
   // slots
   int refresh_scalers(); 

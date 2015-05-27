@@ -1,0 +1,6 @@
+\section{Design}
+The Preshower Calorimeter (PCAL) is triangular in shape. 
+The triangular form is not equalateral, but isosceles, this is done to better match the EC and given space limitations. 
+The PCAL box encapsulates layers of scintillator strips and lead sheets. 
+Between each lead sheet there are three different orientations of scintillating strips. 
+These orientation

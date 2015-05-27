@@ -1,0 +1,58 @@
+\documentclass[letterpaper,10pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage{tocloft}                        %Modify table of contents (toc)      
+\renewcommand{\contentsname}{\hfill\bfseries\Large Contents\hfill}   %center toc title
+\renewcommand{\cftaftertoctitle}{\hfill}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}   %put .... in toc
+\usepackage{url}                            %put websites in paper
+\usepackage[margin=0.8in]{geometry}         %adjust margins
+\usepackage{graphicx}                       %use images
+\graphicspath{ {./Figures/} } %where to find files
+\usepackage[outdir=./Figures/]{epstopdf}
+\usepackage{sectsty}                        %center section titles
+\allsectionsfont{\centering}
+\usepackage{chngcntr}                       %Start Figure counting according to section
+\counterwithin{figure}{section}             %where to start that counter
+\usepackage[section]{placeins}              %able to use Floatbarrier
+\usepackage{caption}
+\usepackage{subcaption}                     %subfigures allowed
+\usepackage{amsmath}                        %math stuff
+\usepackage{verbatim}                        %block commenting
+
+\renewcommand{\thefootnote}{\fnsymbol{footnote}} % modify footnotes to symbols
+%opening
+\title{Calibration of the Preshower Calorimeter}
+\author{N. Compton, C. Smith, and K. Hicks}
+
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+The CLAS12 Pre-Shower Calorimeter (PCAL) has been described geometrically. 
+This information is used to correct for the light attenuation curve seen by the scintillators. 
+The ADC readout plotted as a function of distance away from the PMT, gives the form of the light attenuation. 
+This form is fit and the parameters are recorded to the CLAS12 database. 
+The process used to obtain these parameters are described in this note. 
+\end{abstract}
+
+\tableofcontents
+\clearpage
+
+\input{Design.tex}
+
+\input{VariousCuts.tex}
+
+\input{FitADC.tex}
+
+\input{LightAtt.tex}
+
+\input{Studies.tex}
+
+\input{Bibliography.tex}
+
+
+
+\end{document}

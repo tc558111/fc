@@ -1,0 +1,32 @@
+\documentclass[a4paper,10pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{tocloft}
+\renewcommand{\cftsecleader}{\cftdotfill{\cftdotsep}}
+\usepackage{url}
+%opening
+\title{Calibration of Preshower Calorimeter}
+\author{N. Compton}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+
+\end{abstract}
+
+\tableofcontents
+
+\input{Design.tex}
+
+\input{VariousCuts.tex}
+
+\input{BinFitting.tex}
+
+\input{DistanceFitting.tex}
+
+\input{Bibliography.tex}
+
+
+
+\end{document}

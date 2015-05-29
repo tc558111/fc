@@ -23,7 +23,7 @@ Double_t ttt;
 Float_t  bintime;
 Float_t  norm=0.;                       // clck/ref ref=Group 1 Ref Scaler
 Float_t clck[2]={125000000.,488281.25}; // Scaler clock DSC2,FADC
-int scaler_update_period[2]={1000,200}; // milliseconds
+int scaler_update_period[2]={1000,1000}; // milliseconds
 
 Int_t idet;                // idet=0,1,2 (ECAL,PCAL,FTOF)
 Int_t ndsc[3]={14,12,12};  // Number of DSC2 slots for idet=0,1,2

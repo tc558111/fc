@@ -1,5 +1,10 @@
+/* Author: Cole Smith */
+/* Adapted from vmetcpserver client written by Sergey Boyarinov */
+/* This version uses CrateMsgClient protocol and DiagGuiServer running on each ROC */
+/* For FADC250 scalers it is required FADC250_TET>0 and FADC250_ALLCH_PED are loaded */
+
 #include "guifc.h"
-#include "TriggerBoardRegs.h"
+#include "TriggerBoardRegs.h"	//Not required 
 #include "ttfc.h"
 #include "CrateMsgClient.h"
 

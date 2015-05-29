@@ -366,9 +366,9 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
    TGCompositeFrame *tf;
    fTab = new TGTab(this, 300, 300);
 
-   /* Scalers Tab */
+   /* Slots Tab */
 
-   tf = fTab->AddTab("Scalers");
+   tf = fTab->AddTab("Slots");
    tf->SetLayoutManager(new TGMatrixLayout(tf, 0, ndsc[idet]/2, 1));
 
    char sln[100],buff1[100];

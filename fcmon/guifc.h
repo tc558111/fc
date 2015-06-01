@@ -118,7 +118,7 @@ class FCMainFrame : public TGMainFrame
   TileFrame          *fContainer;
 
   TGMenuBar          *fMenuBar;
-  TGPopupMenu        *fMenuFile, *fMenuPCAL, *fMenuView, *fMenuHelp;
+  TGPopupMenu        *fMenuFile, *fMenuMC, *fMenuView, *fMenuHelp;
   TGLayoutHints      *fMenuBarLayout, *fMenuBarItemLayout, *fMenuBarHelpLayout;
   TGLayoutHints      *fL10, *fL0, *fL1;
 
@@ -139,8 +139,8 @@ class FCMainFrame : public TGMainFrame
   TGStatusBar        *fStatusBar1;
   virtual void CloseWindow();
   virtual Bool_t ProcessMessage(Long_t msg, Long_t parm1, Long_t);
-  void connect_to_server(Int_t icrate);
-  int get_crate_map(Int_t icrate);
+  void connect_to_server();
+  int get_crate_map();
   void ClearDsc2Dlg() {fDsc2Dlg = NULL;}
 
 };
@@ -191,13 +191,13 @@ class Dsc2Dlg : public TGTransientFrame
   virtual void CloseWindow();
   virtual Bool_t ProcessMessage(Long_t msg, Long_t parm1, Long_t parm2);
 
-  virtual void ReadVME(Int_t icrate);
+  virtual void ReadVME();
   virtual void UpdateGUI();
-  virtual void disconnect_from_server(Int_t icrate);
+  virtual void disconnect_from_server();
    
   // slots
   int refresh_scalers();
-  int refresh_statusbar();
+  void refresh_statusbar();
   void set_status_text(const char *txt, Int_t pi);
   void DoSlider();       
   

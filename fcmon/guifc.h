@@ -51,6 +51,7 @@
 #include <TStopwatch.h>
 #include <TDatime.h>
 #include <TQObject.h>
+#include <TGStatusBar.h>
 
 #include <iostream>
 
@@ -121,7 +122,7 @@ class FCMainFrame : public TGMainFrame
   TGLayoutHints      *fMenuBarLayout, *fMenuBarItemLayout, *fMenuBarHelpLayout;
   TGLayoutHints      *fL10, *fL0, *fL1;
 
-  TGRadioButton      *fRadiob1[6],*fRadiob2[3],*fRadiob3[2]; 
+  TGRadioButton      *fRadiob1[6],*fRadiob2[3],*fRadiob3[3]; 
   TGVButtonGroup     *fButtonGroup1,*fButtonGroup2,*fButtonGroup3;
 
   IDList              IDs;           // Widget IDs generator
@@ -135,10 +136,11 @@ class FCMainFrame : public TGMainFrame
   FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h);
   virtual ~FCMainFrame();
 
+  TGStatusBar        *fStatusBar1;
   virtual void CloseWindow();
   virtual Bool_t ProcessMessage(Long_t msg, Long_t parm1, Long_t);
-  void connect_to_server();
-  int get_crate_map();
+  void connect_to_server(Int_t icrate);
+  int get_crate_map(Int_t icrate);
   void ClearDsc2Dlg() {fDsc2Dlg = NULL;}
 
 };
@@ -161,7 +163,8 @@ class Dsc2Dlg : public TGTransientFrame
   TGComboBox          *fCombo;
   TGTab               *fTab;
   TGTextEntry         *fTxt1, *fTxt2;
-  TGLayoutHints       *fL1, *fL2, *fL3, *fL4, *fL5;
+  TGLayoutHints       *fL1, *fL2, *fL3, *fL4, *fL5, *fL10;
+  TGStatusBar         *fStatusBar2;
   TRootEmbeddedCanvas *fE1[6], *fE2[6];
   Int_t                fFirstEntry;
   Int_t                fLastEntry;
@@ -171,8 +174,6 @@ class Dsc2Dlg : public TGTransientFrame
   TGTextEntry         *tentsc[14][16];
   TH1F                *fHP1[68];
   TH2F                *fHP2[68];
-
-  UInt_t ref[16];
 
   void MakeHistos();
   void FillHistos();
@@ -190,12 +191,14 @@ class Dsc2Dlg : public TGTransientFrame
   virtual void CloseWindow();
   virtual Bool_t ProcessMessage(Long_t msg, Long_t parm1, Long_t parm2);
 
-  virtual void ReadVME();
+  virtual void ReadVME(Int_t icrate);
   virtual void UpdateGUI();
-  virtual void disconnect_from_server();
+  virtual void disconnect_from_server(Int_t icrate);
    
   // slots
-  int refresh_scalers(); 
+  int refresh_scalers();
+  int refresh_statusbar();
+  void set_status_text(const char *txt, Int_t pi);
   void DoSlider();       
   
   ClassDef(Dsc2Dlg,0) 

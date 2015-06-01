@@ -33,10 +33,11 @@ Int_t npmt[3][6]={{36,36,36,36,36,36},{68,62,62,0,0,0},{62,62,23,23,0,0}}; // Nu
 
 char hostname[80];         // Name of crate 
 const char *det[] = {"tdc","adc","ecal","pcal","ftof","1","2","3","4","5","6"}; //used to construct hostname
-const char *mod[] = {"DSC2","FADC"};
+const char *mod[] = {"DSC2","FADC","DSC2/FADC"};
+const char *udet[] = {"ECAL","PCAL","FTOF"};
 
-CrateMsgClient *fc_crate;
-int fc_crate_slots[22];
+CrateMsgClient *fc_crate[2];
+int fc_crate_slots[2][22];
 				    
 const char *filetypes[] = { "All files",     "*",
                             "ROOT files",    "*.root",
@@ -176,6 +177,7 @@ FCMainFrame::FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h) : TGMainFrame(p,
    fButtonGroup3 = new TGVButtonGroup(fControlFrame,"Crate");
    fRadiob3[0]   = new TGRadioButton(fButtonGroup3, "DSC2",0);
    fRadiob3[1]   = new TGRadioButton(fButtonGroup3, "FADC",1);
+   fRadiob3[2]   = new TGRadioButton(fButtonGroup3, "BOTH",1);
    
    fRadiob1[0]->SetOn();
    fRadiob2[1]->SetOn();
@@ -194,11 +196,12 @@ FCMainFrame::FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h) : TGMainFrame(p,
    
    for (int i=0;i<6;i++) {fRadiob1[i]->Associate(this);}
    for (int i=0;i<3;i++) {fRadiob2[i]->Associate(this);}
-   for (int i=0;i<2;i++) {fRadiob3[i]->Associate(this);}
+   for (int i=0;i<3;i++) {fRadiob3[i]->Associate(this);}
 
-   fActionFrame = new TGHorizontalFrame(this,100,50);
-   AddFrame(fActionFrame,fL10);
-
+   fStatusBar1 = new TGStatusBar(this,50,10);
+   AddFrame(fStatusBar1,fL10);
+   fStatusBar1->SetText("Choose Sector,Detector,Crate");
+   
    SetWindowName("FCMON");
    MapSubwindows(); 
    Resize(GetDefaultSize()); 
@@ -255,7 +258,7 @@ Bool_t FCMainFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
 	 CloseWindow();   // this also terminates theApp
 	 break;
        case M_DSC2:
-	 connect_to_server();
+	 connect_to_server(0);
 	 fDsc2Dlg = new Dsc2Dlg(fClient->GetRoot(), this, 600, 300);
 	 break;
        case M_VIEW_ENBL_DOCK:
@@ -308,41 +311,42 @@ Bool_t FCMainFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
 
 void FCMainFrame::CloseWindow()
 {
-   // Got close message for this MainFrame. Terminate the application
-   // or returns from the TApplication event loop (depending on the
-   // argument specified in TApplication::Run()).
+  // Got close message for this MainFrame. Terminate the application
+  // or returns from the TApplication event loop (depending on the
+  // argument specified in TApplication::Run()).
 
-   gApplication->Terminate(0);
+  gApplication->Terminate(0);
 }
 
-void FCMainFrame::connect_to_server()
+void FCMainFrame::connect_to_server(Int_t icrate)
 {
-    sprintf(hostname,"%s%s%s",det[kcrt],det[kdet],det[ksec]);
-    printf("Trying to connect to >%s<\n",hostname);
-    fc_crate = new CrateMsgClient(hostname,6102);
-    idet=kdet-2;
-    if(fc_crate->IsValid())  {get_crate_map();}
-    if(!fc_crate->IsValid()) {printf("Connection failed!\n");}
+  sprintf(hostname,"%s%s%s",det[kcrt],det[kdet],det[ksec]);
+  printf("Trying to connect to >%s<\n",hostname);
+  fc_crate[icrate] = new CrateMsgClient(hostname,6102);
+  idet=kdet-2;
+  TString hname = gSystem->BaseName(hostname);
+  if(fc_crate[icrate]->IsValid())  {get_crate_map(icrate);fStatusBar1->SetText("Connected to "+hname+" ");}
+  if(!fc_crate[icrate]->IsValid()) {fStatusBar1->SetText("Connection failed...test mode"); printf("Connection failed!\n");}
 }
 
-int FCMainFrame::get_crate_map()
+int FCMainFrame::get_crate_map(Int_t icrate)
 {
-    unsigned int *cmap;
-    int len,nslots;
+  unsigned int *cmap;
+  int len,nslots;
 
-    if(!fc_crate->GetCrateMap(&cmap, &len)) return -4;
-    if(len > 22) return -5;
-    nslots=0;
-    for(int slot = 0; slot < len; slot++)
-      {
-	if (cmap[slot]==kcrt) {fc_crate_slots[nslots] = slot;nslots++;}
-        printf("host %s slot %d, type %d\n", hostname, slot, cmap[slot]);
-      }
-      delete [] cmap;
+  if(!fc_crate[icrate]->GetCrateMap(&cmap, &len)) return -4;
+  if(len > 22) return -5;
+  nslots=0;
+  for(int slot = 0; slot < len; slot++)
+    {
+      if (cmap[slot]==kcrt) {fc_crate_slots[icrate][nslots] = slot;nslots++;}
+      printf("host %s slot %d, type %d\n", hostname, slot, cmap[slot]);
+    }
+  delete [] cmap;
       
-      printf("Found %d %s slots for %s\n",nslots,mod[kcrt],hostname);
+  printf("Found %d %s slots for %s\n",nslots,mod[kcrt],hostname);
 
-    return nslots;
+  return nslots;
 }
 
 /***********************************/
@@ -351,7 +355,7 @@ int FCMainFrame::get_crate_map()
 Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
 					   UInt_t w, UInt_t h, UInt_t options) : TGTransientFrame(p, main, w, h, options)
 {
-   fMain = main; // remember mainframe
+  fMain = main; // remember mainframe
    SetCleanup(kDeepCleanup);
 
    fL1 = new TGLayoutHints(kLHintsTop    | kLHintsLeft | kLHintsExpandX,2, 2, 2, 2);
@@ -359,13 +363,12 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
    fL3 = new TGLayoutHints(kLHintsTop    | kLHintsLeft, 5, 5, 5, 5);
    fL4 = new TGLayoutHints(kLHintsTop    | kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 5, 5, 5, 5);
    fL5 = new TGLayoutHints(kLHintsBottom | kLHintsExpandX | kLHintsExpandY, 2, 2, 5, 1);
+   fL10 = new TGLayoutHints(kLHintsTop|kLHintsCenterX|kLHintsExpandX,2,2,2,2);
+   
+   AddFrame(fFrame1=new TGHorizontalFrame(this, 200, 20, kFixedWidth), fL2);
+   fFrame1->AddFrame(fCancelButton=new TGTextButton(fFrame1, "&Disconnect", 1), fL1);
+   fFrame1->Resize(150, fCancelButton->GetDefaultHeight());
 
-   AddFrame(fFrame1=new TGHorizontalFrame(this, 60, 20, kFixedWidth), fL2);
-   fFrame1->AddFrame(fOkButton=new TGTextButton(fFrame1, "&Ok", 1),fL1);
-   fFrame1->AddFrame(fCancelButton=new TGTextButton(fFrame1, "&Cancel", 2), fL1);
-   fFrame1->Resize(150, fOkButton->GetDefaultHeight());
-
-   fOkButton->Associate(this);
    fCancelButton->Associate(this);
 
    TGCompositeFrame *tf;
@@ -381,7 +384,7 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
 
    for (nsl=0;nsl<ndsc[idet];nsl++) 
      {
-       imap=fc_crate_slots[nsl];
+       imap=fc_crate_slots[0][nsl];
        sprintf(sln,"Slot %d",imap); fF6[nsl] = new TGGroupFrame(tf,sln, kVerticalFrame);
        fF6[nsl]->SetLayoutManager(new TGMatrixLayout(fF6[nsl], 0, 2, 5));
        fF6[nsl]->SetTitlePos(TGGroupFrame::kLeft);
@@ -501,15 +504,18 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
    for (int ii=0; ii<nplot ; ii++) {fE2[ii]->GetCanvas()->SetBorderMode(0);}
 
    AddFrame(fTab, fL5);
-
+   Int_t parts[]={50,10};
+   fStatusBar2 = new TGStatusBar(this,180,20);
+   fStatusBar2->SetParts(parts,2);
+   AddFrame(fStatusBar2,fL10);
+   
    MapSubwindows();
    Resize();                    
    CenterOnParent();            
-   SetWindowName("Dialog");
+   SetWindowName("Scalers");
    MapWindow();
-   HistAccumulate = 0;
-
-   ifirst=3;
+   
+   HistAccumulate = 0; ifirst=3;
    TTimer::SingleShot(scaler_update_period[idet],"Dsc2Dlg",this,"refresh_scalers()");
 }
 
@@ -526,9 +532,6 @@ Bool_t Dsc2Dlg::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
             case kCM_BUTTON:
                switch(parm1) {
                   case 1:
-                  case 2:
-                     printf("\nTerminating dialog: %s pressed\n",
-                            (parm1 == 1) ? "OK" : "Cancel");
                      CloseWindow();
                      break;
                  default:
@@ -570,34 +573,33 @@ Bool_t Dsc2Dlg::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
 void Dsc2Dlg::CloseWindow()
 {
   fShowRates = kFALSE; fShowStripChart = kFALSE;         // Stop filling histos
-  fOkButton->SetState(kButtonDisabled);                  // no double-clicks
-  fCancelButton->SetState(kButtonDisabled);              // no double-clicks
+  fCancelButton->SetState(kButtonDisabled);                  // no double-clicks
   if (TVirtualPadEditor::GetPadEditor(kFALSE) != 0)      // close Ged editor
       TVirtualPadEditor::Terminate();
   DeleteWindow();
-  disconnect_from_server();
+  disconnect_from_server(0);
   norm=-1.; DeleteHistos();
   fMain->ClearDsc2Dlg();                                 // clear pointer to ourself
+  fMain->fStatusBar1->SetText("Choose Sector,Detector,Crate");
 }
 
-void Dsc2Dlg::disconnect_from_server()
+void Dsc2Dlg::disconnect_from_server(Int_t icrate)
 {
   printf("Closing connection to %s\n",hostname);
-  fc_crate->Close();
+  fc_crate[icrate]->Close();
 }
 
 int Dsc2Dlg::refresh_scalers()
 {
-  printf("I am in refresh_scalers\n");
-
   if (norm==-1.) {norm=0.;return 0;}
-  if (ifirst>0)  {ifirst--;}
+  if (ifirst>0)  ifirst--;
   
-  ReadVME();
+  ReadVME(0);
   
-  if (ifirst==1) {MakeHistos();}
+  if (ifirst==1) MakeHistos();
   if (ifirst==0)
     {
+      refresh_statusbar();
       UpdateGUI();
       FillHistos();
       DrawHistos();
@@ -607,6 +609,24 @@ int Dsc2Dlg::refresh_scalers()
   return 0;
 }
 
+int Dsc2Dlg::refresh_statusbar()
+{
+  TDatime datime;
+  TString stat1,stat2;
+
+  stat1=TString::Format("FCMON: SECTOR %s %s %s",det[ksec],udet[idet],mod[kcrt]);
+  stat2=TString::Format("%d/%d/%d %.2d:%.2d:%.2d",
+		       datime.GetMonth(),datime.GetDay(),datime.GetYear(),
+		       datime.GetHour(),datime.GetMinute(),datime.GetSecond());
+  set_status_text(stat1,0);
+  set_status_text(stat2,1);
+}
+
+void Dsc2Dlg::set_status_text(const char *txt, Int_t pi)
+{
+  fStatusBar2->SetText(txt,pi);
+}
+
 void Dsc2Dlg::DoSlider()
 {
   zmin=fHSlid->GetMinPosition();
@@ -614,35 +634,34 @@ void Dsc2Dlg::DoSlider()
   DrawHistos();
 }
 
-void Dsc2Dlg::ReadVME()
+void Dsc2Dlg::ReadVME(Int_t icrate)
 {
   Int_t ii, jj, i=0, j=0, k=0;
+  UInt_t ref[16];
   unsigned int *buf;
   int len,slot,off[2][2]={{68,16},{51,0}};
-
-  if(fc_crate->IsValid())
-  {
-    for(ii=0; ii<ndsc[idet]; ii++) 
-      {
-	slot=fc_crate_slots[ii]; 
-	fc_crate->ScalerReadBoard(slot, &buf, &len);
-	ref[ii]=buf[off[0][kcrt]];
-	norm = clck[kcrt]/((Float_t)ref[ii]);
-	for(jj=0; jj<16; jj++)
-	  {
-	    scal1[ii][jj]=buf[off[1][kcrt]+jj];
-	    switch (idet){
-	    case 0: i=adclayerecal[map[ii]][jj]-1 ; j=0                        ; k=adcstripecal[map[ii]][jj]-1 ;break;
-	    case 1: i=adclayerpcal[map[ii]][jj]-1 ; j=0                        ; k=adcstrippcal[map[ii]][jj]-1 ;break;
-	    case 2: i=adclayerftof[map[ii]][jj]-1 ; j=adclrftof[map[ii]][jj]-1 ; k=adcslabftof[map[ii]][jj]-1  ;break;
-	    }
-	    printf("ii,jj,scal=%d,%d,%d,%d\n",ii,jj,ref[ii],scal1[ii][jj]);
-	    scal1[ii][jj]=(Int_t)(((Float_t)scal1[ii][jj])*norm) ; scal2[i][j][k]=scal1[ii][jj];
-	  }
-	delete [] buf;
-      }
-  }
-  if(!fc_crate->IsValid()) norm=1.0;
+  norm = 1.0;
+  
+  for(ii=0; ii<ndsc[idet]; ii++) 
+    {
+      slot=fc_crate_slots[icrate][ii];
+      ref[ii]=clck[kcrt];
+      if(fc_crate[icrate]->IsValid()) {fc_crate[icrate]->ScalerReadBoard(slot, &buf, &len); ref[ii]=buf[off[0][kcrt]];}
+      norm = clck[kcrt]/((Float_t)ref[ii]);
+      for(jj=0; jj<16; jj++)
+        {
+          scal1[ii][jj]=jj;
+          if(fc_crate[icrate]->IsValid()) scal1[ii][jj]=buf[off[1][kcrt]+jj];
+          switch (idet){
+          case 0: i=adclayerecal[map[ii]][jj]-1 ; j=0                        ; k=adcstripecal[map[ii]][jj]-1 ;break;
+          case 1: i=adclayerpcal[map[ii]][jj]-1 ; j=0                        ; k=adcstrippcal[map[ii]][jj]-1 ;break;
+          case 2: i=adclayerftof[map[ii]][jj]-1 ; j=adclrftof[map[ii]][jj]-1 ; k=adcslabftof[map[ii]][jj]-1  ;break;
+          }
+          printf("ii,jj,scal=%d,%d,%d,%d\n",ii,jj,ref[ii],scal1[ii][jj]);
+          scal1[ii][jj]=(Int_t)(((Float_t)scal1[ii][jj])*norm) ; scal2[i][j][k]=scal1[ii][jj];
+        }
+      if(fc_crate[icrate]->IsValid()) delete [] buf;
+    }
 }
 
 void Dsc2Dlg::MakeHistos()
@@ -747,7 +766,6 @@ void Dsc2Dlg::FillHistos()
 
 void Dsc2Dlg::DrawHistos()
 {
-  TPaveText tdatime(-5,-6.5,5,-5.8);
   TCanvas *c[6];
   Int_t nplot,np;
   
@@ -763,16 +781,6 @@ void Dsc2Dlg::DrawHistos()
       
       c[np]->Modified(); c[np]->Update();
     }
-  
-  if(!fShowRates)
-    {
-      TDatime datime;
-      tdatime.Clear();
-      tdatime.AddText(Form("%d/%d/%d %.2d:%.2d:%.2d",
-		datime.GetDay(),datime.GetMonth(),datime.GetYear(),
-                datime.GetHour(),datime.GetMinute(),datime.GetSecond()));
-      tdatime.Draw();
-    } 
 }
 
 int main(int argc, char **argv)

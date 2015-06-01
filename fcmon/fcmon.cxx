@@ -11,10 +11,10 @@
 ClassImp(Dsc2Dlg);
 
 Float_t  zmin=0.,zmax=2.;           // Stripchart slider initial settings
-unsigned int ksec=5,kdet=3,kcrt=0;  // Initial radio button settings
+unsigned int ksec=5,kdet=3,kcrt=0,kdbg=0;  // Initial radio button settings
 Int_t ifirst;                       // initialized in Dsc2Dlg
 
-UInt_t scal1[14][16];               // Scaler readout in slot,chan
+UInt_t scal1[2][14][16];               // Scaler readout in slot,chan
 UInt_t scal2[6][2][68];             // Scaler readout in sector,det,pmt
 
 Int_t map[14]={3,4,5,6,7,8,9,10,13,14,15,16,17,18}; //index into translation table ttfc.h
@@ -116,11 +116,11 @@ FCMainFrame::FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h) : TGMainFrame(p,
    fMenuFile->DisableEntry(M_FILE_SAVEAS);
    fMenuFile->HideEntry(M_FILE_PRINT);
    
-   fMenuPCAL = new TGPopupMenu(fClient->GetRoot());
-   fMenuPCAL->AddLabel("Monitoring and Control");
-   fMenuPCAL->AddSeparator();
-   fMenuPCAL->AddEntry("&Scalers", M_DSC2);
-
+   fMenuMC = new TGPopupMenu(fClient->GetRoot());
+   fMenuMC->AddLabel("Monitoring and Control");
+   fMenuMC->AddSeparator();
+   fMenuMC->AddEntry("&Scalers", M_DSC2);
+     
    fMenuView = new TGPopupMenu(gClient->GetRoot());
    fMenuView->AddEntry("&Dock", M_VIEW_DOCK);
    fMenuView->AddEntry("&Undock", M_VIEW_UNDOCK);
@@ -142,13 +142,13 @@ FCMainFrame::FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h) : TGMainFrame(p,
 
    // Menu button messages are handled by the main frame (i.e. "this") ProcessMessage() method.
    fMenuFile->Associate(this);
-   fMenuPCAL->Associate(this);
+   fMenuMC->Associate(this);
    fMenuView->Associate(this);
    fMenuHelp->Associate(this);
 
    fMenuBar = new TGMenuBar(fMenuDock, 1, 1, kHorizontalFrame);
    fMenuBar->AddPopup("&File",    fMenuFile, fMenuBarItemLayout);
-   fMenuBar->AddPopup("&Monitor", fMenuPCAL, fMenuBarItemLayout);
+   fMenuBar->AddPopup("&Monitor", fMenuMC,   fMenuBarItemLayout);
    fMenuBar->AddPopup("&View",    fMenuView, fMenuBarItemLayout);
    fMenuBar->AddPopup("&Help",    fMenuHelp, fMenuBarHelpLayout);
 
@@ -177,7 +177,7 @@ FCMainFrame::FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h) : TGMainFrame(p,
    fButtonGroup3 = new TGVButtonGroup(fControlFrame,"Crate");
    fRadiob3[0]   = new TGRadioButton(fButtonGroup3, "DSC2",0);
    fRadiob3[1]   = new TGRadioButton(fButtonGroup3, "FADC",1);
-   fRadiob3[2]   = new TGRadioButton(fButtonGroup3, "BOTH",1);
+   fRadiob3[2]   = new TGRadioButton(fButtonGroup3, "BOTH",11);
    
    fRadiob1[0]->SetOn();
    fRadiob2[1]->SetOn();
@@ -211,7 +211,7 @@ FCMainFrame::FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h) : TGMainFrame(p,
 FCMainFrame::~FCMainFrame()
 {
    delete fMenuFile;
-   delete fMenuPCAL;
+   delete fMenuMC;
    delete fMenuView;
    delete fMenuHelp;
    delete fContainer;
@@ -226,6 +226,7 @@ Bool_t FCMainFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
        if (parm1<2)           kcrt=parm1;
        if (parm1>1&&parm1<5 ) kdet=parm1;
        if (parm1>4&&parm1<11) ksec=parm1;
+       if (parm1==11)         kdbg=1;
      case kCM_MENUSELECT:
        break;
      case kCM_MENU:
@@ -258,7 +259,8 @@ Bool_t FCMainFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
 	 CloseWindow();   // this also terminates theApp
 	 break;
        case M_DSC2:
-	 connect_to_server(0);
+	 if (kdbg==0) connect_to_server();
+	 if (kdbg==1) {kcrt=0;connect_to_server();kcrt=1;connect_to_server();}
 	 fDsc2Dlg = new Dsc2Dlg(fClient->GetRoot(), this, 600, 300);
 	 break;
        case M_VIEW_ENBL_DOCK:
@@ -318,28 +320,28 @@ void FCMainFrame::CloseWindow()
   gApplication->Terminate(0);
 }
 
-void FCMainFrame::connect_to_server(Int_t icrate)
+void FCMainFrame::connect_to_server()
 {
   sprintf(hostname,"%s%s%s",det[kcrt],det[kdet],det[ksec]);
   printf("Trying to connect to >%s<\n",hostname);
-  fc_crate[icrate] = new CrateMsgClient(hostname,6102);
+  fc_crate[kcrt] = new CrateMsgClient(hostname,6102);
   idet=kdet-2;
   TString hname = gSystem->BaseName(hostname);
-  if(fc_crate[icrate]->IsValid())  {get_crate_map(icrate);fStatusBar1->SetText("Connected to "+hname+" ");}
-  if(!fc_crate[icrate]->IsValid()) {fStatusBar1->SetText("Connection failed...test mode"); printf("Connection failed!\n");}
+  if(fc_crate[kcrt]->IsValid())  {get_crate_map();fStatusBar1->SetText("Connected to "+hname+" ");}
+  if(!fc_crate[kcrt]->IsValid()) {fStatusBar1->SetText("Connection failed...test mode"); printf("Connection failed!\n");}
 }
 
-int FCMainFrame::get_crate_map(Int_t icrate)
+int FCMainFrame::get_crate_map()
 {
   unsigned int *cmap;
   int len,nslots;
 
-  if(!fc_crate[icrate]->GetCrateMap(&cmap, &len)) return -4;
+  if(!fc_crate[kcrt]->GetCrateMap(&cmap, &len)) return -4;
   if(len > 22) return -5;
   nslots=0;
   for(int slot = 0; slot < len; slot++)
     {
-      if (cmap[slot]==kcrt) {fc_crate_slots[icrate][nslots] = slot;nslots++;}
+      if (cmap[slot]==kcrt) {fc_crate_slots[kcrt][nslots] = slot;nslots++;}
       printf("host %s slot %d, type %d\n", hostname, slot, cmap[slot]);
     }
   delete [] cmap;
@@ -380,12 +382,13 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
    tf->SetLayoutManager(new TGMatrixLayout(tf, 0, ndsc[idet]/2, 1));
 
    char sln[100],buff1[100];
-   int nsl,jj,imap;
+   int nsl,jj;
 
    for (nsl=0;nsl<ndsc[idet];nsl++) 
      {
-       imap=fc_crate_slots[0][nsl];
-       sprintf(sln,"Slot %d",imap); fF6[nsl] = new TGGroupFrame(tf,sln, kVerticalFrame);
+       if(kdbg==0) sprintf(sln,"Slot %d",fc_crate_slots[kcrt][nsl]);
+       if(kdbg==1) sprintf(sln,"Slot %d/%d",fc_crate_slots[0][nsl],fc_crate_slots[1][nsl]);
+       fF6[nsl] = new TGGroupFrame(tf,sln, kVerticalFrame);
        fF6[nsl]->SetLayoutManager(new TGMatrixLayout(fF6[nsl], 0, 2, 5));
        fF6[nsl]->SetTitlePos(TGGroupFrame::kLeft);
        tf->AddFrame(fF6[nsl], fL3);
@@ -577,16 +580,18 @@ void Dsc2Dlg::CloseWindow()
   if (TVirtualPadEditor::GetPadEditor(kFALSE) != 0)      // close Ged editor
       TVirtualPadEditor::Terminate();
   DeleteWindow();
-  disconnect_from_server(0);
+  if (kdbg==0) disconnect_from_server();
+  if (kdbg==1) {kcrt=0 ; disconnect_from_server() ; kcrt=1 ; disconnect_from_server();}
   norm=-1.; DeleteHistos();
   fMain->ClearDsc2Dlg();                                 // clear pointer to ourself
   fMain->fStatusBar1->SetText("Choose Sector,Detector,Crate");
 }
 
-void Dsc2Dlg::disconnect_from_server(Int_t icrate)
+void Dsc2Dlg::disconnect_from_server()
 {
+  sprintf(hostname,"%s%s%s",det[kcrt],det[kdet],det[ksec]);
   printf("Closing connection to %s\n",hostname);
-  fc_crate[icrate]->Close();
+  if(fc_crate[kcrt]->IsValid()) fc_crate[kcrt]->Close();
 }
 
 int Dsc2Dlg::refresh_scalers()
@@ -594,27 +599,29 @@ int Dsc2Dlg::refresh_scalers()
   if (norm==-1.) {norm=0.;return 0;}
   if (ifirst>0)  ifirst--;
   
-  ReadVME(0);
+  if (kdbg==0) ReadVME();
+  if (kdbg==1) {kcrt=0;ReadVME();kcrt=1;ReadVME();}
   
-  if (ifirst==1) MakeHistos();
+  if (ifirst==1&&kdbg==0) MakeHistos();
+
   if (ifirst==0)
     {
       refresh_statusbar();
       UpdateGUI();
-      FillHistos();
-      DrawHistos();
+      if (kdbg==0) FillHistos();
+      if (kdbg==0) DrawHistos();
     }
   
   TTimer::SingleShot(scaler_update_period[kcrt],"Dsc2Dlg",this,"refresh_scalers()");
   return 0;
 }
 
-int Dsc2Dlg::refresh_statusbar()
+void Dsc2Dlg::refresh_statusbar()
 {
   TDatime datime;
   TString stat1,stat2;
 
-  stat1=TString::Format("FCMON: SECTOR %s %s %s",det[ksec],udet[idet],mod[kcrt]);
+  stat1=TString::Format("FCMON: SECTOR %s %s %s",det[ksec],udet[idet],mod[kcrt+kdbg]);
   stat2=TString::Format("%d/%d/%d %.2d:%.2d:%.2d",
 		       datime.GetMonth(),datime.GetDay(),datime.GetYear(),
 		       datime.GetHour(),datime.GetMinute(),datime.GetSecond());
@@ -634,7 +641,7 @@ void Dsc2Dlg::DoSlider()
   DrawHistos();
 }
 
-void Dsc2Dlg::ReadVME(Int_t icrate)
+void Dsc2Dlg::ReadVME()
 {
   Int_t ii, jj, i=0, j=0, k=0;
   UInt_t ref[16];
@@ -644,23 +651,23 @@ void Dsc2Dlg::ReadVME(Int_t icrate)
   
   for(ii=0; ii<ndsc[idet]; ii++) 
     {
-      slot=fc_crate_slots[icrate][ii];
+      slot=fc_crate_slots[kcrt][ii];
       ref[ii]=clck[kcrt];
-      if(fc_crate[icrate]->IsValid()) {fc_crate[icrate]->ScalerReadBoard(slot, &buf, &len); ref[ii]=buf[off[0][kcrt]];}
+      if(fc_crate[kcrt]->IsValid()) {fc_crate[kcrt]->ScalerReadBoard(slot, &buf, &len); ref[ii]=buf[off[0][kcrt]];}
       norm = clck[kcrt]/((Float_t)ref[ii]);
       for(jj=0; jj<16; jj++)
         {
-          scal1[ii][jj]=jj;
-          if(fc_crate[icrate]->IsValid()) scal1[ii][jj]=buf[off[1][kcrt]+jj];
+          scal1[kcrt][ii][jj]=jj;
+          if(fc_crate[kcrt]->IsValid()) scal1[kcrt][ii][jj]=buf[off[1][kcrt]+jj];
           switch (idet){
           case 0: i=adclayerecal[map[ii]][jj]-1 ; j=0                        ; k=adcstripecal[map[ii]][jj]-1 ;break;
           case 1: i=adclayerpcal[map[ii]][jj]-1 ; j=0                        ; k=adcstrippcal[map[ii]][jj]-1 ;break;
           case 2: i=adclayerftof[map[ii]][jj]-1 ; j=adclrftof[map[ii]][jj]-1 ; k=adcslabftof[map[ii]][jj]-1  ;break;
           }
-          printf("ii,jj,scal=%d,%d,%d,%d\n",ii,jj,ref[ii],scal1[ii][jj]);
-          scal1[ii][jj]=(Int_t)(((Float_t)scal1[ii][jj])*norm) ; scal2[i][j][k]=scal1[ii][jj];
+          printf("ii,jj,scal=%d,%d,%d,%d\n",ii,jj,ref[ii],scal1[kcrt][ii][jj]);
+          scal1[kcrt][ii][jj]=(Int_t)(((Float_t)scal1[kcrt][ii][jj])*norm) ; scal2[i][j][k]=scal1[kcrt][ii][jj];
         }
-      if(fc_crate[icrate]->IsValid()) delete [] buf;
+      if(fc_crate[kcrt]->IsValid()) delete [] buf;
     }
 }
 
@@ -730,7 +737,8 @@ void Dsc2Dlg::UpdateGUI()
 {
    Int_t ii,jj;
    Char_t str[10];
-   for(ii=0; ii<ndsc[idet]; ii++) {for(jj=0; jj<16; jj++){sprintf(str,"%8d",scal1[ii][jj]);tentsc[ii][jj]->SetText(str);}}
+   if(kdbg==0) for(ii=0; ii<ndsc[idet]; ii++) {for(jj=0; jj<16; jj++){sprintf(str,"%8d",scal1[kcrt][ii][jj]);tentsc[ii][jj]->SetText(str);}}
+   if(kdbg==1) for(ii=0; ii<ndsc[idet]; ii++) {for(jj=0; jj<16; jj++){sprintf(str,"%4d/%4d",scal1[0][ii][jj],scal1[1][ii][jj]);tentsc[ii][jj]->SetText(str);}}
 }
 
 void Dsc2Dlg::FillHistos()

@@ -418,6 +418,13 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
    fChk1->Associate(this);
    fChk3->Associate(this);
    fChk3->SetOn();
+   if (idet==0) {
+     fF3->AddFrame(fRadiob4[0]   = new TGRadioButton(fF3, "Inner",75), fL3);
+     fF3->AddFrame(fRadiob4[1]   = new TGRadioButton(fF3, "Outer",76), fL3);
+     fRadiob4[0]->Associate(this);
+     fRadiob4[1]->Associate(this);
+     fRadiob4[0]->SetOn();
+   }
    tf->AddFrame(fF3,fL3);
 
    switch (idet) {
@@ -469,6 +476,13 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
    fChk2->Associate(this);
    fChk2->SetOn();
    fHSlid->Associate(this);
+   if (idet==0) {
+     fF3b->AddFrame(fRadiob5[0]   = new TGRadioButton(fF3b, "Inner",75), fL3);
+     fF3b->AddFrame(fRadiob5[1]   = new TGRadioButton(fF3b, "Outer",76), fL3);
+     fRadiob5[0]->Associate(this);
+     fRadiob5[1]->Associate(this);
+     fRadiob5[0]->SetOn();
+   }
    tf->AddFrame(fF3b,fL3);
 
    switch (idet) {
@@ -518,7 +532,7 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
    SetWindowName("Scalers");
    MapWindow();
    
-   HistAccumulate = 0; ifirst=3;
+   HistAccumulate = 0; SetInner=1 ; SetOuter=0 ; ifirst=3;
    TTimer::SingleShot(scaler_update_period[idet],"Dsc2Dlg",this,"refresh_scalers()");
 }
 
@@ -557,6 +571,19 @@ Bool_t Dsc2Dlg::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
                      break;
                }
                break;
+
+	 case kCM_RADIOBUTTON:
+	   switch (parm1) {
+	   case 75:
+	     SetInner = 1 ; SetOuter=0; fRadiob4[1]->SetOff();
+	     break;
+	   case 76:
+	     SetOuter = 1 ; SetInner=0; fRadiob4[0]->SetOff()
+	     break;
+	   default:
+	     break;
+	   }
+	   break;
 			   
             case kCM_TAB:
 	      switch(parm1) {
@@ -664,7 +691,7 @@ void Dsc2Dlg::ReadVME()
           case 1: i=adclayerpcal[map[ii]][jj]-1 ; j=0                        ; k=adcstrippcal[map[ii]][jj]-1 ;break;
           case 2: i=adclayerftof[map[ii]][jj]-1 ; j=adclrftof[map[ii]][jj]-1 ; k=adcslabftof[map[ii]][jj]-1  ;break;
           }
-          printf("ii,jj,scal=%d,%d,%d,%d\n",ii,jj,ref[ii],scal1[kcrt][ii][jj]);
+          //printf("ii,jj,scal=%d,%d,%d,%d\n",ii,jj,ref[ii],scal1[kcrt][ii][jj]);
           scal1[kcrt][ii][jj]=(Int_t)(((Float_t)scal1[kcrt][ii][jj])*norm) ; scal2[i][j][k]=scal1[kcrt][ii][jj];
         }
       if(fc_crate[kcrt]->IsValid()) delete [] buf;
@@ -775,11 +802,14 @@ void Dsc2Dlg::FillHistos()
 void Dsc2Dlg::DrawHistos()
 {
   TCanvas *c[6];
-  Int_t nplot,np;
+  Int_t nplot,np,np1,np2;
   
   nplot = nlay[idet]*nlr[idet];
-  
-  for(np=0; np<nplot ; np++)
+  np1=0;np2=nplot;
+  if(idet==0&&SetInner==1) {np1=0;np2=nplot-3;}
+  if(idet==0&&SetOuter==1) {np1=3;np2=nplot;}
+  printf("idet,SetInner,SetOuter,np1,np2=%d %d %d %d %d\n",idet,SetInner,SetOuter,np1,np2);
+  for(np=np1; np<np2 ; np++)
     {
       if(fShowRates)      {c[np] = fE1[np]->GetCanvas(); c[np]->SetLogy(SetYlog);
 	                   c[np]->cd(); fHP1[np]->Draw();}

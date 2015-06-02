@@ -153,6 +153,7 @@ class Dsc2Dlg : public TGTransientFrame
   TGCompositeFrame    *fFrame1, *fF1, *fF2, *fF3, *fF4, *fF50, *fF51, *fF50b, *fF51b, *fF3b;
   TGHorizontalFrame   *fF4b;
   TGGroupFrame        *fF6[12], *fF7;
+  TGRadioButton       *fRadiob4[2],*fRadiob5[2];
   TGButton            *fOkButton, *fCancelButton, *fStartB, *fStopB;
   TGButton            *fBtn1, *fBtn2, *fChk1, *fChk2, *fChk3, *fRad1, *fRad2;
   TGDoubleHSlider     *fHSlid;
@@ -181,7 +182,7 @@ class Dsc2Dlg : public TGTransientFrame
   void DeleteHistos();
    
   Int_t HistAccumulate;
-  Int_t SetZlog, SetYlog;
+  Int_t SetZlog, SetYlog, SetInner, SetOuter;
 
  public:
   Dsc2Dlg(const TGWindow *p, FCMainFrame *main, UInt_t w, UInt_t h,

@@ -29,6 +29,7 @@ Int_t idet;                // idet=0,1,2 (ECAL,PCAL,FTOF)
 Int_t ndsc[3]={14,12,12};  // Number of DSC2 slots for idet=0,1,2
 Int_t nlay[3]={6,3,2};     // Number of layers for idet=0,1,2
 Int_t nlr[3]={1,1,2};      // Number of subdivisions for idet=0,1,2
+Int_t nsg[3]={2,1,1};      // Number of subgraphs for nlay
 Int_t npmt[3][6]={{36,36,36,36,36,36},{68,62,62,0,0,0},{62,62,23,23,0,0}}; // Number of pmts for each nlay*nlr
 
 char hostname[80];         // Name of crate 
@@ -407,7 +408,8 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
 
    /* Rates Tab */
 
-   fShowRates = kTRUE; SetZlog = kTRUE; SetYlog = kTRUE;
+   fShowRates = kTRUE; SetZlog = kTRUE; SetYlog = kTRUE; SetIO = kTRUE;
+   
    for (int ii=0; ii<68 ; ii++) {fHP1[ii]=0 ; fHP2[ii]=0;}
 
    tf = fTab->AddTab("Rates");
@@ -419,26 +421,20 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
    fChk3->Associate(this);
    fChk3->SetOn();
    if (idet==0) {
-     fF3->AddFrame(fRadiob4[0]   = new TGRadioButton(fF3, "Inner",75), fL3);
-     fF3->AddFrame(fRadiob4[1]   = new TGRadioButton(fF3, "Outer",76), fL3);
-     fRadiob4[0]->Associate(this);
-     fRadiob4[1]->Associate(this);
-     fRadiob4[0]->SetOn();
+     fF3->AddFrame(fChk4 = new TGCheckButton(fF3, "Inner/Outer",74),fL3);
+     fChk4->Associate(this);
+     fChk4->SetOn();
    }
    tf->AddFrame(fF3,fL3);
 
    switch (idet) {
    case 0:
    fL4  = new TGLayoutHints(kLHintsTop    | kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 5, 5, 5, 5);
-   fF50 = new TGCompositeFrame(tf, 60, 60, kHorizontalFrame);
-   fF51 = new TGCompositeFrame(tf, 60, 60, kHorizontalFrame);
+   fF50 = new TGCompositeFrame(tf, 60, 60, kVerticalFrame);
    fF50->AddFrame(fE1[0] = new TRootEmbeddedCanvas("ec1", fF50, 100, 100), fL4);
    fF50->AddFrame(fE1[1] = new TRootEmbeddedCanvas("ec2", fF50, 100, 100), fL4);
    fF50->AddFrame(fE1[2] = new TRootEmbeddedCanvas("ec3", fF50, 100, 100), fL4);
-   fF51->AddFrame(fE1[3] = new TRootEmbeddedCanvas("ec4", fF51, 100, 100), fL4);
-   fF51->AddFrame(fE1[4] = new TRootEmbeddedCanvas("ec5", fF51, 100, 100), fL4);
-   fF51->AddFrame(fE1[5] = new TRootEmbeddedCanvas("ec6", fF51, 100, 100), fL4);
-   tf->AddFrame(fF50,fL4);tf->AddFrame(fF51,fL4);
+   tf->AddFrame(fF50,fL4);
    break;
    case 1:
    fL4  = new TGLayoutHints(kLHintsTop    | kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 5, 5, 5, 5);
@@ -460,8 +456,9 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
    break;
    }
 
-   int nplot=nlay[idet]*nlr[idet];
-   for (int ii=0; ii<nplot ; ii++) {fE1[ii]->GetCanvas()->SetBorderMode(0);}
+   int nplt=nlay[idet]*nlr[idet]/nsg[idet];
+   
+   for (int ii=0; ii<nplt ; ii++) {fE1[ii]->GetCanvas()->SetBorderMode(0);}
 
    /* Stripcharts Tab */
 
@@ -477,26 +474,21 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
    fChk2->SetOn();
    fHSlid->Associate(this);
    if (idet==0) {
-     fF3b->AddFrame(fRadiob5[0]   = new TGRadioButton(fF3b, "Inner",75), fL3);
-     fF3b->AddFrame(fRadiob5[1]   = new TGRadioButton(fF3b, "Outer",76), fL3);
-     fRadiob5[0]->Associate(this);
-     fRadiob5[1]->Associate(this);
-     fRadiob5[0]->SetOn();
+     fF3b->AddFrame(fChk5 = new TGCheckButton(fF3b, "Inner/Outer",75),fL3);
+     fChk5->Associate(this);
+     fChk5->SetOn();
    }
+
    tf->AddFrame(fF3b,fL3);
 
    switch (idet) {
    case 0:
    fL4 = new TGLayoutHints(kLHintsTop    | kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 5, 5, 5, 5);
    fF50b = new TGCompositeFrame(tf, 60, 60, kVerticalFrame);
-   fF51b = new TGCompositeFrame(tf, 60, 60, kVerticalFrame);
    fF50b->AddFrame(fE2[0] = new TRootEmbeddedCanvas("ec1", fF50b, 100, 100), fL4);
    fF50b->AddFrame(fE2[1] = new TRootEmbeddedCanvas("ec2", fF50b, 100, 100), fL4);
    fF50b->AddFrame(fE2[2] = new TRootEmbeddedCanvas("ec3", fF50b, 100, 100), fL4);
-   fF51b->AddFrame(fE2[3] = new TRootEmbeddedCanvas("ec4", fF51b, 100, 100), fL4);
-   fF51b->AddFrame(fE2[4] = new TRootEmbeddedCanvas("ec5", fF51b, 100, 100), fL4);
-   fF51b->AddFrame(fE2[5] = new TRootEmbeddedCanvas("ec6", fF51b, 100, 100), fL4);
-   tf->AddFrame(fF50b,fL4);tf->AddFrame(fF51b,fL4);
+   tf->AddFrame(fF50b,fL4);
    break;
    case 1:
    fL4 = new TGLayoutHints(kLHintsTop    | kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 5, 5, 5, 5);
@@ -518,7 +510,7 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
    break;
    }
 
-   for (int ii=0; ii<nplot ; ii++) {fE2[ii]->GetCanvas()->SetBorderMode(0);}
+   for (int ii=0; ii<nplt ; ii++) {fE2[ii]->GetCanvas()->SetBorderMode(0);}
 
    AddFrame(fTab, fL5);
    Int_t parts[]={50,10};
@@ -532,7 +524,7 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
    SetWindowName("Scalers");
    MapWindow();
    
-   HistAccumulate = 0; SetInner=1 ; SetOuter=0 ; ifirst=3;
+   HistAccumulate = 0;  ifirst=3;
    TTimer::SingleShot(scaler_update_period[idet],"Dsc2Dlg",this,"refresh_scalers()");
 }
 
@@ -567,23 +559,16 @@ Bool_t Dsc2Dlg::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
 	          case 73:
 		     SetYlog = fChk3->GetState();
 		     break;
-                  default:
-                     break;
+	       case 74:
+		 SetIO = fChk4->GetState();
+		 break;
+	       case 75:
+		 SetIO = fChk5->GetState();
+		 break;
+               default:
+                 break;
                }
                break;
-
-	 case kCM_RADIOBUTTON:
-	   switch (parm1) {
-	   case 75:
-	     SetInner = 1 ; SetOuter=0; fRadiob4[1]->SetOff();
-	     break;
-	   case 76:
-	     SetOuter = 1 ; SetInner=0; fRadiob4[0]->SetOff()
-	     break;
-	   default:
-	     break;
-	   }
-	   break;
 			   
             case kCM_TAB:
 	      switch(parm1) {
@@ -691,8 +676,9 @@ void Dsc2Dlg::ReadVME()
           case 1: i=adclayerpcal[map[ii]][jj]-1 ; j=0                        ; k=adcstrippcal[map[ii]][jj]-1 ;break;
           case 2: i=adclayerftof[map[ii]][jj]-1 ; j=adclrftof[map[ii]][jj]-1 ; k=adcslabftof[map[ii]][jj]-1  ;break;
           }
-          //printf("ii,jj,scal=%d,%d,%d,%d\n",ii,jj,ref[ii],scal1[kcrt][ii][jj]);
           scal1[kcrt][ii][jj]=(Int_t)(((Float_t)scal1[kcrt][ii][jj])*norm) ; scal2[i][j][k]=scal1[kcrt][ii][jj];
+	  printf("ii,jj,i,j,k,scal1,scal2=%d,%d,%d,%d,%d,%d,%d\n",ii,jj,i,j,k,scal1[kcrt][ii][jj],scal2[i][j][k]);
+          printf("1 scal2=%d\n",scal2[i][j][k]);
         }
       if(fc_crate[kcrt]->IsValid()) delete [] buf;
     }
@@ -802,20 +788,21 @@ void Dsc2Dlg::FillHistos()
 void Dsc2Dlg::DrawHistos()
 {
   TCanvas *c[6];
-  Int_t nplot,np,np1,np2;
+  Int_t nplt,np,ioff;
   
-  nplot = nlay[idet]*nlr[idet];
-  np1=0;np2=nplot;
-  if(idet==0&&SetInner==1) {np1=0;np2=nplot-3;}
-  if(idet==0&&SetOuter==1) {np1=3;np2=nplot;}
-  printf("idet,SetInner,SetOuter,np1,np2=%d %d %d %d %d\n",idet,SetInner,SetOuter,np1,np2);
-  for(np=np1; np<np2 ; np++)
+  nplt = nlay[idet]*nlr[idet]/nsg[idet];
+  
+  ioff=0;
+  if(idet==0&&SetIO)  ioff=0; //EC inner
+  if(idet==0&&!SetIO) ioff=3; //EC outer
+  
+  for(np=0; np<nplt ; np++)
     {
       if(fShowRates)      {c[np] = fE1[np]->GetCanvas(); c[np]->SetLogy(SetYlog);
-	                   c[np]->cd(); fHP1[np]->Draw();}
+	                   c[np]->cd(); fHP1[np+ioff]->Draw();}
       if(fShowStripChart) {c[np] = fE2[np]->GetCanvas(); c[np]->SetLogy(0); c[np]->SetLogz(SetZlog) ; 
 	                           fHP2[np]->GetZaxis()->SetRangeUser(pow(10.,zmin),pow(10.,zmax));
-			   c[np]->cd(); fHP2[np]->Draw("colz");}
+			   c[np]->cd(); fHP2[np+ioff]->Draw("colz");}
       
       c[np]->Modified(); c[np]->Update();
     }

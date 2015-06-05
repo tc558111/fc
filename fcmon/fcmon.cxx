@@ -676,9 +676,10 @@ void Dsc2Dlg::ReadVME()
           case 1: i=adclayerpcal[map[ii]][jj]-1 ; j=0                        ; k=adcstrippcal[map[ii]][jj]-1 ;break;
           case 2: i=adclayerftof[map[ii]][jj]-1 ; j=adclrftof[map[ii]][jj]-1 ; k=adcslabftof[map[ii]][jj]-1  ;break;
           }
+          if(i==0&&j==0&&k<2) {printf("i,j,k,ii,jj,scal2=%d,%d,%d,%d,%d,%d,%d\n",i,j,k,ii,jj,scal2[i][j][k]);}
           scal1[kcrt][ii][jj]=(Int_t)(((Float_t)scal1[kcrt][ii][jj])*norm) ; scal2[i][j][k]=scal1[kcrt][ii][jj];
-	  printf("ii,jj,i,j,k,scal1,scal2=%d,%d,%d,%d,%d,%d,%d\n",ii,jj,i,j,k,scal1[kcrt][ii][jj],scal2[i][j][k]);
-          printf("1 scal2=%d\n",scal2[i][j][k]);
+//	  printf("ii,jj,i,j,k,scal1,scal2=%d,%d,%d,%d,%d,%d,%d\n",ii,jj,i,j,k,scal1[kcrt][ii][jj],scal2[i][j][k]);
+//          printf("1 scal2=%d\n",scal2[i][j][k]);
         }
       if(fc_crate[kcrt]->IsValid()) delete [] buf;
     }
@@ -801,7 +802,8 @@ void Dsc2Dlg::DrawHistos()
       if(fShowRates)      {c[np] = fE1[np]->GetCanvas(); c[np]->SetLogy(SetYlog);
 	                   c[np]->cd(); fHP1[np+ioff]->Draw();}
       if(fShowStripChart) {c[np] = fE2[np]->GetCanvas(); c[np]->SetLogy(0); c[np]->SetLogz(SetZlog) ; 
-	                           fHP2[np]->GetZaxis()->SetRangeUser(pow(10.,zmin),pow(10.,zmax));
+	                           //fHP2[np]->GetZaxis()->SetRangeUser(pow(10.,zmin),pow(10.,zmax));
+	                           fHP2[np]->GetZaxis()->SetRangeUser(zmin,zmax);
 			   c[np]->cd(); fHP2[np+ioff]->Draw("colz");}
       
       c[np]->Modified(); c[np]->Update();

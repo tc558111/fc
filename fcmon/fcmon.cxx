@@ -224,7 +224,7 @@ Bool_t FCMainFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
    case kC_COMMAND:
      switch (GET_SUBMSG(msg)) {
      case kCM_RADIOBUTTON:
-       if (parm1<2)           kcrt=parm1;
+       if (parm1<2)          {kcrt=parm1; kdbg=0;}
        if (parm1>1&&parm1<5 ) kdet=parm1;
        if (parm1>4&&parm1<11) ksec=parm1;
        if (parm1==11)         kdbg=1;

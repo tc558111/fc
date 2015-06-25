@@ -1,0 +1,18 @@
+filecase keep
+
+path=.
+default $quote([path]) option=a
+
+cselect
+
+set file 2
+
+exec utilGenColormap 
+global/import nlevels
+vec/cre nlev i [nlevels]
+
+application COMIS quit
+*  !setopt 'gcc -O2 -c' cc
+  !setopt '-f77 -c' fort
+quit
+

@@ -26,7 +26,7 @@ macro plothw run=484 sec=5 det=ecal opt=ped zca=100 linlog=log path=forcar/rzh/f
   set ywin 0.001 ; set yval 100
   set chhe 0.32 ; set ndvy 32
   set gsiz 0.5 ; set ygti 0.5
-  opt htit ; tit=RUN [run] - $upper([det]) $upper([opt]) SECTOR [sec] ; title_gl [tit]
+  opt htit ; tit=RUN [run] - SECTOR [sec] - $upper([det]) $upper([opt]) ; title_gl [tit]
   opt [linlog]z ; col=colz
 
   exe plot.[v] 
@@ -175,7 +175,7 @@ macro plotfc run=484 sec=5 det=ftof opt=tdc linlog=log path=forcar/rzh/fcMon
 
   set xwin 1.1 ; set ywin 1.7 ; set yhti 0.6
   set gsiz 0.5 ; set ygti 0.5 ; set vsiz 0.2
-  opt htit ; tit=RUN [run] - $upper([det]) $upper([opt]) SECTOR [sec] ; title_gl [tit]
+  opt htit ; tit=RUN [run] - SECTOR [sec] - $upper([det]) $upper([opt]) ; title_gl [tit]
   opt [linlog]z ; col=colz
 
   case [det] in

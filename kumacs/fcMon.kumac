@@ -1,0 +1,250 @@
+macro plothw run=484 sec=5 det=ecal opt=ped zca=100 linlog=log
+
+  cd //pawc ; hi/del * ; close 0
+  hi/file 1 forcar/rzh/fcMon/forcar-s[sec]-[run].rzh
+
+  frag=$eval([sec]*6-5)
+ 
+  global/cre mid,off,atit,id,dett,optt,zscal 
+  dett=[det] ; optt=[opt] ; zscal=[zca]
+
+  case [opt] in
+    (ped) mid=20000000 ; off=0 ; v=all.adc   ; atit=ADC CHAN.
+    (raw) mid=10000000 ; off=0 ; v=all.adc   ; atit=SAMPLES (4 NS/CH)
+    (adc) mid=30000000 ; off=0 ; v=all.adc   ; atit=ADC CHAN.
+    (tdc) mid=0        ; off=1 ; v=[det].tdc ; atit=TDC CHAN.
+  endcase
+
+  case [det] in
+    (ecal) id=$eval(([frag]+[off])*100000)
+    (pcal) id=$eval(([frag]+[off]+2)*100000)
+    (ftof) id=$eval(([frag]+[off]+4)*100000)
+  endcase
+
+  size 30 30
+
+  set ywin 0.001 ; set yval 100
+  set chhe 0.32 ; set ndvy 32
+  set gsiz 0.5 ; set ygti 0.5
+  opt htit ; tit=RUN [run] - $upper([det]) $upper([opt]) SECTOR [sec] ; title_gl [tit]
+  opt [linlog]z ; col=colz
+
+  exe plot.[v] 
+
+return
+
+macro plot.all.adc
+
+ global/imp mid,off,atit,id,dett,optt,zscal
+
+  vec/cre sl(12) r 8 16 7 15 6 14 5 13 4 10 3 9
+  zone 2 6
+  col=colz
+
+  do n=1,12
+  if [n].gt.2 then ; col=col ; endif
+  hid=$eval([mid]+[id]+sl([n])*1000)
+  min [hid] 1 ; max [hid] [zscal]
+  if [optt].eq.ped then ; min [hid] 0.1 ; max [hid] 100 ; endif
+  if [n].ge.11 then ; set yval 0 ; endif
+  opt utit ; title_gl '' U
+  hi/plot [hid] [col]
+  xmax=$grafinfo('wnxmax')
+  if [n].ge.11 then ;  atitle [atit] ; endif
+  if [dett].eq.pcal then
+  case [n] in
+    (3) set lwid 4.5 ; set ltyp 2 ; set plci 5 ; line 0. 4. [xmax] 4. ; set lwid 0
+        set txci 5 ; itx 0.05*[xmax] 2.0 U ; itx 0.05*[xmax] 5.0 V ; set txci 1 
+    (8) set lwid 4.5 ; set ltyp 2 ; set plci 5 ; line 0. 2. [xmax] 2. ; set lwid 0
+        set txci 5 ; itx 0.05*[xmax] 0.4 V ; itx 0.05*[xmax] 3.0 W ; set txci 1
+  endcase
+  endif 
+  exe draw.boxlab 0.15 0.03 0.36  2.5  $upper($word($htitle([hid]),3,2,' '))
+  enddo
+
+return
+
+macro plot.ftof.tdc
+
+ global/imp mid,off,atit,id
+
+  vec/cre sl(5) r 3 6 9 13 16
+  vec/cre zo(5) r 1 3 5 7 2  
+  vec/cre ul(5) r 34 34 34 34 65
+
+  set ndvy 24
+
+  do n=1,5
+  case [n] in
+    (1) zone 2 4
+    (5) zone 2 1 2 s
+    (2,3,4) zone 2 4 $eval(zo([n])) s
+  endcase
+  hid=$eval([mid]+[id]+sl([n])*1000)
+  if [n].ge.4 then ; set yval 0 ; endif
+  ul=ul([n])
+  opt utit ; title_gl '' U
+  hi/plot [hid](:,1:[ul]) col
+  if [n].ge.4 then ;  atitle [atit] ; endif
+  exe draw.boxlab 0.18 0.03 2400 0.03  $upper($word($htitle([hid]),3,2,' ')) 
+  enddo
+
+return
+
+macro plot.ecal.tdc
+
+ global/imp mid,off,atit,id
+
+  vec/cre sl(2) r 6 16
+  vec/cre zo(2) r 1 2  
+  vec/cre ul(2) r 128 65
+
+  set xval 0 ; set yval 0 ; set ndvy 24
+
+  do n=1,2
+  case [n] in
+    (1) zone 2 1
+  endcase
+  hid=$eval([mid]+[id]+sl([n])*1000)
+  ul=ul([n])
+  opt utit ; title_gl '' U
+  hi/plot [hid](:,1:[ul]) col
+  exe draw.boxlab 0.18 0.03 2400 0.03  $upper($word($htitle([hid]),3,2,' ')) 
+  enddo
+
+
+return
+
+macro plot.pcal.tdc
+
+ global/imp mid,off,atit,id
+
+  vec/cre sl(2) r 6 16
+  vec/cre zo(2) r 1 2  
+  vec/cre ul(2) r 128 65
+
+  set xval 0 ; set yval 0 ; set ndvy 24
+
+  do n=1,2
+  case [n] in
+    (1) zone 2 1
+  endcase
+  hid=$eval([mid]+[id]+sl([n])*1000)
+  ul=ul([n])
+  opt utit ; title_gl '' U
+  hi/plot [hid](:,1:[ul]) col
+  exe draw.boxlab 0.18 0.03 2400 0.03  $upper($word($htitle([hid]),3,2,' ')) 
+  enddo
+
+return
+
+macro draw.boxlab xsc ysc xb yb txt tsca=16
+
+* Draw general box with text [txt] in it.
+* xsc,ysc: size of box in normalized window coordinates (0-1)
+* xb,yb: location of box center in plot coordinates (x,y)
+* if xb,yb<1 use normalized coord.to position box relative to left,bottom
+* if tsca>0 box size with scale with text length normalized to [tsca]
+
+  xw1=$grafinfo('wnxmin') ; xw2=$grafinfo('wnxmax') 
+  yw1=$grafinfo('wnymin') ; yw2=$grafinfo('wnymax')
+  xv1=$grafinfo('vpxmin') ; xv2=$grafinfo('vpxmax') 
+  yv1=$grafinfo('vpymin') ; yv2=$grafinfo('vpymax')
+  scalx = $eval(([xw2]-[xw1])/([xv2]-[xv1]))
+  scaly = $eval(([yw2]-[yw1])/([yv2]-[yv1]))
+  xwid=$eval([xsc]*[scalx]/2.) 
+  ywid=$eval([ysc]*[scaly]/2.)
+  if [xb].lt.1 then ; xb=$eval([xw1]+[xb]*[scalx]) ; endif
+  if [yb].lt.1 then ; yb=$eval([yw1]+[yb]*[scaly]) ; endif
+  if [tsca].gt.0 then ; xwid=$eval([xwid]*$len([txt])/[tsca]) ; endif
+  xb1=[xb]-[xwid] ; xb2=[xb]+[xwid]
+  yb1=[yb]-[ywid] ; yb2=[yb]+[ywid]
+  set fais 3 ; set faci 4 ; box [xb1] [xb2] [yb1] [yb2]
+  set txci 5 ; set txfp -20 ; set txal -23; itx [xb] [yb] [txt]
+  set txci 1
+
+return
+
+macro plotfc run=484 sec=5 det=ftof opt=tdc linlog=log
+
+* Plot derived quantities from raw adc,tdc data
+* using forward carriage (fc) detector coordinates
+
+  cd //pawc ; hi/del * ; close 0
+  hi/file 1 forcar/rzh/fcMon/forcar-s[sec]-[run].rzh
+
+  set xwin 1.1 ; set ywin 1.7 ; set yhti 0.6
+  set gsiz 0.5 ; set ygti 0.5 ; set vsiz 0.2
+  opt htit ; tit=$upper([det]) SECTOR [sec] ; title_gl [tit]
+  opt [linlog]z ; col=colz
+
+  case [det] in
+   (ftof)
+  case [opt] in
+   (tdc) zone 4 2
+         hi/plot 12300 colz ; atitle '' 'BAR NO.' ! 321
+         hi/plot 12400 colz
+         hi/plot 12100 colz
+         hi/plot 12200 colz
+         zone 2 2 3 s
+         hi/plot 14500 colz ; atitle '' 'BAR NO.' ! 321
+         hi/plot 14400 colz
+   (adc) zone 4 2 ; set ndvy 32
+         hi/plot 13300 colz ; atitle '' 'BAR NO.' ! 321
+         hi/plot 13400 colz
+         hi/plot 13100 colz
+         hi/plot 13200 colz
+         zone 2 2 3 s
+         hi/plot 16200 colz ; atitle '' 'BAR NO.' ! 321
+         hi/plot 16100 colz
+  (adc1) zone 2 2
+         hi/plot 16200 colz
+         hi/plot 16100 colz
+         hi/plot 17200 colz
+         hi/plot 17100 colz
+  (pix)  zone 2 2 ; set ndvy 32
+         hi/plot 16200 colz
+         hi/plot 16100 colz
+         hi/plot 16201 colz
+         hi/plot 16101 colz
+  endcase
+   (pcal) 
+  case [opt] in
+   (adc) zone 3 1 ; set ndvy 68
+         hi/plot 22000 colz
+         hi/plot 22200 colz
+         hi/plot 22400 colz
+   (pix) hi/plot 52010100 colz
+         hi/plot 52010200 colz
+         hi/plot 52010300 colz
+  (pix1) hi/plot 52110100 colz
+         hi/plot 52110200 colz
+         hi/plot 52110300 colz
+  (pix2) hi/plot 52210100 colz
+         hi/plot 52210200 colz
+         hi/plot 52210300 colz
+   (tdc) zone 3 1 ; set ndvy 68
+         hi/plot 26000 colz
+         hi/plot 26200 colz
+         hi/plot 26400 colz
+  endcase
+   (ecal)
+  case [opt] in
+   (adc) zone 3 2 ; set ndvy 36
+         hi/plot 32000 colz
+         hi/plot 32200 colz
+         hi/plot 32400 colz
+         hi/plot 32600 colz
+         hi/plot 32800 colz
+         hi/plot 33000 colz
+   (tdc) zone 3 2 ; set ndvy 36
+         hi/plot 36000 colz
+         hi/plot 36200 colz
+         hi/plot 36400 colz
+         hi/plot 36600 colz
+         hi/plot 36800 colz
+         hi/plot 37000 colz
+  endcase 
+  endcase 
+          
+return

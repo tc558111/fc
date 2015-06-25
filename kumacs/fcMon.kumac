@@ -1,5 +1,10 @@
 macro plothw run=484 sec=5 det=ecal opt=ped zca=100 linlog=log path=forcar/rzh/fcMon
 
+* Purpose: Plot histos of Forward Carriage raw data created in et2rzh.c program
+* Required files: pawlogon.kumac, utilGenColormap.kumac, higz_windows.dat, forcar-s[sec]-[run].rzh
+* Usage: fcMon#plothw <args> for slot,channel plots
+* Usage: fcMon#plotfc <args> for forward carriage detector coordinates
+
   cd //pawc ; hi/del * ; close 0
   hi/file 1 [path]/forcar-s[sec]-[run].rzh
 

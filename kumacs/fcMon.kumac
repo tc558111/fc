@@ -1,7 +1,7 @@
-macro plothw run=484 sec=5 det=ecal opt=ped zca=100 linlog=log
+macro plothw run=484 sec=5 det=ecal opt=ped zca=100 linlog=log path=forcar/rzh/fcMon
 
   cd //pawc ; hi/del * ; close 0
-  hi/file 1 forcar/rzh/fcMon/forcar-s[sec]-[run].rzh
+  hi/file 1 [path]/forcar-s[sec]-[run].rzh
 
   frag=$eval([sec]*6-5)
  
@@ -165,13 +165,13 @@ macro draw.boxlab xsc ysc xb yb txt tsca=16
 
 return
 
-macro plotfc run=484 sec=5 det=ftof opt=tdc linlog=log
+macro plotfc run=484 sec=5 det=ftof opt=tdc linlog=log path=forcar/rzh/fcMon
 
 * Plot derived quantities from raw adc,tdc data
 * using forward carriage (fc) detector coordinates
 
   cd //pawc ; hi/del * ; close 0
-  hi/file 1 forcar/rzh/fcMon/forcar-s[sec]-[run].rzh
+  hi/file 1 [path]/forcar-s[sec]-[run].rzh
 
   set xwin 1.1 ; set ywin 1.7 ; set yhti 0.6
   set gsiz 0.5 ; set ygti 0.5 ; set vsiz 0.2

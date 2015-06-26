@@ -1,0 +1,262 @@
+macro loop run sec=5 id=10
+
+  exe init.global [run] [sec]; global/imp *path,*file
+  exe init.hist
+
+  message fcPix: Opening ntuple [ifile] 
+  hi/file 1 [ifile] 8191
+  nt/print [id]
+  call [funpath]/fcpixlib.f77
+  nt/loop [id] fcpix()
+  close 0
+  
+  message fcPix: Saving histos in [ofile]
+  hi/file 1 [ofile]  1024 N ; hrout 0 ; close 1
+  message fcPix: Saving globals in [kupath]/[run]
+  global/list * [kupath]/[run]
+  
+return
+
+macro init.global run sec=5
+
+  message fcPix: Initializing globals
+  global/cre rootpath /home/clasrun/ecal/pcal/paw
+  global/cre rznpath [rootpath]/forcar
+  global/cre rzhpath [rootpath]/forcar/rzh/fcPix
+  global/cre funpath [rootpath]/kumac/calcom/cal12/fun
+  global/cre kupath  [rzhpath]
+  global/cre ifile   [rznpath]/forcar-s[sec]-[run].rzn
+  global/cre ofile   [rzhpath]/forcar-s[sec]-[run].rzh
+  global/cre timestamp $DATE $TIME
+
+return
+
+macro init.hist
+
+  message fcPix: Initializing Histograms
+  cd //pawc ; hi/del * ; close 0
+
+* Dalitz test  distributions
+  1d  777,778,779,780 '' 200 1. 3. 0.
+
+* SC1A histos
+  2d 400,500 'SC1A LEFT ADC'  100 0. 3000. 23 1. 24. 0.
+  2d 401,501 'SC1A RIGHT ADC' 100 0. 3000. 23 1. 24. 0.
+  2d 402,502 'SC1A SQRT(L*R)' 100 0. 3000. 23 1. 24. 0.
+  2d 411,511 'SC1A vs PCAL U' 68 1. 69. 23 1. 24 0.
+  2d 412,512 'SC1A vs PCAL V' 62 1. 63. 23 1. 24 0.
+  2d 413,513 'SC1A vs PCAL W' 62 1. 63. 23 1. 24 0.
+  2d 421,521 'SC1A vs ECAL U' 36 1. 37. 23 1. 24 0.
+  2d 422,522 'SC1A vs ECAL V' 36 1. 37. 23 1. 24 0.
+  2d 423,523 'SC1A vs ECAL W' 36 1. 37. 23 1. 24 0.
+  2d 403,503 'SC1A TDC(L-R)'  50 -30. 30. 23 1. 24. 0.
+  do ib=1,23
+    id=4000+[ib] ; 2d [id] 'SC1A TDC(L-R) vs PCAL V' 62 1. 63. 50 -30. 30. 0. 
+    id=5000+[ib] ; 2d [id] 'SC1A TDC(L-R) vs PCAL V' 62 1. 63. 50 -30. 30. 0. 
+    id=4100+[ib] ; 2d [id] 'SC1A TDC(L-R) vs PCAL W' 62 1. 63. 50 -30. 30. 0. 
+    id=5100+[ib] ; 2d [id] 'SC1A TDC(L-R) vs PCAL W' 62 1. 63. 50 -30. 30. 0. 
+    id=4200+[ib] ; 2d [id] 'SC1A TDC(L-R) vs ECAL V' 36 1. 37. 50 -30. 30. 0. 
+    id=5200+[ib] ; 2d [id] 'SC1A TDC(L-R) vs ECAL V' 36 1. 37. 50 -30. 30. 0. 
+    id=4300+[ib] ; 2d [id] 'SC1A TDC(L-R) vs ECAL W' 36 1. 37. 50 -30. 30. 0. 
+    id=5300+[ib] ; 2d [id] 'SC1A TDC(L-R) vs ECAL W' 36 1. 37. 50 -30. 30. 0. 
+  enddo
+
+* SC1B histos
+  2d 700,800 'SC1B LEFT ADC'  100 0. 5000. 62 1. 63. 0.
+  2d 701,801 'SC1B RIGHT ADC' 100 0. 5000. 62 1. 63. 0.
+  2d 702,802 'SC1B SQRT(L*R)' 100 0. 5000. 62 1. 63. 0.
+  2d 711,811 'SC1B vs PCAL U' 68 1. 69. 62 1. 63. 0.
+  2d 712,812 'SC1B vs PCAL V' 62 1. 63. 62 1. 63. 0.
+  2d 713,813 'SC1B vs PCAL W' 62 1. 63. 62 1. 63. 0.
+  2d 721,821 'SC1B vs ECAL U' 36 1. 37. 62 1. 63. 0.
+  2d 722,822 'SC1B vs ECAL V' 36 1. 37. 62 1. 63. 0.
+  2d 723,823 'SC1B vs ECAL W' 36 1. 37. 62 1. 63. 0.
+  2d 703,803 'SC1B TDC(L-R)'  50 -30. 30. 62 1. 63. 0.
+* Had to cut out 1-21 due to PAW memory issues loading ntuple
+  do ib=22,62
+    id=7000+[ib] ; 2d [id] 'SC1A TDC(L-R) vs PCAL V' 62 1. 63. 50 -30. 30. 0. 
+    id=8000+[ib] ; 2d [id] 'SC1A TDC(L-R) vs PCAL V' 62 1. 63. 50 -30. 30. 0. 
+    id=7100+[ib] ; 2d [id] 'SC1A TDC(L-R) vs PCAL W' 62 1. 63. 50 -30. 30. 0. 
+    id=8100+[ib] ; 2d [id] 'SC1A TDC(L-R) vs PCAL W' 62 1. 63. 50 -30. 30. 0. 
+    id=7200+[ib] ; 2d [id] 'SC1A TDC(L-R) vs ECAL V' 36 1. 37. 50 -30. 30. 0. 
+    id=8200+[ib] ; 2d [id] 'SC1A TDC(L-R) vs ECAL V' 36 1. 37. 50 -30. 30. 0. 
+    id=7300+[ib] ; 2d [id] 'SC1A TDC(L-R) vs ECAL W' 36 1. 37. 50 -30. 30. 0. 
+    id=8300+[ib] ; 2d [id] 'SC1A TDC(L-R) vs ECAL W' 36 1. 37. 50 -30. 30. 0. 
+  enddo
+
+* EC histos
+  2d 911,921,931 'ECAL U vs PCAL U' 68 1. 69. 36 1. 37. 0.
+  2d 912,922,932 'ECAL V vs PCAL V' 62 1. 63. 36 1. 37. 0.
+  2d 913,923,933 'ECAL W vs PCAL W' 62 1. 63. 36 1. 37. 0.
+
+return
+
+macro init.graf
+
+  size 30 30
+  set ywin 0.001 ; set yval 0 
+  set chhe 0.32 ; opt logz
+  set ndvx 32 ; set ndvy 12
+  set xwin 1.1 ; set ywin 1.7 ; set yhti 0.6
+  set gsiz 0.5 ; set ygti 0.5 ; set vsiz 0.2
+
+return
+
+macro get.hist run
+  exe init.global [run] ; global/imp rzhpath
+  exe [rzhpath]/[run] ; global/imp *
+  cd //pawc ; hi/del * ; close 0 ; hi/file 1 [ofile]
+return
+
+macro plot run
+
+  exe plot1 [run] a ; wait 'Hit RETURN to go to SC1B plots'
+  exe plot1 [run] b ; wait
+  exe plot2 [run] a ; wait 'Hit RETURN to go to SC1B plots'
+  exe plot2 [run] b ; wait
+  exe plot4 [run] a ; wait 'Hit RETURN to go to SC1B plots'
+  exe plot4 [run] b ; wait
+  exe plot3 [run] a ; wait 'Hit RETURN to go to SC1B plots'
+  exe plot3 [run] b ; wait
+  exe plot5 [run] a ; wait 'Hit RETURN to go to SC1B plots'
+  exe plot5 [run] b 
+
+return
+
+macro plot1 run p=a 
+
+  exe init.graf ; exe get.hist [run]
+  pa1=4;pa2=5;pb1=7;pb2=8
+  zone 2 2
+  tit=RUN [run] - SC1[p] DISTRIBUTIONS and PIXEL CUT ; title_gl [tit]
+  hi/plot [p[p]1]02 colz 
+  exe draw.boxlab 0.18 0.03 0.32 0.05 'NO PIXEL CUT'
+  hi/plot [p[p]2]02 colz
+  exe draw.boxlab 0.18 0.03 0.32 0.05 'PIXEL CUT'
+  hi/plot [p[p]1]03 colz
+  exe draw.boxlab 0.18 0.03 0.32 0.05 'NO PIXEL CUT'
+  hi/plot [p[p]2]03 colz
+  exe draw.boxlab 0.18 0.03 0.32 0.05 'PIXEL CUT'
+
+return
+
+macro plot2 run p=a
+
+
+  exe init.graf ; exe get.hist [run]
+  pa1=4;pa2=5;pb1=7;pb2=8
+  zone 2 3
+  tit=RUN [run] - SC1[p] BARS vs PCAL STRIPS ; title_gl [tit]
+  hi/plot [p[p]1]11 colz
+  exe draw.boxlab 0.18 0.02 0.32 0.05 'NO PIXEL CUT'
+  hi/plot [p[p]2]11 colz
+  exe draw.boxlab 0.18 0.03 0.32 0.05 'PIXEL CUT'
+  hi/plot [p[p]1]12 colz
+  exe draw.boxlab 0.18 0.02 0.32 0.05 'NO PIXEL CUT'
+  hi/plot [p[p]2]12 colz
+  exe draw.boxlab 0.18 0.03 0.32 0.05 'PIXEL CUT'
+  hi/plot [p[p]1]13 colz
+  exe draw.boxlab 0.18 0.02 0.32 0.05 'NO PIXEL CUT'
+  hi/plot [p[p]2]13 colz
+  exe draw.boxlab 0.18 0.03 0.32 0.05 'PIXEL CUT'
+
+return
+
+macro plot3 run p=a
+
+  exe init.graf ; exe get.hist [run]
+  pa1=4;pa2=5;pb1=7;pb2=8
+  na=23 ; nb=62
+  ia=1  ; ib=22
+  
+  zone 2 2
+
+  do i=[i[p]],[n[p]]
+    tit=RUN [run] - SC1[p] TDC(L-R) vs PCAL V,W - BAR [i] ; title_gl [tit]
+    hi/plot $eval([p[p]1]000+[i]) colz 
+    exe draw.boxlab 0.18 0.03 0.32 0.05 'NO PIXEL CUT'
+    hi/plot $eval([p[p]2]000+[i]) colz
+    exe draw.boxlab 0.18 0.03 0.32 0.05 'PIXEL CUT'
+    hi/plot $eval([p[p]1]100+[i]) colz 
+    exe draw.boxlab 0.18 0.03 0.32 0.05 'NO PIXEL CUT'
+    hi/plot $eval([p[p]2]100+[i]) colz
+    exe draw.boxlab 0.18 0.03 0.32 0.05 'PIXEL CUT'
+    if [i].eq.[n[p]] then ; exitm ; endif
+    wait 'Hit RETURN to go to next bar, q to quit'
+  enddo
+
+return
+
+macro plot4 run p=a
+
+
+  exe init.graf ; exe get.hist [run]
+  pa1=4;pa2=5;pb1=7;pb2=8
+  zone 2 3
+  tit=RUN [run] - SC1[p] BARS vs ECAL STRIPS ; title_gl [tit]
+  hi/plot [p[p]1]21 colz
+  exe draw.boxlab 0.18 0.02 0.32 0.05 'NO PIXEL CUT'
+  hi/plot [p[p]2]21 colz
+  exe draw.boxlab 0.18 0.03 0.32 0.05 'PIXEL CUT'
+  hi/plot [p[p]1]22 colz
+  exe draw.boxlab 0.18 0.02 0.32 0.05 'NO PIXEL CUT'
+  hi/plot [p[p]2]22 colz
+  exe draw.boxlab 0.18 0.03 0.32 0.05 'PIXEL CUT'
+  hi/plot [p[p]1]23 colz
+  exe draw.boxlab 0.18 0.02 0.32 0.05 'NO PIXEL CUT'
+  hi/plot [p[p]2]23 colz
+  exe draw.boxlab 0.18 0.03 0.32 0.05 'PIXEL CUT'
+
+return
+
+macro plot5 run p=a
+
+  exe init.graf ; exe get.hist [run]
+  pa1=4;pa2=5;pb1=7;pb2=8
+  na=23 ; nb=62
+  ia=1  ; ib=22
+  zone 2 2
+
+  do i=[i[p]],[n[p]]
+    tit=RUN [run] - SC1[p] TDC(L-R) vs ECAL V,W - BAR [i] ; title_gl [tit]
+    hi/plot $eval([p[p]1]200+[i]) colz 
+    exe draw.boxlab 0.18 0.03 0.32 0.05 'NO PIXEL CUT'
+    hi/plot $eval([p[p]2]200+[i]) colz
+    exe draw.boxlab 0.18 0.03 0.32 0.05 'PIXEL CUT'
+    hi/plot $eval([p[p]1]300+[i]) colz 
+    exe draw.boxlab 0.18 0.03 0.32 0.05 'NO PIXEL CUT'
+    hi/plot $eval([p[p]2]300+[i]) colz
+    exe draw.boxlab 0.18 0.03 0.32 0.05 'PIXEL CUT'
+    if [i].eq.[n[p]] then ; exitm ; endif
+    wait 'Hit RETURN to go to next bar, q to quit'
+  enddo
+
+return
+
+macro draw.boxlab xsc ysc xb yb txt tsca=16
+
+* Draw general box with text [txt] in it.
+* xsc,ysc: size of box in normalized window coordinates (0-1)
+* xb,yb: location of box center in plot coordinates (x,y)
+* if xb,yb<1 use normalized coord.to position box relative to left,bottom
+* if tsca>0 box size with scale with text length normalized to [tsca]
+
+  xw1=$grafinfo('wnxmin') ; xw2=$grafinfo('wnxmax') 
+  yw1=$grafinfo('wnymin') ; yw2=$grafinfo('wnymax')
+  xv1=$grafinfo('vpxmin') ; xv2=$grafinfo('vpxmax') 
+  yv1=$grafinfo('vpymin') ; yv2=$grafinfo('vpymax')
+  scalx = $eval(([xw2]-[xw1])/([xv2]-[xv1]))
+  scaly = $eval(([yw2]-[yw1])/([yv2]-[yv1]))
+  xwid=$eval([xsc]*[scalx]/2.) 
+  ywid=$eval([ysc]*[scaly]/2.)
+  if [xb].lt.1 then ; xb=$eval([xw1]+[xb]*[scalx]) ; endif
+  if [yb].lt.1 then ; yb=$eval([yw1]+[yb]*[scaly]) ; endif
+  if [tsca].gt.0 then ; xwid=$eval([xwid]*$len([txt])/[tsca]) ; endif
+  xb1=[xb]-[xwid] ; xb2=[xb]+[xwid]
+  yb1=[yb]-[ywid] ; yb2=[yb]+[ywid]
+  set fais 1 ; box [xb1] [xb2] [yb1] [yb2]
+  set txci 5 ; set txfp -20 ; set txal -23; itx [xb] [yb] [txt]
+  set txci 1
+
+return
+

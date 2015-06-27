@@ -1,42 +1,54 @@
-macro plot s pic=0
+macro plot s pic=0 norm=1 save=0
 
-  title_gl 'ECAL HV MAP' 
-  zone 1 3
+  nrm1=RESISTANCE;nrm2=VOLTAGE;nrm0=nrm1
   lab1='VOLTAGE SECTOR '//[s]//';CHANNEL;SLOT'
   lab2='CURRENT SECTOR '//[s]//';CHANNEL;SLOT'
-  lab3='NORMALIZED RESISTANCE SECTOR '//[s]//';CHANNEL;SLOT'
+  lab3='NORMALIZED '//[nrm[norm]]//' SECTOR '//[s]//';CHANNEL;SLOT'
   2d 101 [lab1] 24 0. 24. 9 0. 9. 0.
   2d 102 [lab2] 24 0. 24. 9 0. 9. 0.
   2d 103 [lab3] 24 0. 24. 9 0. 9. 0.
-  exe get.pv.map3 [s] MV
-  exe get.pv.map3 [s] MI
-  put_vect/contents 101 mv[s] ; put_vect/contents 102 mi[s]
-  opt nbox ; opt date ; set yhti 0.8 ; set asiz 0.3 ; set vsiz 0.2 ; set ndvx 24 ; set ndvy 16
-  set ygti 0.5 ; set gsiz 0.5
-  min 101 700. ; min 102 170.
+  exe get.pv.map3 [s] MV ; put_vect/contents 101 mv[s]
+  exe get.pv.map3 [s] MI ; put_vect/contents 102 mi[s]
+
+  opt nbox ; opt date 
+  set yhti 0.8 ; set asiz 0.3 ; set vsiz 0.2 ; set ndvx 24 ; set ndvy 16
+  title_gl 'ECAL HV MAP' ; set ygti 0.5 ; set gsiz 0.5
+  min 101 1200. ; min 102 250.
+  zone 1 3
   hi/plot 101 colz ; hi/plot 101 texts
   hi/plot 102 colz ; hi/plot 102 texts
-  sigma r[s]=mv[s]/mi[s]/6.15
+  sigma r[s]=mv[s]/mi[s]/4.2
+  if [save].eq.1 then ; vec/write r[s]  $exec(get.path [s])/r[s].vec 
+                        vec/write mv[s] $exec(get.path [s])/mv[s].vec ; endif
+  z1=0.8 ; z2=1.2
+  case [norm] in
+    (1) vec/read nr $exec(get.path [s])/r[s].vec  ; sigma r[s]=r[s]/nr  ;z1=0.98 ;z2=1.02
+    (2) vec/read nr $exec(get.path [s])/mv[s].vec ; sigma r[s]=mv[s]/nr ;z1=0.995;z2=1.005
+  endcase
   put_vect/contents 103 r[s]
-  min 103 0.9 ; max 103 1.1 ; hi/plot 103 colz 
+  min 103 [z1] ; max 103 [z2] ; hi/plot 103 colz 
   if [pic].eq.1 then ; exe pic [s] ; endif
-  hi/del 101,102,103 ; vec/del r[s],mv[s],mi[s]
+  hi/del 101,102,103 ; vec/del r[s],mv[s],mi[s],nr
 
 return
 
 macro pic s
 
+  message LEFT CLICK TO SELECT CHANNEL, RIGHT CLICK TO RETURN VALUE
+  message RIGHT CLICK ON WHITE AREA TO EXIT
+
   global/imp rmap1*
 10:
-  vlocate x y ntpri=20
+  vlocate x y 
   if $vexist(x).eq.0 then ; exitm ; endif
   slot=$sigma(int(y(1))) ; chan=$sigma(int(x(1)))
-  message ECAL CHANNEL = [rmap1([s]_Sl[slot]_Ch[chan])] HV=$eval(mv[s]([chan]+1,[slot]+1))
+  message ECAL CHANNEL = [rmap1([s]_Sl[slot]_Ch[chan])] _
+          HV=$eval(mv[s]([chan]+1,[slot]+1)) V _
+          IB=$eval(mi[s]([chan]+1,[slot]+1)) uA
   vec/del x,y
   goto 10
 
 return
-
 
 macro get.pv prop
 
@@ -76,6 +88,7 @@ macro get.pv.map3 s prop n1=1 n2=216
 
   vec=[prop][s]
   vec/cre [vec](24,9) r
+  vec/cre nr(24,9) r 216*1.0
 
   string = ''
   p=$exec(get.pv [prop])
@@ -113,6 +126,10 @@ macro get.pv.map2 s prop l1=1 l2=1
 
 return
 
+macro get.path s
+
+return cal/hv/ec/fc/s[s]
+
 macro put.loadhv s=5 prop=DV l1=1 l2=1 tag=569
 
   stat=$exec(map.exist [s])
@@ -129,12 +146,13 @@ macro put.loadhv s=5 prop=DV l1=1 l2=1 tag=569
     comm = caput B_HVECAL[map2([pm],[lay])][p] $eval(newhv([pm])) \n
     if [pm].gt.1 then ; command=[command][comm] ; else ; command=[comm] ; endif
   enddo
-  message Writing [loadhv] to cal/hv/ec/fc/s[s]
+  path=$exe(get.path [s])
+  message Writing [loadhv] to [path]
   txt='echo '//$quote([command])
-  shell [txt] > cal/hv/ec/fc/s[s]/[loadhv]
+  shell [txt] > [path]/[loadhv]
   enddo
 
-  shell chmod a+x cal/hv/ec/fc/s[s]/load*
+  shell chmod a+x [path]/load*
 
 return
 

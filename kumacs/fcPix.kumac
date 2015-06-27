@@ -1,5 +1,6 @@
 macro loop run sec=5 id=10
-* Purpose: Creates histograms containing correlations between hits in FTOF,ECAL planes
+* Purpose: Creates histograms showing effect of pixel cuts
+*          and correlations between hits in FTOF,ECAL planes
 * Input: Ntuple created from et2rzn.c program
 * Output: Histogram file 
 

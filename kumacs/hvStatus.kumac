@@ -1,0 +1,452 @@
+macro get.pv.all
+  
+  exe get.pv.ec 1 6 MV mv 
+  exe get.pv.ec 1 6 DV dv
+  exe get.pv.ec 1 6 ED ed
+  exe get.pv.ec 1 6 MI mi
+  exe get.pv.ec 1 6 ST st
+
+return
+
+macro write.pv.ec run
+
+  global/imp pawroot
+  path=[pawroot]/cal/hv/ec
+  tag=[run]
+  vec/write mv [path]/mv[tag].vec
+  vec/write dv [path]/dv[tag].vec
+  vec/write ed [path]/ed[tag].vec
+  vec/write mi [path]/mi[tag].vec
+  vec/write st [path]/st[tag].vec
+
+return
+  
+macro plot.pv.ec vec mn=0 mx=0 run=67770
+
+  global/import pawroot
+  path=[pawroot]/cal/hv/ec
+  vec/cre [vec](36,6,6) r
+  vec/read [vec] [path]/[vec][run].vec
+  lab=S1 S2 S3 S4 S5 S6
+  label 1 6 $unquote([lab]) 
+  2d 100 '' 36 1. 37. 36. 1. 37. 
+  sigma [vec]=abs([vec])
+  put_vect/contents 100 [vec]
+  if [mx].eq.0 then ;  mn=$sigma(vmin([vec])) ; mx=$sigma(vmax([vec])) ; endif
+  min 100 [mn]; max 100 [mx]
+  set ndvy 6.16
+  hi/plot 100 colz
+  do s=7,32,6 ; line 0. [s] 37 [s] ; enddo
+  atitle PMT
+
+return
+
+macro get.pv.ec s1=1 s2=1 prop=MV vec=mv
+
+  case [prop] in
+    (MV) p=F
+    (DV) p=G
+    (ED) p=K
+    (MI) p=E
+    (ST) p=L
+  endcase
+
+  io1=I ; io2=O
+  lay1=U ; lay2=V ; lay3=W
+
+  vec/cre [vec](36,6,6) r
+
+  do s=[s1],[s2]
+  message Retrieving [prop] for Sector [s]
+  do io=1,2
+  do lay=1,3
+  string = ''
+  do pmt=1,36
+    ipm=[pmt]
+    if [pmt].lt.10 then ; ipm=0[pmt] ; endif
+    pv =  B_hv_EC_S[s]_[lay[lay]][io[io]][ipm]_property.[p]
+    string = [string]//' '//[pv]
+  enddo
+  command = caget -t $unquote([string])
+  sl=$eval([lay]+3*([io]-1))
+  vec/inp [vec](:,[sl],[s]) $unquote($shell([command],' '))
+  enddo
+  enddo
+  enddo
+
+return
+
+******* PCAL *********
+
+macro hv.stat
+
+return
+
+macro hv.off
+
+  do i=1,[#]
+    s=[%i]
+    do lay=1,3
+    message PCAL HV off Sector [s] Layer [lay]
+    shell cal/hv/pc/fc/s[s]/loadhv[lay]-PO0
+    enddo
+  enddo
+
+return
+
+macro hv.on
+
+  do i=1,[#]
+    s=[%i]
+    do lay=1,3
+    message PCAL HV on Sector [s] Layer [lay]
+    shell cal/hv/pc/fc/s[s]/loadhv[lay]-PO1
+    enddo
+  enddo
+
+return
+
+macro hv.disable 
+
+  do i=1,[#]
+    s=[%i]
+    do lay=1,3
+    message PCAL HV disable Sector [s] Layer [lay]
+    shell cal/hv/pc/fc/s[s]/loadhv[lay]-DV0
+    enddo
+  enddo
+
+return
+
+macro hv.enable
+
+  do i=1,[#]
+    s=[%i]
+    do lay=1,3
+    message PCAL HV enable Sector [s] Layer [lay]
+    shell cal/hv/pc/fc/s[s]/loadhv[lay]
+    enddo
+  enddo
+
+return
+
+macro hv.850
+
+  do i=1,[#]
+    s=[%i]
+    do lay=1,3
+    message Setting PCAL Sector [s] Layer [lay] to 850 V
+    shell cal/hv/pc/fc/s[s]/loadhv[lay]-DV850
+    enddo
+  enddo
+
+return
+
+macro hv.par par
+
+  shift
+  do i=1,[#]
+    s=[%i]
+    do lay=1,3
+    message Running [par] for PCAL Sector [s] Layer [lay] 
+    shell cal/hv/pc/fc/s[s]/loadhv[lay]-[par]
+    enddo
+  enddo
+
+return
+
+macro hv.create.loadhv s=5 var=DV val=-1
+
+  n1=68;n2=62;n3=62
+
+  case [var] in
+    (MV) p=.F
+    (DV) p=_v0set
+    (CL) p=_i0set
+    (ED) p=.K
+    (MI) p=.E
+    (ST) p=.L
+    (TR) p=_trip
+    (RU) p=_rampup
+    (RD) p=_rampdn
+    (PO) p=_pwonoff
+  endcase
+
+  exe get.pc.map [s] ; global/imp pcmap*
+
+  do lay=1,3
+  if [val].eq.-1 then ; exe hv.pc.crt2fc [lay] [s] ; endif
+  do i=1,[n[lay]]
+    case [val] in
+     (-1) comm = caput B_HVFTOF[pcmap([i],[lay],[s])]_v0set $eval(newhv([i],[lay],[s])) \n
+          loadhv=loadhv[lay]
+      (*) comm = caput B_HVFTOF[pcmap([i],[lay],[s])][p] [val]  \n
+          loadhv=loadhv[lay]-[var][val]
+    endcase
+    if [i].gt.1 then ; command=[command][comm] ; else ; command=[comm] ; endif
+  enddo
+  message Writing [loadhv] to cal/hv/pc/fc/s[s]
+  txt='echo '//$quote([command])
+  shell [txt] > cal/hv/pc/fc/s[s]/[loadhv]
+  enddo
+  shell chmod a+x cal/hv/pc/fc/s[s]/load*
+
+return
+
+macro get.pv s
+  
+  exe get.pv.pc [s] DV dv 
+  exe get.pv.pc [s] MI mi
+
+return
+
+macro write.pv.pc s run=1
+
+  path=cal/hv/pc/fc/s[s]
+  tag=[run]
+
+  vec/write dv [path]/dv[tag].vec
+  vec/write mi [path]/mi[tag].vec
+
+return
+
+
+macro get.pv.pc s prop vec
+
+  n1=68;n2=62;n3=62
+
+  exe get.pc.map [s] ; global/imp pcmap*
+
+  case [prop] in
+    (MV) p=.F
+    (DV) p=_v0set
+    (ED) p=.K
+    (MI) p=.E
+    (ST) p=.L
+    (CL) p=_i0set
+    (TR) p=_trip
+    (RU) p=_rampup
+    (RD) p=_rampdn
+    (PO) p=_pwonoff
+  endcase
+
+  vec/cre [vec](192) r
+
+  string = ''
+
+  do lay=1,3
+  do i=1,[n[lay]]
+    pv = B_HVFTOF[pcmap([i],[lay],[s])][p]
+    message [pv]
+    string = [string]//' '//[pv]
+  enddo
+  enddo
+
+  command = caget -t $unquote([string])
+  vec/inp [vec](:) $unquote($shell([command],' '))
+
+return
+
+  
+macro plot.pv.pc s run=1 col=1 er=' ' rmin=3.8 rmax=4.0
+
+  set ygti 0.5 ; set gsiz 0.4
+  title_gl 'PCAL R6095 PMT HV (left) V/I (right) - SECTOR '//[s]//' RUN '//[run]
+
+  path=cal/hv/pc/fc/s[s]
+  sigma x=array(68,1#68) ; sigma x=x+0.5
+  vec/cre dv(192) r ; vec/cre mi(192) r
+  vec/read dv [path]/dv[run].vec
+  vec/read mi [path]/mi[run].vec
+  sigma dr=dv/mi
+  t1=U;t2=V;t3=W
+  zone 2 3 1 [er]
+  l1=70;l2=64;l3=64
+  l11=1.;l12=68.;l21=69 ;l22=130 ; l31=131 ; l32=192
+  set mtyp 25 ; set mscf 0.6 ; set pmci [col]
+  do l=1,3
+    null 0. [l[l]] 700. 1000. ; atitle [t[l]]//' PMT' VOLTS ! 321
+    vec/draw dv([l[l]1]:[l[l]2]) chopt=SP
+    null 0. [l[l]] [rmin] [rmax] ; atitle [t[l]]//' PMT' M[W] ! 321
+*    exe plot.boards [l]
+    vec/draw dr([l[l]1]:[l[l]2]) chopt=SP
+    set plci 2 ; line 0. 3.96 70 3.96
+  enddo 
+
+  selnt 1
+  key 12. 18.5 1 '3.96 M[W] E990-07 DIVIDER' ! line
+
+return
+
+macro plot.boards l
+
+  set mtyp 21 ; set txal -20
+
+  case [l] in
+    (1) set pmci 8 ; graph 24 x(1:24)  mi(1:24) chopt=P  ; itx 12 226. 'BOARD 8'
+        set pmci 4 ; graph 24 x(25:48) mi(25:48) chopt=P ; itx 36 226. 'BOARD 9'
+        set pmci 8 ; graph 24 x(49:68) mi(49:68) chopt=P ; itx 58 226. 'BOARD 10'
+    (2) set pmci 8 ; graph  4 x(1:4) mi(69:72) chopt=P
+        set pmci 4 ; graph 24 x(5:28) mi(73:96) chopt=P    ; itx 16. 226. 'BOARD 11'
+        set pmci 8 ; graph 24 x(29:52) mi(97:120) chopt=P  ; itx 40 226. 'BOARD 12'
+        set pmci 4 ; graph 10 x(53:62) mi(121:130) chopt=P
+    (3) set pmci 4 ; graph 14 x(1:14) mi(131:144) chopt=P  ; itx 7. 226. 'BOARD 13' 
+        set pmci 8 ; graph 24 x(15:38) mi(145:168) chopt=P ; itx 27. 226. 'BOARD 14'
+        set pmci 4 ; graph 24 x(39:62) mi(169:192) chopt=P ; itx 50. 226. 'BOARD 15'
+  endcase
+  set pmci 1 ; set mtyp 25
+
+return
+
+macro plot.hv.1 s run1 run2
+
+  path=cal/hv/pc/fc/s[s]
+  
+  vec/cre dv1(192) r ; vec/cre dv2(192) r
+  vec/read dv1 [path]/dv[run1].vec  
+  vec/read dv2 [path]/dv[run2].vec
+
+  t1=U;t2=V;t3=W
+  zone 2 3 1 [er]
+  l1=70;l2=64;l3=64
+  l11=1.;l12=68.;l21=69 ;l22=130 ; l31=131 ; l32=192
+  set mtyp 25 ; set mscf 0.6 ; set pmci 1
+  do l=1,3
+    null 0. [l[l]] 700. 1000. ; atitle [t[l]]//' PMT' VOLTS ! 321 
+    vec/draw dv1([l[l]1]:[l[l]2]) chopt=SP
+    null 0. [l[l]] 700. 1000. ; atitle [t[l]]//' PMT' VOLTS ! 321
+    vec/draw dv2([l[l]1]:[l[l]2]) chopt=SP
+  enddo 
+  
+  selnt 1
+  itx 5.6 18.5 'MODULE 1' ; itx 14.7 18.5 'MODULE 2'
+  
+return
+
+macro plot.hv.2 s run1 run2
+
+  path=cal/hv/pc/fc/s[s]
+  
+  vec/cre dv1(192) r ; vec/cre dv2(192) r
+  vec/read dv1 [path]/dv[run1].vec  
+  vec/read dv2 [path]/dv[run2].vec
+  arg1=1:68;arg2=69:130;arg3=131:192
+  do r=1,2
+  do i=1,3
+    1d 10[i][r] '' 40 780 940.
+    vec/hfill dv[r]([arg[i]]) 10[i][r]
+  enddo
+  enddo
+  
+  zone 2 3
+  hi/plot 1011 ; atitle 'U PMT HV'
+  hi/plot 1012 ; atitle 'U PMT HV'
+  hi/plot 1021 ; atitle 'V PMT HV'
+  hi/plot 1022 ; atitle 'V PMT HV'
+  hi/plot 1031 ; atitle 'W PMT HV'
+  hi/plot 1032 ; atitle 'W PMT HV'
+  
+  selnt 1
+  itx 5.6 18.5 'MODULE 1' ; itx 14.7 18.5 'MODULE 2' 
+  
+return
+
+****PCAL MAINFRAME MAP****
+
+macro get.pc.map s
+
+  map6=1;map5=2;map4=3;map1=5;map2=6;map3=7
+  n1=68;n2=62;n3=62
+  pmt=0;lay=1
+
+  do slot=8,15
+  do chan=0,23
+    pmt=[pmt]+1
+    if [pmt].gt.[n[lay]] then
+      pmt=1 ; lay=[lay]+1
+    endif
+    hvtag = [map[s]]_[slot]_[chan]
+    hvmap = [pmt],[lay],[s]
+    global/cre pcmap([hvmap]) [hvtag]
+  enddo
+  enddo
+
+return
+
+****PCAL CRT to FC TRANSLATION****
+  
+macro hv.pc.crt2fc lay=1 s=5
+
+* Reads crt hv files and dumps into vector newhv
+
+* Sector <-> module map
+  s1=4;s2=3;s3=2;s4=1;s5=6;s6=5
+
+  l1=u;l2=v;l3=w  
+
+  if $vexist(newhv).eq.0 then ; vec/cre newhv(68,3,6) r ; endif
+
+  file=cal/hv/pc/crt/m[s[s]]/pcal_hv_[l[lay]]_m[s[s]]
+
+  tag 		= '$'
+  command 	= 'cat '//[file]
+  filecontents 	= $shell([command],[tag])
+  nlines	= $words([filecontents],[tag])
+
+  n = 0
+  
+  while [n].lt.[nlines] do
+    n = [n]+1
+    string = $word([filecontents],[n],1,[tag])
+    vec/inp newhv([n],[lay],[s]) $word([string],3,1,' ')
+  endwhile
+
+return
+
+**** ECAL *****
+
+macro hv.ec.crt2fc lay sec
+
+  vec/cre newhv(36,6,6) r 
+  vec/read newhv cal/hv/ec/crt/dv69666.vec
+  sigma newhv=abs(newhv)
+
+return
+
+macro hv.ec.create.loadhv s=5 var=DV val=-1
+
+  n1=36;n2=36;n3=36;n4=36;n5=36;n6=36
+
+  case [var] in
+    (MV) p=.F
+    (DV) p=_v0set
+    (CL) p=_i0set
+    (ED) p=.K
+    (MI) p=.E
+    (ST) p=.L
+    (TR) p=_trip
+    (RU) p=_rampup
+    (RD) p=_rampdn
+    (PO) p=_pwonoff
+  endcase
+
+  exe hvECAL#get.map.new [s] ; global/imp map2*
+
+  do lay=1,6
+  if [val].eq.-1 then ; exe hv.ec.crt2fc [lay] [s] ; endif
+  do i=1,[n[lay]]
+    case [val] in
+     (-1) comm = caput B_HVECAL[map2([i],[lay])]_v0set $eval(newhv([i],[lay],[s])) \n
+          loadhv=loadhv[lay]
+      (*) comm = caput B_HVECAL[map2([i],[lay])][p] [val]  \n
+          loadhv=loadhv[lay]-[var][val]
+    endcase
+    if [i].gt.1 then ; command=[command][comm] ; else ; command=[comm] ; endif
+  enddo
+  message Writing [loadhv] to cal/hv/ec/fc/s[s]
+  txt='echo '//$quote([command])
+  shell [txt] > cal/hv/ec/fc/s[s]/[loadhv]
+  enddo
+  shell chmod a+x cal/hv/ec/fc/s[s]/load*
+
+return

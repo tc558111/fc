@@ -1,0 +1,519 @@
+macro run opt=uvw
+
+  exe pc.initvec
+  exe pc.initgraf
+  exe pc.geom.offsets
+  exe pc.drawall [opt]
+  
+return
+
+macro pc.initvec
+
+  global/cre pi,r2d,bu,lvw,hu,alph,beta,nus,nud,nvs,nvd,ss,ds,xc,ta,tb,sa,ca,nu,nv,nw,zt
+  global/cre nuu,nvv,nww
+  
+  global/cre isold 1 ; global/cre ilold 1
+  
+* Geometry from PCAL web page
+  pi   = 3.1415926
+  r2d  = $eval([pi]/180.)
+  bu   = 393.827 
+  lvw  = 432.261 
+  hu   = $sigma(sqrt([lvw]*[lvw]-[bu]*[bu]/4.))
+  ca   = $eval([bu]/[lvw]/2.)
+  sa   = $eval([hu]/[lvw])
+  alph = $sigma(acos([ca])) 
+  beta = $sigma([pi]/2.-[alph])
+  
+* Single and double readout  
+  nus  = 52 ; nud = 16 ; nu=[nus]+[nud] ; nuu=[nus]+[nud]*2
+  nvs  = 47 ; nvd = 15 ; nv=[nvs]+[nvd] ; nvv=[nvs]+[nvd]*2
+  nws  = 47 ; nwd = 15 ; nw=[nws]+[nwd] ; nww=[nws]+[nwd]*2
+  vec/cre uoff([nu]) r [nus]*1 [nud]*2
+  vec/cre voff([nv]) r [nvd]*2 [nvs]*1
+  vec/cre woff([nw]) r [nwd]*2 [nws]*1
+  
+  vec/cre ns(3) i [nu] [nv] [nw]
+  
+*  ss   = 4.5+2*0.025 (including TiO2 coating)
+  ss   = 4.5
+  ds   = $eval([ss]*2)
+  xc   = $sigma([ss]/cos([beta]))
+  ta   = $sigma(tan([alph]))
+  tb   = $sigma(tan([beta]))
+  zt   = 15*(1+0.22)/2.
+
+* Box boundary
+  vec/cre xpc(6) r 0. $eval([bu]/2.) 0. $eval(-[bu]/2.) 0. 0.
+  vec/cre ypc(6) r 0. 0. [hu] 0. 0.  [hu]
+  
+* U strips 
+  sigma yud=array([nud]+1,0.#$eval([nud]*[ds])) ; save=yud(17)
+  sigma yus=array([nus]+1,[save]#$eval([save]+[nus]*[ss]))
+  sigma xud=yud*[bu]/[hu]/2-[bu]/2
+  sigma xus=yus*[bu]/[hu]/2-[bu]/2
+  
+* W strips
+  sigma xwsa=array([nws]+1,[bu]/2-$eval([nws]*[xc])#[bu]/2.) ; save=xwsa(1)
+  sigma xwda=array([nwd]+1,[save]-$eval([nwd]*[xc]*2)#[save])
+  sigma ywsb=[ta]*([bu]/2.-xwsa)/(1+[ta]*[tb])
+  sigma xwsb=-ywsb*[tb]
+  sigma ywsb=[hu]-ywsb
+  
+  sigma ywdb=[ta]*([bu]/2.-xwda)/(1+[ta]*[tb])
+  sigma xwdb=-ywdb*[tb]
+  sigma ywdb=[hu]-ywdb
+  
+* V strips
+  sigma xvsa=-xwsa
+  sigma xvsb=-xwsb
+  sigma xvda=-xwda
+  sigma xvdb=-xwdb
+  sigma yvsb= ywsb
+  sigma yvdb= ywdb
+
+  vec/cre zu([nu]) r [nu]*[zt]
+  vec/cre zv([nu]) r [nv]*[zt]
+  vec/cre zw([nu]) r [nw]*[zt]
+  
+return
+
+macro pc.initgraf
+
+  global/imp zmin,zmax
+  
+* Setup graphics window
+  next
+*  swn 10 -200. 200. -10. 390. 
+  swn 10 -200. 600.  -400. 400. 
+  svp 10 0. 1. 0. 1.
+  set lasi 0.3
+
+  call igcolm(18.,18.5,4.5,16.0,11,56,[zmin],[zmax],'CAV')
+
+  selnt 10
+  
+return
+
+macro pc.geom.offsets
+
+  global/imp zoffpc1,zt
+  global/cre zoffpc $eval([zoffpc1]+2*(5.08+0.1905)+[zt])
+
+return
+
+macro pc.getstrips  
+
+  global/imp zoffpc  
+  do il=1,3
+  do is=1,ns([il])
+  vec/cre xs[il][is](5) r ; vec/cre ys[il][is](5) r ; vec/cre zs[il][is](5) r
+  case [il] in
+    (1) if [is].le.52 then ; iss=53-[is] ; w=s ; endif
+        if [is].gt.52 then ; iss=69-[is] ; w=d ; endif
+        x1=$sigma(abs(xu[w]([iss]+1))) ; x2=$sigma(abs(xu[w]([iss])))
+        y1=$sigma(abs(yu[w]([iss]+1))) ; y2=$sigma(abs(yu[w]([iss])))
+        z1=$sigma(abs(zu([is])))    ; z2=[z1]
+        vec/inp xs[il][is]  -[x1]  [x1]  [x2] -[x2] -[x1]
+        vec/inp ys[il][is]   [y1]  [y1]  [y2]  [y2]  [y1]
+        vec/inp zs[il][is]  -[z1]  [z1]  [z2] -[z2] -[z1]
+        sigma zs[il][is]=zs[il][is]+[zoffpc]
+    (2) if [is].le.15 then ; iss=[is]    ; w=d ; endif
+        if [is].gt.15 then ; iss=[is]-15 ; w=s ; endif
+        x1a=$sigma(xv[w]a([iss]+1)) ; x2a=$sigma(xv[w]a([iss]))
+        x1b=$sigma(xv[w]b([iss]+1)) ; x2b=$sigma(xv[w]b([iss]))
+        y1b=$sigma(yv[w]b([iss]+1)) ; y2b=$sigma(yv[w]b([iss]))
+        vec/inp xs[il][is]   [x1a]  [x2a]  [x2b]  [x1b] [x1a]   
+        vec/inp ys[il][is]      0.     0.  [y2b]  [y1b]    0.
+    (3) sigma xs[il][is]=-xs2[is] ; sigma ys[il][is]=ys2[is]    
+  endcase
+  enddo
+  enddo
+  
+return
+
+macro pc.getvertices.uvw
+
+  global/imp ca,sa,ss,nuu,nvv,nww
+  
+  vec/cre vxuwx(84,78) r
+  vec/cre vxuwy(84,78) r
+  
+  do u=1,84
+  do w=1,78
+    x=$eval(([w]-39)-[ca]*(84-[u]))
+    y=$eval((84-[u])*[sa])
+    vec/inp vxuwx([u],[w]) [x]
+    vec/inp vxuwy([u],[w]) [y]
+  enddo
+  enddo 
+
+  sigma vxuwx=vxuwx*[ss]/[sa]
+  sigma vxuwy=vxuwy*[ss]/[sa]
+  sigma vxuvx=-vxuwx
+  sigma vxuvy=vxuwy
+  
+  vec/write vxuwx pcvec/vxuwx.vec
+  vec/write vxuwy pcvec/vxuwy.vec
+  vec/write vxuvx pcvec/vxuvx.vec
+  vec/write vxuvy pcvec/vxuvy.vec
+  
+return
+
+macro pc.getvertices.vw
+
+  global/imp ca,sa,ss,ta,tb
+  
+  vec/cre vxvwx(78,78) r
+  vec/cre vxvwy(78,78) r
+  
+  do v=1,78 
+  do w=1,78
+    x=$eval([ca]*([w]-[v]))
+    y=$eval([sa]*(([v]-39)+([w]-39)))
+    vec/inp vxvwx([v],[w]) [x]
+    vec/inp vxvwy([v],[w]) [y]
+  enddo
+  enddo 
+
+  sigma vxvwx=vxvwx*[ss]*([ta]+[tb])/2/[ta]/[tb]
+  sigma vxvwy=vxvwy*[ss]*([ta]+[tb])/2/[ta]/[tb]
+  
+  vec/write vxvwx pcvec/vxvwx.vec
+  vec/write vxvwy pcvec/vxvwy.vec
+  
+return
+
+macro pc.getpixels.uvw
+
+  vec/cre pxuwx(6,68,68) r
+  vec/cre pxuwy(6,68,68) r
+  vec/cre goodpix(68) r 
+  vec/cre xx(6) r ; vec/cre yy(6) r
+  set fais 1 ; set faci 2
+  iu=84 ; iw=78 ; us=d ; ws=s ; ius=69 ; iws=63
+  
+  do u=68,2,-1
+  jump=0 
+  if [u].le.52 then ; us=s ; ius=54 ; endif  
+  message Generating pixels for u= [u]
+  do w=62,1,-1
+    iww=[w]
+    if [w].le.15 then ; ws=d ; iww=[w] ; else ; ws=s; iww=[w]-15; endif  
+    uoff=[iu]-uoff([u]);woff=[iw]-woff([w])
+    x1=$eval(vxuwx([iu],[woff]))   ; y1=$eval(vxuwy([iu],[woff]))
+    x2=$eval(vxuwx([iu],[iw]))     ; y2=$eval(vxuwy([iu],[iw]))
+    x3=$eval(vxuwx([uoff],[iw]))   ; y3=$eval(vxuwy([uoff],[iw]))
+    x4=$eval(vxuwx([uoff],[woff])) ; y4=$eval(vxuwy([uoff],[woff]))
+
+    xtst1=$sigma(xu[us]([ius]-[u]))   ; xtst2=$sigma(xu[us]([ius]-[u]+1))
+    xtst1a=$sigma(xw[ws]b([iww]))     ; xtst1b=$sigma(xw[ws]b([iww]+1))
+    ytst1=$sigma(yw[ws]b([iww]))      ; ytst2=$sigma(yw[ws]b([iww]+1))
+    
+    if [x4].gt.[xtst2] then
+      vec/inp pxuwx(:,[u],[w]) [x1] [x2] [x3] [x4] [x1] [x1]
+      vec/inp pxuwy(:,[u],[w]) [y1] [y2] [y3] [y4] [y1] [y1]
+    elseif [x1].gt.[xtst1] then
+      vec/inp pxuwx(:,[u],[w]) [x1] [x2] [x3] [xtst2] [xtst1a] [x1]
+      vec/inp pxuwy(:,[u],[w]) [y1] [y2] [y3] [y3]    [ytst1]  [y1]
+    else
+      vec/inp pxuwx(:,[u],[w]) [xtst1] [x2] [xtst1b] [xtst1] [xtst1] [xtst1]
+      vec/inp pxuwy(:,[u],[w]) [y1]    [y2] [ytst2]  [y1]     [y1]   [y1]
+      jump=1
+    endif 
+    
+    vec/inp goodpix([u]) [w]
+    
+    sigma pxuvx=-pxuwx
+    sigma pxuvy=pxuwy
+    vec/cop pxuwx(:,[u],[w]) xx ; vec/cop pxuwy(:,[u],[w]) yy
+*    vec/cop pxuvx(:,[u],[w]) xx ; vec/cop pxuvy(:,[u],[w]) yy
+    set faci [w]*1.2
+    call ifa(6,xx,yy)  
+
+    iw=[iw]-woff([w])
+    if [jump].eq.1 then ; goto here ; endif
+  enddo
+here:  
+    iw=78
+    iu=[iu]-uoff([u])
+  enddo
+  
+  vec/write pxuwx pcvec/pxuwx.vec
+  vec/write pxuwy pcvec/pxuwy.vec
+  vec/write pxuvx pcvec/pxuvx.vec
+  vec/write pxuvy pcvec/pxuvy.vec
+  vec/write goodpix pcvec/goodpixuw.vec
+  vec/write goodpix pcvec/goodpixuv.vec
+  
+return
+
+macro pc.getpixels.vw
+
+  vec/cre pxvwx(6,68,68) r
+  vec/cre pxvwy(6,68,68) r
+  vec/cre goodpix(68) r 
+  vec/cre xx(6) r ; vec/cre yy(6) r
+  set fais 1 ; set faci 2
+  iv=78 ; iw=78 ; a=2 ; b=4
+  col=2 
+  
+  do v=62,1,-1
+  jump=0
+  if [v].le.15 then ; a=4 ; b=2 ; endif  
+  message Generating pixels for v= [v]
+  do w=62,1,-1
+    voff=[iv]-voff([v]);woff=[iw]-woff([w])
+    x1=$eval(vxvwx([iv],[iw]))       ; y1=$eval(vxvwy([iv],[iw]))
+    x[a]=$eval(vxvwx([voff],[iw]))   ; y[a]=$eval(vxvwy([voff],[iw]))
+    x3=$eval(vxvwx([voff],[woff]))   ; y3=$eval(vxvwy([voff],[woff]))
+    x[b]=$eval(vxvwx([iv],[woff]))   ; y[b]=$eval(vxvwy([iv],[woff]))
+    
+    if [y3].gt.0 then
+      vec/inp pxvwx(:,[v],[w]) [x1] [x2] [x3] [x4] [x1] [x1]
+      vec/inp pxvwy(:,[v],[w]) [y1] [y2] [y3] [y4] [y1] [y1]
+      n=5
+    elseif [y2].gt.0 then
+      x3a=$sigma(([x3]*[y2]-[x2]*[y3])/([y2]-[y3]))
+      x4a=$sigma(([x3]*[y4]-[x4]*[y3])/([y4]-[y3]))
+      vec/inp pxvwx(:,[v],[w]) [x1] [x2] [x3a] [x4a] [x4] [x1]  
+      vec/inp pxvwy(:,[v],[w]) [y1] [y2]   0.  0.    [y4] [y1]
+      n=6
+    else
+      x3a=$sigma(([x2]*[y1]-[x1]*[y2])/([y1]-[y2]))
+      x4a=$sigma(([x4]*[y1]-[x1]*[y4])/([y1]-[y4]))
+      vec/inp pxvwx(:,[v],[w]) [x1] [x3a] [x4a] [x1] [x1] [x1]  
+      vec/inp pxvwy(:,[v],[w]) [y1]    0.    0. [y1] [y1] [y1]
+      n=4
+      jump=1
+    endif
+    
+    vec/inp goodpix([v]) [w]
+    
+    vec/cop pxvwx(:,[v],[w]) xx ; vec/cop pxvwy(:,[v],[w]) yy
+    set faci $sigma(int([w]))
+    call ifa(6,xx,yy)  
+
+    if [jump].eq.1 then ; goto here ; endif
+    
+    iw=[iw]-woff([w])
+
+  enddo
+here:  
+    iw=78
+    iv=[iv]-voff([v])
+  enddo
+  
+  sigma pxwvx=-pxvwx
+  sigma pxwvy=pxvwy
+  vec/write pxvwx pcvec/pxvwx.vec
+  vec/write pxvwy pcvec/pxvwy.vec
+  vec/write pxwvx pcvec/pxwvx.vec
+  vec/write pxwvy pcvec/pxwvy.vec
+  vec/write goodpix pcvec/goodpixvw.vec
+  vec/write goodpix pcvec/goodpixwv.vec
+  
+return
+
+macro pc.drawpix vec pix=uw log=1 z1=20.1 z2=6800.1 grid=0
+
+  vec/cre xx(6) r 
+  vec/cre yy(6) r
+  
+  case [pix] in
+    (uv,uw) imax=68 ; jmax=62
+    (vw,wv) imax=62 ; jmax=62
+    (vu,wu) imax=62 ; jmax=68
+  endcase
+  
+  global/cre zmin,zmax
+  zmin=[z1] ; zmax=[z2]
+  if [log].eq.1 then ; zmin=$sigma(log([z1])) ; zmax=$sigma(log([z2])) ; endif
+
+  exe pc.initvec
+  exe pc.initgraf
+  exe pc.drawall [pix]
+
+  selnt 10
+  
+  do i=[imax],1,-1 ; max=$eval(goodpix([i]))
+  do j=[jmax],[max],-1
+  val=$eval([vec]([i],[j])) 
+  if [val].gt.[zmin] then
+  if [log].eq.1 then ; val=$sigma(log([val])) ; endif
+  nlev=nlev(1)
+  col=$sigma(int(([val]-[zmin])/([zmax]-[zmin])*[nlev]+8))
+  else
+  col=8
+  endif
+  set faci [col] ; set fais 1 ; set faci [col]
+  vec/cop pxx(:,[i],[j]) xx ; vec/cop pxy(:,[i],[j]) yy
+  call ifa(6,xx,yy)
+  enddo
+  enddo
+  
+  if [grid].eq.1 then ; exe pc.drawall [pix] ; endif
+  if [grid].eq.2 then ; exe pc.drawall uvw   ; endif
+  
+return 
+   
+macro pc.drawstrip d1=x d2=y
+
+   selnt 10
+
+   xv=[d1] ; yv=[d2]
+   vold1=v[d1][d2]1 ; vold2=v[d1][d2]2 
+
+   do i=1,$vlen([vold1])
+     is=[vold1]([i]) ; il=[vold2]([i]) ; col=0
+     set fais 1 ; set faci [col] ; call ifa(5,[xv]s[il][is],[yv]s[il][is])
+   enddo
+*   exe pc.drawall uvw
+   do i=1,$vlen(sedstr)
+     is=sedstr([i]) ; il=sedlay([i]) ; col=sedcol([i]) 
+     set fais 1 ; set faci [col] ; call ifa(5,[xv]s[il][is],[yv]s[il][is])
+   enddo
+
+   vec/cop sedstr [vold1] ; vec/cop sedlay [vold2] 
+   
+return
+
+macro pc.drawtxt 
+  
+  selnt 1
+  x1=10;y1=9
+  set chhe 0.2
+  if $vexist(told1).eq.1 then
+  set txci 0 
+  do i=1,$vlen(told1)
+    y1=[y1]-0.4
+    tit=LAY=$eval(told2([i])) STR=$eval(told1([i])) ADC=$eval(told3([i]))
+    itx [x1] [y1] [tit]
+  enddo
+  uvwsum=$sigma(vsum(told1)) ; uvw=$eval(told4)
+  tit=U+V+W=[uvwsum]  Dalitz=[uvw]
+  itx [x1] [y1]-0.7 [tit]
+  endif
+  
+  uvwsum=$sigma(vsum(sedstr)) ; uvw=$eval(seduvw)
+  x1=10 ; y1=9
+  set txci 1
+  do i=1,$vlen(sedstr)
+    y1=[y1]-0.4
+    tit=LAY=$eval(sedlay([i])) STR=$eval(sedstr([i])) ADC=$eval(sedadc([i]))
+    itx [x1] [y1] [tit]
+  enddo
+  tit=U+V+W=[uvwsum]  Dalitz=[uvw]
+  itx [x1] [y1]-0.7 [tit]
+  
+  vec/cop sedstr told1 ; vec/cop sedlay told2 ; vec/cop sedadc told3
+  vec/cop seduvw told4
+  
+return
+
+macro pc.drawall pix=uw
+
+* Draw boundary of box
+  
+  pline 5 xpc ypc
+  
+  case [pix] in 
+    (uv,vu) exe pc.draw.u ; exe pc.draw.v
+    (uw,wu) exe pc.draw.u ; exe pc.draw.w
+    (vw,wv) exe pc.draw.v ; exe pc.draw.w
+      (uvw) exe pc.draw.u ; exe pc.draw.v ; exe pc.draw.w
+  endcase
+   
+*  exe pc.drawgeom
+  
+  selnt 10
+
+return
+
+macro pc.draw.z il
+
+  set plci 1 ; set lwid 4.5
+  do is=1,ns([il]) ; pline 5 zs[il][is] ys[il][is] ; enddo
+  set plci 1 ; set lwid 0
+
+return
+
+macro pc.draw.u
+
+  global/imp pi,r2d,bu,lvw,hu,alph,beta,nus,nud,nvs,nvd,ss,ds,xc,ta,tb
+  
+* Draw u strips
+  
+  do i=1,[nud]+1
+  line $eval(xud([i])) $eval(yud([i])) $eval(-xud([i])) $eval(yud([i]))
+  enddo
+  
+  do i=1,[nus]+1
+  line $eval(xus([i])) $eval(yus([i])) $eval(-xus([i])) $eval(yus([i]))
+  enddo 
+ 
+return
+
+macro pc.draw.v
+
+  global/imp pi,r2d,bu,lvw,hu,alph,beta,nus,nud,nvs,nvd,ss,ds,xc,ta,tb
+  
+* Draw v strips 
+
+  do i=1,[nvs]+1
+  line $eval(xvsa([i])) 0. $eval(xvsb([i])) $eval(yvsb([i])) 
+  enddo
+ 
+  do i=1,[nvd]+1
+  line $eval(xvda([i])) 0. $eval(xvdb([i])) $eval(yvdb([i]))  
+  enddo
+  
+return
+
+macro pc.draw.w
+
+  global/imp pi,r2d,bu,lvw,hu,alph,beta,nus,nud,nvs,nvd,ss,ds,xc,ta,tb
+  
+* Draw w strips
+
+  do i=1,[nvs]+1
+  line $eval(xwsa([i])) 0. $eval(xwsb([i])) $eval(ywsb([i]))
+  enddo
+  
+  do i=1,[nvd]+1
+  line $eval(xwda([i])) 0. $eval(xwdb([i])) $eval(ywdb([i]))
+  enddo
+  
+return
+
+macro pc.drawgeom xoff=1000 yoff=-3400
+
+  global/imp hu,bu,lvw,alph,beta,r2d
+
+  set plci 2
+  vec/cop xpc xoff ; vec/cop ypc yoff 
+  vec/inp xoff $vdim(xpc)*[xoff] 
+  vec/inp yoff $vdim(ypc)*[yoff]
+  sigma xpcc=(xpc-xoff)*0.1
+  sigma ypcc=(ypc-yoff)*0.1
+  pline 6 xpcc ypcc
+  set plci 1
+  
+  selnt 1
+
+  text 4.75 17.3 'BU'  0.2
+  text 5.50 18.6 'LVW' 0.2 -62.89  C
+  text 5.00 18.4 'HU'  0.2  -90.00 C
+  set tfon 0
+  text 6.10 17.5 '[a]' 0.2    0.00 C
+  text 5.00 19.6 '2[b]' 0.2    0.00 C
+  set tfon -60
+  
+  set chhe 0.28
+  tit=BU=[bu]                 ; itx 0.5 19.5 [tit]
+  tit=HU=[hu]                 ; itx 0.5 19.0 [tit]
+  tit=LVW=[lvw]               ; itx 0.5 18.5 [tit]
+  tit=[a]=$eval([alph]/[r2d]) ; itx 0.5 18.0 [tit]
+  tit=[b]=$eval([beta]/[r2d]) ; itx 0.5 17.5 [tit]
+  
+return

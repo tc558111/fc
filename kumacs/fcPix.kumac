@@ -146,11 +146,10 @@ return
 
 macro plot2 run p=a
 
-
   exe init.graf ; exe get.hist [run]
   pa1=4;pa2=5;pb1=7;pb2=8
   zone 2 3
-  tit=RUN [run] - SC1[p] BARS vs PCAL STRIPS ; title_gl [tit]
+  tit=RUN [run] - SC1[p] BARS vs PCAL U STRIPS ; title_gl [tit]
   hi/plot [p[p]1]11 colz
   exe draw.boxlab 0.18 0.02 0.32 0.05 'NO PIXEL CUT'
   hi/plot [p[p]2]11 colz
@@ -196,7 +195,7 @@ macro plot4 run p=a
   exe init.graf ; exe get.hist [run]
   pa1=4;pa2=5;pb1=7;pb2=8
   zone 2 3
-  tit=RUN [run] - SC1[p] BARS vs ECAL STRIPS ; title_gl [tit]
+  tit=RUN [run] - SC1[p] BARS vs ECAL U STRIPS ; title_gl [tit]
   hi/plot [p[p]1]21 colz
   exe draw.boxlab 0.18 0.02 0.32 0.05 'NO PIXEL CUT'
   hi/plot [p[p]2]21 colz

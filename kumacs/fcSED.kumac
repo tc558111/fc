@@ -1,0 +1,252 @@
+macro loop p=1a tim=30 if=1 run=479
+
+  exe init.global ; global/imp *path
+  exe init.vec
+  exe init.hist
+  file=[rznpath]/forcar-s1-[run].rzn
+  message fcMuon: Opening ntuple [file]
+  hi/file 1 [file] 8191
+  nt/print 10
+  call [funpath]/fcsedlib.f77
+  exe sc.geom 
+  exe sc.geom.offsets
+  exe sc.getstrips 1a
+  exe sc.getstrips 1b
+  exe pcSED
+  exe pcSED#pc.getstrips
+  exe ec.geom
+  exe ec.geom.offsets
+  exe ec.getstrips
+  do i=1,10000
+    nt/loop 10 pcsed() ifirst=[if] nevent=1
+    if=[if]+1
+    exe sc.drawstrip [p]
+    exe pcSED#pc.drawstrip
+    exe pcSED#pc.drawall uvw
+    exe sc.draw [p]
+    exe sc.drawstrip [p]
+    exe sc.drawstrip 1a z y
+    exe sc.draw      1a z y
+    exe sc.drawstrip 1a z y
+    exe sc.drawstrip 1b z y
+    exe sc.draw      1b z y
+    exe sc.drawstrip 1b z y
+    exe pcSED#pc.drawstrip z y
+    exe pcSED#pc.draw.z 1
+    exe pcSED#pc.drawtxt
+    exe ec.drawstrip z y
+    exe ec.draw.z 1
+    exe ec.drawstrip z y
+    txt=EVENT [i] ; wait [txt] [tim]
+  enddo
+
+  close 0
+
+return
+
+macro init.global
+
+  message fcSED: Initializing globals
+  global/cre rznpath /home/clasrun/ecal/pcal/paw/forcar
+  global/cre funpath /home/clasrun/ecal/pcal/paw/kumac/calcom/cal12/fun
+
+return
+
+macro init.vec
+
+  vec/cre sedstr(400) r
+  vec/cre sedlay(400) r
+  vec/cre sedadc(400) r
+  vec/cre sedcol(400) i
+  vec/cre s1astr(400) r
+  vec/cre s1bstr(400) r
+  vec/cre secstr(400) r
+  vec/cre seclay(400) r
+  vec/cre secadc(400) r
+  vec/cre seccol(400) r
+  vec/cre seduvw(1)   r
+  vec/cre nn(2)       r 2*0
+  vec/cre thresh(1)   r 15.
+  vec/cre adccal(1)   r 0.35
+
+return
+
+macro init.hist
+
+  cd //pawc ; hi/del * ; close  0
+  1d 777 '' 200 1. 3. 0.
+
+return
+
+macro sc.geom
+
+  global/cre n1a,n1b,w1a,w1b,t1a,t1b
+
+  n1a=23 ; n1b=62 ; w1a=15.01 ; w1b=6.0 ; t1a=5.08/2. ; t1b=6.0/2.
+
+  vec/cre x1a(23) r 32.3 48.1 64. 79.8 95.7 106.6 122.4 138.3 154.1 170._
+                    185.8 201.7 217.6 233.4 249.3 265.1 281. 296.8 312.7 _ 
+                    328.5 344.4 360.2 376.1
+
+  sigma x1a=x1a/2. ; sigma x1a=order(x1a,-x1a)
+  sigma y1a=array([n1a]+1,0.#$eval([n1a]*[w1a]))
+  vec/cre z1a(23) r [n1a]*[t1a]
+
+  vec/cre x1b(62) r  17.27  23.62  30.08  36.43  42.89  49.24  55.70  62.05  68.51_
+                     74.86  81.32_
+                     87.67  94.13 100.48 106.94 113.29 119.75 126.10 132.56 138.91_
+                    145.37 151.72 158.17 164.52 170.98 177.33 183.79 190.14 196.60_
+                    202.95 209.41 215.76 222.22 228.57 235.05 241.38 247.84 254.19_
+                    260.65 267.00 273.46 279.81 286.27 292.62 299.08 305.43 311.88_
+                    318.23 324.69 331.04 337.50 343.85 350.31 356.66 363.12 369.47_
+                    375.93 382.28 388.74 395.09 401.55 407.90
+
+  sigma x1b=x1b/2. ; sigma x1b=order(x1b,-x1b)
+  sigma y1b=array([n1b]+1,0.#$eval([n1b]*[w1b]))
+  vec/cre z1b([n1b]) r [n1b]*[t1b]
+
+return
+
+macro sc.geom.offsets
+
+  global/imp t1a,t1b
+  global/cre xoff1a -0.953
+  global/cre xoff1b -0.953
+  global/cre yoff1a -15.
+  global/cre yoff1b -30.
+  global/cre zoff1b 250.
+  global/cre zoff1a $eval([zoff1b]+10.717+[t1a]+[t1b])
+  global/cre zoffpc1 $eval([zoff1a]+[t1a])
+
+return
+
+macro sc.getstrips p=1a
+
+  global/imp  n[p],w[p],t[p],*off*
+  xv=x[p];yv=y[p];zv=z[p]
+  do i=1,[n[p]]
+  vec/cre [xv][i](5) r ; vec/cre [yv][i](5) r ; vec/cre [zv][i](5) r
+  x1=[xv]([i]) ; x2=[x1] ; y1=[yv]([i]) ; y2=[yv]([i]+1) ; z1=[zv]([i]) ; z2=[z1]
+  vec/inp [xv][i] -[x1] [x1] [x2] -[x2] -[x1] ; sigma [xv][i]=[xv][i]+[xoff[p]]
+  vec/inp [yv][i]  [y1] [y1] [y2]  [y2]  [y1] ; sigma [yv][i]=[yv][i]+[yoff[p]]
+  vec/inp [zv][i] -[z1] [z1] [z2] -[z2] -[z1] ; sigma [zv][i]=[zv][i]+[zoff[p]]
+  enddo
+
+return
+
+macro sc.drawstrip p=1a d1=x d2=y
+
+  selnt 10
+  if [d1].eq.x then ; fais=3 ; endif
+  if [d1].eq.z then ; fais=1 ; endif
+
+  global/imp  n[p],w[p],t[p]
+  xv=[d1][p] ; yv=[d2][p]
+  vold=v[d1][d2][p] ; vstr=s[p]str
+
+  do i=1,$vlen([vold])
+    isold=[n[p]]+1-[vold]([i]) 
+    set fais [fais] ; set faci 0 ; call ifa(5,[xv][isold],[yv][isold])
+  enddo
+
+  do i=1,$vlen([vstr])
+    is=[n[p]]+1-[vstr]([i]) ; col=2
+    set fais [fais] ; set faci [col] ; call ifa(5,[xv][is],[yv][is])
+  enddo
+  vec/cop [vstr] [vold] 
+  
+return
+
+macro sc.draw p=1a d1=x d2=y
+
+  global/imp  n[p],w[p],t[p]
+  col1a=2 ; col1b=1
+  xv=[d1][p] ; yv=[d2][p]
+  set plci [col[p]] ; set lwid 4.5
+  do i=1,[n[p]] ;  pline 5 [xv][i] [yv][i] ; enddo
+  set lwid 0 ; set plci 1
+
+return
+
+macro ec.geom
+
+  nu=36;nv=36;nw=36
+  vec/cre nec(3) r [nu] [nv] [nw]
+  global/cre zecu $eval(1.238*13./2.)
+  y1=$exec(ec.strip.y 1 1); y2=$exec(ec.strip.y 1 37)
+  sigma yecuf=array(37,[y1]#[y2])  
+  y1=$exec(ec.strip.y 13 1); y2=$exec(ec.strip.y 13 37)
+  sigma yecub=array(37,[y1]#[y2])  
+  vec/cre zecu([nu]) r [nu]*[zecu]
+
+return
+
+macro ec.strip.width l
+
+return $sigma(10.3655+0.02476*([l]-1))
+
+macro ec.strip.y l u
+
+  wu=$exec(ec.strip.width [l])
+
+return $sigma(-182.974-0.43708*([l]-1)+([u]-1)*[wu])
+
+macro ec.geom.offsets
+
+  global/imp zoffpc,zt,zecu
+  global/cre zoffec $eval([zoffpc]+[zt]+[zecu]+7.97)
+  global/cre yoffec 190.
+  
+return
+
+macro ec.getstrips 
+
+  global/imp *offec
+
+  do il=1,1
+  do is=1,nec([il])
+    vec/cre yec[il][is](5) r ; vec/cre zec[il][is](5) r
+    y1=yecuf([is]);y2=yecub([is]);y3=yecub([is]+1);y4=yecuf([is]+1)
+    z1=zecu([is]);z2=[z1]
+    vec/inp yec[il][is]  [y1] [y2] [y3]  [y4]  [y1] ; sigma yec[il][is]=yec[il][is]+[yoffec]
+    vec/inp zec[il][is] -[z1] [z1] [z2] -[z2] -[z1] ; sigma zec[il][is]=zec[il][is]+[zoffec]
+  enddo
+  enddo
+
+return
+
+macro ec.drawstrip d1=x d2=y
+
+  selnt 10
+
+  xv=[d1]ec ; yv=[d2]ec
+  vold1=v[d1][d2]3 ; vold2=v[d1][d2]4
+
+  do i=1,$vlen([vold1])
+    is=37-[vold1]([i]) ; il=[vold2]([i]) ; col=0 
+    if [il].eq.1 then 
+    set fais 1 ; set faci [col] ; call ifa(5,[xv][il][is],[yv][il][is])
+    endif
+  enddo
+
+  do i=1,$vlen(secstr)
+    is=37-secstr([i]) ; il=seclay([i]) ; col=seccol([i])
+    if [il].eq.1 then
+    set fais 1 ; set faci [col] ; call ifa(5,[xv][il][is],[yv][il][is])
+    endif
+  enddo
+
+  vec/cop secstr [vold1] ; vec/cop seclay [vold2]
+   
+return
+
+macro ec.draw.z il
+
+  selnt 10
+
+  set plci 1 ; set lwid 4.5
+  do is=1,nec([il]) ; pline 5 zec[il][is] yec[il][is] ; enddo
+  set plci 1 ; set lwid 0
+
+return
+

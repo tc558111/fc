@@ -1,4 +1,7 @@
 macro loop run sec=5 id=10
+* Purpose: Creates histograms containing correlations between hits in FTOF,ECAL planes
+* Input: Ntuple created from et2rzn.c program
+* Output: Histogram file 
 
   exe init.global [run] [sec]; global/imp *path,*file
   exe init.hist
@@ -109,6 +112,7 @@ macro get.hist run
 return
 
 macro plot run
+* Purpose: View histograms created by this macro
 
   exe plot1 [run] a ; wait 'Hit RETURN to go to SC1B plots'
   exe plot1 [run] b ; wait
@@ -188,7 +192,6 @@ macro plot3 run p=a
 return
 
 macro plot4 run p=a
-
 
   exe init.graf ; exe get.hist [run]
   pa1=4;pa2=5;pb1=7;pb2=8

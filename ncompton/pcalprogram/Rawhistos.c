@@ -9,10 +9,9 @@
 //#include "TSpectrum.h"
 #include "TDirectory.h"
 #include "TObject.h"
+#include "TROOT.h"
 #include <math.h>
-#include "fitU.c"
-#include "fitV.c"
-#include "fitW.c"
+#include "fit.c"
 
 #define nPc 192
 #define USIZE 68
@@ -21,8 +20,8 @@
 
 using namespace std;
 
-void fitU(int Pass);
-void fitV(int Pass);
+void fit(const int Pass, const char striplet);
+void GetFiberLengthsRaw(const char uplet, double avfiberlength[], const int size);
 void import(int bin[USIZE][VSIZE][WSIZE]);
 void importgaus(double ucent[USIZE][WSIZE],double usig[USIZE][WSIZE],double vcent[VSIZE][USIZE],double vsig[VSIZE][USIZE],double wcent[WSIZE][USIZE],double wsig[WSIZE][USIZE]);
 bool withingaus(double Ucent,double Usig,double Vcent,double Vsig,double Wcent,double Wsig, double adU, double adV, double adW,int rsU,int rsV,int rsW);
@@ -37,7 +36,7 @@ void importgains(double ugain[], double vgain[], double wgain[]);
 void combinegains(const double ugaini[], const double vgaini[], const double wgaini[], const double ugainf[], const double vgainf[], const double wgainf[]);
 void adjustcoefficients();
 
-void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini[], const int Pass = 0)
+void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini[], const int secselect = 1, const int Pass = 0)
 {
 
     string filetype;
@@ -73,7 +72,7 @@ void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini
 	Int_t good;
 	
 	Int_t is, il, inh, nh[4][6];
-	Double_t adc, adccal[4][69], tdc, tdcpc[193], pcped[69][4][7], thresh, uvw;
+	Double_t adc, adccal[4][69][7], tdc, tdcpc[193], pcped[69][4][7], thresh, uvw;
     Double_t tdcsum;
 	Double_t strr[69][4][7], adcr[69][4][7],tdcr[69][4][7];
 
@@ -91,8 +90,6 @@ void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini
     Double_t Iuv,Iuw,Ivw,Imax;
     Double_t Iu,Iv,Iw, Isum, Isum1, Isum2, Imin;
     Double_t fibU[68],fibV[62],fibW[62];
-    Double_t p0U[68],p0V[62],p0W[62];
-    Double_t p1U[68],p1V[62],p1W[62];
     Double_t width = 5.055;
     Int_t pass;
     Int_t select;
@@ -164,33 +161,33 @@ void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini
 	TH1F *HADVB = new TH1F("HADVB","adv at ustrip=60 and adu < 200",500,0.0,1000);
 	TH1F *HADVS = new TH1F("HADVS","adv at ustrip=60 and adu > 200",500,0.0,1000);
     
-	TH3F *HADUvsRSVustrips = new TH3F("HADUvsRSVustrips","x = v-strip, y = adu, z = u-strip",62,0.5,62.5,300,0.0,1000,68,0.5,68.5);
-	TH3F *HADUvsRSVustripsB = new TH3F("HADUvsRSVustripsB","x = v-strip, y = adu, z = u-strip",62,0.5,62.5,300,0.0,1000,68,0.5,68.5);
+	TH3F *HADUvsRSVustrips = new TH3F("HADUvsRSVustrips","x = v-strip, y = adu, z = u-strip",62,0.5,62.5,300,0.0,2000,68,0.5,68.5);
+	TH3F *HADUvsRSVustripsB = new TH3F("HADUvsRSVustripsB","x = v-strip, y = adu, z = u-strip",62,0.5,62.5,300,0.0,2000,68,0.5,68.5);
 
 
-	TH3F *HADUvsRSWustrips = new TH3F("HADUvsRSWustrips","x = w-strip, y = adu, z = u-strip",62,0.5,62.5,300,0.0,1000,68,0.5,68.5);
-	TH3F *HADUvsRSWustripsB = new TH3F("HADUvsRSWustripsB","x = w-strip, y = adu, z = u-strip",62,0.5,62.5,300,0.0,1000,68,0.5,68.5);
+	TH3F *HADUvsRSWustrips = new TH3F("HADUvsRSWustrips","x = w-strip, y = adu, z = u-strip",62,0.5,62.5,300,0.0,2000,68,0.5,68.5);
+	TH3F *HADUvsRSWustripsB = new TH3F("HADUvsRSWustripsB","x = w-strip, y = adu, z = u-strip",62,0.5,62.5,300,0.0,2000,68,0.5,68.5);
     
     //u strip calibration
-	TH3F *HADUvsRSWustrips200 = new TH3F("HADUvsRSWustrips200","x = w-strip, y = adu, z = u-strip",62,0.5,62.5,125,0.0,1000,68,0.5,68.5);
-	TH3F *HADUvsRSWustripsB200 = new TH3F("HADUvsRSWustripsB200","x = w-strip, y = adu, z = u-strip",62,0.5,62.5,200,0.0,1000,68,0.5,68.5);
+	TH3F *HADUvsRSWustrips200 = new TH3F("HADUvsRSWustrips200","x = w-strip, y = adu, z = u-strip",62,0.5,62.5,125,0.0,2000,68,0.5,68.5);
+	TH3F *HADUvsRSWustripsB200 = new TH3F("HADUvsRSWustripsB200","x = w-strip, y = adu, z = u-strip",62,0.5,62.5,200,0.0,2000,68,0.5,68.5);
 
 
     //v strip calibration
-	TH3F *HADVvsRSUvstrips200 = new TH3F("HADVvsRSUvstrips200","x = u-strip, y = adv, z = v-strip",68,0.5,68.5,125,0.0,1000,62,0.5,62.5);
-	TH3F *HADVvsRSUvstripsB200 = new TH3F("HADVvsRSUvstripsB200","x = u-strip, y = adv, z = v-strip",68,0.5,68.5,200,0.0,1000,62,0.5,62.5);
+	TH3F *HADVvsRSUvstrips200 = new TH3F("HADVvsRSUvstrips200","x = u-strip, y = adv, z = v-strip",68,0.5,68.5,125,0.0,2000,62,0.5,62.5);
+	TH3F *HADVvsRSUvstripsB200 = new TH3F("HADVvsRSUvstripsB200","x = u-strip, y = adv, z = v-strip",68,0.5,68.5,200,0.0,2000,62,0.5,62.5);
 
 
-	TH3F *HADVvsRSWvstrips200 = new TH3F("HADVvsRSWvstrips200","x = w-strip, y = adv, z = v-strip",62,0.5,62.5,200,0.0,1000,62,0.5,62.5);
-	TH3F *HADVvsRSWvstripsB200 = new TH3F("HADVvsRSWvstripsB200","x = w-strip, y = adv, z = v-strip",62,0.5,62.5,200,0.0,1000,62,0.5,62.5);
+	TH3F *HADVvsRSWvstrips200 = new TH3F("HADVvsRSWvstrips200","x = w-strip, y = adv, z = v-strip",62,0.5,62.5,200,0.0,2000,62,0.5,62.5);
+	TH3F *HADVvsRSWvstripsB200 = new TH3F("HADVvsRSWvstripsB200","x = w-strip, y = adv, z = v-strip",62,0.5,62.5,200,0.0,2000,62,0.5,62.5);
 
     //w strip calibration
-	TH3F *HADWvsRSUwstrips200 = new TH3F("HADWvsRSUwstrips200","x = u-strip, y = adw, z = w-strip",68,0.5,68.5,125,0.0,1000,62,0.5,62.5);
-	TH3F *HADWvsRSUwstripsB200 = new TH3F("HADWvsRSUwstripsB200","x = u-strip, y = adw, z = w-strip",68,0.5,68.5,200,0.0,1000,62,0.5,62.5);
+	TH3F *HADWvsRSUwstrips200 = new TH3F("HADWvsRSUwstrips200","x = u-strip, y = adw, z = w-strip",68,0.5,68.5,125,0.0,2000,62,0.5,62.5);
+	TH3F *HADWvsRSUwstripsB200 = new TH3F("HADWvsRSUwstripsB200","x = u-strip, y = adw, z = w-strip",68,0.5,68.5,200,0.0,2000,62,0.5,62.5);
 
 
-	TH3F *HADWvsRSVwstrips200 = new TH3F("HADWvsRSVwstrips200","x = v-strip, y = adw, z = w-strip",62,0.5,62.5,200,0.0,1000,62,0.5,62.5);
-	TH3F *HADWvsRSVwstripsB200 = new TH3F("HAWUvsRSVwstripsB200","x = v-strip, y = adw, z = w-strip",62,0.5,62.5,200,0.0,1000,62,0.5,62.5);
+	TH3F *HADWvsRSVwstrips200 = new TH3F("HADWvsRSVwstrips200","x = v-strip, y = adw, z = w-strip",62,0.5,62.5,200,0.0,2000,62,0.5,62.5);
+	TH3F *HADWvsRSVwstripsB200 = new TH3F("HAWUvsRSVwstripsB200","x = v-strip, y = adw, z = w-strip",62,0.5,62.5,200,0.0,2000,62,0.5,62.5);
 
     //new test
     TH1F *IntSum1 = new TH1F("IntSum1", "Sum of initial intensities",800,0.0,3000);
@@ -207,11 +204,11 @@ void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini
     TH3F *HADWvsRSUwstripsTEST = new TH3F("HADWvsRSUwstripsTEST","x = u-strip, y = adw, z = w-strip",68,0.5,68.5,250,0.0,2000.0,62,0.5,62.5);
 
 
-    TH3F *HADUvsRSWustripsTEST50 = new TH3F("HADUvsRSWustripsTEST50","x = w-strip, y = adu, z = u-strip",62,0.5,62.5,100,0.0,1000.0,68,0.5,68.5);
-    TH3F *HADUvsRSWustripsTEST100 = new TH3F("HADUvsRSWustripsTEST100","x = w-strip, y = adu, z = u-strip",62,0.5,62.5,150,0.0,1000.0,68,0.5,68.5);
-    TH3F *HADUvsRSWustripsTEST150 = new TH3F("HADUvsRSWustripsTEST150","x = w-strip, y = adu, z = u-strip",62,0.5,62.5,175,0.0,1000.0,68,0.5,68.5);
-    TH3F *HADUvsRSWustripsTEST200 = new TH3F("HADUvsRSWustripsTEST200","x = w-strip, y = adu, z = u-strip",62,0.5,62.5,200,0.0,1000.0,68,0.5,68.5);
-    TH3F *HADUvsRSWustripsTEST250 = new TH3F("HADUvsRSWustripsTEST250","x = w-strip, y = adu, z = u-strip",62,0.5,62.5,225,0.0,1000.0,68,0.5,68.5);
+    TH3F *HADUvsRSWustripsTEST50 = new TH3F("HADUvsRSWustripsTEST50","x = w-strip, y = adu, z = u-strip",62,0.5,62.5,100,0.0,2000.0,68,0.5,68.5);
+    TH3F *HADUvsRSWustripsTEST100 = new TH3F("HADUvsRSWustripsTEST100","x = w-strip, y = adu, z = u-strip",62,0.5,62.5,150,0.0,2000.0,68,0.5,68.5);
+    TH3F *HADUvsRSWustripsTEST150 = new TH3F("HADUvsRSWustripsTEST150","x = w-strip, y = adu, z = u-strip",62,0.5,62.5,175,0.0,2000.0,68,0.5,68.5);
+    TH3F *HADUvsRSWustripsTEST200 = new TH3F("HADUvsRSWustripsTEST200","x = w-strip, y = adu, z = u-strip",62,0.5,62.5,200,0.0,2000.0,68,0.5,68.5);
+    TH3F *HADUvsRSWustripsTEST250 = new TH3F("HADUvsRSWustripsTEST250","x = w-strip, y = adu, z = u-strip",62,0.5,62.5,225,0.0,2000.0,68,0.5,68.5);
     
 /////////////////////// Main Program //////////////////////////////////////////// 
 
@@ -248,9 +245,9 @@ void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini
     } 
     
     //Import Fiber Lengths
-    GetFiberULengths(fibU,p0U,p1U);  
-    GetFiberVLengths(fibV,p0V,p1V);
-    GetFiberWLengths(fibW,p0W,p1W);
+    GetFiberLengthsRaw('U', fibU, 84);
+    GetFiberLengthsRaw('V', fibV, 77);
+    GetFiberLengthsRaw('W', fibW, 77);
     
 	//open data file
 	TFile *f = new TFile("pcal_4416.root");
@@ -274,15 +271,15 @@ void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini
         { 
 			p1->GetEntry(e);	//Loop over entries
 			
-//initialize arrays
+            //initialize arrays
 			for(i = 0; i <=3; ++i)           //                u,v,w   1-6
 			{                                //                 1-3    1-6
-				nh[i][1] = 0;                //number of hits [layer][sector]
+				nh[i][secselect] = 0;                //number of hits [layer][sector]
 				for(j = 0; j <= 68; ++j)
 				{
-					strr[j][i][1] = 0;   //strip [num hits][layer][sector]	
-					adcr[j][i][1] = 0;    //adc [num hits][layer][sector]
-                    adccal[i][j] = 1.0;
+                    strr[j][i][secselect] = 0;   //strip [num hits][layer][sector]	
+                    adcr[j][i][secselect] = 0;   //adc [num hits][layer][sector]
+                    adccal[i][j][secselect] = 1.0;  //gain[layer][strip][sector]
 				}	
 				
 			}
@@ -290,36 +287,48 @@ void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini
 			thresh = 0.0;
             tdcsum = 0.0;
 
-//initial gains
+            //initial gains
             for(j = 1; j <= 68; ++j)
             {
-                adccal[1][j] = ugaini[j-1]; //u
+                adccal[1][j][secselect] = ugaini[j-1]; //u
             }
             for(j = 1; j <= 62; ++j)
             {
-                adccal[2][j] = vgaini[j-1]; //v
+                adccal[2][j][secselect] = vgaini[j-1]; //v
             }
             for(j = 1; j <= 62; ++j)
             {
-                adccal[3][j] = wgaini[j-1]; //w
+                adccal[3][j][secselect] = wgaini[j-1]; //w
             }	
 			
 
-//Subtract ADC pedestals, test threshold, get hits, fill arrays
-			for(i = 0; i <npc; ++i)                               //loop over all PMTs fired
+            //Subtract ADC pedestals, test threshold, get hits, fill arrays
+			for(i = 0; i <npc; ++i)      //loop over all PMTs fired
 			{
-				is = (Int_t)strippc[i];                           // strip num of current PMT, 1-68
-				il = (Int_t)layerpc[i];                           // layer num of current PMT, 1-3
                 
-				adc = adccal[il][is] * (Adcpc[i] - pcped[is][il][1]);  //integral of pulse with adjustment
+                // strip num of current PMT, 1-68
+				is = (Int_t)strippc[i];                           
+                // layer num of current PMT, 1-3
+				il = (Int_t)layerpc[i];                           
+
+                //integral of pulse with adjustment
+				adc = adccal[il][is][secselect] * (Adcpc[i] - pcped[is][il][secselect]);  
 				tdc = Tdcpc[i];
-				if(adc > thresh)                             //if energy is greater than the threshold
+                
+                //if energy is greater than the threshold
+                //thresh is on line 297
+				if(adc > thresh && secselect == secpc[nPc])                             
 				{
-					nh[il][1] = nh[il][1] + 1;              //add one valid hit to num hits
-					inh = nh[il][1];                        //make each hit have a unique id
-					adcr[inh][il][1] = adc;		            //energy recorded by PMT
-					tdcr[inh][il][1] = tdc * 4;             //times 4?				
-					strr[inh][il][1] = is;   		        //strip number associated with that PMT
+                    //add one valid hit to num hits
+					nh[il][secselect] = nh[il][secselect] + 1;
+                    //make each hit have a unique id            
+					inh = nh[il][secselect];
+                    //energy recorded by PMT                      
+					adcr[inh][il][secselect] = adc;
+                    //times 4?	      
+					tdcr[inh][il][secselect] = tdc * 4;
+                    //strip number associated with that PMT           				
+					strr[inh][il][secselect] = is;   		        
 	
 					//histo results for each PMT
 					Hadcstrip->Fill(adc,(Float_t)is,(Float_t)il);	    //adc vs strip vs layer
@@ -336,24 +345,24 @@ void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini
 				
 			//histo distances to see distribution
 			HDalitz->Fill(uvw); 
-			 //  https://clasweb.jlab.org/wiki/index.php/File:Uvw.gif
+            //https://clasweb.jlab.org/wiki/index.php/File:Uvw.gif
 
 		
-//Multiplicity tests
-			good_u = (nh[1][1] == 1);
-			good_v = (nh[2][1] == 1);
-			good_w = (nh[3][1] == 1);
+            //Multiplicity tests
+			good_u = (nh[1][secselect] == 1);
+			good_v = (nh[2][secselect] == 1);
+			good_w = (nh[3][secselect] == 1);
 
-//Store strip numbers and ADC values for events with good multiplicity
-			if(good_u) rsu = strr[1][1][1];
-			if(good_v) rsv = strr[1][2][1];
-			if(good_w) rsw = strr[1][3][1];
-			if(good_u) adu = adcr[1][1][1];
-			if(good_v) adv = adcr[1][2][1];
-			if(good_w) adw = adcr[1][3][1];
-			if(good_u) tdu = tdcr[1][1][1];
-			if(good_v) tdv = tdcr[1][2][1];
-			if(good_w) tdw = tdcr[1][3][1];
+            //Store strip numbers and ADC values for events with good multiplicity
+			if(good_u) rsu = strr[1][1][secselect];
+			if(good_v) rsv = strr[1][2][secselect];
+			if(good_w) rsw = strr[1][3][secselect];
+			if(good_u) adu = adcr[1][1][secselect];
+			if(good_v) adv = adcr[1][2][secselect];
+			if(good_w) adw = adcr[1][3][secselect];
+			if(good_u) tdu = tdcr[1][1][secselect];
+			if(good_v) tdv = tdcr[1][2][secselect];
+			if(good_w) tdw = tdcr[1][3][secselect];
 			
 			good_uv = (good_u && good_v);
 			good_uw = (good_u && good_w);
@@ -361,22 +370,22 @@ void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini
 
 			good_uvw = (good_u && good_v && good_w);
 
-//Next Longest Strip
+            //Next Longest Strip
 			good_uwt = (good_uw && (rsw == 61));
 			good_wut = (good_uw && (rsu == 67));
 			good_vwt = (good_uv && (rsu == 67));
 
-//Next Longest Strip trigger threshold (default = 70)
+            //Next Longest Strip trigger threshold (default = 70)
 			good_uwtt = (good_uwt && adw > 70.0);
 			good_wutt = (good_wut && adu > 70.0);
 			good_vwtt = (good_vwt && adu > 70.0);	
 
-//Histogram Dalitz calculation after multiplicity cuts
+            //Histogram Dalitz calculation after multiplicity cuts
 			if(good_uvw)
 			{
 				HDalitzMCut->Fill(uvw);
 
-//Histo U vs V, U vs W, V vs W (used for detector map)
+                //Histo U vs V, U vs W, V vs W (used for detector map)
 
 				for(i = 1; i <= nh[1][1]; ++i)   // loop over hits in u layer
 				{
@@ -416,8 +425,8 @@ void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini
 				}
 
 
-//Histo Plots using next longest strip trigger.
-//These should have MIP peaks visible and will be fitted to obtain PMT gains.
+                //Histo Plots using next longest strip trigger.
+                //These should have MIP peaks visible and will be fitted to obtain PMT gains.
 				if(good_uwt) HaduU->Fill(adu,rsu);
 				if(good_vwt) HadvV->Fill(adv,rsv);
 				if(good_wut) HadwW->Fill(adw,rsw);
@@ -435,9 +444,9 @@ void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini
 				}
 
 
-//Histo Attenuation plots (ADC vs strip number).
-//These will be fit to obtain attenuation lengths of strips.
-//Geometry will be used to convert strip number to distance in cm.
+                //Histo Attenuation plots (ADC vs strip number).
+                //These will be fit to obtain attenuation lengths of strips.
+                //Geometry will be used to convert strip number to distance in cm.
 				if(good_uv) //one hit in u and v layer
 				{
 
@@ -526,7 +535,7 @@ void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini
                     }
 				}
 
-            //New Test
+                //New Test
 /******************************************************************/
                 if(Pass > 0)
                 {
@@ -569,9 +578,9 @@ void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini
                     if(u0[rsu - 1] == 0) u0[rsu - 1] = 650.0;
                     if(v0[rsv - 1] == 0) v0[rsv - 1] = 650.0;
                     if(w0[rsw - 1] == 0) w0[rsw - 1] = 650.0;
-                    if(ugain[rsu - 1] == 0) ugain[rsu - 1] = 650.0;
-                    if(vgain[rsv - 1] == 0) vgain[rsv - 1] = 650.0;
-                    if(wgain[rsw - 1] == 0) wgain[rsw - 1] = 650.0;
+                    if(ugain[rsu - 1] == 0) ugain[rsu - 1] = 1.0;
+                    if(vgain[rsv - 1] == 0) vgain[rsv - 1] = 1.0;
+                    if(wgain[rsw - 1] == 0) wgain[rsw - 1] = 1.0;
                     
                     Iu = adu - u0[rsu - 1] * exp(uA[rsu - 1] * udist)  + u0[rsu - 1];
                     Iv = adv - v0[rsv - 1] * exp(vA[rsv - 1] * vwdist) + v0[rsv - 1];
@@ -870,15 +879,7 @@ void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini
             //End New test
 
             } //end if for good_uvw
-			/*
-			nn[1] = nn[1] + 1;
-			if(nn[1] > 100000)
-			{
-				nn[2] = nn[2] + 100000;
-				cout << "NEVENTS =   " << nn[2];
-				nn[1] = 0;
-			}
-			*/
+
 
             percent = (Int_t)(((Double_t)e * 100.0)/nentries);
             if((percent != oldpercent) && (percent % 5 == 0))
@@ -889,6 +890,7 @@ void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini
 
 
 		} // end loop over all entries
+        f->Close();
 	} //end if clause over h10 tree
 	else
 		cout << "Tree not found" << endl;
@@ -1284,79 +1286,88 @@ bool withingaus3(double Cent,double Sig, double Adc, int Strip, int Hit)
     return (yes == 1);
 }
 
-void GetFiberULengths(double array1[], double array2[], double array3[])
+void GetFiberLengthsRaw(const char uplet, double avfiberlength[], const int size)
 {
+    int effective, i, ustrip;
 	int num;
-    double junk;
-	
-	ifstream fib_file;
-    fib_file.open ("Uparam.txt");
-    while(fib_file >> num)
-    {
-        if(num != 0)
-        {
-            fib_file >> array1[num-1];
-            fib_file >> array2[num-1];
-            fib_file >> array3[num-1];
-        }
-        else
-        {
-            fib_file >> junk;
-            fib_file >> junk;
-            fib_file >> junk;
-        }            
-    }
-	fib_file.close();
-}
+    double fiblength[size]; //size = 77 or 84
+    char genfilename[50];
 
-void GetFiberVLengths(double array1[], double array2[], double array3[])
-{
-	int num;
-    double junk;
-	
-	ifstream fib_file;
-    fib_file.open ("Vparam.txt");
-    while(fib_file >> num)
-    {
-        if(num != 0)
-        {
-            fib_file >> array1[num-1];
-            fib_file >> array2[num-1];
-            fib_file >> array3[num-1];
-        }
-        else
-        {
-            fib_file >> junk;
-            fib_file >> junk;
-            fib_file >> junk;
-        }            
-    }
+    sprintf(genfilename, "FiberLengths%c.txt", uplet);
+	ifstream fib_file (genfilename);
+	for(i = 0; i < size; ++i)
+	{
+		fib_file >> num;
+		fib_file >> fiblength[num - 1];
+	}
 	fib_file.close();
-}
 
-void GetFiberWLengths(double array1[], double array2[], double array3[])
-{
-	int num;
-    double junk;
-	
-	ifstream fib_file;
-    fib_file.open ("Wparam.txt");
-    while(fib_file >> num)
+    if(uplet == 'U')
     {
-        if(num != 0)
+        for(i = 0; i < 68; ++i)
         {
-            fib_file >> array1[num-1];
-            fib_file >> array2[num-1];
-            fib_file >> array3[num-1];
+            ustrip = i + 1;
+            //calculate fiber lengths
+            if(ustrip <= 52)
+            {
+                avfiberlength[i] = fiblength[i];
+            }
+            else	
+            {
+                effective = (ustrip - 52) * 2 + 52  - 1; //ustrip to i conversion
+                    //converts to 84 strips
+                avfiberlength[i] = fiblength[effective] + fiblength[effective - 1]; 
+                    //add the last 15 strips into pairs	
+                avfiberlength[i] = avfiberlength[i]/2.0;
+                    //takes average fiber length
+            }
         }
-        else
-        {
-            fib_file >> junk;
-            fib_file >> junk;
-            fib_file >> junk;
-        }            
     }
-	fib_file.close();
+    else if(uplet == 'V')
+    {
+        for(i = 0; i < 62; ++i)
+        {
+            ustrip = i + 1;
+            //calculate fiber lengths
+            if(ustrip <= 15)
+            {
+                effective = (ustrip  * 2)  - 1; //ustrip to i conversion
+                //converts to 77 strips
+                avfiberlength[i] = fiblength[effective] + fiblength[effective - 1];
+                //takes average fiber length
+                avfiberlength[i] = avfiberlength[i]/2.0;
+            }
+            else	
+            {
+                //add the first 15 strips into pairs	
+                effective = ustrip + 15  - 1; //ustrip to i conversion
+                avfiberlength[i] = fiblength[effective];
+            }
+        }
+    }
+    else if(uplet == 'W')
+    {
+        for(i = 0; i < 62; ++i)
+        {
+            ustrip = i + 1;
+            //calculate fiber lengths
+            if(ustrip <= 15)
+            {
+                effective = (ustrip  * 2)  - 1; //ustrip to i conversion
+                //converts to 77 strips
+                avfiberlength[i] = fiblength[effective] + fiblength[effective - 1];
+                //takes average fiber length
+                avfiberlength[i] = avfiberlength[i]/2.0;
+            }
+            else	
+            {
+                //add the first 15 strips into pairs	
+                effective = ustrip + 15  - 1; //ustrip to i conversion
+                avfiberlength[i] = fiblength[effective];
+            }
+        }
+    }
+
 }
 
 void adjustcoefficients()
@@ -1474,18 +1485,21 @@ int main()
 {
   int num_iter = 6;
   int pass = 0;
-
+  int sector = 1;
+  char analysisu = 'u';
+  char analysisv = 'v';
+  char analysisw = 'w';
 
   //Get initial Gains
   double ugaini[USIZE];
   double vgaini[VSIZE];
   double wgaini[WSIZE];
-  importgains(ugaini, vgaini, wgaini);
+  //importgains(ugaini, vgaini, wgaini);
   //Get final Gains
   double ugainf[USIZE];
   double vgainf[VSIZE];
   double wgainf[WSIZE];
-  /*
+  
   int i;
   for(i = 0; i < USIZE; ++i)
   {
@@ -1496,7 +1510,8 @@ int main()
       vgaini[i] = 1.0;
       wgaini[i] = 1.0;
   }
-  */
+
+  
   //Get FiberLengths
   //Get Initial Gaussian Parameters
   //Get Initial Attenuation Fit Parameters
@@ -1510,19 +1525,22 @@ int main()
           combinegains(ugaini, vgaini, wgaini, ugainf, vgainf, wgainf);//multiply into old ones
           importgains(ugaini, vgaini, wgaini); //import new gains
       }
-      Rawhistos(ugaini, vgaini, wgaini, pass);
+      Rawhistos(ugaini, vgaini, wgaini, sector, pass);
       cout << "Pass " << pass << " of the Histograms generated!" << endl;
       cout << endl;
       cout << endl;
-      fitU(pass);
+      fit(pass, analysisu);
+      //fitU(pass);
       cout << "Pass " << pass << " of the Fits to U strips completed." << endl;
       cout << endl;
       cout << endl;
-      fitV(pass);
+      fit(pass, analysisv);
+      //fitV(pass);
       cout << "Pass " << pass << " of the Fits to V strips completed." << endl;
       cout << endl;
       cout << endl;
-      fitW(pass);
+      fit(pass, analysisw);
+      //fitW(pass);
       cout << "Pass " << pass << " of the Fits to W strips completed." << endl;
       cout << endl;
       cout << endl;

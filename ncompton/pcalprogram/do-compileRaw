@@ -1,4 +1,1 @@
-
-
 g++ -oRaw Rawhistos.c `root-config --cflags --glibs`
-

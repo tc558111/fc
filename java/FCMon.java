@@ -131,8 +131,8 @@ public class PCALMonitor extends DetectorMonitoring {
 			}
 		}
 		
-		if(event.hasBank("PCAL::dgtz")==true){
-			int ic=0;	// ic=0,1,2 -> PCAL,ECinner,ECouter
+	 if(event.hasBank("PCAL::dgtz")==true){
+	    int ic=0;	// ic=0,1,2 -> PCAL,ECinner,ECouter
             EvioDataBank bank = (EvioDataBank) event.getBank("PCAL::dgtz");
             for(int i = 0; i < bank.rows(); i++){
             	int is  = bank.getInt("sector",i);

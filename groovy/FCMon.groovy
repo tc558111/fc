@@ -44,8 +44,8 @@ public class FCMon extends DetectorMonitoring {
 		int is        = 5;
 		int iss       = (int) (is*1e7);
 
-	    TDirectory[] calADC = new TDirectory[3];
-	    TDirectory[] calTDC = new TDirectory[3];
+	        TDirectory[] calADC = new TDirectory[3];
+	        TDirectory[] calTDC = new TDirectory[3];
 
     	for (int ic=0 ; ic<3 ; ic++) {
     		calADC[ic] = new TDirectory(laba[ic]);
@@ -130,8 +130,8 @@ public class FCMon extends DetectorMonitoring {
 			}
 		}
 		
-		if(event.hasBank("PCAL::dgtz")==true){
-			int ic=0;	// ic=0,1,2 -> PCAL,ECinner,ECouter
+	if(event.hasBank("PCAL::dgtz")==true){
+	    int ic=0;	// ic=0,1,2 -> PCAL,ECinner,ECouter
             EvioDataBank bank = (EvioDataBank) event.getBank("PCAL::dgtz");
             for(int i = 0; i < bank.rows(); i++){
             	int is  = bank.getInt("sector",i);

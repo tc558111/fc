@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <string.h>
+#include <stdlib.h>
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TH3F.h"
@@ -36,7 +37,7 @@ void importgains(double ugain[], double vgain[], double wgain[]);
 void combinegains(const double ugaini[], const double vgaini[], const double wgaini[], const double ugainf[], const double vgainf[], const double wgainf[]);
 void adjustcoefficients();
 
-void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini[], const int secselect = 1, const int Pass = 0)
+void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini[], const int secselect = 1, const int Pass = 0,const string mainfile = "pcal_4416.root",const string pedestal = "pcped.vec")
 {
 
     string filetype;
@@ -52,7 +53,7 @@ void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini
         filetype = "update";
     }
     
-    TFile outFile("Histo.root",filetype.c_str());
+    TFile outFile("outputfiles/Histo.root",filetype.c_str());
     outFile.mkdir(folder.c_str());
     outFile.cd(folder.c_str());
     gDirectory->mkdir("Setup");
@@ -67,16 +68,26 @@ void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini
 	Int_t good_uv, good_uw, good_vw;
 	Int_t good_uwt, good_wut, good_vwt;
 	Int_t good_uwtt, good_wutt, good_vwtt;
-	Int_t good_uwtc, good_uwttb, good_uwttc;
+	//Int_t good_uwtc, good_uwttb, good_uwttc;
 	Int_t good_uvw;
-	Int_t good;
+	//Int_t good;
 	
 	Int_t is, il, inh, nh[4][6];
-	Double_t adc, adccal[4][69][7], tdc, tdcpc[193], pcped[69][4][7], thresh, uvw;
+	Double_t adc, adccal[4][69][7], tdc;
+    //Double_t tdcpc[193];
+    Double_t pcped[69][4][7], thresh, uvw;
     Double_t tdcsum;
 	Double_t strr[69][4][7], adcr[69][4][7],tdcr[69][4][7];
 
-	Int_t rsu, rsv, rsw, adu, adv, adw, tdu, tdv, tdw;
+	Int_t rsu = 0;
+    Int_t rsv = 0;
+    Int_t rsw = 0;
+    Double_t adu = 0.0;
+    Double_t adv = 0.0;
+    Double_t adw = 0.0;
+    Double_t tdu = 0.0;
+    Double_t tdv = 0.0;
+    Double_t tdw = 0.0;
 	Int_t bin[USIZE][VSIZE][WSIZE];
     Double_t ucent[USIZE][WSIZE], usig[USIZE][WSIZE];
     Double_t vcent[VSIZE][USIZE], vsig[VSIZE][USIZE];
@@ -85,13 +96,16 @@ void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini
     //variable used in modified versions
     Double_t udist = 0.0;
     Double_t vwdist = 0.0;
-    Double_t vdist = 0.0;
-    Double_t wdist = 0.0;
-    Double_t Iuv,Iuw,Ivw,Imax;
-    Double_t Iu,Iv,Iw, Isum, Isum1, Isum2, Imin;
+    //Double_t vdist = 0.0;
+    //Double_t wdist = 0.0;
+    //Double_t Iuv,Iuw,Ivw;
+    Double_t Imax;
+    Double_t Iu,Iv,Iw;
+    //Double_t Isum;
+    Double_t Isum1, Isum2, Imin;
     Double_t fibU[68],fibV[62],fibW[62];
     Double_t width = 5.055;
-    Int_t pass;
+    //Int_t pass;
     Int_t select;
     Int_t ueff, veff, weff;
 
@@ -212,9 +226,14 @@ void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini
     
 /////////////////////// Main Program //////////////////////////////////////////// 
 
+
+    tdu += 0.0;
+    tdv += 0.0;
+    tdw += 0.0;
 	//Intake pcped values from .vec file
 	ifstream pedfile;
-    pedfile.open ("pcped.vec");
+    //pedfile.open ("pcped.vec");
+    pedfile.open (pedestal.c_str());
 
 	for(j = 1; j <=3; ++j)
 	{
@@ -250,13 +269,14 @@ void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini
     GetFiberLengthsRaw('W', fibW, 77);
     
 	//open data file
-	TFile *f = new TFile("pcal_4416.root");
+	//TFile *f = new TFile("pcal_4416.root");
+    TFile *f = new TFile(mainfile.c_str());
 
-	//exists = f->Contains("h10;4");
+	//exists = f->Contains("h10");
 	exists = 1;
 	if(exists)
 	{
-		TTree *p1 = (TTree*)f->Get("h10;4");
+		TTree *p1 = (TTree*)f->Get("h10");
 		p1->SetBranchAddress("npc", &npc);
 		p1->SetBranchAddress("secpc", secpc); //6 sectors total data is eust from one
 		p1->SetBranchAddress("layerpc", layerpc); //u,v,w  (1,3)
@@ -305,7 +325,6 @@ void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini
             //Subtract ADC pedestals, test threshold, get hits, fill arrays
 			for(i = 0; i <npc; ++i)      //loop over all PMTs fired
 			{
-                
                 // strip num of current PMT, 1-68
 				is = (Int_t)strippc[i];                           
                 // layer num of current PMT, 1-3
@@ -335,18 +354,18 @@ void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini
 					// https://clasweb.jlab.org/wiki/images/9/92/Pcal-mip-u.gif
 					Htdcstrip->Fill(tdc,(Float_t)is,(Float_t)il);	    //tdc vs strip vs layer
 					// ???
-
-										
-				}
-				uvw = uvw + uvw_dist(is,il);  //add distances
-                tdcsum += tdc;	
-			}
+				
+                    uvw = uvw + uvw_dist(is,il);  //add distances
+                    tdcsum += tdc;
+                } // end test on threshold and sector (1,6)
+                
+			} // end loop on PMT's Fired
             Htdcsum->Fill(tdcsum);
 				
 			//histo distances to see distribution
+            //found to be around 2
 			HDalitz->Fill(uvw); 
             //https://clasweb.jlab.org/wiki/index.php/File:Uvw.gif
-
 		
             //Multiplicity tests
 			good_u = (nh[1][secselect] == 1);
@@ -354,15 +373,24 @@ void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini
 			good_w = (nh[3][secselect] == 1);
 
             //Store strip numbers and ADC values for events with good multiplicity
-			if(good_u) rsu = strr[1][1][secselect];
-			if(good_v) rsv = strr[1][2][secselect];
-			if(good_w) rsw = strr[1][3][secselect];
-			if(good_u) adu = adcr[1][1][secselect];
-			if(good_v) adv = adcr[1][2][secselect];
-			if(good_w) adw = adcr[1][3][secselect];
-			if(good_u) tdu = tdcr[1][1][secselect];
-			if(good_v) tdv = tdcr[1][2][secselect];
-			if(good_w) tdw = tdcr[1][3][secselect];
+			if(good_u)
+            {
+                rsu = strr[1][1][secselect];
+                adu = adcr[1][1][secselect];
+                tdu = tdcr[1][1][secselect];
+            }
+			if(good_v)
+            {
+                rsv = strr[1][2][secselect];
+                adv = adcr[1][2][secselect];
+                tdv = tdcr[1][2][secselect];
+            }
+			if(good_w)
+            {
+                rsw = strr[1][3][secselect];
+                adw = adcr[1][3][secselect];
+                tdw = tdcr[1][3][secselect];
+            }
 			
 			good_uv = (good_u && good_v);
 			good_uw = (good_u && good_w);
@@ -904,7 +932,7 @@ void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini
 
 Double_t uvw_dist(Int_t strip, Int_t layer)
 {
-	Double_t uvw;
+	Double_t uvw = 0.0;
 	
 	//numbers have to do with strip widths
 	//u after 52 strip number corresponds to 2 strips
@@ -934,7 +962,7 @@ Double_t uvw_dist(Int_t strip, Int_t layer)
 
 void import(int bin[USIZE][VSIZE][WSIZE])
 {
-	ifstream hitfile ("hitmatrix.txt");
+	ifstream hitfile ("inputfiles/hitmatrix.txt");
 
 	int i,j,k, dummy;
 	for(i = 0; i<USIZE ; ++i)
@@ -987,7 +1015,7 @@ void importgaus(double ucent[USIZE][WSIZE],double usig[USIZE][WSIZE],double vcen
         }
     }
 
-    ifstream ufile("Ucentroid.txt");
+    ifstream ufile("outputfiles/Ucentroid.txt");
     while(ufile >> unum)
     {
         if(unum != 0)
@@ -1005,7 +1033,7 @@ void importgaus(double ucent[USIZE][WSIZE],double usig[USIZE][WSIZE],double vcen
     }
 	ufile.close();
 
-    ifstream vfile("Vcentroid.txt");
+    ifstream vfile("outputfiles/Vcentroid.txt");
     while(vfile >> vnum)
     {
         if(vnum != 0)
@@ -1023,7 +1051,7 @@ void importgaus(double ucent[USIZE][WSIZE],double usig[USIZE][WSIZE],double vcen
     }
 	vfile.close();
 
-    ifstream wfile("Wcentroid.txt");
+    ifstream wfile("outputfiles/Wcentroid.txt");
     while(wfile >> wnum)
     {
         if(wnum != 0)
@@ -1047,7 +1075,7 @@ void importatten(double u0[],double uA[],double uB[],double v0[],double vA[],dou
 
     int num;
 
-    ifstream ufile("UAtten.txt");
+    ifstream ufile("outputfiles/UAtten.txt");
     while(ufile >> num)
     {
         if(num != 0)
@@ -1064,7 +1092,7 @@ void importatten(double u0[],double uA[],double uB[],double v0[],double vA[],dou
     }
 	ufile.close();
 
-    ifstream vfile("VAtten.txt");
+    ifstream vfile("outputfiles/VAtten.txt");
     while(vfile >> num)
     {
         if(num != 0)
@@ -1081,7 +1109,7 @@ void importatten(double u0[],double uA[],double uB[],double v0[],double vA[],dou
     }
 	vfile.close();
     
-    ifstream wfile("WAtten.txt");
+    ifstream wfile("outputfiles/WAtten.txt");
     while(wfile >> num)
     {
         if(num != 0)
@@ -1105,7 +1133,7 @@ void importgains(double ugain[], double vgain[], double wgain[])
 
     int num;
 
-    ifstream ufile("UGains.dat");
+    ifstream ufile("outputfiles/UGains.dat");
     while(ufile >> num)
     {
         if(num != 0)
@@ -1120,7 +1148,7 @@ void importgains(double ugain[], double vgain[], double wgain[])
     }
 	ufile.close();
 
-    ifstream vfile("VGains.dat");
+    ifstream vfile("outputfiles/VGains.dat");
     while(vfile >> num)
     {
         if(num != 0)
@@ -1135,7 +1163,7 @@ void importgains(double ugain[], double vgain[], double wgain[])
     }
 	vfile.close();
     
-    ifstream wfile("WGains.dat");
+    ifstream wfile("outputfiles/WGains.dat");
     while(wfile >> num)
     {
         if(num != 0)
@@ -1156,7 +1184,7 @@ void combinegains(const double ugaini[], const double vgaini[], const double wga
 
     int i;
 
-    ofstream ufile("UGains.dat");
+    ofstream ufile("outputfiles/UGains.dat");
     for(i = 68; i > 0; --i)
     {
         if(ugaini[i-1] * ugainf[i-1] > 0.001 && ugaini[i-1] * ugainf[i-1] < 5.0)
@@ -1166,7 +1194,7 @@ void combinegains(const double ugaini[], const double vgaini[], const double wga
     }
 	ufile.close();
 
-    ofstream vfile("VGains.dat");
+    ofstream vfile("outputfiles/VGains.dat");
     for(i = 62; i > 0; --i)
     {
         if(vgaini[i-1] * vgainf[i-1] > 0.001 && vgaini[i-1] * vgainf[i-1] < 5.0)
@@ -1176,7 +1204,7 @@ void combinegains(const double ugaini[], const double vgaini[], const double wga
     }
 	vfile.close();
     
-    ofstream wfile("WGains.dat");
+    ofstream wfile("outputfiles/WGains.dat");
     for(i = 62; i > 0; --i)
     {
         if(wgaini[i-1] * wgainf[i-1] > 0.001 && wgaini[i-1] * wgainf[i-1] < 5.0)
@@ -1293,7 +1321,7 @@ void GetFiberLengthsRaw(const char uplet, double avfiberlength[], const int size
     double fiblength[size]; //size = 77 or 84
     char genfilename[50];
 
-    sprintf(genfilename, "FiberLengths%c.txt", uplet);
+    sprintf(genfilename, "inputfiles/FiberLengths%c.txt", uplet);
 	ifstream fib_file (genfilename);
 	for(i = 0; i < size; ++i)
 	{
@@ -1385,7 +1413,7 @@ void adjustcoefficients()
     double uA[USIZE] = {0.0};
     double uB[USIZE] = {0.0};
 
-    ifstream ufile("UAtten.txt");
+    ifstream ufile("outputfiles/UAtten.txt");
     while(ufile >> num)
     {
         if(num != 0)
@@ -1403,7 +1431,7 @@ void adjustcoefficients()
     }
 	ufile.close();
     
-    ofstream ufileout("UAtten.txt");
+    ofstream ufileout("outputfiles/UAtten.txt");
     for(num = 0; num < USIZE; ++num)
     {
         ufileout << ustrip[num] << "    ";
@@ -1418,7 +1446,7 @@ void adjustcoefficients()
     double v0[VSIZE] = {1.0};
     double vA[VSIZE] = {0.0};
     double vB[VSIZE] = {0.0};
-    ifstream vfile("VAtten.txt");
+    ifstream vfile("outputfiles/VAtten.txt");
     while(vfile >> num)
     {
         if(num != 0)
@@ -1436,7 +1464,7 @@ void adjustcoefficients()
     }
 	vfile.close();
 
-    ofstream vfileout("VAtten.txt");
+    ofstream vfileout("outputfiles/VAtten.txt");
     for(num = 0; num < VSIZE; ++num)
     {
         vfileout << vstrip[num] << "    ";
@@ -1451,7 +1479,7 @@ void adjustcoefficients()
     double w0[WSIZE] = {1.0};
     double wA[WSIZE] = {0.0};
     double wB[WSIZE] = {0.0};    
-    ifstream wfile("WAtten.txt");
+    ifstream wfile("outputfiles/WAtten.txt");
     while(wfile >> num)
     {
         if(num != 0)
@@ -1468,7 +1496,7 @@ void adjustcoefficients()
     }
 	wfile.close();
 
-    ofstream wfileout("WAtten.txt");
+    ofstream wfileout("outputfiles/WAtten.txt");
     for(num = 0; num < WSIZE; ++num)
     {
         wfileout << wstrip[num] << "    ";
@@ -1481,79 +1509,106 @@ void adjustcoefficients()
 }
 
 # ifndef __CINT__
-int main()
+int main(int argc, char **argv)
 {
-  int num_iter = 6;
-  int pass = 0;
-  int sector = 1;
-  char analysisu = 'u';
-  char analysisv = 'v';
-  char analysisw = 'w';
+    string secnum, rootfile, pmtped;
+    if(argc != 4)
+    {
+        cout << endl;
+        cout << "Please run program as:" << endl;
+        cout << "./Raw <SectorNumber> <SectorRootFile> <PMTpedestal>" << endl;
+                // 1         2               3               4
+        cout << "For Example: ./Raw 1 pcal_4416.root pcped.vec" << endl;
+        cout << endl;
 
-  //Get initial Gains
-  double ugaini[USIZE];
-  double vgaini[VSIZE];
-  double wgaini[WSIZE];
-  //importgains(ugaini, vgaini, wgaini);
-  //Get final Gains
-  double ugainf[USIZE];
-  double vgainf[VSIZE];
-  double wgainf[WSIZE];
-  
-  int i;
-  for(i = 0; i < USIZE; ++i)
-  {
-      ugaini[i] = 1.0;
-  }
-  for(i = 0; i < VSIZE; ++i)
-  {
-      vgaini[i] = 1.0;
-      wgaini[i] = 1.0;
-  }
-
-  
-  //Get FiberLengths
-  //Get Initial Gaussian Parameters
-  //Get Initial Attenuation Fit Parameters
-  //Get hit matrix
-
-  for(pass = 0; pass < num_iter; ++pass)
-  {
-      if(pass > 2)
-      {
-          importgains(ugainf, vgainf, wgainf); //import new gains
-          combinegains(ugaini, vgaini, wgaini, ugainf, vgainf, wgainf);//multiply into old ones
-          importgains(ugaini, vgaini, wgaini); //import new gains
-      }
-      Rawhistos(ugaini, vgaini, wgaini, sector, pass);
-      cout << "Pass " << pass << " of the Histograms generated!" << endl;
-      cout << endl;
-      cout << endl;
-      fit(pass, analysisu);
-      //fitU(pass);
-      cout << "Pass " << pass << " of the Fits to U strips completed." << endl;
-      cout << endl;
-      cout << endl;
-      fit(pass, analysisv);
-      //fitV(pass);
-      cout << "Pass " << pass << " of the Fits to V strips completed." << endl;
-      cout << endl;
-      cout << endl;
-      fit(pass, analysisw);
-      //fitW(pass);
-      cout << "Pass " << pass << " of the Fits to W strips completed." << endl;
-      cout << endl;
-      cout << endl;
-      //combinefiles();
     }
-    //fitU(6);
-    //fitU(7);
-    //fitU(8);
-    //fitU(9);
+    else
+    {
+        secnum = argv[1];
+        rootfile = argv[2];
+        pmtped = argv[3];
+        
+        if(atoi(secnum.c_str()) > 0 && atoi(secnum.c_str()) < 7)
+        {
+          int num_iter = 6;
+          int pass = 0;
+          int sector = 1;
+          char analysisu = 'u';
+          char analysisv = 'v';
+          char analysisw = 'w';
 
-    importgains(ugainf, vgainf, wgainf); //import new gains
-    adjustcoefficients();
-    combinegains(ugaini, vgaini, wgaini, ugainf, vgainf, wgainf);//multiply into old ones
+          //Get initial Gains
+          double ugaini[USIZE];
+          double vgaini[VSIZE];
+          double wgaini[WSIZE];
+          //importgains(ugaini, vgaini, wgaini);
+          //Get final Gains
+          double ugainf[USIZE];
+          double vgainf[VSIZE];
+          double wgainf[WSIZE];
+          
+          int i;
+          for(i = 0; i < USIZE; ++i)
+          {
+              ugaini[i] = 1.0;
+          }
+          for(i = 0; i < VSIZE; ++i)
+          {
+              vgaini[i] = 1.0;
+              wgaini[i] = 1.0;
+          }
+
+          
+          //Get FiberLengths
+          //Get Initial Gaussian Parameters
+          //Get Initial Attenuation Fit Parameters
+          //Get hit matrix
+
+          for(pass = 0; pass < num_iter; ++pass)
+          {
+              if(pass > 2)
+              {
+                  importgains(ugainf, vgainf, wgainf); //import new gains
+                  combinegains(ugaini, vgaini, wgaini, ugainf, vgainf, wgainf);//multiply into old ones
+                  importgains(ugaini, vgaini, wgaini); //import new gains
+              }
+              Rawhistos(ugaini, vgaini, wgaini, sector, pass, rootfile, pmtped);
+              cout << "Pass " << pass << " of the Histograms generated!" << endl;
+              cout << endl;
+              cout << endl;
+              fit(pass, analysisu);
+              //fitU(pass);
+              cout << "Pass " << pass << " of the Fits to U strips completed." << endl;
+              cout << endl;
+              cout << endl;
+              fit(pass, analysisv);
+              //fitV(pass);
+              cout << "Pass " << pass << " of the Fits to V strips completed." << endl;
+              cout << endl;
+              cout << endl;
+              fit(pass, analysisw);
+              //fitW(pass);
+              cout << "Pass " << pass << " of the Fits to W strips completed." << endl;
+              cout << endl;
+              cout << endl;
+              //combinefiles();
+            }
+            //fitU(6);
+            //fitU(7);
+            //fitU(8);
+            //fitU(9);
+
+            importgains(ugainf, vgainf, wgainf); //import new gains
+            adjustcoefficients();
+            combinegains(ugaini, vgaini, wgaini, ugainf, vgainf, wgainf);//multiply into old ones
+        }
+        else
+        {
+            cout << endl;
+            cout << "First arguement has to be a number 1 through 6." << endl;
+            cout << endl;
+        }
+    }
 
 
 

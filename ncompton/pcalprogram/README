@@ -1,0 +1,39 @@
+This program takes a root file of events as input and based on strip numbers
+and ADC readouts, the distance from the PMT is calaculated along with attenuation
+coefficients, Gains, and fit parameters.
+
+All output is recorded in the directory outputfiles.
+
+The input requires a root file, pedestal values, hitmatrix.txt.
+
+In the development stages these were hard coded in and compiled via:
+g++ -oRaw Rawhistos.c `root-config --cflags --glibs`
+
+However, this did not allow an easy way to calibrate separate sectors or
+use different files without editing the program. Therefore to compile
+and run this program follow the steps below.
+
+
+1. Verify that the file hitmatrix.txt is in the inputfiles directory.
+
+2. Type make
+    If make does not work you could try 
+    g++ -oRawhistos Rawhistos.c `root-config --cflags --glibs`
+    
+3. Type "./Rawhistos <SectorNumber> <SectorRootFile> <PMTpedestal>"
+        <SectorNumber> is of int type
+        <SectorRootFile> is a file name
+        <PMTpedestal> is a file name
+
+4. This program may take 5-10 minutes to run depending on the machine it
+is compiled and run on.
+
+5. Once it is finished the Attenuation coefficients, Gains, Gaussian fit
+parameters, and 4 root files (containing each iteration of fits and
+set-up) will be in the outputfiles directory.
+
+*************************************************************************
+Please note that if you recieve the error:
+"Error in ROOT::Math::ParameterSettings>: Invalid lower/upper bounds - ignoring the bounds"
+the program is still working, and therefore you should not be alarmed.
+*************************************************************************

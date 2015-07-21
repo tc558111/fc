@@ -20,9 +20,10 @@ void DrawChiSquare(int count,double chiarray[], const int strip, const int passn
 void FitWithExpGaus(TH1F *fithisto, double par[], double parE[], const int fitnum, double *Rchisquare);
 void FitWithGaus(TH1F *fithisto, double par[], double parE[], const int fitnum, double *Rchisquare);
 
-
 void CalcDistinStrips(const char stripletter, const int crossstrip, double x[], double xE[], const int pointnum);
+
 void CalcDistance(double xdistance[], double xdistanceE[],const double distperstrip, const int numpoints, const char stripletter);
+
 void SetFitLimits(double *xlow, double *xhigh, const double xdist[], const int numpoints);
 void CalcFiberLengths(const char lowlet, const int ustrip, double avfiberlength[], const double fiblength[], double xdist[], const int numpoints);
 
@@ -52,7 +53,7 @@ void fit(const int Pass = 0, const char striplet = 'x')
     histfolder = histfolder + stringnum[0]; //where to look from
     fitfolder = fitfolder + stringnum[0]; //where to write to
         
-    cout << histfolder << endl;
+    //cout << histfolder << endl;
 
     if(Pass == 0)
     {
@@ -65,8 +66,9 @@ void fit(const int Pass = 0, const char striplet = 'x')
 
     //u,v,w specific
     char gethistname[50];
-    char crossstrip;
-    int num_in_layer, num_in_crosslayer;
+    char crossstrip = 'W';
+    int num_in_layer = 68;
+    int num_in_crosslayer = 62;
     if(lowlet == 'u')
     {
         crossstrip = 'W';
@@ -93,9 +95,11 @@ void fit(const int Pass = 0, const char striplet = 'x')
 	double fiblen[69 + 16];
     TGraphErrors *graph[69];
     TF1 *total2[69];
-	double swidth = 4.5;
+	//double swidth = 4.5;
 	double width = 5.055;
-	int wstrip, i, j, count, ustrip;
+	int wstrip;
+    //int i, j;
+    int count, ustrip;
 	int nentries = 0;
 	char name[30];
 	char canname[30];
@@ -106,21 +110,22 @@ void fit(const int Pass = 0, const char striplet = 'x')
 	//bin study
     int gcount = 0;
 	double xsquare[68 * 62];
-    double ndf;
+    //double ndf;
 
     //fit study
 	double x2square[69];
     int fitcount = 0;
 
 	//statistical test
-	double functionval;
-	double diffsquare;
-	double chisquare;
+	//double functionval;
+	//double diffsquare;
+	//double chisquare;
     double redchisquare, redchisq2;
 
     //bincontent function
-    double bincontent, bincontentold, lowestx;
-    int bin, maxbin;
+    //double bincontent;
+    //double bincontentold, lowestx;
+    //int bin, maxbin;
 
     //declare 3d histo
     TH3F *inhist;
@@ -131,7 +136,7 @@ void fit(const int Pass = 0, const char striplet = 'x')
     //canallatt->Divide(8,9);
 
     //input file
-	TFile *f = new TFile("Histo.root");
+	TFile *f = new TFile("outputfiles/Histo.root");
     f->cd(histfolder.c_str());
     gDirectory->cd("Setup");
 
@@ -167,7 +172,7 @@ void fit(const int Pass = 0, const char striplet = 'x')
 
     //output file
     char fitfilename[50];
-    sprintf(fitfilename, "%cFits.root", uplet);
+    sprintf(fitfilename, "outputfiles/%cFits.root", uplet);
     string cppfitfilename = fitfilename;
     TFile fitsfile(cppfitfilename.c_str(),filetype.c_str());
     fitsfile.mkdir(fitfolder.c_str());
@@ -180,18 +185,18 @@ void fit(const int Pass = 0, const char striplet = 'x')
 	Initialize(fiblen,69+15);
 	GetFiberLengths(fiblen,69+15,uplet);
 
-    char genfilename[50];
+    char genfilename[100];
     
-    sprintf(genfilename, "%ccentroid.txt", uplet);
+    sprintf(genfilename, "outputfiles/%ccentroid.txt", uplet);
 	ofstream centroids (genfilename);
 
-    sprintf(genfilename, "%cparameters.txt", uplet);
-	ofstream Par_file (genfilename);
+    //sprintf(genfilename, "%cparameters.txt", uplet);
+	//ofstream Par_file (genfilename);
 
-    sprintf(genfilename, "%cAtten.txt", uplet);
+    sprintf(genfilename, "outputfiles/%cAtten.txt", uplet);
     ofstream Atten (genfilename); // strip, I0, A, B
 
-    sprintf(genfilename, "%cGains.dat", uplet);
+    sprintf(genfilename, "outputfiles/%cGains.dat", uplet);
     ofstream Gains (genfilename); // x = 0 value
     
 	Initialize(parfit,3);
@@ -288,7 +293,7 @@ void fit(const int Pass = 0, const char striplet = 'x')
 		}//w strip
         canfit[ustrip]->~TCanvas();
 
-        cout << "Finished looping over W cross strips. " <<endl;
+        //cout << "Finished looping over W cross strips. " <<endl;
 
         //Change distance from strips from edge to cm from edge
         CalcDistance(x, xE, width, count, lowlet);
@@ -331,7 +336,7 @@ void fit(const int Pass = 0, const char striplet = 'x')
 
             //cout << "Function Passed!" << endl;
             
-            Par_file << ustrip << "  &  " << parfit[1] << "  &  " <<  parfit[2]  << "  hline " << endl;
+            //Par_file << ustrip << "  &  " << parfit[1] << "  &  " <<  parfit[2]  << "  hline " << endl;
             // strip, I0, A, B
             Atten << ustrip << "    " << parfit[0] << "    " << parfit[1] << "    " << parfit[2] << endl;
             Gains << ustrip << "    " << 650.0/(parfit[0] + parfit[2]) << endl;
@@ -342,7 +347,7 @@ void fit(const int Pass = 0, const char striplet = 'x')
             ++fitcount;
 
 
-            cout << "after chisquare" <<endl;
+            //cout << "after chisquare" <<endl;
             gDirectory->cd("../AtFits");
             gDirectory->Append(graph[ustrip]);
             gDirectory->cd("../SigFits");
@@ -352,7 +357,7 @@ void fit(const int Pass = 0, const char striplet = 'x')
         {
             cout << "No Gaussian Fit achieved. Layer: " << lowlet << " Stip #: " << ustrip << endl;
             Atten << ustrip << "    " << 0.0 << "    " << 0.0 << "    " << 0.0 << endl;
-            Par_file << ustrip << "  &  " << 0.0 << "  &  " <<  0.0  << "  hline " << endl;
+            //Par_file << ustrip << "  &  " << 0.0 << "  &  " <<  0.0  << "  hline " << endl;
             Gains << ustrip << "    " << 1.0 << endl;
         }
         
@@ -365,7 +370,7 @@ void fit(const int Pass = 0, const char striplet = 'x')
 
 	} //u strip
     Atten.close();
-	Par_file.close();
+	//Par_file.close();
     Gains.close();
     centroids.close();
 
@@ -523,7 +528,6 @@ void CalcDistinStrips(const char stripletter, const int crossstrip, double x[], 
 
 void SetFitLimits(double *xlow, double *xhigh, const double xdist[], const int numpoints)
 {
-    int i;
     int lowindex, highindex;
 
     if(numpoints == 0)
@@ -704,7 +708,7 @@ void GetFiberLengths(double array[], const int size, const char uplet)
 	int num;
     char genfilename[50];
 
-    sprintf(genfilename, "FiberLengths%c.txt", uplet);
+    sprintf(genfilename, "inputfiles/FiberLengths%c.txt", uplet);
 	ifstream fib_file (genfilename);
 	for(i = 0; i < size; ++i)
 	{

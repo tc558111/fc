@@ -46,8 +46,9 @@ return
 
 macro merge runs tag=a s=5 det=pc
 
+  global/imp kuroot,pawlogon.fcroot ; fcroot=[pawlogon.fcroot]
   exe init.global rsum [s] [det]; global/imp *path,*file
-  exe utilMerge#merge forcar/rzh/fcMuon forcar-s[s]- forcar-s[s]-rsum[s][tag] $unquote([runs])
+  exe utilMerge#merge [fcroot]/rzh/fcMuon forcar-s[s]- forcar-s[s]-rsum[s][tag] $unquote([runs])
   global/cre ofile [rzhpath]/forcar-s[s]-rsum[s][tag].rzh
   global/cre runlist [runs]
   global/list * [kupath]/rsum[s][tag]
@@ -59,7 +60,6 @@ macro init.global r=477 s=5 det=ec
   message fcMuon: Initializing globals 
   
   global/imp kuroot,pawlogon.fcroot ; fcroot=[pawlogon.fcroot]
-  
   global/cre rznpath [fcroot]
   global/cre rzhpath [fcroot]/rzh/fcMuon
   global/cre funpath [kuroot]/kumac/calcom/cal12/fc/fun

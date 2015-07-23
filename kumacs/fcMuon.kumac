@@ -6,7 +6,7 @@ macro run r=477 s=1 det=ec
   message fcMuon: Opening ntuple [ifile]
   hi/file 1 [ifile] 8191
   nt/print 10 ; global/cre ntrig $hinfo(10,'entries')
-  call [funpath]/pclib.f77
+  call [funpath]/fclib.f77
   nt/loop 10 fc() 
   close 0
   exit=0
@@ -62,7 +62,7 @@ macro init.global r=477 s=5 det=ec
   
   global/cre rznpath [fcroot]
   global/cre rzhpath [fcroot]/rzh/fcMuon
-  global/cre funpath [kuroot]/kumac/calcom/cal12/pc/fun
+  global/cre funpath [kuroot]/kumac/calcom/cal12/fc/fun
   global/cre kupath  [fcroot]/rzh/fcMuon/[det]
   global/cre runno  [r]
   global/cre sector [s]

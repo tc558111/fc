@@ -1,0 +1,900 @@
+macro run r=477 s=1 det=ec
+
+  exe init.global [r] [s] [det] ; global/imp *path,*file
+  exe init.vec
+  exe init.hist 
+  message fcMuon: Opening ntuple [ifile]
+  hi/file 1 [ifile] 8191
+  nt/print 10 ; global/cre ntrig $hinfo(10,'entries')
+  call [funpath]/pclib.f77
+  nt/loop 10 fc() 
+  close 0
+  exit=0
+  if $fexist([ofile]).eq.1 then ; read exit 'File exists! 1=exit' ; endif
+  if ([exit].ne.1) then 
+  message fcMuon: Saving histos in [ofile]
+  hi/file 1 [ofile] 1024 N ; hrout 0 ; close 1
+  global/list * [kupath]/[r]
+  endif
+  
+return
+
+macro loop s=1 det=pc
+
+  shift;shift
+  
+  do i=1,[#]
+    exe run [%i] [s] [det]
+  enddo
+
+return
+
+macro do.merge s=1 det=pc
+
+  case [s] in
+    (1) exe loop 1 [det] 103 109 126 131 132 
+	exe merge '103 109' a 1 [det] ; exe merge '126 131 132' b 1 [det]
+  (1pc) exe loop 1 [det] 142 143 148 
+	exe merge '142-pc 143-pc 148-pc' c 1 [det]
+  (1ec) exe loop 1 [det] 142 143 148 
+	exe merge '142-ec 143-ec 148-ec' c 1 [det]
+    (2) exe loop 2 [det] 110 113 114 115 131 133 134 135 141 142 145 146 154
+	exe merge '110 113 114 115 131 133 134 135' a 2 ; exe merge '141 142 145 146' b 2
+  endcase
+  
+return
+
+macro merge runs tag=a s=5 det=pc
+
+  exe init.global rsum [s] [det]; global/imp *path,*file
+  exe utilMerge#merge forcar/rzh/fcMuon forcar-s[s]- forcar-s[s]-rsum[s][tag] $unquote([runs])
+  global/cre ofile [rzhpath]/forcar-s[s]-rsum[s][tag].rzh
+  global/cre runlist [runs]
+  global/list * [kupath]/rsum[s][tag]
+
+return
+
+macro init.global r=477 s=5 det=ec
+
+  message fcMuon: Initializing globals 
+  global/cre rznpath /home/clasrun/ecal/pcal/paw/forcar
+  global/cre rzhpath /home/clasrun/ecal/pcal/paw/forcar/rzh/fcMuon
+  global/cre funpath /home/clasrun/ecal/pcal/paw/kumac/calcom/cal12/pc/fun
+  global/cre kupath  /home/clasrun/ecal/pcal/paw/forcar/rzh/fcMuon/[det]
+  global/cre runno  [r]
+  global/cre sector [s]
+  global/cre ifile [rznpath]/forcar-s[s]-[r].rzn
+  global/cre ofile [rzhpath]/forcar-s[s]-[r]-[det].rzh
+  global/cre timestamp $DATE $TIME
+  global/cre runlist [r]
+  global/cre thresh '30 40 40'
+  global/cre adccal '0.35 0.2 0.2'
+  global/cre tdccal '1e-3 1e-3 1e-3'
+  global/cre pixcut '0.1 0.1 0.1'
+  global/cre pcmask '168 233 235 262 308 310 362'
+  global/cre det [det]
+
+  case [det] in
+    (pc) global/cre ic1 1 ; global/cre ic2 1
+    (ec) global/cre ic1 2 ; global/cre ic2 3
+  endcase
+
+return
+
+macro init.vec
+
+  global/imp sector,ic*,thresh,adccal,tdccal,pixcut,pcmask
+  vec/cre srange(2)  i [sector] [sector]
+  vec/cre icrange(2) i [ic1] [ic2]
+  vec/cre thresh(3)  i $unquote([thresh])
+  vec/cre adccal(3)  r $unquote([adccal])
+  vec/cre tdccal(3)  r $unquote([tdccal])
+  vec/cre pixcut(3)  r $unquote([pixcut])
+  vec/cre pcmask(10) i $unquote([pcmask])
+
+return
+
+macro init.hist 
+  
+  message fcMuon: Creating histograms
+
+  global/imp sector,ic*,det
+
+* Histogram ID convention
+* hid=1e7*is + 1e5*tag + 1e4*ic + 1e2*uv + pmt
+* is=1-6 tag=0-99 ic=0-2 uv=12,13,23 pmt=1-[nbn]
+
+  cd  //pawc ; hi/del * ; close 0
+
+  vec/cre nbn(3) i 68 36 36
+
+  tid=100000
+  cid=10000
+  lid=100
+
+  1d  701     '' 192 1. 3. 0.
+  1d  702,703 ''  72 1. 3. 0.
+
+* FTOF Gain Monitor Histos
+  2d 664,666 '' 200 0. 2500. 23 1. 24. 0.
+  2d 665,667 '' 150 0. 4000. 62 1. 63. 0.
+
+* PCAL(ic=1) ECinner(ic=2) ECouter(ic=3) Histos
+  do is=[sector],[sector]
+    message Creating Sector [is] histograms for $upper([det])
+    iss=[is]*1e7
+    hid=[iss]+1 ; 1d [hid] '' 193 0. 193. 0. 
+    hid=[iss]+2 ; 1d [hid] '' 109 0. 109. 0. 
+    hid=[iss]+3 ; 1d [hid] '' 109 0. 109. 0.
+    hid=[iss]+4 ; 1d [hid] '' 193 0. 193. 0.
+    hid=[iss]+5 ; 1d [hid] '' 109 0. 109. 0.
+    hid=[iss]+6 ; 1d [hid] '' 109 0. 109. 0.
+    hid=[iss]+7 ; 2d [hid] ''  50 0.  50. 30 0. 30. 0.
+    hid=[iss]+8 ; 2d [hid] ''  50 0.  50. 30 0. 30. 0.
+    do ic=[ic1],[ic2]
+      nbn=nbn([ic]);xmx=[nbn]+1
+      hid=[iss]+50*[tid]+[ic]*[cid]
+      do i=1,[nbn]
+        hidd=[hid]+21*[lid]+[i]
+        2d [hidd] '' [nbn] 1. [xmx]. 30 0. 700. 0.
+        hidd=[hid]+12*[lid]+[i]
+        2d [hidd] '' [nbn] 1. [xmx]. 30 0. 700. 0.
+        hidd=[hid]+31*[lid]+[i]
+        2d [hidd] '' [nbn] 1. [xmx]. 30 0. 700. 0.
+        hidd=[hid]+13*[lid]+[i]
+        2d [hidd] '' [nbn] 1. [xmx]. 30 0. 700. 0.
+        hidd=[hid]+32*[lid]+[i]
+        2d [hidd] '' [nbn] 1. [xmx]. 30 0. 700. 0.
+        hidd=[hid]+23*[lid]+[i]
+        2d [hidd] '' [nbn] 1. [xmx]. 30 0. 700. 0.
+      enddo
+      hid=[iss]+40*[tid]+[ic]*[cid]
+      do i=1,3
+        hidd=[hid]+12*[lid]+[i]
+        2d [hidd] '' [nbn] 1. [xmx]. [nbn] 1. [xmx]. 0.
+        hidd=[hid]+13*[lid]+[i]
+        2d [hidd] '' [nbn] 1. [xmx]. [nbn] 1. [xmx]. 0.
+        hidd=[hid]+23*[lid]+[i]
+        2d [hidd] '' [nbn] 1. [xmx]. [nbn] 1. [xmx]. 0.
+        hidd=[hid]+32*[lid]+[i]
+        2d [hidd] '' [nbn] 1. [xmx]. [nbn] 1. [xmx]. 0.
+      enddo
+      hid=[iss]+[ic]*[cid]
+      do il=1,3
+         hidd=[hid]+10*[tid]+[il]*[lid]
+         2d [hidd] ' '  80 0. 600. [nbn] 1. [xmx]. 0.
+         hidd=[hid]+11*[tid]+[il]*[lid]
+         2d [hidd] ' ' 150 1100. 1600. [nbn] 1. [xmx]. 0.
+         hidd=[hid]+15*[tid]+[il]*[lid]
+         2d [hidd] ' '  80 0. 1000. [nbn] 1. [xmx]. 0.
+         hidd=[hid]+16*[tid]+[il]*[lid]
+         2d [hidd] ' '  80 0. 1000. [nbn] 1. [xmx]. 0.
+         hidd=[hid]+20*[tid]+[il]*[lid]
+         2d [hidd] ' '  50 0. 1000. [nbn] 1. [xmx]. 0.
+         hidd=[hid]+21*[tid]+[il]*[lid]
+         2d [hidd] ' '  50 0. 1000. [nbn] 1. [xmx]. 0.
+         hidd=[hid]+22*[tid]+[il]*[lid]
+         2d [hidd] ' '  50 0. 1000. [nbn] 1. [xmx]. 0.
+      enddo
+    enddo
+  enddo
+
+return
+
+macro get.hist run det=pc ofile=1 lun=1
+  if [ofile].eq.1 then ; exe forcar/rzh/fcMuon/[det]/[run] ; global/imp *
+  else ; global/cre sector 5 ; ofile=level3-s5-[run].rzh ; endif
+  if [lun].eq.1 then ; cd //pawc ; hi/del * ; close 0 ; endif 
+  hi/file [lun] [ofile]
+return
+
+macro plot.label run t
+
+  global/imp sector,runlist,ofile,timestamp,det,ntrig
+
+  case [t] in
+   (1) ttxt='HIT MULTIPLICITY PIXEL EFFICIENCY' ; det=ecpc
+  (10) ttxt='ADC ALL EVENTS'
+  (11) ttxt='TDC ALL EVENTS'
+  (15) ttxt='ADC U(1).V(1)'
+  (16) ttxt='ADC U+V+W=2'
+  (20) ttxt='MULT=2.and.STRIP CUT'
+  (21) ttxt='MULT=3.and.STRIP CUT'
+  (22) ttxt='MULT=3.and.STRIP.and.ECUT'
+  (50) ttxt='ATTENUATION CUTS'
+  endcase
+  case [run] in
+   (151,152,153,154,155) trig=U(1).or.V(1).or.W(1) (80 ns) ECAL INNER v1495
+     (*) trig=U(1).V(1).W(1) (80 ns) ECAL INNER V1495 
+  endcase
+
+  eclab=ECAL;pclab=PCAL;ecpclab=EC/PC
+  selnt 1 ; set chhe 0.3
+  txt= [[det]lab]//' SECTOR '//[sector]	  ; itx  2.0 17.5 [txt]
+  txt='RUN '//[run]//' ('//[runlist]//')' ; itx  2.0 17.0 [txt]
+  txt=[ttxt] 		                  ; itx  6.0 17.5 [txt]
+  txt='NTRIG='//[ntrig]                   ; itx  6.0 17.0 [txt]
+  set chhe 0.2
+  txt='FILE= '//[ofile]			  ; itx 17.  17.5 [txt]
+  time1=$word([timestamp],
+  txt='DATE= '//[timestamp]               ; itx 17.  17.2 [txt]
+  txt='TRIG='//[trig]			  ; itx 17.  16.9 [txt]
+  set chhe 0.3
+
+return
+
+macro plot.ftof.mip run1 run2 id bar
+
+  vec/cre par1(3) r ; vec/cre par2(3) r
+  exe get.hist [run1] ;       global/imp runlist ; runlist1=[runlist]
+  exe get.hist [run2] lun=2 ; global/imp runlist ; runlist2=[runlist]
+  hi/cop //lun1/[id] 668 ; hi/cop //lun2/[id] 669
+  a664=500.:900. ; a665=1400.:2200. ; a666=450.:800. ; a667=1400.:2200.
+  slix 668 $hinfo(668,ybins) ; hi/proj 668
+  slix 669 $hinfo(669,ybins) ; hi/proj 669
+  hi/cop 668.slix.[bar] 670
+  hi/cop 669.slix.[bar] 671
+  zone 3 1
+  set plci 5
+  hi/plot //lun1/[id] colz ; line 0. [bar] 4000 [bar] ; line 0. [bar]+1 4000 [bar]+1 ; atitle SQRT(L*R) BAR ! 321
+  hi/plot //lun2/[id] colz ; line 0. [bar] 4000 [bar] ; line 0. [bar]+1 4000 [bar]+1 ; atitle SQRT(L*R) BAR ! 321
+  opt fit ; set csiz 0.7 ; set yhti 0.8
+  hi/fit 670([a[id]]) g  0 par=par1(:) 
+  hi/fit 671([a[id]]) g  0 par=par2(:) 
+  opt utit ; title_gl [run1]//' BAR '//[bar] U
+  zone 3 2 3 s ; set plci 2 ; hi/plot 670 ; line par1(2) 0. par1(2) 5000.
+  opt utit ; title_gl [run2]//' BAR '//[bar] U
+  zone 3 2 6 s ; set plci 4 ; hi/plot 671 ; line par2(2) 0. par2(2) 5000.
+  opt htit ; title_gl ''
+  selnt 1 ; set chhe 0.3
+  txt='RUN '//[run1]//' ('//[runlist1]//')' ; itx  2.0 17. [txt]
+  txt='RUN '//[run2]//' ('//[runlist2]//')' ; itx 11.2 17. [txt]
+
+return
+
+macro get.pixsum lun id x1 x2
+
+  hi/plot //lun[lun]/[id]
+  hi/cop //lun[lun]/[id] 888 ; hi/cop 888([x1]:[x2]) 889
+  set hcol 4 ; set htyp 1 ; hi/plot 889 s ; set hcol 1 ; set htyp 0
+  global/imp ntrig ; sum=$hinfo(889,sum)
+  global/imp sum1,sum2,sum3
+  eff=$format($sigma([sum]/[ntrig]),f5.3)
+  set txci 4
+  tit=PIX=[sum] ; itx 1.1 $grafinfo('wnymax')*0.8 [tit]
+  set txci 1
+  id=[id]-700
+  tit=EFFt=[eff] ; itx 1.1 $grafinfo('wnymax')*0.7 [tit]
+  tit=EFF3=$format($sigma([sum]/[sum[id]]),f5.3) ; itx 1.1 $grafinfo('wnymax')*0.6 [tit]
+  atitle 'U+V+W'
+  hi/del 888,889
+ 
+return [sum]
+
+macro get.multsum lun id x1 x2
+
+  tit1=PCAL;tit2=ECAL INNER;tit3=ECAL OUTER
+  opt logx ; opt logy
+  set hcol 1 
+  hi/plot //lun[lun]/[id](0.5:80.)
+  hi/cop  //lun[lun]/[id](3.0:3.0) 888
+  sum=$hinfo(888,sum) 
+  set hcol 4 ; set htyp 1 ; hi/plot 888 s
+  set htyp 0
+  id=[id]-3 ; set hcol 2
+  hi/plot //lun[lun]/[id](0.5:80.) se
+  set hcol 1
+  atitle 'STRIPS FIRING'
+  id=[id]-10000000
+  selnt 1
+  case [id] in
+    (1) x1=2.5  ; y1=14.0 ; xt=5.2  ; yt=16.2
+    (2) x1=11.8 ; y1=14.0 ; xt=14.0 ; yt=16.2
+    (3) x1=21.0 ; y1=14.0 ; xt=23.0 ; yt=16.2
+  endcase
+  global/imp thresh ; global/cre sum[id] [sum]
+  set txal -10
+  set txci 1 ; itx [xt] [yt] [tit[id]]
+  set txal 0
+  set txci 2 ; itx [x1] [y1] RAW
+  set txci 1 ; itx [x1] [y1]-0.5 THR=$word([thresh],[id],1,' ')
+  set txci 4 ; itx [x1] [y1]-1.0 'N3='//[sum]
+  set txci 1
+  opt linx ; opt liny
+  hi/del 888 
+
+return
+
+macro plot.eff run
+
+  zone 3 2
+  set ndvy 5
+  exe get.hist [run] pc 1 1
+  exe get.hist [run] ec 1 2
+  exe get.multsum 1 10000004 1.01 2.01
+  exe get.multsum 2 10000005 1.01 2.01
+  exe get.multsum 2 10000006 1.01 2.01
+  exe get.pixsum 1 701 1.9 2.1
+  exe get.pixsum 2 702 2.0 2.1
+  exe get.pixsum 2 703 2.0 2.1
+  exe plot.label [run] 1
+  global/del sum1,sum2,sum3
+
+return
+
+macro plot.1 run det=pc t=10 ic=1 ofile=1
+
+  exe get.hist [run] [det] [ofile] ; global/imp sector ; s=[sector]
+
+  id=[s][t][ic]0
+  mip1=400 ; mip2=300 ; mip3=300*1.6 
+  of0=1;of1=0;o=[of[ofile]]
+  title_gl '' U ; opt utit
+
+  global/imp ecal*
+  set xwin 0 ;set ywin 0 ; set xval 0 ; set yval 0 ; set vsiz 0 ; set txal 0
+  set ndvx 10
+  opt logz
+  zone 3 1
+  set plci 5
+  min [id]10[o] 0.5 ; hi/plot [id]10[o] col ; atitle 'U FADC' 'U PMT' ! 221 ; line [mip[ic]] 0 [mip[ic]] 68
+  min [id]20[o] 0.5 ; hi/plot [id]20[o] col ; atitle 'V FADC' 'V PMT' ! 221 ; line [mip[ic]] 0 [mip[ic]] 68
+  min [id]30[o] 0.5 ; hi/plot [id]30[o] col ; atitle 'W FADC' 'W PMT' ! 221 ; line [mip[ic]] 0 [mip[ic]] 68
+  set plci 1
+  exe plot.label [run] [t]
+  txt=NU=$hinfo([id]10[o],sum) ; itx 12.7 17.5 [txt]
+  txt=NV=$hinfo([id]20[o],sum) ; itx 12.7 17.0 [txt]
+  txt=NW=$hinfo([id]30[o],sum) ; itx 12.7 16.5 [txt]
+
+return
+ 
+macro plot.att run det=pc lay=uv t=50 ic=1 ofile=1
+
+  exe get.hist [run] [det] [ofile]; global/imp sector ; s=[sector]
+
+  mip1=400 ; xpc=40 ; xec=25
+  layd=[lay].[det]
+
+  case [layd] in
+   (uv.pc) id=21 ; n=68 ; n1=62 ; zone 9 8
+   (uw.pc) id=31 ; n=68 ; n1=62 ; zone 9 8
+   (vu.pc) id=12 ; n=62 ; n1=68 ; zone 9 7
+   (vw.pc) id=32 ; n=62 ; n1=62 ; zone 9 7
+   (wu.pc) id=13 ; n=62 ; n1=68 ; zone 9 7
+   (wv.pc) id=23 ; n=62 ; n1=62 ; zone 9 7
+   (uv.ec) id=21 ; n=36 ; n1=36 ; zone 6 6
+   (uw.ec) id=31 ; n=36 ; n1=36 ; zone 6 6
+   (vu.ec) id=12 ; n=36 ; n1=36 ; zone 6 6
+   (vw.ec) id=32 ; n=36 ; n1=36 ; zone 6 6
+   (wu.ec) id=13 ; n=36 ; n1=36 ; zone 6 6
+   (wv.ec) id=23 ; n=36 ; n1=36 ; zone 6 6
+  endcase
+
+  set xwin 0.1 ; set ywin 0.1 ; set xval 0 ; set yval 100 ; set ndvx 32 ; set chhe 0.3
+  set plci 5 
+
+  do i=1,[n]
+    hid= $eval([s][t][ic][id]00+[i]) ; max [hid] 250
+    hi/plot [hid](1:[n1],:) col
+    set ltyp 3 ; set plci 5 ; line 0. 400  [n]+1 400.
+    set ltyp 1 ; set plci 7 ; line 0. 15. [n]+1 15.
+    set xval 100 ; if [i].eq.[n]-1 then ; set yval 0 ; endif
+    set txci 5 ; itx [x[det]]. 540. $upper($substring([lay],1,1))//[i] ; set txci 1
+  enddo
+  atitle $upper($substring([lay],2,1))//' PMT'
+
+  exe plot.label [run] [t]
+ 
+return
+
+macro map.plot.att run lay=uw z2=540.
+
+  case [lay] in
+    (uv) exe map.plot [run] uv 1201 1202 z2=[z2]
+    (uw) exe map.plot [run] uw 1301 1302 z2=[z2]
+    (vw) exe map.plot [run] vw 2301 2302 z2=[z2]
+    (wv) exe map.plot [run] wv 3201 3202 z2=[z2]
+  endcase
+
+return
+
+macro map.plot.yld run lay=uw z1=1.1 z2=1000.1 grid=1
+
+  case [lay] in
+    (uv) exe map.plot [run] uv 1201 0 [z1] [z2] EVENTS [grid]
+    (uw) exe map.plot [run] uw 1301 0 [z1] [z2] EVENTS [grid]
+    (vw) exe map.plot [run] vw 2301 0 [z1] [z2] EVENTS [grid]
+    (wv) exe map.plot [run] wv 3201 0 [z1] [z2] EVENTS [grid]
+  endcase
+
+return
+
+macro map.plot.tdc run lay=uw z1=-30.1 z2=30.1 grid=0
+
+  case [lay] in
+    (uv) exe map.plot [run] uv 1201 1203 [z1] [z2] 'TDIFF' [grid] 
+    (uw) exe map.plot [run] uw 1301 1303 [z1] [z2] 'TDIFF' [grid] 
+    (vw) exe map.plot [run] vw 2301 2303 -8.1  8.1 'TDIFF' [grid] 
+    (wv) exe map.plot [run] wv 3201 3203 [z1] [z2] 'TDIFF' [grid] 
+  endcase
+
+ return
+
+macro map.plot runno=4047 pix=uv i1=1201 i2=1202 z1=1.1 z2=540.1 txt=ATTEN grid=0 ta=0
+
+  file=pcvec/px[pix]x.vec ; if $fexist([file]).eq.0 then ; message 'NO PIXEL FILE' ; exitm ; endif
+  
+  vec/cre goodpix(68) r
+  vec/cre pxx(6,68,68) r ; ve/cre pxy(6,68,68) r
+  
+  vec/read pxx pcvec/px[pix]x.vec ; vec/read pxy pcvec/px[pix]y.vec
+  vec/read goodpix pcvec/goodpix[pix].vec
+  exe get.hist [runno] ; global/imp sector ; s=[sector]
+  t=40 ; io=1
+  id1=[s][t][io][i1] ; id2=[s][t][io][i2]
+  vec/cre pix(68,68) r
+  hi/cop [id1] 7777,7779 ; ll=1
+  if [z2].eq.0 then ; z1=$hinfo(7779,min)+0.1 ; z2=$hinfo(7779,max)+0.1 ; endif
+  if [i2].ne.0 then ; hi/cop [id2] 7778 ; divide 7778 7777 7779 ; z1=[z1] ; z2=[z2] ; ll=0 ; endif
+  get_vect/contents 7779 pix 
+  
+  exe pcSED#pc.drawpix vec=pix pix=[pix] log=[ll] z1=[z1] z2=[z2] txt=[txt] grid=[grid]
+
+  selnt 1
+  igset txfp -60
+  igset txal -20
+  set chhe 0.4
+  itx 16. 10.  U ; itx  4. 10.  W ; itx 10. 0.0  V
+  set chhe 0.8
+  tit=PCAL SEC[s]; itx 15. 19. [tit]
+  itx 15. 18. $upper([pix])//' '//[txt]
+  set chhe 0.2
+  igset txfp 2
+  set txal 0
+  selnt 10
+  
+  hi/del 7777,7778,7779
+  
+return 
+
+macro plot.mip.1 runno=4068 lay=u y1 io=1 t=20
+  
+  exe get.hist [runno] ; global/imp sector ; s=[sector]
+  hid=[s][t][io]0
+
+  lay=$upper([lay])
+
+  case [lay] in
+    (U) id=[hid]100 ; y1=1 ; y2=68 ; zone 9 8 ; i1=52 ; col1=24 ; col2=29
+    (V) id=[hid]200 ; y1=1 ; y2=62 ; zone 9 7 ; i1=15 ; col1=29 ; col2=24
+    (W) id=[hid]300 ; y1=1 ; y2=62 ; zone 9 7 ; i1=15 ; col1=29 ; col2=24
+  endcase
+
+  title_gl '' U ; opt utit
+  set xwin 0.2 ; set ywin 0.2
+  set xval 100 ; set yval 100
+  set ndvx 48 ; set chhe 0.35
+  hi/cop [id] 800
+  slix 800 $hinfo(800,ybins)
+  hi/proj 800
+  do i=[y1],[y2]
+    if [i].eq.[y2] then ; set yval 0 ; endif
+    if [i].le.[i1] then ; set hcol [col1]  ; set htyp 1 ; endif
+    if [i].gt.[i1] then ; set hcol [col2]  ; set htyp 1 ; endif
+    hi/cop 800.slix.[i] 801 ; hi/plot 801(0.:1075.)
+    set plci 2 ; line 400. 0. 400. 2000.
+    itx 817. $hinfo(801,'max')*0.8 [lay]//[i]
+    hi/del 801
+  enddo
+  atitle 'ADC CHAN.'
+  tit=PCAL SECTOR [s]  COSMIC MIP DISTRIBUTIONS
+  selnt 1 ; set txal 23 ; set chhe 0.5 ; itx 15. 17.2 [tit] ; set chhe 0.4 ; itx 15 16.5 'RUN '//[runno]
+  set faci 24 ; set txci 24 ; key 24. 17.0 1 'SINGLE READOUT' 0.6 H
+  set faci 29 ; set txci 29 ; key 24. 16.5 1 'DOUBLE READOUT' 0.6 H
+  set txci 1 ; set faci 1
+  hi/del 800
+  
+return
+
+macro plot.mip.2 runno=4068 id=22 goto=plot sym=21 er=' ' sca=1.0
+
+  global/imp sector ; s=[sector]
+  set ygti 0.5 ; set gsiz 0.4 
+
+  goto [goto]
+  
+fit:
+  opt logz
+  zone 3 1
+  exe hv.fit [runno] q0 [id] 1 init
+  exe hv.fit [runno] q0 [id] 2 fit
+  exe hv.fit [runno] q0 [id] 3 fit
+  exe hv.fit.io [runno] w
+  wait
+  
+plot:
+
+  exe hv.fit.io [runno] r
+  sigma xx=array(68,1#68)+0.5 ; vec/cre xe(68) r 0.0
+
+  set xwin 0.1 ; set ywin 0.1
+  set xval 0 ; set yval 100 
+  set ndvy 4 ; set ndvx 12
+  col1=24*[sca] ; col2=29*[sca]
+  zone 3 2 1 [er]
+  set plci 2 ; set ltyp 1
+* crt  y1=150. ; y2=250. ; cal=200. ; c1=[cal]*0.95 ; c2=[cal]*1.05
+  y1=300. ; y2=500. ; cal=400. ; c1=[cal]*0.95 ; c2=[cal]*1.05
+
+  null 0.5 69.5 [y1] [y2] ; set xval 100 ; atitle '' 'CENTROID' ! 221
+  set ltyp 1 ; set plci 1 ; line 0 [cal] 70 [cal] 
+  set ltyp 2 ; set plci 2 ; line 0 [c1] 70 [c1] ; line 0 [c2] 70 [c2] ; set ltyp 1
+  set pmci [col1] ; set hcol [col1] ; hplot/errors xx(1:52)  pcg(1:52,1,[s])  xe pcge(1:52,1,[s])  52 [sym] 0.2 1
+  set pmci [col2] ; set hcol [col2] ; hplot/errors xx(53:68) pcg(53:68,1,[s]) xe pcge(53:68,1,[s]) 16 [sym] 0.2 1
+  null 0.5 69.5 [y1] [y2]
+  set ltyp 1 ; set plci 1 ; line 0 [cal] 70 [cal] 
+  set ltyp 2 ; set plci 2 ; line 0 [c1] 70 [c1] ; line 0 [c2] 70 [c2] ; set ltyp 1
+  set pmci [col2] ; set hcol [col2] ; hplot/errors xx(1:15)  pcg(1:15,2,[s])  xe pcge(1:15,2,[s])  15 [sym] 0.2 1
+  set pmci [col1] ; set hcol [col1] ; hplot/errors xx(16:62) pcg(16:62,2,[s]) xe pcge(16:62,2,[s]) 47 [sym] 0.2 1
+  null 0.5 69.5 [y1] [y2]  
+  set ltyp 1 ; set plci 1 ; line 0 [cal] 70 [cal] 
+  set ltyp 2 ; set plci 2 ; line 0 [c1] 70 [c1] ; line 0 [c2] 70 [c2] ; set ltyp 1
+  set pmci [col2] ; set hcol [col2] ; hplot/errors xx(1:15)  pcg(1:15,3,[s])  xe pcge(1:15,3,[s])  15 [sym] 0.2 1
+  set pmci [col1] ; set hcol [col1] ; hplot/errors xx(16:62) pcg(16:62,3,[s]) xe pcge(16:62,3,[s]) 47 [sym] 0.2 1
+  set ltyp 1 
+  set txal 23 ; set txci 2 ; set chhe 0.3 ; itx 73 [c2] '+5"Y&' ; itx 73 [c1] '-5"Y&' ; set txci 1
+  
+  y1=20; y2=70
+  sigma rat=pcgr/pcg ; sigma rate=rat*sqrt((pcgre/pcgr)**2+(pcge/pcg)**2)
+  vec=rat ; vece=rate ; y1=0.14  ; y2=0.5 
+  
+  set xval 0 ; set yval 0 ; set ndvy 4
+  null 0.5 69.5 [y1] [y2] ; set xval 100 ; atitle 'U PMT' 'RMS/CENTROID' ! 221
+  set pmci [col1] ; set hcol [col1] ; hplot/errors xx(1:52)  [vec](1:52,1,[s])  xe [vec]e(1:52,1,[s])  52 [sym] 0.2 1
+  set pmci [col2] ; set hcol [col2] ; hplot/errors xx(53:68) [vec](53:68,1,[s]) xe [vec]e(53:68,1,[s]) 16 [sym] 0.2 1
+  null 0.5 69.5 [y1] [y2] ; atitle 'V PMT'  ' ' ! 221
+  set pmci [col2] ; set hcol [col2] ; hplot/errors xx(1:15)  [vec](1:15,2,[s])  xe [vec]e(1:15,2,[s])  15 [sym] 0.2 1
+  set pmci [col1] ; set hcol [col1] ; hplot/errors xx(16:62) [vec](16:62,2,[s]) xe [vec]e(16:62,2,[s]) 47 [sym] 0.2 1
+  null 0.5 69.5 [y1] [y2] ; atitle 'W PMT'  ' ' ! 221
+  set pmci [col2] ; set hcol [col2] ; hplot/errors xx(1:15)  [vec](1:15,3,[s])  xe [vec]e(1:15,3,[s])  15 [sym] 0.2 1
+  set pmci [col1] ; set hcol [col1] ; hplot/errors xx(16:62) [vec](16:62,3,[s]) xe [vec]e(16:62,3,[s]) 47 [sym] 0.2 1
+  set xval 0 ; set yval 0
+  set xwin 0 ; set ywin 0  
+
+  global/imp sector ; tit=GAUSSIAN FITS TO MIP PEAKS - PCAL SECTOR [s]
+  selnt 1 ; set txal 23 ; set chhe 0.5 ; itx 15. 17.2 [tit] ; set chhe 0.4 ; itx 15 16.5 'RUN '//[runno]
+  set pmci 24 ; set txci 24 ; key 24. 16.9 21 'SINGLE READOUT'  
+  set pmci 29 ; set txci 29 ; key 24. 16.4 21 'DOUBLE READOUT' 
+  set txci 1 ; set pmci 1
+
+  title_gl ''
+   
+return
+
+macro comis.gauss 
+
+  vec/cre par(7)  r 100.  430. 50.  1.0  3*0.
+  vec/cre err(7)  r
+  vec/cre step(7) r    1.   1.  1.   0.5  0.  0.   0.  
+  vec/cre pmin(7) r    0. 100.  70.  0.9  2. 30.  10. 
+  vec/cre pmax(7) r 4000. 610.  200. 2.2 50. 90. 100. 
+  
+ application comis quit
+
+      real function gauass(x)
+      common/pawpar/par(7)
+      if (x.gt.par(2)) then
+        gauass = par(1)*exp(-0.5*((x-par(2))/par(3))**2)
+      else
+        gauass = par(1)*exp(-0.5*((x-par(2))/par(3)*par(4))**2)
+      endif
+      if (x.gt.par(6)) then
+        gauass=gauass+par(5)*exp(-0.5*((x-par(6))/par(7))**2)
+      endif
+      end
+
+quit
+
+return 
+
+macro fitit id opt=q0 summax=200 off1=100. off2=10. min=0.42 max=1.3 mip=400
+
+    hsum  = $hinfo([id],sum)
+    hmax  = $hinfo([id],max)
+    hmean = $hinfo([id],mean)
+    hrms  = $hinfo([id],rms)
+    good=0
+    if [hsum].gt.[summax] then
+      xa=$sigma(int([hmean]-[min]*[hrms]-[off1]))+0.01 
+      xb=$sigma(int([hmean]+[max]*[hrms]+[off2]))+0.01 
+      vec/inp par(2) [hmean] ; vec/inp par(3) [hrms]
+      vec/inp pmin(2) [xa]   ; vec/inp pmax(2) [xb]
+      hi/fit [id]([xa]:[xb]) gauass B[opt] 7 par=par errpar=err step=step pmin=pmin pmax=pmax
+      if [opt].ne.'q0' then
+        hi/plot [id] es
+        set plci 2 ; set ltyp 2 ; set lwid 4.5
+        line [xa] 0. [xa] $grafinfo('wnymax') ; line [xb] 0. [xb] $grafinfo('wnymax') 
+        set plci 1 ; set ltyp 1 ; set lwid 0
+        mean=par(2)
+        set plci 4  ; line [mean] 0. [mean] [hmax]
+        set plci 2  ; line [mip] 0. [mip] [hmax]
+        set hcol 2  ; fun/plot gauass(x) [xa]-20. [xb]+20. sl
+        set hcol 4  ; fun/plot gauass(x) [xa] [xb] sl 
+        set hcol 1  
+      endif
+      good=1
+    endif
+    
+return [good]
+
+******* ATT *******
+
+macro att.fit runno la str1=1 str2=68 opt=q0 mip=430
+
+  exe comis.gauss
+  exe get.hist [runno] ; global/imp sector ; s=[sector]
+  
+  case [la] in
+   (uv) id=21 ; lay=1
+   (uw) id=31 ; lay=1
+   (vu) id=12 ; lay=2
+   (vw) id=32 ; lay=2
+   (wu) id=13 ; lay=3
+   (wv) id=23 ; lay=3
+  endcase
+  
+  t=50 ; io=1
+  hid=[s][t][io][id]00
+
+init:
+
+  vec/cre pc[la](68,68,3) r 13872*-777 ; vec/cre pc[la]e(68,68,3) r 13872*-777
+  vec/cre pc[la]r(68,68,3) r 13872*-777 ; vec/cre pc[la]re(68,68,3) r 13872*-777
+
+  x1=20;x2=700
+  sigma xpmt=array(68,1#68)+0.5 ; vec/cre xe(68) r 0.0
+  size 30 18 ; opt logz ; title_gl '' U ; opt utit
+  do is=[str1],[str2]
+  zone 12 8 ; set xwin 0.1 ; set ywin 0.001 ; opt liny ; set xval 10 ; set yval 10
+  hi/cop //lun1/$eval([hid]+[is]) 779 ;  nbx=$hinfo(779,xbins)
+  sliy 779 [nbx] ; hi/proj 779
+  do i=2,[nbx]-1
+    hi/cop 779.sliy.[i] 78 
+    hi/cop 78([x1].:[x2].) 79 
+    tst=$exec(fcMuon#fitit 79 opt=[opt] summax=20 off1=20 min=1.2 max=1.7 mip=430)
+    if [tst].eq.1 then
+      vec/inp   pc[la]([i],[is],[lay]) par(2)
+       vec/inp  pc[la]e([i],[is],[lay]) $sigma(min(err(2),par(2)*0.05))
+      vec/inp  pc[la]r([i],[is],[lay]) par(3)
+      vec/inp pc[la]re([i],[is],[lay]) $sigma(min(err(3),par(3)*0.2))
+      hi/del 78,79
+    endif
+    set xval 100 ; set yval 100 
+  enddo
+  set xval 0 ; set yval 0 
+  set xwin 0.4 ; set ywin 0.2
+  zone 4 3 11 s
+  if [opt].ne.'q0' then
+  opt liny
+  hi/plot 779(:,[x1].:[x2].) col
+  sigma r1=pc[la]r/pc[la] ; sigma r1e=r1*sqrt((pc[la]re/pc[la]r)**2+(pc[la]e/pc[la])**2)
+  set pmci 7 ; set hcol 7 ; hplot/errors xpmt pc[la](:,[is],[lay]) xe pc[la]e(:,[is],[lay]) [nbx] 21 0.2  
+  set pmci 1 ; set hcol 7 ; hplot/errors xpmt pc[la](:,[is],[lay]) xe pc[la]e(:,[is],[lay]) [nbx] 25 0.2  
+  null 0. 69. 0. 0.5
+  set pmci 7 ; set hcol 7 ; hplot/errors xpmt r1(:,[is],[lay]) xe r1e(:,[is],[lay]) [nbx] 21 0.2  
+  set pmci 1 ; set hcol 7 ; hplot/errors xpmt r1(:,[is],[lay]) xe r1e(:,[is],[lay]) [nbx] 25 0.2  
+  set pmci 1 ; set hcol 1 
+  selnt 1 ; set chhe 0.6 ; tit=STRIP [is] ; itx 15. 17. [tit]
+  hi/del 779
+  wait
+  endif
+  enddo
+  
+  vec/cre pix(68,68) r ; vec/cop pc[la](:,:,[lay]) pix
+  
+  exe att.fit.io [runno] [la] w ; vec/del pc*
+  
+return
+
+
+macro att.fit.io runno la=uv rw=w
+
+  file=pcvec/att/att_[la]_[runno].vec
+  
+  case [rw] in
+    (r) vec/cre pc[la](68,68,3)  r 13872*-777 ; vec/cre pc[la]e(68,68,3)  r 13872*-777
+        vec/cre pc[la]r(68,68,3) r 13872*-777 ; vec/cre pc[la]re(68,68,3) r 13872*-777
+        message Reading att vectors from [file]
+    (w) message Writing att vectors to [file]
+  endcase
+  
+  vec/[rw] pc[la]   [file] ' ' 'O'
+  vec/[rw] pc[la]e  [file] ' ' ' '
+  vec/[rw] pc[la]r  [file] ' ' ' '
+  vec/[rw] pc[la]re [file] ' ' 'C'
+  
+  global/cre attfile [file]
+  
+return
+
+macro plot.att.1 runno la=uv linlog=logy xa=-10. xb=405. ya=120. yb=600. y11=48 mip=430
+
+  set xwin 0.2 ; set ywin 0.2
+  set xval 100 ; set yval 100
+  set ndvx 48 ; set chhe 0.35
+  set vsiz 0.2
+  
+  case [la] in
+    (uv) y1=1 ; y2=68 ; zone 9 8 ; tit=U ; lay=1 ; titx=CM ; imax=68 ; xmax=62 ; pmax=62
+    (vw) y1=1 ; y2=62 ; zone 9 7 ; tit=V ; lay=2 ; titx=CM ; imax=62 ; xmax=62 ; pmax=62
+    (wv) y1=1 ; y2=62 ; zone 9 7 ; tit=W ; lay=3 ; titx=CM ; imax=62 ; xmax=62 ; pmax=62
+    (uv1) y1=[y11] ; y2=[y11] ; zone 1 1 ; tit=U ; lay=1 ; titx=CM ; imax=68 ; xmax=62 ; pmax=62 ; la=uv ; set ndvx 6
+    (vw1) y1=[y11] ; y2=[y11] ; zone 1 1 ; tit=V ; lay=2 ; titx=CM ; imax=62 ; xmax=62 ; pmax=62 ; la=vw ; set ndvx 6
+          set asiz 0.4 ; set vsiz 0.4
+  endcase
+
+  exe att.fit.io [runno] [la]  r
+
+  title_gl '' U ; opt utit
+
+  vec/cre x([xmax]) r ; vec/cre y([xmax]) r ; vec/cre ye([xmax]) r ; vec/cre xe([xmax]) r
+  vec/cre pxx(6,68,68) r ; vec/cre pxy(6,68,68) r ; vec/cre pdif(6,68,68) r
+  
+  vec/read pxx pcvec/px[la]x.vec
+  vec/read pxy pcvec/px[la]y.vec
+  
+  do i=[y1],[y2]
+    if [i].eq.[y2] then ; set yval 0 ; endif
+    vec/cop pxx(2,[i],1:[xmax]) px ; vec/cop pxy(2,[i],1:[xmax]) py ; px1=px([pmax]) ; py1=py([pmax])
+    sigma x=sqrt((px-[px1])**2+(py-[py1])**2)
+    vec/cop  pc[la](1:62,[i],[lay]) y 
+    vec/cop pc[la]e(1:62,[i],[lay]) ye 
+    opt [linlog]
+    null [xa] [xb] [ya] [yb]  
+    sigma xx=x*(y ne -777)+(-777)*(y eq -777)  
+    sigma xxx=order(xx,-xx) ; sigma yy=order(y,-xx) ; sigma yye=order(ye,-xx)  
+    off=xxx(1);sigma xxx=(xxx ne -777)*([off]-xxx)+0*(xxx eq -777) 
+    set pmci 8 ; hplot/errors xxx yy xe yye $vlen(xxx) 21 0.05 1
+    set pmci 4 ; hplot/errors xxx yy xe yye $vlen(xxx) 25 0.05 1
+*    if [i].gt.45 then ; set lwid 4.5 ; exe pcAtt#plot.att.attdb 2 [lay] [i]  ; set lwid 0 ; endif
+*    if [i].gt.45 then ; exe pcAtt#fit.att 2 [lay] $vlen($sigma(spm[lay] le [i])) 1 $sigma(vmax(yy)) ; endif
+    itx $eval(0.5*([xa]+[xb])) $eval([yb]-([yb]-[ya])*0.3) [tit]//[i]
+    set hcol 2 ; fun/plot [mip]*exp(-x/350.) 0. 400. sl ; set hcol 1
+  enddo
+  
+  atitle [titx]
+  
+  tit=RUN [runno] LAYER $upper([la])  
+  global/imp sector
+  selnt 1 ; set txal 23 ; set chhe 0.5 ; itx 15. 17. 'PCAL SECTOR '//[sector]//' -  LIGHT ATTENUATION'
+  set pmci 4 ; key 5 1.3 25 [tit]
+  set plci 2 ; key 5 0.5 1 [mip]*EXP(-X/350.) ! line ; set plci 1
+  set xval 0 ; set yval 0 ; set xwin 0 ; set ywin 0 
+  
+return
+
+******* HV ********
+
+macro get.hv run
+
+  global/imp pawroot
+  exe hvStatus#get.pv
+  exe hvStatus#write.pv.pc [run]
+
+return
+
+macro hv.fit run=4046 opt=' '  t=20 l1=1 goto=init
+
+  global/imp gainpath,vecpath
+
+  exe comis.gauss
+
+  goto [goto]
+    
+init:
+  vec/cre pcg(68,3,6) r  ; vec/cre pcge(68,3,6) r 
+  vec/cre pcgr(68,3,6) r ; vec/cre pcgre(68,3,6) r 
+
+  sigma xx=array(68,1#68)+0.5 ; vec/cre xe(68) r 0.0
+  
+fit:  
+
+  t1=U;t2=V;t3=W
+  title_gl ' ' U ; opt utit
+*  zone 8 8 ; set xwin 0.01 ; set ywin 0.01 ; set xval 30 ; set yval 30
+
+  exe get.hist [run] ; global/imp sector ; sec=[sector] ; io=1 
+  hid=[sec][t][io]0
+
+  do s=[sec],[sec]
+    do lay=[l1],[l1]
+      hi/cop [hid][lay]00 779 ; nby=$hinfo(779,ybins)
+      slix 779 [nby] ; hi/proj 779
+      case [lay] in 
+        (1,2,3) x1=30. ; x2=1000.
+      endcase
+      do str=1,[nby]
+        hi/cop  779.slix.[str] 78 ; hi/cop 78([x1].:[x2].) 79 
+        tst=$exec(fcMuon#fitit 79 [opt] summax=50 off1=20 min=1.1)          
+        sigma eop=min(0.05,err/par) ; sigma err=par*eop
+        if [tst].eq.1 then  
+          vec/inp    pcg([str],[lay],[s]) par(2)
+          vec/inp   pcgr([str],[lay],[s]) par(3)
+          vec/inp   pcge([str],[lay],[s]) err(2)
+          vec/inp  pcgre([str],[lay],[s]) err(3)
+        endif
+        hi/del 78,79
+        if [opt].ne.q0 then ;  wait  ; endif
+      enddo
+      hi/plot 779(0.:1000.,:) colz 
+      vec/inp pcg(1,[lay],[s]) 430 
+*      set pmci 7 ; set hcol 7 ; hplot/errors pcg(:,[lay],[s]) xx pcgr(:,[lay],[s]) xe [nby] 20 0.2 2
+      set pmci 7 ; set hcol 7 ; hplot/errors pcg(:,[lay],[s]) xx pcge(:,[lay],[s]) xe [nby] 20 0.2 1
+      set pmci 1 ; set hcol 7 ; hplot/errors pcg(:,[lay],[s]) xx pcge(:,[lay],[s]) xe [nby] 24 0.2 1
+      set plci 1 ; line 430. 0. 430. [nby] ; set plci 1
+      set plci 0 ; set ltyp 2 ; line 408. 0. 408. [nby] ; set plci 1
+      set plci 0 ; set ltyp 2 ; line 451. 0. 451. [nby] ; set plci 1
+      set pmci 1 ; set hcol 1 ; set ltyp 1
+    enddo
+    atitle 'ADC CHANNEL NO.' [t[l1]]//' PMT'
+  enddo
+  
+return
+
+macro hv.fit.io runno rw=w vec=pcg
+
+  file=pcvec/gain/fc/hvfit_[runno].vec
+  
+  case [rw] in
+    (r)   vec/cre [vec](68,3,6) r  ; vec/cre [vec]e(68,3,6) r 
+          vec/cre [vec]r(68,3,6) r ; vec/cre [vec]re(68,3,6) r 
+          message Reading hvfit vectors from [file]
+    (w)   message Writing hvfit vectors to [file]
+  endcase
+  
+  vec/[rw] [vec]   [file] ' ' 'O'
+  vec/[rw] [vec]e  [file] ' ' ' '
+  vec/[rw] [vec]r  [file] ' ' ' '
+  vec/[rw] [vec]re [file] ' ' 'C'
+  
+  global/cre hvfitfile [file]
+  
+return
+
+macro refit lay s=1
+
+start:
+  vlocate x y
+  case $vlen(x) in
+    (1) str=$sigma(int(y)) ; vec/inp pcg([str],[lay],[s]) x(1)
+        message Adjusting [str],[lay],[s]  ; vec/del x,y ; go to start
+    (0) goto replot
+  endcase
+
+replot:  
+  hi/plot 779 colz 
+  vec/inp pcg(1,[lay],[s]) 200 
+  set pmci 7 ; set hcol 7 ; hplot/errors pcg(:,[lay],[s]) xx pcge(:,[lay],[s]) xe 68 20 0.2 
+  set plci 7 ; line 200. 0. 200. 68 ; set plci 1
+  set pmci 1 ; set hcol 1  
+
+return
+
+macro newhv lay=1 oldhv=dv4294 thr=0.5
+
+  global/imp pawroot ; path=[pawroot]/cal/hv/pc/archive
+  vec/cre dum2(192) r ; vec/read dum2 [path]/[oldhv].vec
+  case [lay] in
+    (1) alias/cre arg 1:68    ; n=68
+    (2) alias/cre arg 69:130  ; n=62
+    (3) alias/cre arg 131:192 ; n=62
+  endcase
+  vec/cop dum2(arg) oldhv
+  vec/cre adc([n]) r [n]*200 ; vec/cre pmt([n]) r [n]*11.
+  vec/cop pcg(1:[n],[lay],1) dum
+  sigma dum1=adc/dum ; sigma dum1=dum1*(dum1 gt 0) + 0.*(dum1 le 0)
+  sigma ratio=dum1**(1./pmt)
+  sigma newhv = int(oldhv*ratio*(ratio gt [thr])+oldhv*(ratio le [thr]))
+  vec/del dum,dum1,oldhv
+  
+return

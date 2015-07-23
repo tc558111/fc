@@ -54,9 +54,15 @@ macro merge runs tag=a s=5 det=pc
 
 return
 
-macro init.global r=477 s=5 det=ec
+macro init.global r=477 s=5 det=ec home=jlab
 
   message fcMuon: Initializing globals 
+  
+  case [home] in
+    (jlab) home=/home/clasrun/ecal/pcal/paw
+     (uva) home=/home/lcs1h/data/scratch4/fc
+  endcase  
+  
   global/cre rznpath /home/clasrun/ecal/pcal/paw/forcar
   global/cre rzhpath /home/clasrun/ecal/pcal/paw/forcar/rzh/fcMuon
   global/cre funpath /home/clasrun/ecal/pcal/paw/kumac/calcom/cal12/pc/fun

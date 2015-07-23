@@ -185,7 +185,8 @@ macro init.hist
 return
 
 macro get.hist run det=pc ofile=1 lun=1
-  if [ofile].eq.1 then ; exe forcar/rzh/fcMuon/[det]/[run] ; global/imp *
+  global/imp pawlogon.fcroot ; fcroot=[pawlogon.fcroot]
+  if [ofile].eq.1 then ; exe [fcroot]/rzh/fcMuon/[det]/[run] ; global/imp *
   else ; global/cre sector 5 ; ofile=level3-s5-[run].rzh ; endif
   if [lun].eq.1 then ; cd //pawc ; hi/del * ; close 0 ; endif 
   hi/file [lun] [ofile]

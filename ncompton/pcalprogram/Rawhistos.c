@@ -336,7 +336,7 @@ void Rawhistos(const double ugaini[], const double vgaini[], const double wgaini
                 
                 //if energy is greater than the threshold
                 //thresh is on line 297
-				if(adc > thresh && secselect == secpc[nPc])                             
+				if(adc > thresh && secselect == secpc[i])                             
 				{
                     //add one valid hit to num hits
 					nh[il][secselect] = nh[il][secselect] + 1;

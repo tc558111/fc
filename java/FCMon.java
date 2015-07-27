@@ -9,12 +9,12 @@ import org.jlab.evio.clas12.EvioDataEvent;
 import org.root.group.TBrowser;
 import org.root.group.TDirectory;
 
-public class PCALMonitor extends DetectorMonitoring {
+public class FCMon extends DetectorMonitoring {
 	
 	public String laba[] = {"monitor/pcal/adc","monitor/ecinner/adc","monitor/ecouter/adc"}; 
 	public String labt[] = {"monitor/pcal/tdc","monitor/ecinner/tdc","monitor/ecouter/tdc"}; 
 	
-		public PCALMonitor(){
+		public FCMon(){
 			super("FCMON","1.0","lcsmith");
 		}
 
@@ -131,8 +131,8 @@ public class PCALMonitor extends DetectorMonitoring {
 			}
 		}
 		
-	 if(event.hasBank("PCAL::dgtz")==true){
-	    int ic=0;	// ic=0,1,2 -> PCAL,ECinner,ECouter
+		if(event.hasBank("PCAL::dgtz")==true){
+			int ic=0;	// ic=0,1,2 -> PCAL,ECinner,ECouter
             EvioDataBank bank = (EvioDataBank) event.getBank("PCAL::dgtz");
             for(int i = 0; i < bank.rows(); i++){
             	int is  = bank.getInt("sector",i);
@@ -337,7 +337,7 @@ public class PCALMonitor extends DetectorMonitoring {
         }
     }
 	public static void main(String[] args){
-		   PCALMonitor calib = new PCALMonitor();
+		   FCMon calib = new FCMon();
 		   calib.init();
 		   CLASMonitoring monitor = new CLASMonitoring("/Users/colesmith/CLAS/crt/gemc/fc-muon-100k.evio", calib);
 		   monitor.process();

@@ -6,7 +6,7 @@ macro run r=477 s=1 det=ec
   message fcMuon: Opening ntuple [ifile]
   hi/file 1 [ifile] 8191
   nt/print 10 ; global/cre ntrig $hinfo(10,'entries')
-  call [funpath]/pclib.f77
+  call [funpath]/fclib.f77
   nt/loop 10 fc() 
   close 0
   exit=0
@@ -46,8 +46,9 @@ return
 
 macro merge runs tag=a s=5 det=pc
 
+  global/imp kuroot,pawlogon.fcroot ; fcroot=[pawlogon.fcroot]
   exe init.global rsum [s] [det]; global/imp *path,*file
-  exe utilMerge#merge forcar/rzh/fcMuon forcar-s[s]- forcar-s[s]-rsum[s][tag] $unquote([runs])
+  exe utilMerge#merge [fcroot]/rzh/fcMuon forcar-s[s]- forcar-s[s]-rsum[s][tag] $unquote([runs])
   global/cre ofile [rzhpath]/forcar-s[s]-rsum[s][tag].rzh
   global/cre runlist [runs]
   global/list * [kupath]/rsum[s][tag]
@@ -57,10 +58,12 @@ return
 macro init.global r=477 s=5 det=ec
 
   message fcMuon: Initializing globals 
-  global/cre rznpath /home/clasrun/ecal/pcal/paw/forcar
-  global/cre rzhpath /home/clasrun/ecal/pcal/paw/forcar/rzh/fcMuon
-  global/cre funpath /home/clasrun/ecal/pcal/paw/kumac/calcom/cal12/pc/fun
-  global/cre kupath  /home/clasrun/ecal/pcal/paw/forcar/rzh/fcMuon/[det]
+  
+  global/imp kuroot,pawlogon.fcroot ; fcroot=[pawlogon.fcroot]
+  global/cre rznpath [fcroot]
+  global/cre rzhpath [fcroot]/rzh/fcMuon
+  global/cre funpath [kuroot]/kumac/calcom/cal12/fc/fun
+  global/cre kupath  [fcroot]/rzh/fcMuon/[det]
   global/cre runno  [r]
   global/cre sector [s]
   global/cre ifile [rznpath]/forcar-s[s]-[r].rzn
@@ -182,7 +185,8 @@ macro init.hist
 return
 
 macro get.hist run det=pc ofile=1 lun=1
-  if [ofile].eq.1 then ; exe forcar/rzh/fcMuon/[det]/[run] ; global/imp *
+  global/imp pawlogon.fcroot ; fcroot=[pawlogon.fcroot]
+  if [ofile].eq.1 then ; exe [fcroot]/rzh/fcMuon/[det]/[run] ; global/imp *
   else ; global/cre sector 5 ; ofile=level3-s5-[run].rzh ; endif
   if [lun].eq.1 then ; cd //pawc ; hi/del * ; close 0 ; endif 
   hi/file [lun] [ofile]

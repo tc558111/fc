@@ -1,4 +1,4 @@
-package org.jlab.mon.clasmon_fc;
+package org.jlab.mon;
 import java.util.ArrayList;
 import org.jlab.evio.clas12.EvioDataBank;
 

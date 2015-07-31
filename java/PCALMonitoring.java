@@ -1,4 +1,4 @@
-package org.jlab.mon.clasmon_fc;
+package org.jlab.mon;
 
 import org.jlab.evio.clas12.*;
 import org.jlab.clasrec.main.*;
@@ -24,7 +24,7 @@ public class PCALMonitoring extends DetectorMonitoring {
 
     @Override
     public void init() {
-    	   ttPCAL.readFile("/Users/colesmith/COATJAVA/PCAL.table");
+    	   ttPCAL.readFile("/home/lcsmith/coatjava/PCAL.table");
        	   for (int lay=1 ; lay<4 ; lay++) {
     	       PCAL_ADC.put(lay, new H2D("ADC_LAYER_"+lay,68,1.0,69.0,50,0.0,300.0));
     	       PCAL_TDC.put(lay, new H2D("TDC_LAYER_"+lay,68,1.0,69.0,200,0.0,1000.0));

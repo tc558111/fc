@@ -1,4 +1,4 @@
-package org.jlab.mon.clasmon_fc;
+package org.jlab.mon;
 
 import org.jlab.clasrec.main.DetectorMonitoring;
 import org.jlab.clasrec.rec.CLASMonitoring;
@@ -32,7 +32,7 @@ public class FCMon extends DetectorMonitoring {
 	public void init() {
 		
 		//Histogram ID convention
-		//hid=1e7*is + 1e5*tag + 1e4*ic + 1e2*uv + pmt
+		//hid=is*1e7 + tag*1e5 + ic*1e4 + uv*1e2 + pmt
 		//is=1-6 tag=0-99 ic=0-2 uv=12,13,23 pmt=1-68
 		
 		int    nbn1[] = {68,36,36}; 
@@ -47,11 +47,15 @@ public class FCMon extends DetectorMonitoring {
 
 	    TDirectory calADC[] = new TDirectory[3];
 	    TDirectory calTDC[] = new TDirectory[3];
-
-    	for (int ic=0 ; ic<3 ; ic++) {
+	    
+    	for (int ic=0 ; ic<3 ; ic++) {  //ic=0,1,2 -> PCAL,ECALinner,ECALouter
     		calADC[ic] = new TDirectory(laba[ic]);
     		calTDC[ic] = new TDirectory(labt[ic]);
-    		hid=iss+50*tid+ic*cid;
+ 
+    		hid=iss+11*tid+ic*cid; //Dalitz test
+    		calADC[ic].add(new H1D("A"+hid,50,0.,3.0));
+    		
+    		hid=iss+50*tid+ic*cid; //Light attenuation vs crossing strip
     		for (int ip=1 ; ip<nbn1[ic]+1 ; ip++) {    		 
     			calADC[ic].add(new H2D("A"+(int)(hid+21*lid+ip),nbn1[ic],1.0,nbn2[ic],30,0.0,200.0));
     			calADC[ic].add(new H2D("A"+(int)(hid+12*lid+ip),nbn1[ic],1.0,nbn2[ic],30,0.0,200.0));     
@@ -60,14 +64,14 @@ public class FCMon extends DetectorMonitoring {
     			calADC[ic].add(new H2D("A"+(int)(hid+32*lid+ip),nbn1[ic],1.0,nbn2[ic],30,0.0,200.0));    		 
     			calADC[ic].add(new H2D("A"+(int)(hid+23*lid+ip),nbn1[ic],1.0,nbn2[ic],30,0.0,200.0));	
     			}
-    		hid=iss+40*tid+ic*cid;
+    		hid=iss+40*tid+ic*cid; //Detector map
     		for (int il=1 ; il<4 ; il++) {    	 
     			calADC[ic].add(new H2D("A"+(int)(hid+12*lid+il),nbn1[ic],1.0,nbn2[ic],nbn1[ic],1.0,nbn2[ic]));     
     			calADC[ic].add(new H2D("A"+(int)(hid+13*lid+il),nbn1[ic],1.0,nbn2[ic],nbn1[ic],1.0,nbn2[ic]));    	 
     			calADC[ic].add(new H2D("A"+(int)(hid+23*lid+il),nbn1[ic],1.0,nbn2[ic],nbn1[ic],1.0,nbn2[ic]));    		 
     			calADC[ic].add(new H2D("A"+(int)(hid+32*lid+il),nbn1[ic],1.0,nbn2[ic],nbn1[ic],1.0,nbn2[ic]));
     			}
-    		hid=iss+ic*cid;
+    		hid=iss+ic*cid; //FADC MIP vs strip 
     		for (int il=1 ; il<4 ; il++) {
     			calADC[ic].add(new H2D("A"+(int)(hid+10*tid+il*lid),50,0.0,200.0,nbn1[ic],1.0,nbn2[ic])); 
     			calTDC[ic].add(new H2D("T"+(int)(hid+10*tid+il*lid),200,200.0,800.0,nbn1[ic],1.0,nbn2[ic]));     		 
@@ -80,7 +84,28 @@ public class FCMon extends DetectorMonitoring {
     		getDir().addDirectory(calTDC[ic]);
     		}
 	}
-
+	
+	public float uvw_dalitz(int ic, int ip, int il) {
+		float uvw=0;
+		switch (ic) {
+		case 0: //PCAL
+			if (il==1&&ip<=52) uvw=(float)ip/84;
+			if (il==1&&ip>52)  uvw=(float)(52+(ip-52)*2)/84;
+			if (il==2&&ip<=15) uvw=(float) 2*ip/77;
+			if (il==2&&ip>15)  uvw=(float)(30+(ip-15))/77;
+			if (il==3&&ip<=15) uvw=(float) 2*ip/77;
+			if (il==3&&ip>15)  uvw=(float)(30+(ip-15))/77;
+			break;
+		case 1: //ECALinner
+			uvw=(float)ip/36;
+			break;
+		case 2: //ECALouter
+			uvw=(float)ip/36;
+			break;
+		}
+		return uvw;
+		
+	}
 	@Override
 	public void processEvent(EvioDataEvent event) {
 		
@@ -117,8 +142,10 @@ public class FCMon extends DetectorMonitoring {
 		int thr            = 15;
 		int iis            = 5;	//Sector 5 hardwired for now
 		
-		int hidd;
+		int hid,hidd;
+		
 		H2D hadc,htdc;
+		H1D hpix;
 		
 		for (int is=0 ; is<6 ; is++) {
 			for (int il=0 ; il<9 ; il++) {
@@ -133,6 +160,7 @@ public class FCMon extends DetectorMonitoring {
 		
 		if(event.hasBank("PCAL::dgtz")==true){
 			int ic=0;	// ic=0,1,2 -> PCAL,ECinner,ECouter
+			float uvw=0;
             EvioDataBank bank = (EvioDataBank) event.getBank("PCAL::dgtz");
             for(int i = 0; i < bank.rows(); i++){
             	int is  = bank.getInt("sector",i);
@@ -141,8 +169,6 @@ public class FCMon extends DetectorMonitoring {
             	int adc = bank.getInt("ADC",i);
             	int tdc = bank.getInt("TDC",i);
             	
-            	int hid = (int) (1e7*is+10*tid+ic*cid+il*lid);
-            	
                 if(is==iis){
             	   if (adc>thr) {
             	     nh[is-1][il-1]++;
@@ -150,29 +176,34 @@ public class FCMon extends DetectorMonitoring {
             	     adcr[is-1][il-1][inh-1] = adc;
             	     tdcr[is-1][il-1][inh-1] = tdc;
             	     strr[is-1][il-1][inh-1] = ip;
+            	     uvw=uvw+uvw_dalitz(ic,ip,il);
             	   }
+            	   
+               	   hid = (int) (1e7*is+10*tid+ic*cid+il*lid);
             	   hadc = (H2D) getDir().getDirectory(laba[ic]).getObject("A"+hid);
             	   htdc = (H2D) getDir().getDirectory(labt[ic]).getObject("T"+hid);
                    hadc.fill(adc,ip);
                    htdc.fill(tdc,ip);
+            	   hid = (int) (1e7*is+11*tid+ic*cid);
+            	   hpix = (H1D) getDir().getDirectory(laba[ic]).getObject("A"+hid);
+                   hpix.fill(uvw);
                }
             }
          }		
 		
         if(event.hasBank("EC::dgtz")==true){
+        	float uvw=0;
             EvioDataBank bank = (EvioDataBank) event.getBank("EC::dgtz");
             for(int i = 0; i < bank.rows(); i++){
             	int  is = bank.getInt("sector",i);
             	int  ip = bank.getInt("strip",i);
-             	int  ic = bank.getInt("stack",i);	// ic=0,1,2 -> PCAL,ECinner,ECouter
+             	int  ic = bank.getInt("stack",i);	 
             	int  il = bank.getInt("view",i);
             	int adc = bank.getInt("ADC",i);
             	int tdc = bank.getInt("TDC",i);
             	
             	int  iv = ic*3+il;
                 
-               	int hid = (int) (1e7*is+10*tid+ic*cid+il*lid);
-          	
                 if(is==iis){
             	   if (adc>thr) {
             	     nh[is-1][iv-1]++;
@@ -180,11 +211,17 @@ public class FCMon extends DetectorMonitoring {
             	     adcr[is-1][iv-1][inh-1] = adc;
             	     tdcr[is-1][iv-1][inh-1] = tdc;
             	     strr[is-1][iv-1][inh-1] = ip;
+            	     uvw=uvw+uvw_dalitz(ic,ip,il);
             	   }
+            	   
+                   hid = (int) (1e7*is+10*tid+ic*cid+il*lid);
             	   hadc = (H2D) getDir().getDirectory(laba[ic]).getObject("A"+hid);
             	   htdc = (H2D) getDir().getDirectory(labt[ic]).getObject("T"+hid);
                    hadc.fill(adc,ip);
                    htdc.fill(tdc,ip);
+            	   hid = (int) (1e7*is+11*tid+ic*cid);
+            	   hpix = (H1D) getDir().getDirectory(laba[ic]).getObject("A"+hid);
+                   hpix.fill(uvw);
                }
             }
          }
@@ -218,7 +255,7 @@ public class FCMon extends DetectorMonitoring {
         
         // Histo: Check plots using trigger condition (here u.v coincidence) (TAG=15)
         
-        int hid  = (int) (1e7*iis);
+        hid  = (int) (1e7*iis);
         
         for (int ic=0 ; ic<3 ; ic++){
         	if (good_uv[ic]) {
@@ -339,7 +376,7 @@ public class FCMon extends DetectorMonitoring {
 	public static void main(String[] args){
 		   FCMon calib = new FCMon();
 		   calib.init();
-		   CLASMonitoring monitor = new CLASMonitoring("/Users/colesmith/CLAS/crt/gemc/fc-muon-100k.evio", calib);
+		   CLASMonitoring monitor = new CLASMonitoring("/Users/colesmith/COATJAVA/dat/fc-muon-100k.evio", calib);
 		   monitor.process();
 		   calib.analyze();
 		   TBrowser browser = new TBrowser(calib.getDir()); 

@@ -43,16 +43,16 @@ public class ECMonitoring extends DetectorMonitoring {
 	@Override
 
 	public void init() {
-		for (int lay=1 ; lay<4 ; lay++) {
-			ECAL_ADC.put(lay, new H2D("ADC_LAYER_"+lay,100,0.0,200.0,36,1.0,37.0));
-    	    ECAL_TDC.put(lay, new H2D("TDC_LAYER_"+lay,100,0.0,1000.0,36,1.0,37.0));  
-			ECAL_ADC_PIX.put(lay, new H2D("ADC_PIX_LAYER_"+lay,100,0.0,200.0,36,1.0,37.0));
-    	    ECAL_TDC_PIX.put(lay, new H2D("TDC_PIX_LAYER_"+lay,100,0.0,1000.0,36,1.0,37.0));  
+	    for (int lay=1 ; lay<4 ; lay++) {
+		ECAL_ADC.put(lay, new H2D("ADC_LAYER_"+lay,100,0.0,200.0,36,1.0,37.0));
+		ECAL_TDC.put(lay, new H2D("TDC_LAYER_"+lay,100,0.0,1000.0,36,1.0,37.0));
+		ECAL_ADC_PIX.put(lay, new H2D("ADC_PIX_LAYER_"+lay,100,0.0,200.0,36,1.0,37.0));
+		ECAL_TDC_PIX.put(lay, new H2D("TDC_PIX_LAYER_"+lay,100,0.0,1000.0,36,1.0,37.0));  
     		ECAL_ADCPIX.put(lay, new H1D("ADC_PIX"+lay,1296,1.0,1297.0));
     		ECAL_TDCPIX.put(lay, new H1D("ADC_PIX"+lay,1296,1.0,1297.0));
     		ECAL_EVTPIX.put(lay, new H1D("ADC_PIX"+lay,1296,1.0,1297.0));
     		System.out.println("init():lay="+lay);
-		}
+	    }
 	}
 	
 	public void initecgui() {

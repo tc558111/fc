@@ -376,7 +376,7 @@ public class FCMon extends DetectorMonitoring {
 	public static void main(String[] args){
 		   FCMon calib = new FCMon();
 		   calib.init();
-		   CLASMonitoring monitor = new CLASMonitoring("/Users/colesmith/COATJAVA/dat/fc-muon-100k.evio", calib);
+		   CLASMonitoring monitor = new CLASMonitoring("/Users/colesmith/COATJAVA/dat/fc-muon-100k-2.evio", calib);
 		   monitor.process();
 		   calib.analyze();
 		   TBrowser browser = new TBrowser(calib.getDir()); 

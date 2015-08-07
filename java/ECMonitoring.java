@@ -34,6 +34,8 @@ public class ECMonitoring extends DetectorMonitoring {
     public TreeMap<Integer,H2D>      ECAL_TDC     = new TreeMap<Integer,H2D>();
     public TreeMap<Integer,H2D>      ECAL_ADC_PIX = new TreeMap<Integer,H2D>();
     public TreeMap<Integer,H2D>      ECAL_TDC_PIX = new TreeMap<Integer,H2D>();
+    public TreeMap<Integer,H2D>      ECAL_APIX    = new TreeMap<Integer,H2D>();
+    public TreeMap<Integer,H2D>      ECAL_TPIX    = new TreeMap<Integer,H2D>();
     public TreeMap<Integer,Object>   LAYMAP       = new TreeMap<Integer,Object>();
 
 	public ECMonitoring() {
@@ -43,16 +45,18 @@ public class ECMonitoring extends DetectorMonitoring {
 	@Override
 
 	public void init() {
-	    for (int lay=1 ; lay<4 ; lay++) {
-		ECAL_ADC.put(lay, new H2D("ADC_LAYER_"+lay,100,0.0,200.0,36,1.0,37.0));
-		ECAL_TDC.put(lay, new H2D("TDC_LAYER_"+lay,100,0.0,1000.0,36,1.0,37.0));
-		ECAL_ADC_PIX.put(lay, new H2D("ADC_PIX_LAYER_"+lay,100,0.0,200.0,36,1.0,37.0));
-		ECAL_TDC_PIX.put(lay, new H2D("TDC_PIX_LAYER_"+lay,100,0.0,1000.0,36,1.0,37.0));  
+		for (int lay=1 ; lay<4 ; lay++) {
+			ECAL_ADC.put(lay, new H2D("ADC_LAYER_"+lay,100,0.0,200.0,36,1.0,37.0));
+    	    ECAL_TDC.put(lay, new H2D("TDC_LAYER_"+lay,100,0.0,1000.0,36,1.0,37.0));  
+			ECAL_ADC_PIX.put(lay, new H2D("ADC_PIX_LAYER_"+lay,100,0.0,200.0,36,1.0,37.0));
+    	    ECAL_TDC_PIX.put(lay, new H2D("TDC_PIX_LAYER_"+lay,100,0.0,1000.0,36,1.0,37.0));  
     		ECAL_ADCPIX.put(lay, new H1D("ADC_PIX"+lay,1296,1.0,1297.0));
     		ECAL_TDCPIX.put(lay, new H1D("ADC_PIX"+lay,1296,1.0,1297.0));
     		ECAL_EVTPIX.put(lay, new H1D("ADC_PIX"+lay,1296,1.0,1297.0));
+    		ECAL_APIX.put(lay, new H2D("APIX"+lay,1296,1.0,1297.0,20,0.0,200.0));
+    		ECAL_TPIX.put(lay, new H2D("TPIX"+lay,1296,1.0,1297.0,20,0.0,1000.0));
     		System.out.println("init():lay="+lay);
-	    }
+		}
 	}
 	
 	public void initecgui() {
@@ -320,9 +324,10 @@ public class ECMonitoring extends DetectorMonitoring {
 	    LAYMAP.put(9, toTreeMap(ECAL_ADCPIX.get(1).getData()));
 	    LAYMAP.put(10,toTreeMap(ECAL_ADCPIX.get(2).getData()));
 	    LAYMAP.put(11,toTreeMap(ECAL_ADCPIX.get(3).getData()));
-	    LAYMAP.put(12,toTreeMap(ECAL_TDCPIX.get(1).getData()));
-	    LAYMAP.put(13,toTreeMap(ECAL_TDCPIX.get(2).getData()));
-	    LAYMAP.put(14,toTreeMap(ECAL_TDCPIX.get(3).getData()));
+	    LAYMAP.put(12,toTreeMap(ECAL_EVTPIX.get(1).getData()));
+	    LAYMAP.put(13,toTreeMap(ECAL_TDCPIX.get(1).getData()));
+	    LAYMAP.put(14,toTreeMap(ECAL_TDCPIX.get(2).getData()));
+	    LAYMAP.put(15,toTreeMap(ECAL_TDCPIX.get(3).getData()));
 	  System.out.println("Leave analyze():");
 	}
 	
@@ -406,6 +411,8 @@ public class ECMonitoring extends DetectorMonitoring {
 				ECAL_EVTPIX.get(il).fill(pixel,1.0);
 				ECAL_ADCPIX.get(il).fill(pixel,adcr[iis-1][il+2][0]);
 				ECAL_TDCPIX.get(il).fill(pixel,tdcr[iis-1][il+2][0]);
+				ECAL_APIX.get(il).fill(pixel,adcr[iis-1][il+2][0],1.0);
+				ECAL_TPIX.get(il).fill(pixel,tdcr[iis-1][il+2][0],1.0);
 			}
 	    }
 
@@ -458,7 +465,7 @@ public class ECMonitoring extends DetectorMonitoring {
 		
 		if (inProcess==1) {
 			
-		 if (layer<4)  {col1=0; col2=0;strip=component-1;}
+		 if (layer<4)  {col1=0; col2=0;strip=component;}
 		 if (layer>=7) {col1=2; col2=4;pixel=component;}
 		
 	     canvas.divide(3,3);
@@ -505,12 +512,18 @@ public class ECMonitoring extends DetectorMonitoring {
 	    		 canvas.cd(il+6) ; h = ECAL_TDC.get(il+1).sliceY(pixmap[il][pixel]-1); h.setXTitle(tlab[il]); h.setFillColor(4); canvas.draw(h);
 	    	 }
 		 }
-	     if (layer>7){
+	     if (layer>7&&layer<12){
 	    	 for(int il=0;il<3;il++) {
 	    		 canvas.cd(il+3) ; h = ECAL_ADC_PIX.get(il+1).sliceY(pixmap[il][pixel]-1); h.setXTitle(alab[il]); h.setFillColor(4); canvas.draw(h);
-	    		 canvas.cd(il+6) ; h = ECAL_TDC_PIX.get(il+1).sliceY(pixmap[il][pixel]-1); h.setXTitle(tlab[il]); h.setFillColor(4); canvas.draw(h);
+	    		 canvas.cd(il+6) ; h = ECAL_APIX.get(il+1).sliceX(pixel)                 ; h.setXTitle(alab[il]); h.setFillColor(4); canvas.draw(h);
 	    	 }
 		 }
+	     if (layer>11&&layer<16){
+	    	 for(int il=0;il<3;il++) {
+	    		 canvas.cd(il+3) ; h = ECAL_TDC_PIX.get(il+1).sliceY(pixmap[il][pixel]-1); h.setXTitle(tlab[il]); h.setFillColor(4); canvas.draw(h);
+	    		 canvas.cd(il+6) ; h = ECAL_TPIX.get(il+1).sliceX(pixel)                 ; h.setXTitle(tlab[il]); h.setFillColor(4); canvas.draw(h);
+	    	 }
+		 } 
 		}
 	}
 

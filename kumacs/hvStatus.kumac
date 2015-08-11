@@ -428,6 +428,7 @@ macro hv.ec.create.loadhv s=5 var=DV val=-1
     (RU) p=_rampup
     (RD) p=_rampdn
     (PO) p=_pwonoff
+    (VM) p=_svmax
   endcase
 
   exe hvECAL#get.map.new [s] ; global/imp map2*

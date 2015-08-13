@@ -1,4 +1,4 @@
-macro run r=477 s=1 det=ec
+macro run r=477 s=1 det=ec mode=full ifirst=10 ic1=4 ic2=6
 
   exe init.global [r] [s] [det] ; global/imp *path,*file
   exe init.vec
@@ -7,7 +7,10 @@ macro run r=477 s=1 det=ec
   hi/file 1 [ifile] 8191
   nt/print 10 ; global/cre ntrig $hinfo(10,'entries')
   call [funpath]/fclib.f77
-  nt/loop 10 fc() 
+  case [mode] in 
+    (full) nt/loop 10 fc() 
+     (sed) exe sed [s] [ic1] [ic2] ; exitm
+  endcase
   close 0
   exit=0
   if $fexist([ofile]).eq.1 then ; read exit 'File exists! 1=exit' ; endif
@@ -29,6 +32,36 @@ macro loop s=1 det=pc
 
 return
 
+macro sed s ic1 ic2
+
+  nev=10 
+  do i=1,100 
+    nt/loop 10 fc() ifirst=[nev] nevent=1 
+    nev=[nev]+1
+    exe sed.2d [s] [ic1] [ic2]
+    wait 
+  enddo
+  
+return
+
+macro sed.2d s ic1=4 ic2=6
+
+  tit1=PCAL U;tit2=PCAL V;tit3=PCAL W;tit4=ECAL INNER U;tit5=ECAL INNER V;tit6=EC INNER W
+  tit7=ECAL OUTER U;tit8=ECAL OUTER V;tit9=ECAL OUTER W
+  zone 1 3 ; set txci 5  ; set yval 100 ; set ywin 0.01
+  do ic=[ic1],[ic2]
+  case [ic] in
+    (3,6,9) set yval 0 
+  endcase
+  2d 22[ic] '' 130 1320. 1451. 8 1. 9. 0. ; max 22[ic] 1.0
+  n=$eval(nh([ic],[s])); do i=1,[n] ; call hf2(22[ic],$eval(tdcr([i],[ic],[s])).,[i].,1.) ; enddo
+  hi/plot 22[ic] col  ; do i=1,[n] ; itx $eval(tdcr([i],[ic],[s]))+2 [i].5 $eval(strr([i],[ic],[s])) ; enddo
+  itx 1420 8 [tit[ic]]
+  hi/del 22[ic]
+  enddo
+    
+return
+
 macro do.merge s=1 det=pc
 
   case [s] in
@@ -46,7 +79,7 @@ return
 
 macro merge runs tag=a s=5 det=pc
 
-  global/imp kuroot,pawlogon.fcroot ; fcroot=[pawlogon.fcroot]
+  global/imp pawlogon.fcroot ; fcroot=[pawlogon.fcroot]
   exe init.global rsum [s] [det]; global/imp *path,*file
   exe utilMerge#merge [fcroot]/rzh/fcMuon forcar-s[s]- forcar-s[s]-rsum[s][tag] $unquote([runs])
   global/cre ofile [rzhpath]/forcar-s[s]-rsum[s][tag].rzh
@@ -94,6 +127,9 @@ macro init.vec
   vec/cre tdccal(3)  r $unquote([tdccal])
   vec/cre pixcut(3)  r $unquote([pixcut])
   vec/cre pcmask(10) i $unquote([pcmask])
+  vec/cre nh(9,6)    i
+  vec/cre tdcr(68,9,6) i
+  vec/cre strr(68,9,6) i
 
 return
 
@@ -151,6 +187,28 @@ macro init.hist
         hidd=[hid]+23*[lid]+[i]
         2d [hidd] '' [nbn] 1. [xmx]. 30 0. 700. 0.
       enddo
+      hid=[iss]+60*[tid]+[ic]*[cid]
+      do i=1,[nbn]
+        hidd=[hid]+21*[lid]+[i]
+        2d [hidd] '' [nbn] 1. [xmx]. 80 -40. 40. 0.
+        hidd=[hid]+12*[lid]+[i]
+        2d [hidd] '' [nbn] 1. [xmx]. 80 -40. 40. 0.
+        hidd=[hid]+31*[lid]+[i]
+        2d [hidd] '' [nbn] 1. [xmx]. 80 -40. 40. 0.
+        hidd=[hid]+13*[lid]+[i]
+        2d [hidd] '' [nbn] 1. [xmx]. 80 -40. 40. 0.
+        hidd=[hid]+32*[lid]+[i]
+        2d [hidd] '' [nbn] 1. [xmx]. 80 -40. 40. 0.
+        hidd=[hid]+23*[lid]+[i]
+        2d [hidd] '' [nbn] 1. [xmx]. 80 -40. 40. 0.
+      enddo
+      hid=[iss]+61*[tid]+[ic]*[cid]
+      do i=1,[nbn]
+        hidd=[hid]+32*[lid]+[i]
+        2d [hidd] '' 30 0. 700.  40 -20. 20. 0.
+        hidd=[hid]+23*[lid]+[i]
+        2d [hidd] '' 30 0. 700.  40 -20. 20. 0.
+      enddo
       hid=[iss]+40*[tid]+[ic]*[cid]
       do i=1,3
         hidd=[hid]+12*[lid]+[i]
@@ -192,7 +250,7 @@ macro get.hist run det=pc ofile=1 lun=1
   hi/file [lun] [ofile]
 return
 
-macro plot.label run t
+macro plot.label run t lab=0
 
   global/imp sector,runlist,ofile,timestamp,det,ntrig
 
@@ -205,8 +263,12 @@ macro plot.label run t
   (20) ttxt='MULT=2.and.STRIP CUT'
   (21) ttxt='MULT=3.and.STRIP CUT'
   (22) ttxt='MULT=3.and.STRIP.and.ECUT'
-  (50) ttxt='ATTENUATION CUTS'
+  (50) ttxt='ADC vs STRIP'
+  (60) ttxt='TDC vs STRIP'
   endcase
+  
+  if [lab].ne.0 then ; ttxt=[lab] ; endif
+  
   case [run] in
    (151,152,153,154,155) trig=U(1).or.V(1).or.W(1) (80 ns) ECAL INNER v1495
      (*) trig=U(1).V(1).W(1) (80 ns) ECAL INNER V1495 
@@ -326,6 +388,72 @@ macro plot.eff run
 
 return
 
+macro plot.tsig run det=pc lay=uv ic=1 i=35 sli=34 y1=200.1 y2=300.1
+
+  exe get.hist [run] [det] 1; global/imp sector ; s=[sector]
+  t=60
+  s1=$substring([lay],1,1);s2=$substring([lay],2,1)
+  opt utit ; utit=$upper([s1])[i] ; title_gl [utit] U ; set tsiz 0.3 ; set yhti 0.95
+  
+  layd=[lay].[det]
+
+  case [layd] in
+   (uv.pc) id=21  
+   (uw.pc) id=31  
+   (vu.pc) id=12 
+   (vw.pc) id=32  
+   (wu.pc) id=13  
+   (wv.pc) id=23  
+   (uv.ec) id=21  
+   (uw.ec) id=31  
+   (vu.ec) id=12  
+   (vw.ec) id=32  
+   (wu.ec) id=13  
+   (wv.ec) id=23  
+  endcase  
+  
+  t=60 ; hid1= $eval([s][t][ic][id]00+[i]) ; max [hid1] 250  
+  t=50 ; hid2= $eval([s][t][ic][id]00+[i]) ; max [hid2] 250
+  
+  set xval 0 ; set yval 0 ; set xwin 0 ; set ywin 0 ; set ndvx 10 ; set plci 7
+  zone 2 3
+  
+  xt=$upper([s2]) STRIP ; yt=[D]T $upper([s1])[i]-$upper([s2]) (NS)
+  hi/plot [hid1] col ; line [sli] -100 [sli] 100 ; line [sli]+1 -100 [sli]+1 100 ; atitle [xt] [yt] ! 321
+  xt=$upper([s2]) STRIP ; yt=ADC
+  hi/plot [hid2] col ; line [sli]    0 [sli] 700 ; line [sli]+1    0 [sli]+1 700 ; atitle [xt] [yt] ! 321
+  
+  sliy [hid1] 36 ; hi/proj [hid1] ; hi/cop [hid1].sliy.[sli] 77
+  set plci 2
+  xt=[D]T $upper([s1])[i]-$upper([s2])[sli] (NS) ; title_gl '' U 
+  set csiz 0.6 ; opt fit ; hi/fit 77 g 0; hi/plot 77 ; atitle [xt] ' ' ! 321
+  
+  sliy [hid2] 36 ; hi/proj [hid2] ; hi/cop [hid2].sliy.[sli] 78
+  xt=ADC $upper([s1])[i] ; tit=CUT $upper([s2])[sli] ; title_gl [tit] U  
+  hi/plot 78 ; atitle [xt] ' ' ! 321
+  
+  title_gl '' U
+  set plci 7
+  vec/cre par1(3) r ; vec/cre par2(3) r
+  t=61 ; id=32 ; hid3= $eval([s][t][ic][id]00+[i]) ; max [hid3] 250  
+  yt=[D]T $upper([s1])[i]-$upper([s2][sli]) (NS) ; xt=ADC $upper([s2])[sli]
+  hi/plot [hid3] col  ; atitle [xt] [yt] ! 321
+  line [y1] -20. [y1] 20. ; line [y2] -20 [y2] 20. 
+  bany [hid3] [y1] [y2] ; hi/proj [hid3] ; hi/cop [hid3].bany.1 79 ; hi/fit 79 g 0 par=par1(:)
+  set txci 7 ; itx 350 0. 'SIGMA='//$format($eval(par1(3)),f4.2)//' NS' ; set txci 1
+  set hcol 7 ; fun/plot 18-25/sqrt(0.2*x) 20 400 sl ; set hcol 1
+  t=61 ; id=23 ; hid3= $eval([s][t][ic][id]00+[i]) ; max [hid3] 250  
+  yt=[D]T $upper([s2])[sli]-$upper([s1])[i] (NS) ; xt=ADC $upper([s1])[i]
+  hi/plot [hid3] col  ; atitle [xt] [yt] ! 321
+  line [y1] -20. [y1] 20. ; line [y2] -20 [y2] 20. 
+  bany [hid3] [y1] [y2] ; hi/proj [hid3] ; hi/cop [hid3].bany.1 79 ; hi/fit 79 g 0 par=par2(:)
+  set txci 7 ; itx 350. 0. 'SIGMA='//$format($eval(par2(3)),f4.2)//' NS' ; set txci 1
+  set hcol 7 ; fun/plot -7-25/sqrt(0.2*x) 20 400 sl ; set hcol 1
+*  exe plot.label [run] 60 '(LEFT) [D]T vs STRIP (RIGHT) ADC vs STRIP'
+  opt htit ; title_gl ''
+  
+return
+
 macro plot.1 run det=pc t=10 ic=1 ofile=1
 
   exe get.hist [run] [det] [ofile] ; global/imp sector ; s=[sector]
@@ -351,12 +479,16 @@ macro plot.1 run det=pc t=10 ic=1 ofile=1
   txt=NW=$hinfo([id]30[o],sum) ; itx 12.7 16.5 [txt]
 
 return
+
+macro get.hid  
+
+return
  
 macro plot.att run det=pc lay=uv t=50 ic=1 ofile=1
 
   exe get.hist [run] [det] [ofile]; global/imp sector ; s=[sector]
 
-  mip1=400 ; xpc=40 ; xec=25
+  mip1=400 ; xpc=40 ; xec=25 ; y50=540 ; y60=20
   layd=[lay].[det]
 
   case [layd] in
@@ -383,7 +515,7 @@ macro plot.att run det=pc lay=uv t=50 ic=1 ofile=1
     set ltyp 3 ; set plci 5 ; line 0. 400  [n]+1 400.
     set ltyp 1 ; set plci 7 ; line 0. 15. [n]+1 15.
     set xval 100 ; if [i].eq.[n]-1 then ; set yval 0 ; endif
-    set txci 5 ; itx [x[det]]. 540. $upper($substring([lay],1,1))//[i] ; set txci 1
+    set txci 5 ; itx [x[det]]. [y[t]]. $upper($substring([lay],1,1))//[i] ; set txci 1
   enddo
   atitle $upper($substring([lay],2,1))//' PMT'
 

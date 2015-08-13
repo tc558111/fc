@@ -2,8 +2,9 @@
 
       include ?
 
-      integer nh(9,6),nic(3,6),nnic(3,6),ilic(6)
-      integer strr(68,9,6),adcr(68,9,6),tdcr(68,9,6)
+      integer nic(3,6),nnic(3,6),ilic(6)
+      integer adcr(68,9,6)
+c      integer nh(9,6),tdcr(68,9,6),strr(68,9,6)
       integer maxstr(3),hid,hidd,nn(2)
       integer rs1,rs2,rs3
       real    rs(9),ad(9),td(9),uvw(3,6)
@@ -37,6 +38,9 @@
       vector adccal
       vector tdccal
       vector pixcut
+      vector nh(9,6)
+      vector tdcr(68,9,6)
+      vector strr(68,9,6)
 
 c Loop limits for calorimeter type (PCAL:1 ECAL:2-3)
 
@@ -98,6 +102,7 @@ c Loop: Get PC hits and fill arrays
           tdcr(inh,il,is) = tdc
           strr(inh,il,is) = ip
           uvw(ic,is) = uvw(ic,is) + uvw_dist_pc(ip,il)
+c          print *, il,ip,tdc,adc
         endif
       enddo
 
@@ -130,6 +135,7 @@ c Loop: Get EC hits and fill arrays
           tdcr(inh,iv,is) = tdc
           strr(inh,iv,is) = ip
           uvw(ic,is) = uvw(ic,is) + uvw_dist_ec(ip)
+c          print *, il,ip,tdc,adc
         endif
       enddo
 
@@ -297,6 +303,36 @@ c Histo: Attenuation lengths (ADC vs strip) (TAG=50)
          if(ad2.gt.5)call hf2(hidd+23*lid+rs3,float(rs2),ad3,1.)
       endif  
       
+c Histo: Time Resolution (Delta t vs strip) (TAG=60)      
+
+      hidd  = hid+60*tid+ic*cid    
+
+      td1=td(1+icm*3)
+      td2=td(2+icm*3)
+      td3=td(3+icm*3)
+      
+      if(good_vu(ic)) then
+         if(ad2.gt.5)call hf2(hidd+21*lid+rs1,float(rs2),td1-td2,1.)
+         if(ad1.gt.5)call hf2(hidd+12*lid+rs2,float(rs1),td2-td1,1.)
+      endif
+      if(good_uw(ic)) then
+         if(ad3.gt.5)call hf2(hidd+31*lid+rs1,float(rs3),td1-td3,1.)
+         if(ad1.gt.5)call hf2(hidd+13*lid+rs3,float(rs1),td3-td1,1.)
+      endif
+      if(good_wv(ic)) then
+         if(ad3.gt.5)call hf2(hidd+32*lid+rs2,float(rs3),td2-td3,1.)
+         if(ad2.gt.5)call hf2(hidd+23*lid+rs3,float(rs2),td3-td2,1.)
+      endif
+      
+c Histo: Time Walk (Delta t vs ADC (TAG=61)
+
+      hidd = hid+61*tid+ic*cid   
+      
+      if(good_wv(ic).and.rs3.eq.25) then
+         if(ad3.gt.5)call hf2(hidd+32*lid+rs2,ad3,td2-td3,1.)
+         if(ad2.gt.5)call hf2(hidd+23*lid+rs2,ad2,td3-td2,1.)
+      endif
+      
       endif
 
       enddo
@@ -356,4 +392,6 @@ c FTOF geom. mean plots for stability checks
       uvw_dist_ec=ip/36.
       
       end
+
+      
 

@@ -1,4 +1,4 @@
-macro plothw run=484 sec=5 det=ecal opt=ped zca=100 linlog=log path=forcar/rzh/fcMon
+macro plothw run=484 sec=5 det=ecal opt=ped zca=100 linlog=log path=forcar/rzh/fcMon pedref=102
 
 * Purpose: Plot histos of Forward Carriage raw data created in et2rzh.c program
 * Required files: pawlogon.kumac, utilGenColormap.kumac, higz_windows.dat, forcar-s[sec]-[run].rzh
@@ -14,7 +14,7 @@ macro plothw run=484 sec=5 det=ecal opt=ped zca=100 linlog=log path=forcar/rzh/f
   dett=[det] ; optt=[opt] ; zscal=[zca]
 
   case [opt] in
-    (ped) mid=20000000 ; off=0 ; v=all.adc   ; atit=ADC CHAN.
+    (ped) mid=20000000 ; off=0 ; v=all.adc   ; atit=ADC CHAN. ; exe get.ped [pedref] [sec] [det]
     (raw) mid=10000000 ; off=0 ; v=all.adc   ; atit=SAMPLES (4 NS/CH)
     (adc) mid=30000000 ; off=0 ; v=all.adc   ; atit=ADC CHAN.
     (tdc) mid=0        ; off=1 ; v=[det].tdc ; atit=TDC CHAN.
@@ -38,24 +38,44 @@ macro plothw run=484 sec=5 det=ecal opt=ped zca=100 linlog=log path=forcar/rzh/f
 
 return
 
+macro get.ped run sec det
+
+  path = cal/ped/[det]
+  vec/cre ped(5,16,14) r
+  vec/read ped [path]/forcar-s[sec]-[run]-[det].ped
+  sigma y=array(16,0#15) ; sigma y=y+0.5
+
+return
+
+macro plot.ped n
+
+  set pmci 2 ; set mtyp 25
+  graph 16 ped(3,:,[n]) y P
+
+return
+
 macro plot.all.adc
 
- global/imp mid,off,atit,id,dett,optt,zscal
+  global/imp mid,off,atit,id,dett,optt,zscal
 
-  vec/cre sl(12) r 8 16 7 15 6 14 5 13 4 10 3 9
-  zone 2 6
+  case [dett] in
+    (ftof,pcal) vec/cre sl(12) r 8 16 7 15 6 14 5 13 4 10 3 9       ; zone 2 6 
+                vec/cre np(12) i 6 12 5 11 4 10 3  9 2  8 1 7
+         (ecal) vec/cre sl(14) r 9 18 8 17 7 16 6 15 5 14 4 13 3 10 ; zone 2 7 
+                vec/cre np(14) i 7 14 6 13 5 12 4 11 3 10 2  9 1  8
+  endcase
   col=colz
-
-  do n=1,12
+  n1=$vlen(sl);n2=[n1]-1
+  do n=1,[n1]
   if [n].gt.2 then ; col=col ; endif
   hid=$eval([mid]+[id]+sl([n])*1000)
   min [hid] 1 ; max [hid] [zscal]
   if [optt].eq.ped then ; min [hid] 0.1 ; max [hid] 100 ; endif
-  if [n].ge.11 then ; set yval 0 ; endif
+  if [n].ge.[n2] then ; set yval 0 ; endif
   opt utit ; title_gl '' U
-  hi/plot [hid] [col]
+  hi/plot [hid] [col] ; if [optt].eq.ped then ; exe plot.ped $eval(np([n])) ; endif
   xmax=$grafinfo('wnxmax')
-  if [n].ge.11 then ;  atitle [atit] ; endif
+  if [n].ge.[n2] then ;  atitle [atit] ; endif
   if [dett].eq.pcal then
   case [n] in
     (3) set lwid 4.5 ; set ltyp 2 ; set plci 5 ; line 0. 4. [xmax] 4. ; set lwid 0

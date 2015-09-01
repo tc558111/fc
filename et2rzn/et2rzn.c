@@ -1,4 +1,6 @@
-/* evio_sectorhist.c */
+/* et2rzn.c */
+/* Cole Smith
+/* Hacked from original code evio_sectorhist.c by Sergey Boiarino (JLAB) */
 
 #include <stdio.h>
 #include <stdlib.h>

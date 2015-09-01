@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <malloc.h>
 #include <math.h>
 #include <time.h>
 
@@ -11,6 +12,7 @@
 #include "etserg.h"
 #include "evnlink.h"
 #include "ttfc.h"
+#include "tabread.h"
 
 #undef DEBUG_SEARCH
 
@@ -55,6 +57,7 @@ int pparms[10]={1,5,20000,-1,3,10,10,100,0,0};
 void plot1d(int datasaved[][16], int *baseline, int nsamples);
 void utilSetupGraf1(void);
 void utilGenColormap(int map);
+int tabread(int n, float arr[n][n], char fname[]);
 
 int main(int argc, char **argv)
 {
@@ -90,7 +93,7 @@ int main(int argc, char **argv)
 
   int nr,sec,strip,nl,ncol,nrow,i,j, k, ii,jj,kk,l,l1,l2,ichan,nn,mm,iev,nbytes,ind1;
   char title[128], *ch;
-  char HBOOKfilename[256], chrunnum[32];
+  char HBOOKfilename[256], PEDfilename[256], chrunnum[32];
   int runnum;
 
   int nwpawc,lun,lrec,istat,icycle,idn,idn1,idn2,nbins,nxbins,nx2bins,nybins,nbins1,igood,offset;
@@ -188,11 +191,58 @@ int main(int argc, char **argv)
   thrsh  = pparms[5];
   nskp   = pparms[6];
   ymax   = pparms[7];
+
   if(doplt)  {pdet  = pparms[3] = atoi(argv[5]);}
   if(argc>6) {pslt  = pparms[4] = atoi(argv[6]);}
   if(argc>7) {thrsh = pparms[5] = atoi(argv[7]);}
   if(argc>8) {nskp  = pparms[6] = atoi(argv[8]);}
   if(argc>9) {ymax  = pparms[7] = atof(argv[9]);}
+
+  /* NSA+NSB to calculate pedestals*/
+  /* From $CLON_PARMS/fadc250/adc*mode3.cnf */
+
+  int nsat[3]={12,12,12};   /* ns */
+  //int nsbt[3]={76,156,60};  /* runs 170,171 */
+  int nsbt[3]={36,156,44};
+  int nsa[3] ={3,3,3};      /* samples */
+  int nsb[3] ={9,39,11};
+  
+  /* PEDESTAL TABLES */
+
+  float tabecal[22][16];
+  float tabpcal[22][16];
+  float tabftof[22][16];
+
+  int pedrun[6]={169,0,0,0,0,0};
+
+  int columns=16;
+
+  sprintf(PEDfilename,"cal/ped/ecal/forcar-s%d-%d-ecal.ped",sec,pedrun[sec-1]);
+  tabread(columns,tabecal,PEDfilename);
+  sprintf(PEDfilename,"cal/ped/pcal/forcar-s%d-%d-pcal.ped",sec,pedrun[sec-1]);
+  tabread(columns,tabpcal,PEDfilename);
+  sprintf(PEDfilename,"cal/ped/ftof/forcar-s%d-%d-ftof.ped",sec,pedrun[sec-1]);
+  tabread(columns,tabftof,PEDfilename);
+
+  
+  for(i=0;i<22;i++){
+    for(j=0;j<16;j++)
+      printf("%lf%s",tabecal[i][j], j < columns-1 ? "\t" : "\n");
+    
+  }
+
+  for(i=0;i<22;i++){
+    for(j=0;j<16;j++)
+      printf("%lf%s",tabpcal[i][j], j < columns-1 ? "\t" : "\n");
+    
+  }  
+
+  for(i=0;i<22;i++){
+    for(j=0;j<16;j++)
+      printf("%lf%s",tabftof[i][j], j < columns-1 ? "\t" : "\n");
+    
+  }
+  
 
   sprintf(HBOOKfilename,"forcar-s%d-%d.rzh",sec,runnum);
 
@@ -795,9 +845,10 @@ a123:
 
     tdcref = 0;
 
-    /*TDCs*/
     for(fragment=1; fragment<=36; fragment++)
       {
+
+    /*TDCs*/
     if((ind1 = evNlink(bufptr,  fragment, 0xe107,  0, &nbytes)) > 0)
       {
       int half,chip,chan,bco,val,chan1,edge,nw,tdcl,tdcr;
@@ -819,7 +870,7 @@ a123:
 #endif
       sector   = (fragment-1)/6 + 1;
       detector = (fragment/2)%6;
-      /*printf("TDC: fragment=%d, sector=%d, detector=%d\n",fragment,sector,detector);*/
+      //printf("TDC: fragment=%d, sector=%d, detector=%d\n",fragment,sector,detector);
 
       tdcl = tdcr = 0;
 
@@ -874,14 +925,14 @@ a123:
           jj =    tdclrftof[slot][chan] - 1;
           kk =  tdcslabftof[slot][chan] - 1;
           if(ii>=0)
-	    {
-		  /*
-		  printf("1=> %d %d %d\n",ii,jj,kk);fflush(stdout);
-		  printf("1==> %d\n",ntdc[ii][jj][kk]);fflush(stdout);
-		  */
-            tdc[ii][jj][kk][ntdc[ii][jj][kk]] = val;
-            ntdc[ii][jj][kk]++;
-	    }
+	  {
+	  /*
+	  printf("1=> %d %d %d\n",ii,jj,kk);fflush(stdout);
+	  printf("1==> %d\n",ntdc[ii][jj][kk]);fflush(stdout);
+	  */
+          tdc[ii][jj][kk][ntdc[ii][jj][kk]] = val;
+          ntdc[ii][jj][kk]++;
+	  }
 
 #ifdef DEBUG
 	 
@@ -894,6 +945,8 @@ a123:
 	}
       }
 
+    int edet;
+
     /* ADC raw mode bank */
     if((ind1 = evNlink(bufptr, fragment, 0xe101, 0, &nbytes)) > 0)
       {
@@ -902,9 +955,9 @@ a123:
       int crate,slot,trig,nchan,chan,nsamples,notvalid,edge,val,data,count,ncol1,nrow1;
       int oldslot = 100;
       int thr=15;
-      int goplt,edet;
+      int goplt;
       int ndata0[22], data0[21][8];
-      int baseline, pedestal[16], pedplt[16], sum, channel, summing_in_progress;
+      int baseline, pedestal[16], pedplt[16], sum, channel, summing_in_progress, mmsum;
       int datasaved[100][16];
 
 #ifdef DEBUG
@@ -918,7 +971,12 @@ a123:
 
       sector = (fragment-1)/6 + 1;
       detector = (fragment/2)%6 + 1;
-      /*printf("ADC: fragment=%d, sector=%d, detector=%d\n",fragment,sector,detector);*/
+
+      edet = -1;
+      if(detector==1 || detector==4) edet=0;
+      if(detector==2 || detector==5) edet=1;
+      if(detector==3 || detector==6) edet=2;
+      //printf("ADC: fragment=%d, sector=%d, detector=%d\n",fragment,sector,detector);
 
       while(b08<end)
         {
@@ -944,12 +1002,12 @@ a123:
 #ifdef DEBUG
           printf("  chan=%d, nsamples=%d\n",chan,nsamples);
 #endif
-          baseline = sum = summing_in_progress = 0;
+          baseline = sum = summing_in_progress = mmsum = 0;
           for(mm=0; mm<nsamples; mm++)
 	    {
 	    GET16(data);
             datasaved[mm][nn] = data;
-			/*printf("mm=%d data=%d\n",mm,data);*/
+	    /*printf("mm=%d data=%d\n",mm,data);*/
             if(mm<10) baseline += data;
             if(mm==10)
 	      {
@@ -964,18 +1022,26 @@ a123:
 		{
                 /*printf("open summing at mm=%d\n",mm);*/
                 summing_in_progress = 1;
-                sum += (datasaved[mm-3][nn]-baseline);
-                sum += (datasaved[mm-2][nn]-baseline);
-                sum += (datasaved[mm-1][nn]-baseline);
+                for (ii=1;ii++;ii<nsa[edet]+1) 
+		  {
+		  sum += (datasaved[mm-ii][nn]-baseline);
+		  }
+		mmsum=nsa[edet];
+		}
+	      if(summing_in_progress>0 && mmsum==(nsa[edet]+nsb[edet]))
+		{
+		summing_in_progress = -1;
 		}
               if(summing_in_progress>0 && data<baseline)
 	        {
                 /*printf("close summing at mm=%d, sum=%d\n",mm,sum);*/
-                summing_in_progress = -1;
+                //summing_in_progress = -1;
 		}
+
               if(summing_in_progress>0)
 	        {
                 sum += (datasaved[mm][nn]-baseline);
+                mmsum++;
                 //printf("sum=%d (mm=%d)\n",sum,mm);
 		}
 	      }
@@ -986,19 +1052,14 @@ a123:
 	      {
               for(mm=0; mm<nsamples; mm++)
 	        {
-                if(1/*slot < 17*/)
-                  {
                   tmpx = (float)mm+0.5;
                   tmpy = (float)chan;
                   ww = (float)datasaved[mm][nn]-baseline;
                   idn = 10000000 + fragment*100000 + 1000*slot;
-                  hf2_(&idn,&tmpx,&tmpy,&ww);
-                  }  
+                  hf2_(&idn,&tmpx,&tmpy,&ww);   
 		}
 	      }
 
-	    if(1/*slot < 17*/)
-	      {
 	      ww = 1.;
             /* adc pedestal */
               tmpx = (float)baseline;
@@ -1011,8 +1072,8 @@ a123:
               tmpy = (float)chan;
               idn = 30000000 + fragment*100000 + 1000*slot;
               if(sum>0) hf2_(&idn,&tmpx,&tmpy,&ww);
-	      edet = -1;
-	      if(detector==1 || detector==4)
+
+	      if(edet==0)
 		{
 		ii = adclayerecal[slot][chan]-1;
 		kk = adcstripecal[slot][chan]-1;
@@ -1021,9 +1082,8 @@ a123:
 		  eadc[ii][kk][neadc[ii][kk]] = sum;
 		  neadc[ii][kk]++;
 		  }
-		edet=0;
 		}
-	      if(detector==2 || detector==5)
+	      if(edet==1)
 		{
 		ii = adclayerpcal[slot][chan]-1;
 		kk = adcstrippcal[slot][chan]-1;
@@ -1033,9 +1093,8 @@ a123:
 		  npadc[ii][kk]++;
                   if (sum>100) {strr[ii][npl[ii]]=kk+1;adcr[ii][npl[ii]]=sum;npl[ii]++;}
 		  }
-		edet=1;
 		}
-              if(detector==3 || detector==6) 
+              if(edet==2) 
 		{
                 ii = adclayerftof[slot][chan] - 1;
                 jj =    adclrftof[slot][chan] - 1;
@@ -1045,12 +1104,13 @@ a123:
                   adc[ii][jj][kk][nadc[ii][jj][kk]] = sum;
                   nadc[ii][jj][kk] ++;
 		  }
-		edet=2;
-		}
-	      }	  
+		}    	  
+
+	    /* Plot FADC samples for each channel */
+
 	    if (sum>=thrsh) {goplt=1;}
 	    if(slot==pslt&&edet==pdet&&iev<10) {pedplt[nn]=baseline;}
-	  } 
+	  }
 
         pparms[8]=trig;
        	if(doplt&&goplt==1&&edet==pdet&&slot==pslt){plot1d(datasaved,pedplt,100);} 
@@ -1060,8 +1120,9 @@ a123:
         }   
      }
 	
-    /* ADC pulsed mode bank */
-    if((ind1 = evNlink(bufptr, 277, 0xe103, 277, &nbytes)) > 0)
+    /* Adc pulsed mode bank */
+   
+    if((ind1 = evNlink(bufptr, fragment, 0xe103, 0, &nbytes)) > 0)
     {
       unsigned short pulse_time;
       unsigned int pulse_integral;
@@ -1096,51 +1157,89 @@ a123:
 
         b32 = (unsigned int *)b64;
         nchan = *b32++;
-#ifdef DEBUG
-        printf("slot=%d, trig=%d, time=%lld nchan=%d\n",slot,trig,time,nchan);
-#endif
+
+	//#ifdef DEBUG
+        //printf("slot=%d, trig=%d, time=%lld nchan=%d\n",slot,trig,time,nchan);
+	//#endif
+
+        sector   = (fragment-1)/6 + 1;
+        detector = (fragment/2)%6 + 1;
+
+        edet = -1;
+        if(detector==1 || detector==4) edet=0;
+        if(detector==2 || detector==5) edet=1;
+        if(detector==3 || detector==6) edet=2;
+
         for(nn=0; nn<nchan; nn++)
 	    {
-          b08 = (unsigned char *)b32;
-          chan = (*b08 ++) /*+ 1*/;
-      
-          b32 = (unsigned int *)b08;
-          npulses = *b32++;
-#ifdef DEBUG
-          printf("  chan=%d, npulses=%d\n",chan,npulses);
-#endif
+            b08 = (unsigned char *)b32;
+            chan = (*b08 ++) /*+ 1*/;
+            b32 = (unsigned int *)b08;
+            npulses = *b32++;
+
+	    //#ifdef DEBUG
+	    //printf("detector=%d\n",detector);
+	    //printf("  chan=%d, npulses=%d\n",chan,npulses);
+	  //#endif
+
           for(mm=0; mm<npulses; mm++)
 	      {
-            b16 = (unsigned short *)b32;
-            pulse_time = (*b16++)>>6;
-            b32 = (unsigned int *)b16;
-            pulse_integral = *b32++;
-#ifdef DEBUG
-            printf(" b32=0x%08x:  pulse_time=%d pulse_integral=%d\n",b32,pulse_time,pulse_integral);
-#endif		
-			if(slot < 17)
-			{
-              ww = 1.;
-              tmpx = (float)pulse_integral;
-              idn = 1000+adcslot2hist[slot]*100+chan;
-			  /*printf("slot %d chan %d -> idn=%d tmpx=%f\n",slot,chan,idn,tmpx);*/
-              hf1_(&idn,&tmpx,&ww);
-              ii = adclayerftof[slot][chan] - 1;
-              jj = adclrftof[slot][chan] - 1;
-              kk = adcslabftof[slot][chan] - 1;
-			  if(ii>=0)
-			  {
-			  /*
-		printf("3=> %d %d %d\n",ii,jj,kk);fflush(stdout);
-		printf("3==> %d\n",nadc[ii][jj][kk]);fflush(stdout);
-			  */
-                adc[ii][jj][kk][nadc[ii][jj][kk]] = pulse_integral;
-                nadc[ii][jj][kk] ++;
-		      }
+              b16 = (unsigned short *)b32;
+              pulse_time = (*b16++)>>6;
+              b32 = (unsigned int *)b16;
+              pulse_integral = *b32++;
+
+	      //#ifdef DEBUG
+	      //printf(" b32=0x%08x:  pulse_time=%d pulse_integral=%d\n",b32,pulse_time,pulse_integral);
+	    //#endif		
+
+	        if(edet==0)
+		  {
+		  sum  = (float)pulse_integral-tabecal[slot][chan]*(nsa[edet]+nsb[edet]);
+                  //printf("slot,chan,adc,ped=%d %d %d %f\n",slot,chan,sum,tabecal[slot][chan]);
+		  ii = adclayerecal[slot][chan]-1;
+		  kk = adcstripecal[slot][chan]-1;
+		  if(ii>=0 && sum>0)
+		    {
+		    eadc[ii][kk][neadc[ii][kk]] = sum;
+		    neadc[ii][kk]++;
+		    }	
+		  }
+	        if(edet==1)
+		  {
+		  sum  = (float)pulse_integral-tabpcal[slot][chan]*(nsa[edet]+nsb[edet]);
+		  ii = adclayerpcal[slot][chan]-1;
+		  kk = adcstrippcal[slot][chan]-1;
+		  if(ii>=0 && sum>0)
+		    {
+		    padc[ii][kk][npadc[ii][kk]] = sum;
+		    npadc[ii][kk]++;
+                    if (sum>100) {strr[ii][npl[ii]]=kk+1;adcr[ii][npl[ii]]=sum;npl[ii]++;}
 		    }
+		  }
+                if(edet==2) 
+		  {
+		  sum  = (float)pulse_integral-tabftof[slot][chan]*(nsa[edet]+nsb[edet]);
+                  ii = adclayerftof[slot][chan] - 1;
+                  jj =    adclrftof[slot][chan] - 1;
+                  kk =  adcslabftof[slot][chan] - 1;
+	          if(ii>=0 && sum>0)
+		    {
+                    adc[ii][jj][kk][nadc[ii][jj][kk]] = sum;
+                    nadc[ii][jj][kk] ++;
+		    }
+		  }
+
+                tmpx = (float)sum;
+                tmpy = (float)chan;                
+                idn = 30000000 + fragment*100000 + 1000*slot;
+                if(sum>0) hf2_(&idn,&tmpx,&tmpy,&ww);	 
+
+	      /*printf("slot %d chan %d -> idn=%d tmpx=%f\n",slot,chan,idn,tmpx);*/
 
 	      }
 	    }
+
         b08 = (unsigned char *)b32;
 #ifdef DEBUG
         printf("end loop: b08=0x%08x\n",b08);

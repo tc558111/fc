@@ -1,6 +1,4 @@
-/* et2rzn.c */
-/* Cole Smith */
-/* Hacked from original code evio_sectorhist.c by Sergey Boiarinov (JLAB) */
+/* evio_sectorhist.c */
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -117,8 +115,9 @@ int main(int argc, char **argv)
   int runnum;
   int nwpawc,lun,lrec,istat,icycle,idn,idnt,nbins,nxbins,nx2bins,nybins,nbins1,igood,offset;
   float x1,x2,y1,y2,x22,ww,tmpx,tmpy,ttt,ref;
+  static int doevio=0;
 
-  if(argc == 1) {printf("Usage: et2rzn <evio_filename> <runno>  <sector> <maxevents> \n"); exit(1);}
+  if(argc == 1) {printf("Usage: et2rzn <evio_filename> <runno>  <sector> <maxevents> <doevio> \n"); exit(1);}
 
   /* check if events come from ET system */
   if(!strncmp(argv[1],"/tmp/et_sys_",12))
@@ -174,6 +173,7 @@ int main(int argc, char **argv)
   runnum = atoi(argv[2]);
   sec = atoi(argv[3]);
   int maxev = atoi(argv[4]);
+  if(argc>5) doevio = atoi(argv[5]);
   
   sprintf(HBOOKfilename,"forcar-s%d-%d.rzn",sec,runnum);
 
@@ -224,17 +224,20 @@ int main(int argc, char **argv)
    hbname_(&idnt,"ECAL",&tdcEC,"TDCEC(nEC):I",4L,12L);
    hbname_(&idnt,"ECAL",&adcEC,"ADCEC(nEC):I",4L,12L);
 
-/* Write evio output file */
+/* OPEN EVIO OUTPUT FILE */
 
-  sprintf(filename,"forcar-s%d-%d.evio",sec,runnum);
-  printf("Opening evio file >%s<\n",filename);
-  status = evOpen(filename,"w",&handler);
-  printf("evOpen status=%d\n",status);
-  if(status!=0)
-    {
-      printf("evOpen error %d - exit\n",status);
-      exit;
-    }  
+   if (doevio) 
+     {
+       sprintf(filename,"forcar-s%d-%d.evio",sec,runnum);
+       printf("Opening evio file >%s<\n",filename);
+       status = evOpen(filename,"w",&handler);
+       printf("evOpen status=%d\n",status);
+       if(status!=0)
+	 {
+	   printf("evOpen error %d - exit\n",status);
+	   exit;
+	 }  
+     }
 
 /* NSA+NSB to calculate pedestals*/
 /* From $CLON_PARMS/fadc250/adc*mode3.cnf */
@@ -355,7 +358,11 @@ while(1)
 	    printf("after hrout_\n");fflush(stdout);
 	    hrend_("NTP", 3L);
 	    printf("after hrend_\n");fflush(stdout);
-
+	    if (doevio) 
+	      {
+		printf("evClose after %d events\n",iev);fflush(stdout);
+		evClose(handler);
+	      }
 	    exit(0);
 	      }
         }
@@ -942,8 +949,11 @@ a123:
 
     if(nECi==3 || nECo==3 || nPC==3 || nSC1A==1 || nSC1B==1) 
       { hfnt_(&idnt);
-	status=evWrite(handler,bufptr);
-        if(status!=0) printf("evWrite returns %d\n",status);
+	if (doevio)
+	  {
+	    status=evWrite(handler,bufptr);
+	    if(status!=0) printf("evWrite returns %d\n",status);
+	  }
       }
 
   }
@@ -976,8 +986,11 @@ a123:
   printf("after hrout_\n");fflush(stdout);
   hrend_("NTP", 3L);
   printf("after hrend_\n");fflush(stdout);
-  printf("evClose after %d events\n",iev);fflush(stdout);
-  evClose(handler);
+  if (doevio) 
+    {
+      printf("evClose after %d events\n",iev);fflush(stdout);
+      evClose(handler);
+    }
 
   exit(0);
 }

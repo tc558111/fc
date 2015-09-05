@@ -296,11 +296,11 @@ int main(int argc, char **argv)
 /* NSA+NSB to calculate pedestals*/
 /* From $CLON_PARMS/fadc250/adc*mode3.cnf */
 
-  int nsat[3]={12,12,12};   /* ns */
-  //int nsbt[3]={76,156,60};  /* runs 170,171 */
-  int nsbt[3]={60,156,44};
-  int nsa[3] ={3,3,3};      /* samples */
-  int nsb[3] ={15,39,11};
+  int nsbt[3]={12,12,12};   /* ns */
+  //int nsat[3]={76,156,60};  /* runs 170,171 */
+  int nsat[3]={60,156,44};
+  int nsb[3] ={3,3,3};      /* samples */
+  int nsa[3] ={15,39,11};
   
 /* PEDESTAL TABLES */
 
@@ -679,8 +679,8 @@ a123:
               if(summing_in_progress==0 && data>(baseline+10))
 		{
                 summing_in_progress = 1;
-                for (ii=1;ii<(nsa[edet]+1);ii++) sum += (datasaved[mm-ii]-baseline);
-                mmsum=nsa[edet];
+                for (ii=1;ii<(nsb[edet]+1);ii++) sum += (datasaved[mm-ii]-baseline);
+                mmsum=nsb[edet];
                 mmt0=mm;
 		}
 	      if(summing_in_progress>0 && mmsum>(nsa[edet]+nsb[edet]))

@@ -33,6 +33,9 @@ int quest_[100];
 #define max1B 64
 #define maxPC 192
 #define maxEC 216
+#define maxEC2 50
+#define maxPC2 50
+#define maxSC  20
 
 int    nSC1A;
 int  secSC1A[max1A];
@@ -63,6 +66,28 @@ int  layerEC[maxEC];
 int  stripEC[maxEC];
 int    tdcEC[maxEC];
 int    adcEC[maxEC];
+
+int      nEC2;
+int   slotEC[maxEC2];
+int   chanEC[maxEC2];
+float  pedEC[maxEC2];
+int     t0EC[maxEC2];
+int   adcEC2[maxEC2][100];
+
+int      nPC2;
+int   slotPC[maxPC2];
+int   chanPC[maxPC2];
+float  pedPC[maxPC2];
+int     t0PC[maxPC2];
+int   adcPC2[maxPC2][100];
+
+int      nSC;
+int     idSC[maxSC];
+int   slotSC[maxSC];
+int   chanSC[maxSC];
+float  pedSC[maxSC];
+int     t0SC[maxSC];
+int    adcSC[maxSC][100];
 
 int nECi,nECo;
 
@@ -118,8 +143,9 @@ int main(int argc, char **argv)
   int nwpawc,lun,lrec,istat,icycle,idn,idnt,nbins,nxbins,nx2bins,nybins,nbins1,igood,offset;
   float x1,x2,y1,y2,x22,ww,tmpx,tmpy,ttt,ref;
   static int doevio=0;
+  static int dofadc=0;
 
-  if(argc == 1) {printf("Usage: et2rzn <evio_filename> <runno>  <sector> <maxevents> <doevio> \n"); exit(1);}
+  if(argc == 1) {printf("Usage: et2rzn <evio_filename> <runno>  <sector> <maxevents> <doevio> <dofadc>\n"); exit(1);}
 
   /* check if events come from ET system */
   if(!strncmp(argv[1],"/tmp/et_sys_",12))
@@ -176,6 +202,7 @@ int main(int argc, char **argv)
   sec = atoi(argv[3]);
   int maxev = atoi(argv[4]);
   if(argc>5) doevio = atoi(argv[5]);
+  if(argc>6) dofadc = atoi(argv[6]);
   
   sprintf(HBOOKfilename,"forcar-s%d-%d.rzn",sec,runnum);
 
@@ -226,6 +253,31 @@ int main(int argc, char **argv)
    hbname_(&idnt,"ECAL",&tdcEC,"TDCEC(nEC):I",4L,12L);
    hbname_(&idnt,"ECAL",&adcEC,"ADCEC(nEC):I",4L,12L);
 
+   if (dofadc) 
+   {
+   hbname_(&idnt,"FADC",&nEC2,"nEC2[0,50]:I",4L,12L);
+   hbname_(&idnt,"FADC",&slotEC,"slotEC(nEC2)[0,18]:I",4L,20L);
+   hbname_(&idnt,"FADC",&chanEC,"chanEC(nEC2)[0,15]:I",4L,20L);
+   hbname_(&idnt,"FADC",&pedEC,"pedEC(nEC2)",4L,11L);
+   hbname_(&idnt,"FADC",&t0EC,"t0EC(nEC2)[0,100]:I",4L,19L);
+   hbname_(&idnt,"FADC",&adcEC2,"RAWEC(100,nEC2):I",4L,17L);
+
+   hbname_(&idnt,"FADC",&nPC2,"nPC2[0,50]:I",4L,12L);
+   hbname_(&idnt,"FADC",&slotPC,"slotPC(nPC2)[0,18]:I",4L,20L);
+   hbname_(&idnt,"FADC",&chanPC,"chanPC(nPC2)[0,15]:I",4L,20L);
+   hbname_(&idnt,"FADC",&pedPC,"pedPC(nPC2)",4L,11L);
+   hbname_(&idnt,"FADC",&t0PC,"t0PC(nPC2)[0,100]:I",4L,19L);
+   hbname_(&idnt,"FADC",&adcPC2,"RAWPC(100,nPC2):I",4L,17L);
+
+   hbname_(&idnt,"FADC",&nSC,"nSC[0,20]:I",4L,11L);
+   hbname_(&idnt,"FADC",&idSC,"idSC(nSC)[0,1]:I",4L,16L);
+   hbname_(&idnt,"FADC",&slotSC,"slotSC(nSC)[0,18]:I",4L,19L);
+   hbname_(&idnt,"FADC",&chanSC,"chanSC(nSC)[0,15]:I",4L,19L);
+   hbname_(&idnt,"FADC",&pedSC,"pedSC(nSC)",4L,10L);
+   hbname_(&idnt,"FADC",&t0SC,"t0SC(nSC)[0,100]:I",4L,18L);
+   hbname_(&idnt,"FADC",&adcSC,"RAWSC(100,nSC):I",4L,16L);
+   }
+   
 /* OPEN EVIO OUTPUT FILE */
 
    if (doevio) 
@@ -246,9 +298,9 @@ int main(int argc, char **argv)
 
   int nsat[3]={12,12,12};   /* ns */
   //int nsbt[3]={76,156,60};  /* runs 170,171 */
-  int nsbt[3]={36,156,44};
+  int nsbt[3]={60,156,44};
   int nsa[3] ={3,3,3};      /* samples */
-  int nsb[3] ={9,39,11};
+  int nsb[3] ={15,39,11};
   
 /* PEDESTAL TABLES */
 
@@ -483,6 +535,7 @@ a123:
       }
     }
 
+    nEC2 = nPC2 = nSC = 0;
     tdcref = 0;
 
     /*TDCs*/
@@ -568,7 +621,8 @@ a123:
       int oldslot = 100;
       int thr=15;
       int ndata0[22], data0[21][8];
-      int baseline, sum, channel, summing_in_progress, mmsum;
+      int sum, channel, summing_in_progress, mmsum, mmt0;
+      float baseline;
       int datasaved[1000];
 
 #ifdef DEBUG
@@ -580,7 +634,7 @@ a123:
       printf("ind1=%d, nbytes=%d (from 0x%08x to 0x%08x)\n",ind1,nbytes,b08,end);
 #endif
 
-      sector = (fragment-1)/6 + 1;
+      sector   = (fragment-1)/6 + 1;
       detector = (fragment/2)%6 + 1;
 
       edet = -1;
@@ -607,34 +661,32 @@ a123:
 #ifdef DEBUG
           printf("  chan=%d, nsamples=%d\n",chan,nsamples);
 #endif
-          baseline = sum = summing_in_progress = mmsum = 0;
+          baseline = sum = summing_in_progress = mmsum = mmt0 = 0;
           for(mm=0; mm<nsamples; mm++)
 	    {
 	    GET16(data);
             datasaved[mm] = data;
-            if(mm<10) baseline += data;
-            if(mm==10)
+            if(mm<35) baseline += data;
+            if(mm==35)
 	      {
-              baseline = baseline / 10;
-#ifdef DEBUG
-              printf("slot=%d chan=%d baseline=%d\n",slot,chan,baseline);
-#endif
+              baseline = baseline / 35;
+	      //#ifdef DEBUG
+              //printf("slot=%d chan=%d baseline=%f\n",slot,chan,baseline);
+	      //#endif
 	      }
-            if(mm>15 && mm<100)
+            if(mm>35 && mm<100)
               {
               if(summing_in_progress==0 && data>(baseline+10))
 		{
                 summing_in_progress = 1;
-                for (ii=1;ii<(nsa[edet]+1);ii++)
-		  {
-                  sum += (datasaved[mm-ii]-baseline);
-		  }
+                for (ii=1;ii<(nsa[edet]+1);ii++) sum += (datasaved[mm-ii]-baseline);
                 mmsum=nsa[edet];
+                mmt0=mm;
 		}
 	      if(summing_in_progress>0 && mmsum>(nsa[edet]+nsb[edet]))
 		{
 		summing_in_progress = -1;
-                //printf("det=%d tsa+tsb=%d\n",edet,nsa[edet]+nsb[edet]);
+                //printf("det=%d sum=%d tsa+tsb=%d\n",edet,sum,nsa[edet]+nsb[edet]);
 		}
               if(summing_in_progress>0 && data<baseline)
 	        {
@@ -658,6 +710,19 @@ a123:
 		  {
 		  eadc[ii][kk][neadc[ii][kk]] = sum;
 		  neadc[ii][kk]++;
+                 
+		  if (dofadc)
+		    {
+		    if (nEC2>=0&&nEC2<maxEC2) 
+		    {
+		    slotEC[nEC2]=slot;
+		    chanEC[nEC2]=chan;
+		    pedEC[nEC2]=baseline;
+		    t0EC[nEC2]=mmt0;
+		    for(jj=0;jj<100;jj++) adcEC2[nEC2][jj]=datasaved[jj];
+		    nEC2++;
+		    }
+		    }
 		  }
 		}
 	      if(edet==1)
@@ -668,6 +733,19 @@ a123:
 		  {
 		  padc[ii][kk][npadc[ii][kk]] = sum;
 		  npadc[ii][kk]++;
+
+		  if (dofadc)
+		    {
+                    if (nPC2<maxPC2) 
+		    {
+		    slotPC[nPC2]=slot;
+		    chanPC[nPC2]=chan;
+		    pedPC[nPC2]=baseline;
+		    t0PC[nPC2]=mmt0;
+		    for(jj=0;jj<100;jj++) adcPC2[nPC2][jj]=datasaved[jj];
+		    nPC2++;
+		    }
+		    }
 		  }
 		}
               if(edet==2) 
@@ -679,6 +757,20 @@ a123:
 		  {
                   adc[ii][jj][kk][nadc[ii][jj][kk]] = sum;
                   nadc[ii][jj][kk] ++;
+
+		  if (dofadc) 
+		    {
+                    if (nSC<maxSC) 
+		    {
+		    slotSC[nSC]=slot;
+		    chanSC[nSC]=chan;
+		    pedSC[nSC]=baseline;
+		    idSC[nSC]=ii;
+		    t0SC[nSC]=mmt0;
+		    for(jj=0;jj<100;jj++) adcSC[nSC][jj]=datasaved[jj];
+		    nSC++;
+		    }
+		    }
 		  }
 		}
 	      
@@ -778,10 +870,10 @@ a123:
 		}
               if(edet==2) 
 		{
-		sum  = (float)pulse_integral-tabftof[slot][chan]*(nsa[edet]+nsb[edet]);
                 ii = adclayerftof[slot][chan] - 1;
                 jj =    adclrftof[slot][chan] - 1;
                 kk =  adcslabftof[slot][chan] - 1;
+		sum  = (float)pulse_integral-tabftof[slot][chan]*(nsa[edet]+nsb[edet]);
 	        if(ii>=0 && sum>0)
 		  {
                   adc[ii][jj][kk][nadc[ii][jj][kk]] = sum;
@@ -950,7 +1042,7 @@ a123:
     //if( good_uvw[0] || good_uvw[1] || good_uvw[2] || nSC1A==1 || nSC1B==1) {hfnt_(&idnt);}
 
     if(nECi==3 || nECo==3 || nPC==3 || nSC1A==1 || nSC1B==1) 
-      { hfnt_(&idnt);
+      {hfnt_(&idnt);
 	if (doevio)
 	  {
 	    status=evWrite(handler,bufptr);

@@ -723,6 +723,7 @@ void Dsc2Dlg::MakeHistos()
       fHP1[np] = new TH1F(tit,htit1[idet][np],npmt[idet][np],1.,((Float_t)npmt[idet][np]+1.));
       fHP1[np]->SetFillColor(kRed);fHP1[np]->SetStats(kFALSE);
       fHP1[np]->SetNdivisions(npmt[idet][np]); fHP1[np]->GetYaxis()->SetTickLength(0.01);
+      fHP1[np]->SetMinimum(0.5);
       sprintf(tit,"hp2%d",np);
       fHP2[np] = new TH2F(tit,htit2[idet][np],100,1.,101.*bintime,npmt[idet][np],1.,((Float_t)npmt[idet][np]+1.));
       fHP2[np]->SetStats(kFALSE);fHP2[np]->GetXaxis()->SetTimeDisplay(1); 

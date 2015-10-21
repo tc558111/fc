@@ -1,0 +1,92 @@
+macro get.peds run sec det plot=0 write=0
+
+  global/cre plot [plot]
+  exe ped.vec.init [det]
+  exe get.ped.run [run] [sec]
+  nslots = $vlen([det])
+  message NSLOTS=[nslots]
+  do i=1,[nslots]
+    exe get.ped.fits [sec] [det] [i]
+  enddo
+
+  if [write].eq.1 then
+    message Writing pedestals to  cal/ped/[det]/forcar-s[sec]-[run]-[det].ped
+    vec/write ped cal/ped/[det]/forcar-s[sec]-[run]-[det].ped format=(1x,5(1x,G9.4))
+  endif
+
+return
+
+macro get.ped.run run sec 
+
+  path=forcar/rzh/fcMon
+  cd //pawc ; hi/del * ; close 0
+  hi/file 1 [path]/forcar-s[sec]-[run].rzh
+
+return
+
+macro ped.vec.init det
+
+  vec/cre ecal(14) r 3 4 5 6 7 8 9 10 13 14 15 16 17 18
+  vec/cre pcal(12) r 3 4 5 6 7 8 9 10 13 14 15 16
+  vec/cre ftof(12) r 3 4 5 6 7 8 9 10 13 14 15 16 
+  vec/cre ped(5,16,$vlen([det])) r
+  vec/cre par(3) r
+  vec/cre mean(16) r
+  vec/cre rms(16) r
+
+return
+
+macro get.ped.fits sec det n
+
+  slot=[det]([n])
+
+  message Processing $upper([det]) Sector [sec] slot [slot]
+
+  hid=$exec(fcCal#get.ped.hid [sec] [det] [slot])
+
+  exe 2d.get.sli [hid] x
+
+  do i=1,16
+    hi/cop 222.slix.[i] 223
+    vec/inp mean([i]) $hinfo(223,mean) 
+    vec/inp rms([i])  $hinfo(223,rms)
+    hi/fit 223 g q0 par=par(:) ; set plci 2
+    vec/inp ped(:,[i],[n]) [slot] $eval([i]-1) $eval(mean([i])) $eval(rms([i])) 0
+  enddo
+
+  global/imp plot
+  if [plot].eq.1 then
+  zone 1 1 ; opt logz
+  hi/plot 222 colz
+  sigma y=array(16,0#15); sigma y=y+0.5 
+  set pmci 7 ; set mscf 0.8 ; set mtyp 20
+  graph 16 ped(3,:,[n]) y P
+  set pmci 1 ; set mtyp 24
+  graph 16 mean y P
+  wait
+  endif
+
+return
+
+macro get.ped.hid sec det slot
+
+  frag=$eval([sec]*6-5) ; off=0 ; mid=20000000
+
+  case [det] in
+    (ecal) id=$eval(([frag]+[off])*100000)
+    (pcal) id=$eval(([frag]+[off]+2)*100000)
+    (ftof) id=$eval(([frag]+[off]+4)*100000)
+  endcase
+
+  hid=$eval([mid]+[id]+[slot]*1000)
+
+exitm [hid]
+return
+
+macro 2d.get.sli id xy=x
+
+  hi/cop [id] 222
+  ys=$hinfo(222,xbins) ; xs=$hinfo(222,ybins) 
+  sli[xy] 222 [[xy]s] ; hi/proj 222 
+
+return

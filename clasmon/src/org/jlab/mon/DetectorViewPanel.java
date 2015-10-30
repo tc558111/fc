@@ -37,6 +37,7 @@ public class DetectorViewPanel extends JPanel implements ChangeListener{
     public void stateChanged(ChangeEvent e) {
         JTabbedPane tabbedPane = (JTabbedPane) e.getSource();
         panel1 = (DetectorShape3DPanel) tabbedPane.getSelectedComponent();
+        //Start timer in selected panel, stop timer in previous panel
         panel1.start();
         if (panel2!=null) panel2.stop();
         panel2=panel1;

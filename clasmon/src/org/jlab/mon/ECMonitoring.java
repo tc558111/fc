@@ -12,6 +12,7 @@ import java.util.TreeMap;
 import java.util.Arrays;
 
 import javax.swing.JLabel;
+import javax.swing.SwingUtilities;
 
 import org.jlab.evio.clas12.*;
 import org.jlab.clasrec.main.*;
@@ -31,6 +32,12 @@ public class ECMonitoring extends DetectorMonitoring {
 	
     public TreeMap<Integer,H1D>      ECAL_ADCPIX  = new TreeMap<Integer,H1D>();
     public TreeMap<Integer,H1D>      ECAL_TDCPIX  = new TreeMap<Integer,H1D>();
+    public TreeMap<Integer,H1D>      ECAL_PIXA    = new TreeMap<Integer,H1D>();
+    public TreeMap<Integer,H1D>      ECAL_PIXT    = new TreeMap<Integer,H1D>();
+    public TreeMap<Integer,H1D>      ECAL_PIXAS   = new TreeMap<Integer,H1D>();
+    public TreeMap<Integer,H1D>      ECAL_PIXTS   = new TreeMap<Integer,H1D>();
+    public TreeMap<Integer,H1D>      ECAL_PIXASUM = new TreeMap<Integer,H1D>();
+    public TreeMap<Integer,H1D>      ECAL_PIXTSUM = new TreeMap<Integer,H1D>();
     public TreeMap<Integer,H1D>      ECAL_EVTPIX  = new TreeMap<Integer,H1D>();
     public TreeMap<Integer,H2D>      ECAL_ADC     = new TreeMap<Integer,H2D>();
     public TreeMap<Integer,H2D>      ECAL_TDC     = new TreeMap<Integer,H2D>();
@@ -47,16 +54,22 @@ public class ECMonitoring extends DetectorMonitoring {
 	@Override
 
 	public void init() {
+		ECAL_EVTPIX.put(1, new H1D("EVTPIX"+1,1296,1.0,1297.0));
+		ECAL_PIXASUM.put(1, new H1D("A_PIXSUM"+1,1296,1.0,1297.0));
+		ECAL_PIXTSUM.put(1, new H1D("T_PIXSUM"+1,1296,1.0,1297.0));
+		ECAL_PIXAS.put(1, new H1D("A_PIXAS"+1,1296,1.0,1297.0));
+		ECAL_PIXTS.put(1, new H1D("T_PIXTS"+1,1296,1.0,1297.0));
 		for (int lay=1 ; lay<4 ; lay++) {
 			ECAL_ADC.put(lay, new H2D("ADC_LAYER_"+lay,100,0.0,200.0,36,1.0,37.0));
     	    ECAL_TDC.put(lay, new H2D("TDC_LAYER_"+lay,100,1330.0,1370.0,36,1.0,37.0));  
 			ECAL_ADC_PIX.put(lay, new H2D("ADC_PIX_LAYER_"+lay,100,0.0,200.0,36,1.0,37.0));
     	    ECAL_TDC_PIX.put(lay, new H2D("TDC_PIX_LAYER_"+lay,100,1330.0,1370.0,36,1.0,37.0));  
     		ECAL_ADCPIX.put(lay, new H1D("ADC_PIX"+lay,1296,1.0,1297.0));
+    		ECAL_PIXA.put(lay, new H1D("T_PIX"+lay,1296,1.0,1297.0));
+    		ECAL_PIXT.put(lay, new H1D("A_PIX"+lay,1296,1.0,1297.0));
     		ECAL_TDCPIX.put(lay, new H1D("TDC_PIX"+lay,1296,1.0,1297.0));
-    		ECAL_EVTPIX.put(lay, new H1D("ADC_PIX"+lay,1296,1.0,1297.0));
     		ECAL_APIX.put(lay, new H2D("APIX"+lay,1296,1.0,1297.0,20,0.0,200.0));
-    		ECAL_TPIX.put(lay, new H2D("TPIX"+lay,1296,1.0,1297.0,20,1330.0,1370.0));
+    		ECAL_TPIX.put(lay, new H2D("TPIX"+lay,1296,1.0,1297.0,40,1330.0,1370.0));
     		System.out.println("init():lay="+lay);
 		}
 	}
@@ -311,25 +324,28 @@ public class ECMonitoring extends DetectorMonitoring {
 	@Override
 
 	public void analyze() {
-	  System.out.println("analyze():");
-	    ECAL_ADCPIX.get(1).divide(ECAL_EVTPIX.get(1));
-	    ECAL_ADCPIX.get(2).divide(ECAL_EVTPIX.get(2));
-	    ECAL_ADCPIX.get(3).divide(ECAL_EVTPIX.get(3));
-	    ECAL_TDCPIX.get(1).divide(ECAL_EVTPIX.get(1));
-	    ECAL_TDCPIX.get(2).divide(ECAL_EVTPIX.get(2));
-	    ECAL_TDCPIX.get(3).divide(ECAL_EVTPIX.get(3));
+	  //System.out.println("analyze():");
+	    ECAL_ADCPIX.get(1).divide(ECAL_EVTPIX.get(1),ECAL_PIXA.get(1));
+	    ECAL_ADCPIX.get(2).divide(ECAL_EVTPIX.get(1),ECAL_PIXA.get(2));
+	    ECAL_ADCPIX.get(3).divide(ECAL_EVTPIX.get(1),ECAL_PIXA.get(3));
+	    ECAL_TDCPIX.get(1).divide(ECAL_EVTPIX.get(1),ECAL_PIXT.get(1));
+	    ECAL_TDCPIX.get(2).divide(ECAL_EVTPIX.get(1),ECAL_PIXT.get(2));
+	    ECAL_TDCPIX.get(3).divide(ECAL_EVTPIX.get(1),ECAL_PIXT.get(3));
+	    ECAL_PIXASUM.get(1).divide(ECAL_EVTPIX.get(1),ECAL_PIXAS.get(1));
+	    ECAL_PIXTSUM.get(1).divide(ECAL_EVTPIX.get(1),ECAL_PIXTS.get(1));
 		
 	    LAYMAP.put(1, toTreeMap(ECAL_ADC.get(1).projectionY().getData()));
 	    LAYMAP.put(2, toTreeMap(ECAL_ADC.get(2).projectionY().getData()));
 	    LAYMAP.put(3, toTreeMap(ECAL_ADC.get(3).projectionY().getData()));
-	    LAYMAP.put(8, toTreeMap(ECAL_EVTPIX.get(1).getData()));
-	    LAYMAP.put(9, toTreeMap(ECAL_ADCPIX.get(1).getData()));
-	    LAYMAP.put(10,toTreeMap(ECAL_ADCPIX.get(2).getData()));
-	    LAYMAP.put(11,toTreeMap(ECAL_ADCPIX.get(3).getData()));
-	    LAYMAP.put(12,toTreeMap(ECAL_EVTPIX.get(1).getData()));
-	    LAYMAP.put(13,toTreeMap(ECAL_TDCPIX.get(1).getData()));
-	    LAYMAP.put(14,toTreeMap(ECAL_TDCPIX.get(2).getData()));
-	    LAYMAP.put(15,toTreeMap(ECAL_TDCPIX.get(3).getData()));
+	    LAYMAP.put(7, toTreeMap(ECAL_EVTPIX.get(1).getData()));
+	    LAYMAP.put(8, toTreeMap(ECAL_PIXAS.get(1).getData()));
+	    LAYMAP.put(9, toTreeMap(ECAL_PIXA.get(1).getData()));
+	    LAYMAP.put(10,toTreeMap(ECAL_PIXA.get(2).getData()));
+	    LAYMAP.put(11,toTreeMap(ECAL_PIXA.get(3).getData()));
+	    LAYMAP.put(12,toTreeMap(ECAL_PIXTS.get(1).getData()));
+	    LAYMAP.put(13,toTreeMap(ECAL_PIXT.get(1).getData()));
+	    LAYMAP.put(14,toTreeMap(ECAL_PIXT.get(2).getData()));
+	    LAYMAP.put(15,toTreeMap(ECAL_PIXT.get(3).getData()));
 	}
 	
 	public TreeMap<Integer, Object> toTreeMap(double dat[]) {
@@ -412,7 +428,7 @@ public class ECMonitoring extends DetectorMonitoring {
           	     adcr[is-1][iv-1][inh-1] = adc;
           	     tdcr[is-1][iv-1][inh-1] = tdcc;
           	     strr[is-1][iv-1][inh-1] = ip;
-          	     uvw=uvw+uvw_dalitz(ic,ip,il);
+          	     uvw=uvw+uvw_dalitz(ic,ip,il); //Dalitz test
           	   }
    		    ECAL_ADC.get(il).fill(adc,ip,1.0);
    		    ECAL_TDC.get(il).fill(tdcc,ip,1.0);
@@ -424,14 +440,16 @@ public class ECMonitoring extends DetectorMonitoring {
 		boolean good_u = nh[iis-1][3]==1;
 		boolean good_v = nh[iis-1][4]==1;
 		boolean good_w = nh[iis-1][5]==1;
-		boolean good_uvw = good_u&&good_v&&good_w;
+		boolean good_uvw = good_u&&good_v&&good_w; //Multiplicity test (NU=NV=NW=1)
 		
 		if (good_uvw&&Math.abs(uvw-2.0)<0.2) {
 			int pixel=pix(strr[iis-1][3][0],strr[iis-1][4][0],strr[iis-1][5][0]);
+			ECAL_EVTPIX.get(1).fill(pixel,1.0);
 			for (int il=1; il<4 ; il++){
 				ECAL_ADC_PIX.get(il).fill(adcr[iis-1][il+2][0],strr[iis-1][il+2][0],1.0);
 				ECAL_TDC_PIX.get(il).fill(tdcr[iis-1][il+2][0],strr[iis-1][il+2][0],1.0);
-				ECAL_EVTPIX.get(il).fill(pixel,1.0);
+				ECAL_PIXASUM.get(1).fill(pixel,adcr[iis-1][il+2][0]);
+				ECAL_PIXTSUM.get(1).fill(pixel,tdcr[iis-1][il+2][0]);
 				ECAL_ADCPIX.get(il).fill(pixel,adcr[iis-1][il+2][0]);
 				ECAL_TDCPIX.get(il).fill(pixel,tdcr[iis-1][il+2][0]);
 				ECAL_APIX.get(il).fill(pixel,adcr[iis-1][il+2][0],1.0);
@@ -446,19 +464,17 @@ public class ECMonitoring extends DetectorMonitoring {
 		double colorfraction=1;
 	   
 		switch(inProcess) {
-		case 0:
+		case 0: // Assign default colors upon starting GUI (before event processing)
 	    if(layer==1) colorfraction = (double)component/36;
 	    if(layer==2) colorfraction = (double)component/36;
 	    if(layer==3) colorfraction = (double)component/36;
 		if(layer>=7) colorfraction = getcolor((TreeMap<Integer, Object>) LAYMAP.get(7), component); 
 		break;
-		case 1:
+		case 1: // Use LAYMAP to get colors of components while processing data
 	    colorfraction = getcolor((TreeMap<Integer, Object>) LAYMAP.get(layer), component);
 	    break;
 		}
 		
-		//System.out.println("layer,component,color="+layer+" "+component+" "+colorfraction);
-     
 		return palette.getRange(colorfraction);
 
 	}
@@ -486,7 +502,9 @@ public class ECMonitoring extends DetectorMonitoring {
 		String alab[]={"U ADC","V ADC","W ADC"},tlab[]={"U TDC","V TDC","W TDC"};
 		H1D u,v,w,h;
 		
-		if (inProcess==1) {
+		// System.out.println("I am in drawComponent");	
+		 
+		 if (inProcess==1) analyze(); //updates component colormap ; may not be thread-save 
 			
 		 if (layer<4)  {col0=0 ; col1=4; col2=2;strip=component;}
 		 if (layer>=7) {col0=4 ; col1=4; col2=2;pixel=component;}
@@ -547,17 +565,19 @@ public class ECMonitoring extends DetectorMonitoring {
 	    		 canvas.cd(il+6) ; h = ECAL_TPIX.get(il+1).sliceX(pixel)                 ; h.setXTitle(tlab[il]); h.setFillColor(col2); canvas.draw(h);
 	    	 }
 		 } 
-		}
 	}
 
-	
 	public static void main(String[] args){
 
 	    monitor = new ECMonitoring();
-	    app = new DetectorBrowserApp();
-	    monitor.initecgui(); 
-	    app.setPluginClass(monitor);
-	    app.updateDetectorView();
-
-	   }
+	    SwingUtilities.invokeLater(new Runnable() {
+	    	public void run() {
+	    		app = new DetectorBrowserApp();
+	    		monitor.init();
+	    		monitor.initecgui();
+	    		app.setPluginClass(monitor);
+	    		app.updateDetectorView();
+	    	}
+	    });
+	}
 }

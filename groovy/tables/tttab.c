@@ -41,11 +41,11 @@ int main(int argc, char **argv)
 		  {
 		    if (type==0&&adclayerecal[slot][chan]>0) 
 		      {
-			printf("ECAL %8d %8d %8d %8d %8d %8d %8d\n",roc,slot,chan,sector,adclayerecal[slot][chan],adcstripecal[slot][chan],type);  
+			printf("EC %8d %8d %8d %8d %8d %8d %8d\n",roc,slot,chan,sector,adclayerecal[slot][chan],adcstripecal[slot][chan],type);  
 		      }
 		    if (type==1&&tdclayerecal[slot][chan]>0) 
 		      {
-			printf("ECAL %8d %8d %8d %8d %8d %8d %8d\n",roc,slot,chan,sector,tdclayerecal[slot][chan],tdcstripecal[slot][chan],type+1);  
+			printf("EC %8d %8d %8d %8d %8d %8d %8d\n",roc,slot,chan,sector,tdclayerecal[slot][chan],tdcstripecal[slot][chan],type+1);  
 		      }
 		  }
 	      }

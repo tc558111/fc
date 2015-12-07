@@ -56,6 +56,7 @@ public class DetectorShape3DPanel extends JPanel implements MouseListener , Mous
         updateGUIAction action = new updateGUIAction();
         timer = new Timer(delay,action);
         
+     // JSlider code copied from SliderDemo.java from Oracle Documentation
         framesPerSecond = new JSlider(JSlider.HORIZONTAL,FPS_MIN,FPS_MAX,FPS_INIT);
         framesPerSecond.addChangeListener(this);
         framesPerSecond.setMajorTickSpacing(10);
@@ -117,6 +118,7 @@ public class DetectorShape3DPanel extends JPanel implements MouseListener , Mous
         this.shapeStore.setIntensityMap(intens);
     }
     
+    // Action for Timer to update plots without mouse motion
     private class updateGUIAction implements ActionListener {
         public void actionPerformed(ActionEvent evt) {
             updateGUI();
@@ -162,7 +164,7 @@ public class DetectorShape3DPanel extends JPanel implements MouseListener , Mous
             this.shapeStore.reaset();
             DetectorShape3D cui = this.shapeStore.getSelectedShape(e.getX(),e.getY(),
                                   this.getSize().width, this.getSize().height);
-            if (cui!=cui_old) {
+            if (cui!=cui_old) { //Don't call if mouse has not moved outside of object
                 cui_old = cui;
                 this.repaint();
                 if(cui!=null){

@@ -29,6 +29,7 @@ import javax.swing.event.*;
 /**
  *
  * @author gavalian
+ * Revised by L. C. Smith in Sep-Nov 2015 for development of ECMon.java (now ECMonv1.java)
  */
 public class DetectorShape3DPanel extends JPanel implements MouseListener , MouseMotionListener, ChangeListener {
     

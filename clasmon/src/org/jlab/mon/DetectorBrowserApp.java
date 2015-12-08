@@ -44,6 +44,7 @@ import org.jlab.clas.tools.benchmark.BenchmarkTimer;
 /**
  *
  * @author gavalian
+ * Revised by L. C. Smith in Sep-Nov 2015 for development of ECMon.java (now ECMonv1.java).
  */
 public class DetectorBrowserApp extends JFrame implements IDetectorComponentSelection,ActionListener {
     

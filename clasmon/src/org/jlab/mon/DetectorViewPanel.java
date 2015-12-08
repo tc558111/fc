@@ -14,6 +14,7 @@ import javax.swing.event.ChangeListener;
 /**
  *
  * @author gavalian
+ * Revised by L. C. Smith in Sep-Nov 2015 for development of ECMon.java (now ECMonv1.java)
  */
 public class DetectorViewPanel extends JPanel implements ChangeListener{
     

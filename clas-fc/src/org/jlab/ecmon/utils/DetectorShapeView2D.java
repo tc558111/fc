@@ -33,6 +33,7 @@ import org.jlab.geom.prim.Point3D;
 /**
  *
  * @author gavalian
+ * Modified by L.C. Smith for use with ECMon
  */
 public class DetectorShapeView2D extends JPanel implements MouseListener , MouseMotionListener{
     

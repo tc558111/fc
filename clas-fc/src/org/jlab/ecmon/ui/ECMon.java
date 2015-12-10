@@ -88,18 +88,18 @@ public class ECMon extends DetectorMonitor {
             decoder.addTranslationTable(trTable);
             
             if(system_name.compareTo("FTOF1A")==0){
-                trTable.setDetectorType(DetectorType.FTOF);
+                trTable.setDetectorType(DetectorType.FTOF1A);
             }
             
             if(system_name.compareTo("FTOF1B")==0){
-                trTable.setDetectorType(DetectorType.FTOF);
+                trTable.setDetectorType(DetectorType.FTOF1B);
             }
             
             if(system_name.compareTo("ECAL")==0){
                 trTable.setDetectorType(DetectorType.EC);
             }
             if(system_name.compareTo("PCAL")==0){
-                trTable.setDetectorType(DetectorType.EC);
+                trTable.setDetectorType(DetectorType.PCAL);
             }
         }
 	}
@@ -474,17 +474,19 @@ public class ECMon extends DetectorMonitor {
         List<DetectorRawData>  selectionECAL = decoder.getDetectorData(rawdata,DetectorType.EC);       
         
         for(DetectorRawData data : selectionECAL){
-        	int is  = data.getDescriptor().getSector();
+         	int is  = data.getDescriptor().getSector();
         	int il  = data.getDescriptor().getLayer();
         	int ip  = data.getDescriptor().getComponent();
+        	int ped = (int) data.getDataObject(2);
            	if (data.getMode()==10) tdc = (float) data.getTDC()*24/1000;
         	if (data.getMode()==1)  adc = (int)   data.getSignal(0,30,35,60)/10;
-        	if (data.getMode()==7)  adc = (int)   data.getADC()/10;
+        	if (data.getMode()==7)  adc = (int)   (data.getADC()-ped*18)/10;
+        	//System.out.println("data:"+data);
+			//System.out.println("sector,layer,pmt,adc,ped,tdc= "+is+" "+il+" "+ip+" "+adc+" "+ped+" "+tdc);
         				        	
 			if(il<4){
 				int ic=1;
 				if (adc>thr) {
-					//System.out.println("sector,layer,pmt,adc,tdc= "+is+" "+il+" "+ip+" "+adc+" "+tdc);
 	   	            int  iv = ic*3+il;
 	          	    nh[is-1][iv-1]++;
 	          	    inh = nh[is-1][iv-1];

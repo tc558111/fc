@@ -477,10 +477,12 @@ public class ECMon extends DetectorMonitor {
          	int is  = data.getDescriptor().getSector();
         	int il  = data.getDescriptor().getLayer();
         	int ip  = data.getDescriptor().getComponent();
-        	int ped = (int) data.getDataObject(2);
            	if (data.getMode()==10) tdc = (float) data.getTDC()*24/1000;
         	if (data.getMode()==1)  adc = (int)   data.getSignal(0,30,35,60)/10;
-        	if (data.getMode()==7)  adc = (int)   (data.getADC()-ped*18)/10;
+        	if (data.getMode()==7) {
+            	int ped = (int) data.getDataObject(2);
+        		adc = (int)   (data.getADC()-ped*18)/10;
+        	}
         	//System.out.println("data:"+data);
 			//System.out.println("sector,layer,pmt,adc,ped,tdc= "+is+" "+il+" "+ip+" "+adc+" "+ped+" "+tdc);
         				        	

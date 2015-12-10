@@ -7,13 +7,9 @@ package org.jlab.ecmon.utils;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.Graphics2D;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +60,6 @@ public class DetectorShapeTabView extends JPanel implements ActionListener {
      	   public void stateChanged(ChangeEvent e) {
      	        JTabbedPane tabbedPane = (JTabbedPane) e.getSource();
      	        panel1 = (DetectorShapeView2D) tabbedPane.getSelectedComponent();
-     	        System.out.println("fps="+fps);
      	        panel1.start(fps);
      	        if (panel2!=null) panel2.stop();
      	        panel2=panel1;

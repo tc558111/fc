@@ -31,6 +31,7 @@ import org.root.pad.EmbeddedCanvas;
 /**
  *
  * @author gavalian
+ * Modified by L.C. Smith to use with ECMon
  */
 public class DetectorShapeTabView extends JPanel implements ActionListener {
     

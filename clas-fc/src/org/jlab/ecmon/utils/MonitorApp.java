@@ -241,7 +241,8 @@ public class MonitorApp extends JFrame implements ActionListener {
                     try {
                         processorClass.processEvent(event);
                     } catch (Exception e){
-                        System.out.println("SOMETHING WRONG WITH THE EVENT");
+                    	e.printStackTrace(System.out);
+                        //System.out.println("SOMETHING WRONG WITH THE EVENT");
                     }
                 }
                 monitoringClass.analyze();
@@ -278,7 +279,8 @@ public class MonitorApp extends JFrame implements ActionListener {
                     try {
                         processorClass.processEvent(event);
                     } catch (Exception e){
-                        System.out.println("SOMETHING WRONG WITH THE EVENT");
+                    	e.printStackTrace(System.out);
+//                        System.out.println("SOMETHING WRONG WITH THE EVENT");
                     }
                     counter++;
                 }

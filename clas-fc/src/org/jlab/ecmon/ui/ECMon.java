@@ -123,7 +123,7 @@ public class ECMon extends DetectorMonitor {
  
 			for (int lay=1 ; lay<4 ; lay++) {
 				int iss=is*10+lay;
-				ECAL_ADC.put(iss,     new H2D("ADC_LAYER_"+iss,100,0.0,200.0,36,1.0,37.0));
+				ECAL_ADC.put(iss,     new H2D("ADC_LAYER_"+iss,100,0.0,250.0,36,1.0,37.0));
 				ECAL_TDC.put(iss,     new H2D("TDC_LAYER_"+iss,100,1330.0,1370.0,36,1.0,37.0));  
 				ECAL_ADC_PIX.put(iss, new H2D("ADC_PIX_LAYER_"+iss,100,0.0,200.0,36,1.0,37.0));
 				ECAL_TDC_PIX.put(iss, new H2D("TDC_PIX_LAYER_"+iss,100,1330.0,1370.0,36,1.0,37.0));  
@@ -131,7 +131,7 @@ public class ECMon extends DetectorMonitor {
 				ECAL_PIXA.put(iss,    new H1D("T_PIX"+iss,1296,1.0,1297.0));
 				ECAL_PIXT.put(iss,    new H1D("A_PIX"+iss,1296,1.0,1297.0));
 				ECAL_TDCPIX.put(iss,  new H1D("TDC_PIX"+iss,1296,1.0,1297.0));
-				ECAL_APIX.put(iss,    new H2D("APIX"+iss,1296,1.0,1297.0,20,0.0,200.0));
+				ECAL_APIX.put(iss,    new H2D("APIX"+iss,1296,1.0,1297.0,30,0.0,250.0));
 				ECAL_TPIX.put(iss,    new H2D("TPIX"+iss,1296,1.0,1297.0,40,1330.0,1370.0));
 				System.out.println("init():iss="+iss);
 			}

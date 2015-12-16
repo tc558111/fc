@@ -1,23 +1,20 @@
 package org.jlab.ecmon.ui;
 
 import org.jlab.geom.prim.Path3D;
-import org.jlab.io.decode.AbsDetectorTranslationTable;
+
 import org.jlab.clas.detector.BankType;
 import org.jlab.clas.detector.DetectorBankEntry;
 import org.jlab.clas.detector.DetectorDescriptor;
-import org.jlab.clas.detector.DetectorRawData;
 import org.jlab.clas.detector.DetectorType;
-import org.jlab.clas.tools.utils.FileUtils;
-import org.jlab.clas.tools.utils.ResourcesUtils;
 import org.jlab.clas12.calib.DetectorShape2D;
 import org.jlab.clas12.detector.EventDecoder;
+
 import org.root.histogram.*;
 import org.root.attr.ColorPalette;
 import org.root.attr.TStyle;
 
 import java.awt.Color;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+
 import java.util.List;
 import java.util.TreeMap;
 import java.util.Arrays;
@@ -26,7 +23,7 @@ import javax.swing.SwingUtilities;
 
 import org.jlab.evio.clas12.*;
 import org.jlab.data.io.DataEvent;
-import org.jlab.evio.decode.EvioEventDecoder;
+
 import org.jlab.ecmon.utils.*;
 
 public class ECMon extends DetectorMonitor {
@@ -66,51 +63,12 @@ public class ECMon extends DetectorMonitor {
 
 	public ECMon(String[] args) {
 		super("ECMON","1.0","lcsmith");
-		//initTT(); // Use with evioEventDecoder
 	}
 	
 	public void init() {
 		initHistograms();
 	}
 	
-	// Use with evioEventDecoder
-	/*
-	public void initTT() {
-		
-        String directory = ResourcesUtils.getResourceDir("CLAS12DIR", "etc/bankdefs/translation");        
-        List<String> tables = FileUtils.getFilesInDir(directory);
-        
-        for(int loop = 0; loop < tables.size(); loop++){
-            
-            AbsDetectorTranslationTable  trTable = new AbsDetectorTranslationTable();
-            Path tablePath = Paths.get(tables.get(loop));
-            
-            String filename    = tablePath.getFileName().toString();
-            String system_name = filename.substring(0, filename.indexOf("."));
-            System.out.println("LOADING FILE : " + tablePath.getFileName() + " SYSTEM = " + system_name);
-            
-            trTable.readFile(tables.get(loop));
-            trTable.setName(system_name);   
-            
-            decoder.addTranslationTable(trTable);
-            
-            if(system_name.compareTo("FTOF1A")==0){
-                trTable.setDetectorType(DetectorType.FTOF1A);
-            }
-            
-            if(system_name.compareTo("FTOF1B")==0){
-                trTable.setDetectorType(DetectorType.FTOF1B);
-            }
-            
-            if(system_name.compareTo("ECAL")==0){
-                trTable.setDetectorType(DetectorType.EC);
-            }
-            if(system_name.compareTo("PCAL")==0){
-                trTable.setDetectorType(DetectorType.PCAL);
-            }
-        }
-	}
-*/
 	public void initHistograms() {
 
 		for (int is=0;is<6;is++) {
@@ -475,30 +433,7 @@ public class ECMon extends DetectorMonitor {
 		if(event.hasBank("EC::true")!=true) {	
 			
 		if (debug) event.getHandler().list();	
-		
-		// Use evioEventDecoder
-		/*
-        List<DetectorRawData> rawdata = decoder.getDataEntries(event);
-        if (debug) for(DetectorRawData data : rawdata) System.out.println(data);    	
-        decoder.decode(rawdata);
-        if (debug) for(DetectorRawData data : rawdata) System.out.println(data);    	        
-        List<DetectorRawData>  selectionECAL = decoder.getDetectorData(rawdata,DetectorType.EC);       
-        
-        for(DetectorRawData data : selectionECAL){
-        	int adc=0; int tdc=0 ; int ped=0;
-         	int is  = data.getDescriptor().getSector();
-        	int il  = data.getDescriptor().getLayer();
-        	int ip  = data.getDescriptor().getComponent();
-           	if (data.getMode()==10) tdc = (int) data.getTDC()*24/1000;
-        	if (data.getMode()==1)  adc = (int) data.getSignal(0,30,35,60)/10;
-        	if (data.getMode()==7) {
-            	ped = data.get(2);
-        		adc = (int)   (data.getADC()-ped*18)/10;
-        	}
-
-			*/
 					
-			//Use EventDecoder
     		decoder.decode(event);
             List<DetectorBankEntry> strips = decoder.getDataEntries("EC");
             for(DetectorBankEntry strip : strips) {

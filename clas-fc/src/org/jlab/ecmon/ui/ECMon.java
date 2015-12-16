@@ -114,8 +114,8 @@ public class ECMon extends DetectorMonitor {
 	public void initHistograms() {
 
 		for (int is=0;is<6;is++) {
-			ECAL_EVTPIXA.put(is,  new H1D("EVTPIXA"+is,1296,1.0,1297.0));
-			ECAL_EVTPIXT.put(is,  new H1D("EVTPIXT"+is,1296,1.0,1297.0));
+			ECAL_EVTPIXA.put(is, new H1D("EVTPIXA"+is,1296,1.0,1297.0));
+			ECAL_EVTPIXT.put(is, new H1D("EVTPIXT"+is,1296,1.0,1297.0));
 			ECAL_PIXASUM.put(is, new H1D("A_PIXSUM"+is,1296,1.0,1297.0));
 			ECAL_PIXTSUM.put(is, new H1D("T_PIXSUM"+is,1296,1.0,1297.0));
 			ECAL_PIXAS.put(is,   new H1D("A_PIXAS"+is,1296,1.0,1297.0));
@@ -431,15 +431,23 @@ public class ECMon extends DetectorMonitor {
 		
 		EvioDataEvent event = (EvioDataEvent) de;
 		
-		int nha[][]         = new int[6][9];
-		int nht[][]         = new int[6][9];
-		int strra[][][]     = new int[6][9][68]; 
-		int strrt[][][]     = new int[6][9][68]; 
-		int adcr[][][]     = new int[6][9][68];
-		float tdcr[][][]   = new float[6][9][68];
+		int nha[][]      = new int[6][9];
+		int nht[][]      = new int[6][9];
+		int strra[][][]  = new int[6][9][68]; 
+		int strrt[][][]  = new int[6][9][68]; 
+		int adcr[][][]   = new int[6][9][68];
+		float tdcr[][][] = new float[6][9][68];
+		float uvwa[][]   = new float[6][3];
+		float uvwt[][]   = new float[6][3];
 		
 		int inh;
-		float uvw = 0;
+		
+		for (int is=0 ; is<6 ; is++) {
+			for (int il=0 ; il<3 ; il++) {
+				uvwa[is][il] = 0;
+				uvwt[is][il] = 0;
+			}
+		}
 		
 		for (int is=0 ; is<6 ; is++) {
 			for (int il=0 ; il<9 ; il++) {
@@ -459,7 +467,8 @@ public class ECMon extends DetectorMonitor {
 		double mc_t=0.0;
 		float tdcmax=100000;
 		boolean debug=false;
-		int adc,tdc,ped;
+		int adc,ped;
+		float tdc;
 
 		// Process raw banks
 		
@@ -493,7 +502,7 @@ public class ECMon extends DetectorMonitor {
     		decoder.decode(event);
             List<DetectorBankEntry> strips = decoder.getDataEntries("EC");
             for(DetectorBankEntry strip : strips) {
-                adc=tdc=ped=0 ; 
+                adc=ped=0 ; tdc=0;
             	//System.out.println(strip);
             	int is = strip.getDescriptor().getSector();
             	int il = strip.getDescriptor().getLayer();
@@ -501,7 +510,7 @@ public class ECMon extends DetectorMonitor {
             	
             	if(strip.getType()==BankType.TDC) {
             		int[] tdcc = (int[]) strip.getDataObject();
-            		tdc = tdcc[0]*24/1000;
+            		tdc = (float) tdcc[0]*24/1000;
             	}
             	if(strip.getType()==BankType.ADCFPGA) {
             		int[] adcc= (int[]) strip.getDataObject();
@@ -510,12 +519,13 @@ public class ECMon extends DetectorMonitor {
             	}
                     	
 			//System.out.println("sector,layer,pmt,adc,ped,tdc= "+is+" "+il+" "+ip+" "+adc+" "+ped+" "+tdc);
-        				        	
-			if(il<4){
-				int ic = 1;
-	   	        int iv = ic*3+il;
+            int ic = 0; if (il<4) ic=1;		
+            	
+			if(ic==1){
+	   	        int  iv = ic*3+il;
 	            int iss = (is-1)*10+il;
-	   	        if(tdc>0){
+	   	        if(tdc>1200&&tdc<1500){
+		          uvwt[is-1][ic]=uvwt[is-1][ic]+uvw_dalitz(ic,ip,il); //Dalitz test
 	          	  nht[is-1][iv-1]++;
 	          	  inh = nht[is-1][iv-1];
 	          	   tdcr[is-1][iv-1][inh-1] = tdc;
@@ -523,7 +533,7 @@ public class ECMon extends DetectorMonitor {
 	          	  ECAL_TDC.get(iss).fill(tdc,ip,1.0);
 	   	        }
 	   	        if(adc>thr){
-	          	  uvw=uvw+uvw_dalitz(ic,ip,il); //Dalitz test
+	          	  uvwa[is-1][ic]=uvwa[is-1][ic]+uvw_dalitz(ic,ip,il); //Dalitz test
 	          	  nha[is-1][iv-1]++;
 	          	  inh = nha[is-1][iv-1];
 	          	  adcr[is-1][iv-1][inh-1] = adc;
@@ -547,6 +557,7 @@ public class ECMon extends DetectorMonitor {
 					
 		if(event.hasBank("EC::dgtz")==true){
 			
+			int tdcc;
 			EvioDataBank bank = (EvioDataBank) event.getBank("EC::dgtz");
 			
 			for(int i = 0; i < bank.rows(); i++){
@@ -554,66 +565,79 @@ public class ECMon extends DetectorMonitor {
 				if (dum<tdcmax) tdcmax=dum;
 			}	    		
 	        
-	    uvw=0;
-	
 	    for(int i = 0; i < bank.rows(); i++){
         	int is  = bank.getInt("sector",i);
 			int ip  = bank.getInt("strip",i);
          	int ic  = bank.getInt("stack",i);	 
 		    int il  = bank.getInt("view",i);  
 			    adc = bank.getInt("ADC",i);
-        	    tdc = bank.getInt("TDC",i);
+        	   tdcc = bank.getInt("TDC",i);
 				//System.out.println("sector,layer,pmt,adc,tdc= "+is+" "+il+" "+ip+" "+adc+" "+tdc);
 		     
-        	float tdcc=(((float)tdc-(float)mc_t*1000)-tdcmax+1340000)/1000;
-		   	
-        	int  iv = ic*3+il;
-        	
+        	tdc=(((float)tdcc-(float)mc_t*1000)-tdcmax+1340000)/1000;
+		   	        	
 		    if(ic==1){
+	        	int  iv = ic*3+il;
 	         	int iss = (is-1)*10+il;
-	   	        if(tdcc>0){
-		          	  nht[is-1][iv-1]++;
-		          	  inh = nht[is-1][iv-1];
-		          	   tdcr[is-1][iv-1][inh-1] = tdcc;
-		          	  strrt[is-1][iv-1][inh-1] = ip;
-		          	  ECAL_TDC.get(iss).fill(tdcc,ip,1.0);
-		   	        }
-		   	        if(adc>thr){
-		          	  uvw=uvw+uvw_dalitz(ic,ip,il); //Dalitz test
-		          	  nha[is-1][iv-1]++;
-		          	  inh = nha[is-1][iv-1];
-		          	  adcr[is-1][iv-1][inh-1] = adc;
-		          	  strra[is-1][iv-1][inh-1] = ip;
-		   		      ECAL_ADC.get(iss).fill(adc,ip,1.0);
-		   	        }		    	
+	   	        if(tdc>0){
+		          uvwt[is-1][ic]=uvwt[is-1][ic]+uvw_dalitz(ic,ip,il); //Dalitz test
+		          nht[is-1][iv-1]++;
+		          inh = nht[is-1][iv-1];
+		           tdcr[is-1][iv-1][inh-1] = tdc;
+		          strrt[is-1][iv-1][inh-1] = ip;
+		          ECAL_TDC.get(iss).fill(tdc,ip,1.0);
+		   	    }
+		   	    if(adc>thr){
+		          uvwa[is-1][ic]=uvwa[is-1][ic]+uvw_dalitz(ic,ip,il); //Dalitz test
+		          nha[is-1][iv-1]++;
+		          inh = nha[is-1][iv-1];
+		          adcr[is-1][iv-1][inh-1] = adc;
+		          strra[is-1][iv-1][inh-1] = ip;
+		   		  ECAL_ADC.get(iss).fill(adc,ip,1.0);
+		   	    }		    	
 		    }
 		}
 		}
 		
 		//Process pixel data
+		boolean good_u, good_v, good_w, good_uvw;
 		
 		for (int is=0 ; is<6 ; is++) {		
 			
-			boolean good_u = nha[is][3]==1;
-			boolean good_v = nha[is][4]==1;
-			boolean good_w = nha[is][5]==1;
-			boolean good_uvw = good_u&&good_v&&good_w; //Multiplicity test (NU=NV=NW=1)
-		    //if (is==1) System.out.println("is,uvw,nh= "+is+" "+uvw+" "+nha[is][3]+" "+nha[is][4]+" "+nha[is][5]);
-			if (good_uvw&&Math.abs(uvw-2.0)<0.2) {
-			    //System.out.println("is,uvw,nh= "+is+" "+uvw+" "+nha[is][3]+" "+nha[is][4]+" "+nha[is][5]);
+			good_u = nha[is][3]==1;
+			good_v = nha[is][4]==1;
+			good_w = nha[is][5]==1;
+			
+			good_uvw = good_u && good_v && good_w; //Multiplicity test (NU=NV=NW=1)
+		   
+			if (good_uvw && Math.abs(uvwa[is][1]-2.0)<0.2) {
+			    
 				int pixela=pix(strra[is][3][0],strra[is][4][0],strra[is][5][0]);
-				int pixelt=pix(strrt[is][3][0],strrt[is][4][0],strrt[is][5][0]);
 				ECAL_EVTPIXA.get(is).fill(pixela,1.0);
-				ECAL_EVTPIXT.get(is).fill(pixelt,1.0);
 				for (int il=1; il<4 ; il++){
 					int iss = is*10+il;
 					ECAL_ADC_PIX.get(iss).fill(adcr[is][il+2][0],strra[is][il+2][0],1.0);
-					ECAL_TDC_PIX.get(iss).fill(tdcr[is][il+2][0],strrt[is][il+2][0],1.0);
 					ECAL_PIXASUM.get(is).fill(pixela,adcr[is][il+2][0]);
-					ECAL_PIXTSUM.get(is).fill(pixelt,tdcr[is][il+2][0]);
 					ECAL_ADCPIX.get(iss).fill(pixela,adcr[is][il+2][0]);
-					ECAL_TDCPIX.get(iss).fill(pixelt,tdcr[is][il+2][0]);
 					ECAL_APIX.get(iss).fill(pixela,adcr[is][il+2][0],1.0);
+				}
+			}	
+			
+			good_u = nht[is][3]==1;
+			good_v = nht[is][4]==1;
+			good_w = nht[is][5]==1;
+			if (is==1) System.out.println("N(u,v,w)="+nht[is][3]+" "+nht[is][4]+" "+nht[is][5]);
+			good_uvw = good_u && good_v && good_w; //Multiplicity test (NU=NV=NW=1)
+		   
+			if (good_uvw && Math.abs(uvwt[is][1]-2.0)<0.2) {
+			    
+				int pixelt=pix(strrt[is][3][0],strrt[is][4][0],strrt[is][5][0]);
+				ECAL_EVTPIXT.get(is).fill(pixelt,1.0);
+				for (int il=1; il<4 ; il++){
+					int iss = is*10+il;
+					ECAL_TDC_PIX.get(iss).fill(tdcr[is][il+2][0],strrt[is][il+2][0],1.0);
+				    ECAL_PIXTSUM.get(is).fill(pixelt,tdcr[is][il+2][0]);
+					ECAL_TDCPIX.get(iss).fill(pixelt,tdcr[is][il+2][0]);
 					ECAL_TPIX.get(iss).fill(pixelt,tdcr[is][il+2][0],1.0);
 				}
 			}			

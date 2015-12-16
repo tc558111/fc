@@ -609,9 +609,8 @@ public class ECMon extends DetectorMonitor {
 			good_w = nha[is][5]==1;
 			
 			good_uvw = good_u && good_v && good_w; //Multiplicity test (NU=NV=NW=1)
-		   
-			if (good_uvw && Math.abs(uvwa[is][1]-2.0)<0.2) {
-			    
+			
+			if (good_uvw && Math.abs(uvwa[is][1]-2.0)<0.056) { 
 				int pixela=pix(strra[is][3][0],strra[is][4][0],strra[is][5][0]);
 				ECAL_EVTPIXA.get(is).fill(pixela,1.0);
 				for (int il=1; il<4 ; il++){
@@ -629,8 +628,7 @@ public class ECMon extends DetectorMonitor {
 			
 			good_uvw = good_u && good_v && good_w; //Multiplicity test (NU=NV=NW=1)
 		   
-			if (good_uvw && Math.abs(uvwt[is][1]-2.0)<0.2) {
-			    
+			if (good_uvw && Math.abs(uvwt[is][1]-2.0)<0.056) {
 				int pixelt=pix(strrt[is][3][0],strrt[is][4][0],strrt[is][5][0]);
 				ECAL_EVTPIXT.get(is).fill(pixelt,1.0);
 				for (int il=1; il<4 ; il++){

@@ -435,7 +435,7 @@ public class ECMon extends DetectorMonitor {
 		int nht[][]      = new int[6][9];
 		int strra[][][]  = new int[6][9][68]; 
 		int strrt[][][]  = new int[6][9][68]; 
-		int adcr[][][]   = new int[6][9][68];
+		float adcr[][][] = new float[6][9][68];
 		float tdcr[][][] = new float[6][9][68];
 		float uvwa[][]   = new float[6][3];
 		float uvwt[][]   = new float[6][3];
@@ -456,8 +456,8 @@ public class ECMon extends DetectorMonitor {
 				for (int ip=0 ; ip<68 ; ip++) {
 					strra[is][il][ip] = 0;
 					strrt[is][il][ip] = 0;
-					adcr[is][il][ip] = 0;
-					tdcr[is][il][ip] = 0;
+					 adcr[is][il][ip] = 0;
+					 tdcr[is][il][ip] = 0;
 				}
 			}
 		}
@@ -467,8 +467,7 @@ public class ECMon extends DetectorMonitor {
 		double mc_t=0.0;
 		float tdcmax=100000;
 		boolean debug=false;
-		int adc,ped;
-		float tdc;
+		float adc,tdc,ped;
 
 		// Process raw banks
 		
@@ -502,7 +501,7 @@ public class ECMon extends DetectorMonitor {
     		decoder.decode(event);
             List<DetectorBankEntry> strips = decoder.getDataEntries("EC");
             for(DetectorBankEntry strip : strips) {
-                adc=ped=0 ; tdc=0;
+                adc=tdc=ped=0 ;
             	//System.out.println(strip);
             	int is = strip.getDescriptor().getSector();
             	int il = strip.getDescriptor().getLayer();
@@ -510,12 +509,12 @@ public class ECMon extends DetectorMonitor {
             	
             	if(strip.getType()==BankType.TDC) {
             		int[] tdcc = (int[]) strip.getDataObject();
-            		tdc = (float) tdcc[0]*24/1000;
+            		tdc = tdcc[0]*24/1000;
             	}
             	if(strip.getType()==BankType.ADCFPGA) {
             		int[] adcc= (int[]) strip.getDataObject();
             		ped = adcc[2];
-            		adc = (int) (adcc[1]-ped*18)/10;
+            		adc = (adcc[1]-ped*18)/10;
             	}
                     	
 			//System.out.println("sector,layer,pmt,adc,ped,tdc= "+is+" "+il+" "+ip+" "+adc+" "+ped+" "+tdc);
@@ -536,7 +535,7 @@ public class ECMon extends DetectorMonitor {
 	          	  uvwa[is-1][ic]=uvwa[is-1][ic]+uvw_dalitz(ic,ip,il); //Dalitz test
 	          	  nha[is-1][iv-1]++;
 	          	  inh = nha[is-1][iv-1];
-	          	  adcr[is-1][iv-1][inh-1] = adc;
+	          	   adcr[is-1][iv-1][inh-1] = adc;
 	          	  strra[is-1][iv-1][inh-1] = ip;
 	   		      ECAL_ADC.get(iss).fill(adc,ip,1.0);
 	   	        }
@@ -626,7 +625,7 @@ public class ECMon extends DetectorMonitor {
 			good_u = nht[is][3]==1;
 			good_v = nht[is][4]==1;
 			good_w = nht[is][5]==1;
-			if (is==1) System.out.println("N(u,v,w)="+nht[is][3]+" "+nht[is][4]+" "+nht[is][5]);
+			
 			good_uvw = good_u && good_v && good_w; //Multiplicity test (NU=NV=NW=1)
 		   
 			if (good_uvw && Math.abs(uvwt[is][1]-2.0)<0.2) {

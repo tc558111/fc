@@ -123,7 +123,7 @@ public class ECMon extends DetectorMonitor {
  
 			for (int lay=1 ; lay<4 ; lay++) {
 				int iss=is*10+lay;
-				ECAL_ADC.put(iss,     new H2D("ADC_LAYER_"+iss,100,0.0,250.0,36,1.0,37.0));
+				ECAL_ADC.put(iss,     new H2D("ADC_LAYER_"+iss,100,0.0,200.0,36,1.0,37.0));
 				ECAL_TDC.put(iss,     new H2D("TDC_LAYER_"+iss,100,1330.0,1370.0,36,1.0,37.0));  
 				ECAL_ADC_PIX.put(iss, new H2D("ADC_PIX_LAYER_"+iss,100,0.0,200.0,36,1.0,37.0));
 				ECAL_TDC_PIX.put(iss, new H2D("TDC_PIX_LAYER_"+iss,100,1330.0,1370.0,36,1.0,37.0));  
@@ -435,10 +435,10 @@ public class ECMon extends DetectorMonitor {
 		int nht[][]      = new int[6][9];
 		int strra[][][]  = new int[6][9][68]; 
 		int strrt[][][]  = new int[6][9][68]; 
-		float adcr[][][] = new float[6][9][68];
-		float tdcr[][][] = new float[6][9][68];
-		float uvwa[][]   = new float[6][3];
-		float uvwt[][]   = new float[6][3];
+		int adcr[][][]   = new int[6][9][68];
+		double tdcr[][][] = new double[6][9][68];
+		double uvwa[][]   = new double[6][3];
+		double uvwt[][]   = new double[6][3];
 		
 		int inh;
 		
@@ -467,7 +467,8 @@ public class ECMon extends DetectorMonitor {
 		double mc_t=0.0;
 		float tdcmax=100000;
 		boolean debug=false;
-		float adc,tdc,ped;
+		int adc,ped;
+		double tdc;
 
 		// Process raw banks
 		
@@ -501,7 +502,7 @@ public class ECMon extends DetectorMonitor {
     		decoder.decode(event);
             List<DetectorBankEntry> strips = decoder.getDataEntries("EC");
             for(DetectorBankEntry strip : strips) {
-                adc=tdc=ped=0 ;
+                adc=ped=0 ; tdc=0;
             	//System.out.println(strip);
             	int is = strip.getDescriptor().getSector();
             	int il = strip.getDescriptor().getLayer();
@@ -509,7 +510,7 @@ public class ECMon extends DetectorMonitor {
             	
             	if(strip.getType()==BankType.TDC) {
             		int[] tdcc = (int[]) strip.getDataObject();
-            		tdc = tdcc[0]*24/1000;
+            		tdc = tdcc[0]*24./1000.;
             	}
             	if(strip.getType()==BankType.ADCFPGA) {
             		int[] adcc= (int[]) strip.getDataObject();
@@ -590,7 +591,7 @@ public class ECMon extends DetectorMonitor {
 		          uvwa[is-1][ic]=uvwa[is-1][ic]+uvw_dalitz(ic,ip,il); //Dalitz test
 		          nha[is-1][iv-1]++;
 		          inh = nha[is-1][iv-1];
-		          adcr[is-1][iv-1][inh-1] = adc;
+		           adcr[is-1][iv-1][inh-1] = adc;
 		          strra[is-1][iv-1][inh-1] = ip;
 		   		  ECAL_ADC.get(iss).fill(adc,ip,1.0);
 		   	    }		    	

@@ -1,20 +1,19 @@
 package org.jlab.ecmon.ui;
 
 import org.jlab.geom.prim.Path3D;
-
 import org.jlab.clas.detector.BankType;
 import org.jlab.clas.detector.DetectorBankEntry;
 import org.jlab.clas.detector.DetectorDescriptor;
 import org.jlab.clas.detector.DetectorType;
 import org.jlab.clas12.calib.DetectorShape2D;
 import org.jlab.clas12.detector.EventDecoder;
-
 import org.root.histogram.*;
+import org.root.pad.EmbeddedCanvas;
 import org.root.attr.ColorPalette;
 import org.root.attr.TStyle;
 
 import java.awt.Color;
-
+import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 import java.util.Arrays;
@@ -23,7 +22,6 @@ import javax.swing.SwingUtilities;
 
 import org.jlab.evio.clas12.*;
 import org.jlab.data.io.DataEvent;
-
 import org.jlab.ecmon.utils.*;
 
 public class ECMon extends DetectorMonitor {
@@ -44,8 +42,10 @@ public class ECMon extends DetectorMonitor {
 	//public EvioEventDecoder           decoder = new EvioEventDecoder();
 		
     public TreeMap<Integer,H1D>      ECAL_ADCPIX  = new TreeMap<Integer,H1D>();
+    public TreeMap<Integer,H1D>      ECAL_ADCPIX2 = new TreeMap<Integer,H1D>();
     public TreeMap<Integer,H1D>      ECAL_TDCPIX  = new TreeMap<Integer,H1D>();
     public TreeMap<Integer,H1D>      ECAL_PIXA    = new TreeMap<Integer,H1D>();
+    public TreeMap<Integer,H1D>      ECAL_PIXA2   = new TreeMap<Integer,H1D>();
     public TreeMap<Integer,H1D>      ECAL_PIXT    = new TreeMap<Integer,H1D>();
     public TreeMap<Integer,H1D>      ECAL_PIXAS   = new TreeMap<Integer,H1D>();
     public TreeMap<Integer,H1D>      ECAL_PIXTS   = new TreeMap<Integer,H1D>();
@@ -86,8 +86,10 @@ public class ECMon extends DetectorMonitor {
 				ECAL_ADC_PIX.put(iss, new H2D("ADC_PIX_LAYER_"+iss,100,0.0,200.0,36,1.0,37.0));
 				ECAL_TDC_PIX.put(iss, new H2D("TDC_PIX_LAYER_"+iss,100,1330.0,1370.0,36,1.0,37.0));  
 				ECAL_ADCPIX.put(iss,  new H1D("ADC_PIX"+iss,1296,1.0,1297.0));
-				ECAL_PIXA.put(iss,    new H1D("T_PIX"+iss,1296,1.0,1297.0));
-				ECAL_PIXT.put(iss,    new H1D("A_PIX"+iss,1296,1.0,1297.0));
+				ECAL_ADCPIX2.put(iss, new H1D("ADC_PIX2"+iss,1296,1.0,1297.0));
+				ECAL_PIXA.put(iss,    new H1D("A_PIX"+iss,1296,1.0,1297.0));
+				ECAL_PIXA2.put(iss,   new H1D("A_PIX2"+iss,1296,1.0,1297.0));
+				ECAL_PIXT.put(iss,    new H1D("T_PIX"+iss,1296,1.0,1297.0));
 				ECAL_TDCPIX.put(iss,  new H1D("TDC_PIX"+iss,1296,1.0,1297.0));
 				ECAL_APIX.put(iss,    new H2D("APIX"+iss,1296,1.0,1297.0,30,0.0,250.0));
 				ECAL_TPIX.put(iss,    new H2D("TPIX"+iss,1296,1.0,1297.0,40,1330.0,1370.0));
@@ -317,7 +319,29 @@ public class ECMon extends DetectorMonitor {
 			}
 		}
 	}
-
+	
+	public double[] getpixels(int view, int strip, double[] in){
+		int numpix,a,b,c,sum,pixel=1;
+		numpix = 2*strip-1;
+		a = strip;
+		b = 37-a;
+		c = 36;
+		
+		double[] out = new double[numpix];
+		for (int j=0; j<numpix ; j++) {
+			if (view==1) pixel=a*(a-1)+b-c+1;
+			if (view==2) pixel=c*(c-1)+a-b+1;
+			if (view==3) pixel=b*(b-1)+c-a+1;
+			if (view==4) pixel=a*(a-1)+b-c+1;
+			if (view==5) pixel=c*(c-1)+a-b+1;
+			if (view==6) pixel=b*(b-1)+c-a+1;
+			out[j] = in[pixel-1];
+			sum = a+b+c;
+			if(sum==73) b=b+1;
+			if(sum==74) c=c-1;
+		}
+		return out;
+	}
 	
 	public int pix(int u, int v, int w) {
 		return u*(u-1)+v-w+1;
@@ -347,27 +371,30 @@ public class ECMon extends DetectorMonitor {
 	public void analyze() {
 		  
 		for (int is=0;is<6;is++) {
-	    ECAL_ADCPIX.get(is*10+1).divide(ECAL_EVTPIXA.get(is),ECAL_PIXA.get(is*10+1));
-	    ECAL_ADCPIX.get(is*10+2).divide(ECAL_EVTPIXA.get(is),ECAL_PIXA.get(is*10+2));
-	    ECAL_ADCPIX.get(is*10+3).divide(ECAL_EVTPIXA.get(is),ECAL_PIXA.get(is*10+3));
-	    ECAL_TDCPIX.get(is*10+1).divide(ECAL_EVTPIXT.get(is),ECAL_PIXT.get(is*10+1));
-	    ECAL_TDCPIX.get(is*10+2).divide(ECAL_EVTPIXT.get(is),ECAL_PIXT.get(is*10+2));
-	    ECAL_TDCPIX.get(is*10+3).divide(ECAL_EVTPIXT.get(is),ECAL_PIXT.get(is*10+3));
-	    ECAL_PIXASUM.get(is).divide(ECAL_EVTPIXA.get(is),ECAL_PIXAS.get(is));
-	    ECAL_PIXTSUM.get(is).divide(ECAL_EVTPIXT.get(is),ECAL_PIXTS.get(is));
+		    ECAL_ADCPIX.get(is*10+1).divide(ECAL_EVTPIXA.get(is),ECAL_PIXA.get(is*10+1));
+		    ECAL_ADCPIX.get(is*10+2).divide(ECAL_EVTPIXA.get(is),ECAL_PIXA.get(is*10+2));
+		    ECAL_ADCPIX.get(is*10+3).divide(ECAL_EVTPIXA.get(is),ECAL_PIXA.get(is*10+3));
+		    ECAL_ADCPIX2.get(is*10+1).divide(ECAL_EVTPIXA.get(is),ECAL_PIXA2.get(is*10+1));
+		    ECAL_ADCPIX2.get(is*10+2).divide(ECAL_EVTPIXA.get(is),ECAL_PIXA2.get(is*10+2));
+		    ECAL_ADCPIX2.get(is*10+3).divide(ECAL_EVTPIXA.get(is),ECAL_PIXA2.get(is*10+3));
+		    ECAL_TDCPIX.get(is*10+1).divide(ECAL_EVTPIXT.get(is),ECAL_PIXT.get(is*10+1));
+		    ECAL_TDCPIX.get(is*10+2).divide(ECAL_EVTPIXT.get(is),ECAL_PIXT.get(is*10+2));
+		    ECAL_TDCPIX.get(is*10+3).divide(ECAL_EVTPIXT.get(is),ECAL_PIXT.get(is*10+3));
+		    ECAL_PIXASUM.get(is).divide(ECAL_EVTPIXA.get(is),ECAL_PIXAS.get(is));
+		    ECAL_PIXTSUM.get(is).divide(ECAL_EVTPIXT.get(is),ECAL_PIXTS.get(is));
 	    	
-	    LAYMAP.put(1+is*20, toTreeMap(ECAL_ADC.get(is*10+1).projectionY().getData()));
-	    LAYMAP.put(2+is*20, toTreeMap(ECAL_ADC.get(is*10+2).projectionY().getData()));
-	    LAYMAP.put(3+is*20, toTreeMap(ECAL_ADC.get(is*10+3).projectionY().getData()));
-	    LAYMAP.put(7+is*20, toTreeMap(ECAL_EVTPIXA.get(is).getData()));
-	    LAYMAP.put(8+is*20, toTreeMap(ECAL_PIXAS.get(is).getData()));
-	    LAYMAP.put(9+is*20, toTreeMap(ECAL_PIXA.get(is*10+1).getData()));
-	    LAYMAP.put(10+is*20,toTreeMap(ECAL_PIXA.get(is*10+2).getData()));
-	    LAYMAP.put(11+is*20,toTreeMap(ECAL_PIXA.get(is*10+3).getData()));
-	    LAYMAP.put(12+is*20,toTreeMap(ECAL_PIXTS.get(is).getData()));
-	    LAYMAP.put(13+is*20,toTreeMap(ECAL_PIXT.get(is*10+1).getData()));
-	    LAYMAP.put(14+is*20,toTreeMap(ECAL_PIXT.get(is*10+2).getData()));
-	    LAYMAP.put(15+is*20,toTreeMap(ECAL_PIXT.get(is*10+3).getData()));	     
+		    LAYMAP.put(1+is*20, toTreeMap(ECAL_ADC.get(is*10+1).projectionY().getData()));
+		    LAYMAP.put(2+is*20, toTreeMap(ECAL_ADC.get(is*10+2).projectionY().getData()));
+		    LAYMAP.put(3+is*20, toTreeMap(ECAL_ADC.get(is*10+3).projectionY().getData()));
+		    LAYMAP.put(7+is*20, toTreeMap(ECAL_EVTPIXA.get(is).getData()));
+		    LAYMAP.put(8+is*20, toTreeMap(ECAL_PIXAS.get(is).getData()));
+		    LAYMAP.put(9+is*20, toTreeMap(ECAL_PIXA.get(is*10+1).getData()));
+		    LAYMAP.put(10+is*20,toTreeMap(ECAL_PIXA.get(is*10+2).getData()));
+		    LAYMAP.put(11+is*20,toTreeMap(ECAL_PIXA.get(is*10+3).getData()));
+		    LAYMAP.put(12+is*20,toTreeMap(ECAL_PIXTS.get(is).getData()));
+		    LAYMAP.put(13+is*20,toTreeMap(ECAL_PIXT.get(is*10+1).getData()));
+		    LAYMAP.put(14+is*20,toTreeMap(ECAL_PIXT.get(is*10+2).getData()));
+		    LAYMAP.put(15+is*20,toTreeMap(ECAL_PIXT.get(is*10+3).getData()));	     
 		}
 	}
 	
@@ -555,6 +582,7 @@ public class ECMon extends DetectorMonitor {
 					ECAL_ADC_PIX.get(iss).fill(adcr[is][il+2][0],strra[is][il+2][0],1.0);
 					ECAL_PIXASUM.get(is).fill(pixela,adcr[is][il+2][0]);
 					ECAL_ADCPIX.get(iss).fill(pixela,adcr[is][il+2][0]);
+					ECAL_ADCPIX2.get(iss).fill(pixela,Math.pow(adcr[is][il+2][0],2));
 					ECAL_APIX.get(iss).fill(pixela,adcr[is][il+2][0],1.0);
 				}
 			}	
@@ -627,6 +655,59 @@ public class ECMon extends DetectorMonitor {
 	
 	public void detectorSelected(DetectorDescriptor desc) {
 		
+		if (inProcess!=1) return;
+		this.analyze();
+	    this.canvasOccupancy(desc, app.canvas);
+		this.canvasAttenuation(desc, app.canvas1);
+		
+	}
+	
+	public void canvasAttenuation(DetectorDescriptor desc, EmbeddedCanvas canvas) {
+		
+		int is        = desc.getSector();
+		int layer     = desc.getLayer();
+		int component = desc.getComponent();
+		
+		double meanerr[] = new double[1296];
+		
+		TreeMap<Integer, Object> map;
+		CalibrationData fits ; 
+	    List<CalibrationData> calibData = new ArrayList<CalibrationData>();		
+		
+		//if (inProcess!=1) return;
+		
+		//this.analyze(); //calculates data for update(DetectorShape2D) -  may not be thread-save 
+		
+		if (layer<4) {
+			int il=layer;
+
+			double cnts[]  = ECAL_EVTPIXA.get(is).getData();
+			double adc[]   = ECAL_PIXA.get(is*10+il).getData();
+			double adcsq[] = ECAL_PIXA2.get(is*10+il).getData();
+			
+			for (int ipix=0 ; ipix<1296 ; ipix++){
+				meanerr[ipix]=Math.sqrt((adcsq[ipix]-adc[ipix]*adc[ipix])/(cnts[ipix]-1));
+			}
+			
+			map = (TreeMap<Integer, Object>)  LAYMAP.get(is*20+8+il);
+			double meanmap[] = (double[]) map.get(1);
+			
+			for (int ip=0 ; ip<36 ; ip++){
+				fits = new CalibrationData(is,il,component);
+				fits.addGraph(this.getpixels(il,ip+1,meanmap),this.getpixels(il,ip+1,meanerr));
+				fits.analyze();
+				calibData.add(fits);
+
+			}
+			canvas.divide(1,1); canvas.cd(0);
+			canvas.draw(calibData.get(component).getGraph(0));
+			canvas.draw(calibData.get(component).getFunc(0),"same");
+		}
+		
+	}
+	
+	public void canvasOccupancy(DetectorDescriptor desc, EmbeddedCanvas canvas) {
+				
 		int is        = desc.getSector();
 		int layer     = desc.getLayer();
 		int component = desc.getComponent();
@@ -637,70 +718,70 @@ public class ECMon extends DetectorMonitor {
 		//TStyle.setOptStat(false);
 	    TStyle.setStatBoxFont(TStyle.getStatBoxFontName(),12);
 	    
-		if (inProcess==1) analyze(); //updates component colormap ; may not be thread-save 
+		//if (inProcess==1) analyze(); //updates component colormap ; may not be thread-save 
 		
 		//System.out.println("is,layer,component="+is+" "+layer+" "+component);
 			
 		if (layer<4)  {col0=0 ; col1=4; col2=2;strip=component;}
 		if (layer>=7) {col0=4 ; col1=4; col2=2;pixel=component;}
 		
-	    app.canvas.divide(3,3);
-	    l=1;app.canvas.cd(l-1); u = ECAL_ADC.get(is*10+l).projectionY(); u.setXTitle("U STRIPS"); u.setFillColor(col0); app.canvas.draw(u);
-	    l=2;app.canvas.cd(l-1); v = ECAL_ADC.get(is*10+l).projectionY(); v.setXTitle("V STRIPS"); v.setFillColor(col0); app.canvas.draw(v);
-	    l=3;app.canvas.cd(l-1); w = ECAL_ADC.get(is*10+l).projectionY(); w.setXTitle("W STRIPS"); w.setFillColor(col0); app.canvas.draw(w);
+	    canvas.divide(3,3);
+	    l=1;canvas.cd(l-1); u = ECAL_ADC.get(is*10+l).projectionY(); u.setXTitle("U STRIPS"); u.setFillColor(col0); canvas.draw(u);
+	    l=2;canvas.cd(l-1); v = ECAL_ADC.get(is*10+l).projectionY(); v.setXTitle("V STRIPS"); v.setFillColor(col0); canvas.draw(v);
+	    l=3;canvas.cd(l-1); w = ECAL_ADC.get(is*10+l).projectionY(); w.setXTitle("W STRIPS"); w.setFillColor(col0); canvas.draw(w);
 	    
 	    if (layer<4) {
-	    	 l=layer;app.canvas.cd(l-1); h = ECAL_ADC.get(is*10+l).projectionY(); h.setFillColor(col1); app.canvas.draw(h,"same");
+	    	 l=layer;canvas.cd(l-1); h = ECAL_ADC.get(is*10+l).projectionY(); h.setFillColor(col1); canvas.draw(h,"same");
 	         H1D copy = h.histClone("Copy");
 	         copy.reset() ; copy.setBinContent(strip, h.getBinContent(strip));
-	         copy.setFillColor(col2); app.canvas.draw(copy,"same");
+	         copy.setFillColor(col2); canvas.draw(copy,"same");
 	    }
 	    
 	    if (layer==7) {
 	    	for(int il=1;il<4;il++) {
-	    		app.canvas.cd(il-1); h = ECAL_ADC.get(is*10+il).projectionY();
+	    		canvas.cd(il-1); h = ECAL_ADC.get(is*10+il).projectionY();
 	    		H1D copy = h.histClone("Copy");
 	    		copy.reset() ; copy.setBinContent(pixmap[il-1][pixel]-1, h.getBinContent(pixmap[il-1][pixel]-1));
-	    		copy.setFillColor(col2); app.canvas.draw(copy,"same");	    		 
+	    		copy.setFillColor(col2); canvas.draw(copy,"same");	    		 
 	    	}
 	    }
 	    
 		if (layer>7) {
 			for(int il=1;il<4;il++) {
-				app.canvas.cd(il-1); h = ECAL_ADC_PIX.get(is*10+il).projectionY();
+				canvas.cd(il-1); h = ECAL_ADC_PIX.get(is*10+il).projectionY();
 	 		    H1D copy = h.histClone("Copy");
 			    copy.reset() ; copy.setBinContent(pixmap[il-1][pixel]-1, h.getBinContent(pixmap[il-1][pixel]-1));
-			    copy.setFillColor(col2); app.canvas.draw(copy,"same");		    		 
+			    copy.setFillColor(col2); canvas.draw(copy,"same");		    		 
 			}  	 
 	     }
 	    
 	     if (layer<4){
-	     if(layer!=1) {l=1;app.canvas.cd(l+2); u = ECAL_ADC.get(is*10+l).sliceY(22);   u.setXTitle(alab[l-1]); u.setFillColor(col0); app.canvas.draw(u);}
-	     if(layer!=2) {l=2;app.canvas.cd(l+2); v = ECAL_ADC.get(is*10+l).sliceY(22);   v.setXTitle(alab[l-1]); v.setFillColor(col0); app.canvas.draw(v);}
-	     if(layer!=3) {l=3;app.canvas.cd(l+2); w = ECAL_ADC.get(is*10+l).sliceY(22);   w.setXTitle(alab[l-1]); w.setFillColor(col0); app.canvas.draw(w);}
-	     l=layer;          app.canvas.cd(l+2); h = ECAL_ADC.get(is*10+l).sliceY(strip);h.setXTitle(alab[l-1]); h.setFillColor(col2); app.canvas.draw(h);
-		 if(layer!=1) {l=1;app.canvas.cd(l+5); u = ECAL_TDC.get(is*10+l).sliceY(22);   u.setXTitle(tlab[l-1]); u.setFillColor(col0); app.canvas.draw(u);}
-		 if(layer!=2) {l=2;app.canvas.cd(l+5); v = ECAL_TDC.get(is*10+l).sliceY(22);   v.setXTitle(tlab[l-1]); v.setFillColor(col0); app.canvas.draw(v);}
-		 if(layer!=3) {l=3;app.canvas.cd(l+5); w = ECAL_TDC.get(is*10+l).sliceY(22);   w.setXTitle(tlab[l-1]); w.setFillColor(col0); app.canvas.draw(w);}
-		 l=layer;          app.canvas.cd(l+5); h = ECAL_TDC.get(is*10+l).sliceY(strip);h.setXTitle(tlab[l-1]); h.setFillColor(col2); app.canvas.draw(h);
+	     if(layer!=1) {l=1;canvas.cd(l+2); u = ECAL_ADC.get(is*10+l).sliceY(22);   u.setXTitle(alab[l-1]); u.setFillColor(col0); canvas.draw(u);}
+	     if(layer!=2) {l=2;canvas.cd(l+2); v = ECAL_ADC.get(is*10+l).sliceY(22);   v.setXTitle(alab[l-1]); v.setFillColor(col0); canvas.draw(v);}
+	     if(layer!=3) {l=3;canvas.cd(l+2); w = ECAL_ADC.get(is*10+l).sliceY(22);   w.setXTitle(alab[l-1]); w.setFillColor(col0); canvas.draw(w);}
+	     l=layer;          canvas.cd(l+2); h = ECAL_ADC.get(is*10+l).sliceY(strip);h.setXTitle(alab[l-1]); h.setFillColor(col2); canvas.draw(h);
+		 if(layer!=1) {l=1;canvas.cd(l+5); u = ECAL_TDC.get(is*10+l).sliceY(22);   u.setXTitle(tlab[l-1]); u.setFillColor(col0); canvas.draw(u);}
+		 if(layer!=2) {l=2;canvas.cd(l+5); v = ECAL_TDC.get(is*10+l).sliceY(22);   v.setXTitle(tlab[l-1]); v.setFillColor(col0); canvas.draw(v);}
+		 if(layer!=3) {l=3;canvas.cd(l+5); w = ECAL_TDC.get(is*10+l).sliceY(22);   w.setXTitle(tlab[l-1]); w.setFillColor(col0); canvas.draw(w);}
+		 l=layer;          canvas.cd(l+5); h = ECAL_TDC.get(is*10+l).sliceY(strip);h.setXTitle(tlab[l-1]); h.setFillColor(col2); canvas.draw(h);
 	     }
 	     
 	     if (layer==7){
 	    	 for(int il=1;il<4;il++) {
-	    		 app.canvas.cd(il+2) ; h = ECAL_ADC.get(is*10+il).sliceY(pixmap[il-1][pixel]-1); h.setXTitle(alab[il-1]); h.setFillColor(col2); app.canvas.draw(h);
-	    		 app.canvas.cd(il+5) ; h = ECAL_TDC.get(is*10+il).sliceY(pixmap[il-1][pixel]-1); h.setXTitle(tlab[il-1]); h.setFillColor(col2); app.canvas.draw(h);
+	    		 canvas.cd(il+2) ; h = ECAL_ADC.get(is*10+il).sliceY(pixmap[il-1][pixel]-1); h.setXTitle(alab[il-1]); h.setFillColor(col2); canvas.draw(h);
+	    		 canvas.cd(il+5) ; h = ECAL_TDC.get(is*10+il).sliceY(pixmap[il-1][pixel]-1); h.setXTitle(tlab[il-1]); h.setFillColor(col2); canvas.draw(h);
 	    	 }
 		 }
 	     if (layer>7&&layer<12){
 	    	 for(int il=1;il<4;il++) {
-	    		 app.canvas.cd(il+2) ; h = ECAL_ADC_PIX.get(is*10+il).sliceY(pixmap[il-1][pixel]-1); h.setXTitle(alab[il-1]); h.setFillColor(col2); app.canvas.draw(h);
-	    		 app.canvas.cd(il+5) ; h = ECAL_APIX.get(is*10+il).sliceX(pixel)                   ; h.setXTitle(alab[il-1]); h.setFillColor(col2); app.canvas.draw(h);
+	    		 canvas.cd(il+2) ; h = ECAL_ADC_PIX.get(is*10+il).sliceY(pixmap[il-1][pixel]-1); h.setXTitle(alab[il-1]); h.setFillColor(col2); canvas.draw(h);
+	    		 canvas.cd(il+5) ; h = ECAL_APIX.get(is*10+il).sliceX(pixel)                   ; h.setXTitle(alab[il-1]); h.setFillColor(col2); canvas.draw(h);
 	    	 }
 		 }
 	     if (layer>11&&layer<16){
 	    	 for(int il=1;il<4;il++) {
-	    		 app.canvas.cd(il+2) ; h = ECAL_TDC_PIX.get(is*10+il).sliceY(pixmap[il-1][pixel]-1); h.setXTitle(tlab[il-1]); h.setFillColor(col2); app.canvas.draw(h);
-	    		 app.canvas.cd(il+5) ; h = ECAL_TPIX.get(is*10+il).sliceX(pixel)                   ; h.setXTitle(tlab[il-1]); h.setFillColor(col2); app.canvas.draw(h);
+	    		 canvas.cd(il+2) ; h = ECAL_TDC_PIX.get(is*10+il).sliceY(pixmap[il-1][pixel]-1); h.setXTitle(tlab[il-1]); h.setFillColor(col2); canvas.draw(h);
+	    		 canvas.cd(il+5) ; h = ECAL_TPIX.get(is*10+il).sliceX(pixel)                   ; h.setXTitle(tlab[il-1]); h.setFillColor(col2); canvas.draw(h);
 	    	 }
 		 } 
 		     

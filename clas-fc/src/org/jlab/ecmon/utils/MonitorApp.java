@@ -41,8 +41,10 @@ import org.jlab.ecmon.utils.DetectorShapeTabView;
 @SuppressWarnings("serial")
 public class MonitorApp extends JFrame implements ActionListener {
     
-	public DetectorShapeTabView         view;   
+	public DetectorShapeTabView         view;  
+	public CanvasViewPanel        canvasView;
 	public EmbeddedCanvas             canvas;   
+	public EmbeddedCanvas             canvas1;   
     
     private JPanel bottom;
     private JButton startButton;
@@ -80,7 +82,11 @@ public class MonitorApp extends JFrame implements ActionListener {
     private void initComponents(){
 
 		canvas = new EmbeddedCanvas(800,400,3,1);
+		canvas1 = new EmbeddedCanvas(800,400,2,2);
 		view   = new DetectorShapeTabView();
+		canvasView = new CanvasViewPanel();
+		canvasView.addCanvasLayer("Occupancy",canvas);
+		canvasView.addCanvasLayer("Attenuation",canvas1);
 		
     	setLayout(new BorderLayout(3,3));
     	
@@ -89,7 +95,7 @@ public class MonitorApp extends JFrame implements ActionListener {
         splitPane.setPreferredSize(new Dimension(1200,900));
         splitPane.setDividerLocation(900);	
 		splitPane.setLeftComponent(view);
-		splitPane.setRightComponent(canvas);
+		splitPane.setRightComponent(canvasView);
 		this.add(splitPane,BorderLayout.CENTER);	
 		
 		bottom = new JPanel();

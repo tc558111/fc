@@ -291,7 +291,7 @@ public class MonitorApp extends JFrame implements ActionListener {
                     counter++;
                 }
                 timer.pause();
-                monitoringClass.analyze(2);
+                monitoringClass.analyze(1);
                 //System.out.println("--> processed events #  " + counter);
                 //System.out.println("--> " + timer.toString());
             }

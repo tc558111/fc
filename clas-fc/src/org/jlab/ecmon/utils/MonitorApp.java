@@ -242,7 +242,7 @@ public class MonitorApp extends JFrame implements ActionListener {
                 int counter = 0;
                 while(reader.hasEvent()){
                     counter++;
-                    if( counter>100&&counter%500==0) monitoringClass.analyze();
+                    if( counter>100&&counter%500==0) monitoringClass.analyze(1);
                     EvioDataEvent event = (EvioDataEvent) reader.getNextEvent();
                     try {
                         processorClass.processEvent(event);
@@ -251,7 +251,7 @@ public class MonitorApp extends JFrame implements ActionListener {
                         //System.out.println("SOMETHING WRONG WITH THE EVENT");
                     }
                 }
-                monitoringClass.analyze();
+                monitoringClass.analyze(2);
                 if (!running) return;
                 System.out.println("DONE PROCESSING FILE");
             }
@@ -280,7 +280,7 @@ public class MonitorApp extends JFrame implements ActionListener {
                 int counter = 0;
                 while(reader.hasEvent()==true){
                     counter++;
-                    if( counter>100&&counter%500==0) monitoringClass.analyze();
+                    if( counter>100&&counter%500==0) monitoringClass.analyze(1);
                     EvioDataEvent  event = (EvioDataEvent) reader.getNextEvent();
                     try {
                         processorClass.processEvent(event);
@@ -291,7 +291,7 @@ public class MonitorApp extends JFrame implements ActionListener {
                     counter++;
                 }
                 timer.pause();
-                monitoringClass.analyze();
+                monitoringClass.analyze(2);
                 //System.out.println("--> processed events #  " + counter);
                 //System.out.println("--> " + timer.toString());
             }

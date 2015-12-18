@@ -3,6 +3,7 @@ package org.jlab.ecmon.ui;
 import org.jlab.geom.prim.Path3D;
 import org.jlab.clas.detector.BankType;
 import org.jlab.clas.detector.DetectorBankEntry;
+import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas.detector.DetectorDescriptor;
 import org.jlab.clas.detector.DetectorType;
 import org.jlab.clas12.calib.DetectorShape2D;
@@ -13,7 +14,7 @@ import org.root.attr.ColorPalette;
 import org.root.attr.TStyle;
 
 import java.awt.Color;
-import java.util.ArrayList;
+
 import java.util.List;
 import java.util.TreeMap;
 import java.util.Arrays;
@@ -28,6 +29,7 @@ public class ECMon extends DetectorMonitor {
 	
 	public static ECMon monitor;
 	public static MonitorApp app;
+	DetectorCollection<CalibrationData> collection = new DetectorCollection<CalibrationData>();
 	
 	ColorPalette              palette = new ColorPalette();
 	
@@ -66,6 +68,7 @@ public class ECMon extends DetectorMonitor {
 	}
 	
 	public void init() {
+		inProcess=0;
 		initHistograms();
 	}
 	
@@ -368,36 +371,6 @@ public class ECMon extends DetectorMonitor {
 		return uvw;
 	}
 	
-	public void analyze() {
-		  
-		for (int is=0;is<6;is++) {
-		    ECAL_ADCPIX.get(is*10+1).divide(ECAL_EVTPIXA.get(is),ECAL_PIXA.get(is*10+1));
-		    ECAL_ADCPIX.get(is*10+2).divide(ECAL_EVTPIXA.get(is),ECAL_PIXA.get(is*10+2));
-		    ECAL_ADCPIX.get(is*10+3).divide(ECAL_EVTPIXA.get(is),ECAL_PIXA.get(is*10+3));
-		    ECAL_ADCPIX2.get(is*10+1).divide(ECAL_EVTPIXA.get(is),ECAL_PIXA2.get(is*10+1));
-		    ECAL_ADCPIX2.get(is*10+2).divide(ECAL_EVTPIXA.get(is),ECAL_PIXA2.get(is*10+2));
-		    ECAL_ADCPIX2.get(is*10+3).divide(ECAL_EVTPIXA.get(is),ECAL_PIXA2.get(is*10+3));
-		    ECAL_TDCPIX.get(is*10+1).divide(ECAL_EVTPIXT.get(is),ECAL_PIXT.get(is*10+1));
-		    ECAL_TDCPIX.get(is*10+2).divide(ECAL_EVTPIXT.get(is),ECAL_PIXT.get(is*10+2));
-		    ECAL_TDCPIX.get(is*10+3).divide(ECAL_EVTPIXT.get(is),ECAL_PIXT.get(is*10+3));
-		    ECAL_PIXASUM.get(is).divide(ECAL_EVTPIXA.get(is),ECAL_PIXAS.get(is));
-		    ECAL_PIXTSUM.get(is).divide(ECAL_EVTPIXT.get(is),ECAL_PIXTS.get(is));
-	    	
-		    LAYMAP.put(1+is*20, toTreeMap(ECAL_ADC.get(is*10+1).projectionY().getData()));
-		    LAYMAP.put(2+is*20, toTreeMap(ECAL_ADC.get(is*10+2).projectionY().getData()));
-		    LAYMAP.put(3+is*20, toTreeMap(ECAL_ADC.get(is*10+3).projectionY().getData()));
-		    LAYMAP.put(7+is*20, toTreeMap(ECAL_EVTPIXA.get(is).getData()));
-		    LAYMAP.put(8+is*20, toTreeMap(ECAL_PIXAS.get(is).getData()));
-		    LAYMAP.put(9+is*20, toTreeMap(ECAL_PIXA.get(is*10+1).getData()));
-		    LAYMAP.put(10+is*20,toTreeMap(ECAL_PIXA.get(is*10+2).getData()));
-		    LAYMAP.put(11+is*20,toTreeMap(ECAL_PIXA.get(is*10+3).getData()));
-		    LAYMAP.put(12+is*20,toTreeMap(ECAL_PIXTS.get(is).getData()));
-		    LAYMAP.put(13+is*20,toTreeMap(ECAL_PIXT.get(is*10+1).getData()));
-		    LAYMAP.put(14+is*20,toTreeMap(ECAL_PIXT.get(is*10+2).getData()));
-		    LAYMAP.put(15+is*20,toTreeMap(ECAL_PIXT.get(is*10+3).getData()));	     
-		}
-	}
-	
 	public TreeMap<Integer, Object> toTreeMap(double dat[]) {
         TreeMap<Integer, Object> hcontainer = new TreeMap<Integer, Object>();
         hcontainer.put(1, dat);
@@ -446,8 +419,6 @@ public class ECMon extends DetectorMonitor {
 				}
 			}
 		}
-		
-		inProcess=1;
 		
 		double mc_t=0.0;
 		float tdcmax=100000;
@@ -616,23 +587,19 @@ public class ECMon extends DetectorMonitor {
 		int component = shape.getDescriptor().getComponent();
 		
 		double colorfraction=1;
-		switch(inProcess) {
-		case 0: // Assign default colors upon starting GUI (before event processing)
+		
+		if (inProcess==0){ // Assign default colors upon starting GUI (before event processing)
 			if(layer==1) colorfraction = (double)component/36;
 			if(layer==2) colorfraction = (double)component/36;
 			if(layer==3) colorfraction = (double)component/36;
-			if(layer>=7) colorfraction = getcolor((TreeMap<Integer, Object>) LAYMAP.get(7), component); 
-		break;
-		case 1: // Use LAYMAP to get colors of components while processing data
-		//System.out.println("is,layer,component="+is+" "+layer+" "+component);
-			colorfraction = getcolor((TreeMap<Integer, Object>) LAYMAP.get(is*20+layer), component);
-	    break;
+			if(layer>=7) colorfraction = getcolor((TreeMap<Integer, Object>) LAYMAP.get(7), component);
+		} else {   		  // Use LAYMAP to get colors of components while processing data
+			             colorfraction = getcolor((TreeMap<Integer, Object>) LAYMAP.get(is*20+layer), component);
 		}
 		if (colorfraction<0.05) colorfraction = 0.05;
 		
 		Color col = palette.getRange(colorfraction);
 		shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
-
 	}
 
 	public double getcolor(TreeMap<Integer, Object> map, int component) {
@@ -648,18 +615,85 @@ public class ECMon extends DetectorMonitor {
 		if (opt==2) color=(double)(Math.log10(z)-Math.log10(rmin))/(Math.log10(rmax)-Math.log10(rmin));      
 		 
 		if (color>1) color=1;
-        if (color<=0)  color=0.;
+		if (color<=0)  color=0.;
 
 		return color;
 	}
 	
+	public void analyzeOccupancy() {
+		 
+		for (int is=0;is<6;is++) {
+		    ECAL_ADCPIX.get(is*10+1).divide(ECAL_EVTPIXA.get(is),ECAL_PIXA.get(is*10+1));
+		    ECAL_ADCPIX.get(is*10+2).divide(ECAL_EVTPIXA.get(is),ECAL_PIXA.get(is*10+2));
+		    ECAL_ADCPIX.get(is*10+3).divide(ECAL_EVTPIXA.get(is),ECAL_PIXA.get(is*10+3));
+		    ECAL_ADCPIX2.get(is*10+1).divide(ECAL_EVTPIXA.get(is),ECAL_PIXA2.get(is*10+1));
+		    ECAL_ADCPIX2.get(is*10+2).divide(ECAL_EVTPIXA.get(is),ECAL_PIXA2.get(is*10+2));
+		    ECAL_ADCPIX2.get(is*10+3).divide(ECAL_EVTPIXA.get(is),ECAL_PIXA2.get(is*10+3));
+		    ECAL_TDCPIX.get(is*10+1).divide(ECAL_EVTPIXT.get(is),ECAL_PIXT.get(is*10+1));
+		    ECAL_TDCPIX.get(is*10+2).divide(ECAL_EVTPIXT.get(is),ECAL_PIXT.get(is*10+2));
+		    ECAL_TDCPIX.get(is*10+3).divide(ECAL_EVTPIXT.get(is),ECAL_PIXT.get(is*10+3));
+		    ECAL_PIXASUM.get(is).divide(ECAL_EVTPIXA.get(is),ECAL_PIXAS.get(is));
+		    ECAL_PIXTSUM.get(is).divide(ECAL_EVTPIXT.get(is),ECAL_PIXTS.get(is));
+	    	
+		    LAYMAP.put(1+is*20, toTreeMap(ECAL_ADC.get(is*10+1).projectionY().getData()));
+		    LAYMAP.put(2+is*20, toTreeMap(ECAL_ADC.get(is*10+2).projectionY().getData()));
+		    LAYMAP.put(3+is*20, toTreeMap(ECAL_ADC.get(is*10+3).projectionY().getData()));
+		    LAYMAP.put(7+is*20, toTreeMap(ECAL_EVTPIXA.get(is).getData()));
+		    LAYMAP.put(8+is*20, toTreeMap(ECAL_PIXAS.get(is).getData()));
+		    LAYMAP.put(9+is*20, toTreeMap(ECAL_PIXA.get(is*10+1).getData()));
+		    LAYMAP.put(10+is*20,toTreeMap(ECAL_PIXA.get(is*10+2).getData()));
+		    LAYMAP.put(11+is*20,toTreeMap(ECAL_PIXA.get(is*10+3).getData()));
+		    LAYMAP.put(12+is*20,toTreeMap(ECAL_PIXTS.get(is).getData()));
+		    LAYMAP.put(13+is*20,toTreeMap(ECAL_PIXT.get(is*10+1).getData()));
+		    LAYMAP.put(14+is*20,toTreeMap(ECAL_PIXT.get(is*10+2).getData()));
+		    LAYMAP.put(15+is*20,toTreeMap(ECAL_PIXT.get(is*10+3).getData()));
+		}
+
+	}
+	
+	public void analyzeAttenuation(int is1, int is2, int il1, int il2, int ip1, int ip2) {
+		
+		TreeMap<Integer, Object> map;
+		CalibrationData fits ; 	
+		double meanerr[] = new double[1296];
+		
+		for (int is=is1 ; is<is2 ; is++) {
+			double cnts[]  = ECAL_EVTPIXA.get(is).getData();
+			for (int il=il1 ; il<il2 ; il++) {
+				double adc[]   = ECAL_PIXA.get(is*10+il).getData();
+				double adcsq[] = ECAL_PIXA2.get(is*10+il).getData();
+				
+				for (int ipix=0 ; ipix<1296 ; ipix++){
+					meanerr[ipix]=Math.sqrt((adcsq[ipix]-adc[ipix]*adc[ipix])/(cnts[ipix]-1));
+				}
+				
+				map = (TreeMap<Integer, Object>)  LAYMAP.get(is*20+8+il);
+				double meanmap[] = (double[]) map.get(1);
+				
+				for (int ip=ip1 ; ip<ip2 ; ip++){
+					fits = new CalibrationData(is,il,ip);
+					fits.getDescriptor().setType(DetectorType.EC);
+					fits.addGraph(this.getpixels(il,ip+1,meanmap),this.getpixels(il,ip+1,meanerr));
+					fits.analyze();
+					System.out.println("inProcess="+inProcess);
+					collection.add(fits.getDescriptor(),fits);
+				}
+			}
+		}
+	}
+	
 	public void detectorSelected(DetectorDescriptor desc) {
 		
-		if (inProcess!=1) return;
-		this.analyze();
-	    this.canvasOccupancy(desc, app.canvas);
-		this.canvasAttenuation(desc, app.canvas1);
+		this.analyze(inProcess);
+		this.canvasOccupancy(desc, app.canvas);
+		this.canvasAttenuation(desc, app.canvas1);	
+	}
+	
+	public void analyze(int process) {
 		
+		this.inProcess = process;
+		if (process==1)  this.analyzeOccupancy();	 //Don't analyze until event counter sets process flag
+		if (process==2)  this.analyzeOccupancy();	 //Final analysis for end of run 		
 	}
 	
 	public void canvasAttenuation(DetectorDescriptor desc, EmbeddedCanvas canvas) {
@@ -668,46 +702,21 @@ public class ECMon extends DetectorMonitor {
 		int layer     = desc.getLayer();
 		int component = desc.getComponent();
 		
-		double meanerr[] = new double[1296];
-		
-		TreeMap<Integer, Object> map;
-		CalibrationData fits ; 
-	    List<CalibrationData> calibData = new ArrayList<CalibrationData>();		
-		
-		//if (inProcess!=1) return;
-		
-		//this.analyze(); //calculates data for update(DetectorShape2D) -  may not be thread-save 
-		
+		if (inProcess==1)  this.analyzeAttenuation(is,is+1,layer,layer+1,component,component+1); //Only analyze the mouseover component
+        if (inProcess==2) {this.analyzeAttenuation(0,6,1,4,0,36);inProcess=3;}
 		if (layer<4) {
-			int il=layer;
-
-			double cnts[]  = ECAL_EVTPIXA.get(is).getData();
-			double adc[]   = ECAL_PIXA.get(is*10+il).getData();
-			double adcsq[] = ECAL_PIXA2.get(is*10+il).getData();
-			
-			for (int ipix=0 ; ipix<1296 ; ipix++){
-				meanerr[ipix]=Math.sqrt((adcsq[ipix]-adc[ipix]*adc[ipix])/(cnts[ipix]-1));
+			if (inProcess>0) {
+				canvas.divide(1,1); canvas.cd(0);
+				canvas.draw(collection.get(is,layer,component).getGraph(0));
+				canvas.draw(collection.get(is,layer,component).getFunc(0),"same");
 			}
-			
-			map = (TreeMap<Integer, Object>)  LAYMAP.get(is*20+8+il);
-			double meanmap[] = (double[]) map.get(1);
-			
-			for (int ip=0 ; ip<36 ; ip++){
-				fits = new CalibrationData(is,il,component);
-				fits.addGraph(this.getpixels(il,ip+1,meanmap),this.getpixels(il,ip+1,meanerr));
-				fits.analyze();
-				calibData.add(fits);
-
-			}
-			canvas.divide(1,1); canvas.cd(0);
-			canvas.draw(calibData.get(component).getGraph(0));
-			canvas.draw(calibData.get(component).getFunc(0),"same");
 		}
-		
 	}
 	
 	public void canvasOccupancy(DetectorDescriptor desc, EmbeddedCanvas canvas) {
 				
+		if (inProcess==0) return;
+		
 		int is        = desc.getSector();
 		int layer     = desc.getLayer();
 		int component = desc.getComponent();

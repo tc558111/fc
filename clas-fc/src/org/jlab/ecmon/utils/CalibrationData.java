@@ -39,7 +39,7 @@ public class CalibrationData {
         graph.setXTitle("Pixel Number");
         graph.setYTitle("Mean ADC");	
         this.graphs.add(graph);
-        F1D f1 = new F1D("exp",2,data.length-1);
+        F1D f1 = new F1D("exp",2,data.length-2);
         this.functions.add(f1);
     }
     
@@ -49,9 +49,9 @@ public class CalibrationData {
             //double [] dataY=this.graphs.get(loop).getDataY().getArray();
             //double [] dataX=this.graphs.get(loop).getDataX().getArray();
             func.setParameter(0, 100.0);
-            func.setParameter(1,-0.04);
+            func.setParameter(1,-0.016);
             func.setParLimits(0,80.,120.);
-            func.setParLimits(1,-0.06,-0.0005);
+            func.setParLimits(1,-0.03,-0.014);
             this.graphs.get(loop).fit(this.functions.get(loop));
         }
     }

@@ -14,7 +14,6 @@ import org.root.attr.ColorPalette;
 import org.root.attr.TStyle;
 
 import java.awt.Color;
-
 import java.util.List;
 import java.util.TreeMap;
 import java.util.Arrays;
@@ -30,7 +29,11 @@ public class ECMon extends DetectorMonitor {
 	public static ECMon monitor;
 	public static MonitorApp app;
 	DetectorCollection<CalibrationData> collection = new DetectorCollection<CalibrationData>();
-	
+    double[] xp  = new double[36];
+    double[] yp  = new double[36]; 
+    double[] xpe = new double[36];
+    double[] ype = new double[36]; 
+    
 	ColorPalette              palette = new ColorPalette();
 	
 	double ec_xpix[][][] = new double[3][1296][7];
@@ -664,7 +667,11 @@ public class ECMon extends DetectorMonitor {
 				double adcsq[] = ECAL_PIXA2.get(is*10+il).getData();
 				
 				for (int ipix=0 ; ipix<1296 ; ipix++){
-					meanerr[ipix]=Math.sqrt((adcsq[ipix]-adc[ipix]*adc[ipix])/(cnts[ipix]-1));
+					if (cnts[ipix]>2) {
+						meanerr[ipix]=Math.sqrt((adcsq[ipix]-adc[ipix]*adc[ipix])/(cnts[ipix]-1));
+					}else{
+						meanerr[ipix]=0.;
+					}
 				}
 				
 				map = (TreeMap<Integer, Object>)  LAYMAP.get(is*20+8+il);
@@ -675,11 +682,11 @@ public class ECMon extends DetectorMonitor {
 					fits.getDescriptor().setType(DetectorType.EC);
 					fits.addGraph(this.getpixels(il,ip+1,meanmap),this.getpixels(il,ip+1,meanerr));
 					fits.analyze();
-					System.out.println("inProcess="+inProcess);
 					collection.add(fits.getDescriptor(),fits);
 				}
 			}
 		}
+		
 	}
 	
 	public void detectorSelected(DetectorDescriptor desc) {
@@ -702,13 +709,25 @@ public class ECMon extends DetectorMonitor {
 		int layer     = desc.getLayer();
 		int component = desc.getComponent();
 		
-		if (inProcess==1)  this.analyzeAttenuation(is,is+1,layer,layer+1,component,component+1); //Only analyze the mouseover component
+//		GraphErrors gainGraph, attGraph;
+		
+	    if (inProcess==1)  this.analyzeAttenuation(is,is+1,layer,layer+1,component,component+1); //Only analyze the mouseover component
         if (inProcess==2) {this.analyzeAttenuation(0,6,1,4,0,36);inProcess=3;}
 		if (layer<4) {
 			if (inProcess>0) {
-				canvas.divide(1,1); canvas.cd(0);
+				canvas.divide(2,2); canvas.cd(0);
 				canvas.draw(collection.get(is,layer,component).getGraph(0));
 				canvas.draw(collection.get(is,layer,component).getFunc(0),"same");
+/*		        yp[component]  = collection.get(1,layer,component).getFunc(0).getParameter(0);
+		        ype[component] = collection.get(1,layer,component).getFunc(0).parameter(0).error();	
+		        for(int loop = 0; loop < 36; loop++){ xp[loop] = loop; xpe[loop]=0.;}
+		        gainGraph = new GraphErrors(xp,yp,xpe,ype);		        
+		        yp[component] = -1./collection.get(1,layer,component).getFunc(0).getParameter(1);
+		        ype[component] = 1./collection.get(1,layer,component).getFunc(0).parameter(1).error();			        
+		        attGraph = new GraphErrors(xp,yp,xpe,ype);
+				canvas.cd(1); canvas.draw(gainGraph);
+				canvas.cd(2); canvas.draw(attGraph);
+*/				
 			}
 		}
 	}

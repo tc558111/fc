@@ -715,7 +715,7 @@ public class ECMon extends DetectorMonitor {
         if (inProcess==2) {this.analyzeAttenuation(0,6,1,4,0,36);inProcess=3;}
 		if (layer<4) {
 			if (inProcess>0) {
-				canvas.divide(2,2); canvas.cd(0);
+				canvas.divide(1,1); canvas.cd(0);
 				canvas.draw(collection.get(is,layer,component).getGraph(0));
 				canvas.draw(collection.get(is,layer,component).getFunc(0),"same");
 /*		        yp[component]  = collection.get(1,layer,component).getFunc(0).getParameter(0);

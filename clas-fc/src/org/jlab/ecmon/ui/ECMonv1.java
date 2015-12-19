@@ -25,7 +25,7 @@ import javax.swing.SwingUtilities;
 import org.jlab.evio.clas12.*;
 import org.jlab.clasrec.main.*;
 import org.jlab.evio.decode.EvioEventDecoder;
-import org.jlab.ecmon.utils.*;
+import org.jlab.ecmon.utils.DetectorBrowserApp;
 
 public class ECMonv1 extends DetectorMonitoring {
 	

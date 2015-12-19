@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.jlab.clas.detector.DetectorDescriptor;
 import org.root.histogram.GraphErrors;
+import org.root.fitter.DataFitter;
 import org.root.func.F1D;
 
 public class CalibrationData {
@@ -13,9 +14,6 @@ public class CalibrationData {
     
     private List<GraphErrors>  graphs     = new ArrayList<GraphErrors>();
     private List<F1D>          functions  = new ArrayList<F1D>();
-    private GraphErrors        gainGraph  = null;
-    private GraphErrors        attGraph   = null;
-    private F1D                resFunc    = new F1D("p1");
 	
     public CalibrationData(int sector, int layer, int component){
         this.desc.setSectorLayerComponent(sector, layer, component);
@@ -44,6 +42,7 @@ public class CalibrationData {
     }
     
     public void analyze(){
+    	DataFitter.FITPRINTOUT=false;
         for(int loop = 0; loop < this.graphs.size(); loop++){
             F1D func = this.functions.get(loop);
             //double [] dataY=this.graphs.get(loop).getDataY().getArray();
@@ -54,12 +53,10 @@ public class CalibrationData {
             func.setParLimits(1,-0.03,-0.014);
             this.graphs.get(loop).fit(this.functions.get(loop));
         }
+        
     }
     
     public GraphErrors  getGraph(int index){ return this.graphs.get(index);}
     public F1D          getFunc(int index){ return this.functions.get(index);}
-    public GraphErrors  getGainGraph(){ return this.gainGraph;}
-    public GraphErrors  getAttGraph(){ return this.attGraph;}
-    public F1D          getResFunc(){ return this.resFunc;}
     
 }

@@ -41,6 +41,7 @@ public class DetectorShapeView2D extends JPanel implements MouseListener , Mouse
     private String     canvasName = "undefined";
     private List<DetectorShape2D>   shapes = new ArrayList<DetectorShape2D>();
     private Integer                 selectedShape = 1;
+    private Integer 			 	selectedShapeSave = -1;
     private ActionListener          listener = null;
     private List<IDetectorListener> detectorListeners = new ArrayList<IDetectorListener>();
     
@@ -382,12 +383,13 @@ public class DetectorShapeView2D extends JPanel implements MouseListener , Mouse
         }
         
         if(index<0){
-            this.selectedShape = -1;
+            this.selectedShape = this.selectedShapeSave;
             this.repaint();
         }
         
         if(index>=0&&index!=this.selectedShape){
             this.selectedShape = index;
+            this.selectedShapeSave = index;
             //System.out.println("SHAPE SELECTION HAS CHANGED TO " + index);
             this.repaint();
             for(IDetectorListener lt : this.detectorListeners){
@@ -421,11 +423,12 @@ public class DetectorShapeView2D extends JPanel implements MouseListener , Mouse
                 }
         }
         if(index<0) {
-            this.selectedShape = -1;
+            this.selectedShape = this.selectedShapeSave;
             this.repaint();
         }
         if(index>=0&&index!=this.selectedShape){
             this.selectedShape = index;
+            this.selectedShapeSave = index;
             //System.out.println("SHAPE SELECTION HAS CHANGED TO " + index);
             this.repaint();
             for(IDetectorListener lt : this.detectorListeners){

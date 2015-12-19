@@ -711,10 +711,10 @@ public class ECMon extends DetectorMonitor {
 		
 //		GraphErrors gainGraph, attGraph;
 		
-	    if (inProcess==1)  this.analyzeAttenuation(is,is+1,layer,layer+1,component,component+1); //Only analyze the mouseover component
         if (inProcess==2) {this.analyzeAttenuation(0,6,1,4,0,36);inProcess=3;}
 		if (layer<4) {
 			if (inProcess>0) {
+			    if (inProcess==1)  this.analyzeAttenuation(is,is+1,layer,layer+1,component,component+1); //Only analyze the mouseover component
 				canvas.divide(1,1); canvas.cd(0);
 				canvas.draw(collection.get(is,layer,component).getGraph(0));
 				canvas.draw(collection.get(is,layer,component).getFunc(0),"same");

@@ -709,9 +709,9 @@ public class ECMonv2 extends DetectorMonitor {
 		int layer     = desc.getLayer();
 		int component = desc.getComponent();
 		
-	    if (inProcess==1)  this.analyzeAttenuation(is,is+1,layer,layer+1,component,component+1); //Only analyze the mouseover component
         if (inProcess==2) {this.analyzeAttenuation(0,6,1,4,0,36);inProcess=3;}
 		if (layer<4) {
+		    if (inProcess==1)  this.analyzeAttenuation(is,is+1,layer,layer+1,component,component+1); //Only analyze the mouseover component
 			if (inProcess>0) {
 				canvas.divide(1,1); canvas.cd(0);
 				canvas.draw(collection.get(is,layer,component).getGraph(0));

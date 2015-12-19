@@ -49,7 +49,7 @@ public class CalibrationData {
             //double [] dataX=this.graphs.get(loop).getDataX().getArray();
             func.setParameter(0, 100.0);
             func.setParameter(1,-0.016);
-            func.setParLimits(0,80.,120.);
+            func.setParLimits(0,80.,140.);
             func.setParLimits(1,-0.03,-0.014);
             this.graphs.get(loop).fit(this.functions.get(loop));
         }

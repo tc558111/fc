@@ -36,7 +36,7 @@ import org.jlab.ecmon.utils.DetectorShapeTabView;
 /**
  *
  * @author gavalian
- * Revised by L. C. Smith in Sep-Nov 2015 for development of ECMon.java (now ECMonv1.java).
+ * Revised by L. C. Smith in Sep-Nov 2015 for development of ECMon.java (now ECMonv2.java).
  */
 @SuppressWarnings("serial")
 public class MonitorApp extends JFrame implements ActionListener {
@@ -100,6 +100,7 @@ public class MonitorApp extends JFrame implements ActionListener {
 		
 		bottom = new JPanel();
 		bottom.setLayout(new FlowLayout());
+		
 		startButton = new JButton();
 		startButton.setText("Load EVIO file");
 		startButton.setEnabled(false);		
@@ -248,7 +249,6 @@ public class MonitorApp extends JFrame implements ActionListener {
                         processorClass.processEvent(event);
                     } catch (Exception e){
                     	e.printStackTrace(System.out);
-                        //System.out.println("SOMETHING WRONG WITH THE EVENT");
                     }
                 }
                 monitoringClass.analyze(2);
@@ -286,7 +286,6 @@ public class MonitorApp extends JFrame implements ActionListener {
                         processorClass.processEvent(event);
                     } catch (Exception e){
                     	e.printStackTrace(System.out);
-//                        System.out.println("SOMETHING WRONG WITH THE EVENT");
                     }
                     counter++;
                 }

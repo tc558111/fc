@@ -44,7 +44,6 @@ public class ECMonv2 extends DetectorMonitor {
 	int thr              = 20;
 	
 	public EventDecoder               decoder = new EventDecoder();
-	//public EvioEventDecoder           decoder = new EvioEventDecoder();
 		
     public TreeMap<Integer,H1D>      ECAL_ADCPIX  = new TreeMap<Integer,H1D>();
     public TreeMap<Integer,H1D>      ECAL_ADCPIX2 = new TreeMap<Integer,H1D>();

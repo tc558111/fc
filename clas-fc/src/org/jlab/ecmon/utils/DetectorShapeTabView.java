@@ -7,16 +7,18 @@ package org.jlab.ecmon.utils;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -36,7 +38,8 @@ import org.root.pad.EmbeddedCanvas;
 public class DetectorShapeTabView extends JPanel implements ActionListener {
     
     private		      JTabbedPane tabbedPane;
-    private DetectorShapeView2D panel1=null;
+    private			  JPanel bottom1;
+    public  DetectorShapeView2D panel1=null;
     private DetectorShapeView2D panel2=null;
     private final             TreeMap<String, DetectorShapeView2D>  detectorView = new TreeMap<String, DetectorShapeView2D>();
     private DetectorCalibration  calibrationModule = null;
@@ -66,7 +69,7 @@ public class DetectorShapeTabView extends JPanel implements ActionListener {
      	        panel2=panel1;
      	    }
      });
-        this.add(tabbedPane,BorderLayout.CENTER);
+        this.add(tabbedPane,BorderLayout.CENTER);                
     }
     
     public void setFPS(int fps){

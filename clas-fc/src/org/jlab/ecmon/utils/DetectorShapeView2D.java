@@ -6,7 +6,9 @@
 package org.jlab.ecmon.utils;
 
 import java.awt.BasicStroke;
+import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
@@ -20,8 +22,11 @@ import java.awt.event.MouseMotionListener;
 import java.awt.geom.GeneralPath;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
+import javax.swing.ButtonGroup;
 import javax.swing.JPanel;
+import javax.swing.JRadioButton;
 import javax.swing.Timer;
 
 import org.jlab.clas12.calib.DetectorShape2D;
@@ -35,9 +40,11 @@ import org.jlab.geom.prim.Point3D;
  * @author gavalian
  * Modified by L.C. Smith for use with ECMon
  */
-public class DetectorShapeView2D extends JPanel implements MouseListener , MouseMotionListener{
+public class DetectorShapeView2D extends JPanel implements ActionListener, MouseListener , MouseMotionListener{
     
     public  Rectangle  drawRegion = new Rectangle();
+    private JPanel bottom1;
+    public int omap=0;
     private String     canvasName = "undefined";
     private List<DetectorShape2D>   shapes = new ArrayList<DetectorShape2D>();
     private Integer                 selectedShape = 1;
@@ -57,7 +64,7 @@ public class DetectorShapeView2D extends JPanel implements MouseListener , Mouse
     private List<Color>             pathColors        = new ArrayList<Color>();
     
     public boolean MOUSEOVER_CALLBACK = true;
-    
+/*    
     public DetectorShapeView2D(String name){
         canvasName = name;
         addMouseListener(this);
@@ -66,6 +73,65 @@ public class DetectorShapeView2D extends JPanel implements MouseListener , Mouse
         updateGUIAction action = new updateGUIAction();
         this.timer = new Timer(delay,action);  
     }
+  */  
+    public DetectorShapeView2D(String name){
+        canvasName = name;
+        addMouseListener(this);
+        this.addMouseMotionListener(this);
+        delay = 1000 / FPS_INIT;
+        updateGUIAction action = new updateGUIAction();
+        this.timer = new Timer(delay,action);  
+        
+		bottom1 = new JPanel();
+		bottom1.setLayout(new FlowLayout());
+    }
+    
+    public void addRB(List<List<String>> buttons){
+    	for(List<String> bn : buttons){
+    		ButtonGroup bG = new ButtonGroup();
+    		for(int i=0; i< bn.size(); i++){
+    			JRadioButton b = new JRadioButton(bn.get(i));
+    			b.addActionListener(this);
+    			b.setActionCommand(bn.get(i));
+    			bottom1.add(b); bG.add(b);
+    		}
+		}     	
+        this.add(bottom1,BorderLayout.SOUTH);       
+    }
+    
+    public void actionPerformed(ActionEvent e) {
+    	String name = this.getName();
+    	switch(e.getActionCommand() ) {
+    	case "Inner":
+    		omap=0;
+    		break;
+    	case "Outer":
+    		omap=0;
+    		break;
+    	case "Counts":
+    		omap=0;
+    		break;
+    	case "ADC":
+    		omap=0;
+    		break;
+    	case "TDC":
+    		omap=0;
+    		break;
+    	case "ADC U":
+    		omap=6;
+    		break;
+    	case "ADC V":
+    		omap=7;
+    		break;
+    	case "ADC W":
+    		omap=8;
+    		break;
+    	case "ADC U+V+W":
+    		omap=5;
+    		break;
+    	}
+    }
+   
     
     public void start(int fps){
     	delay = 1000 / fps;
@@ -83,12 +149,12 @@ public class DetectorShapeView2D extends JPanel implements MouseListener , Mouse
     }
     
     public void updateGUI(){
-    	this.repaint();
         if (this.selectedShape>-1){
           for(IDetectorListener lt : this.detectorListeners){
               lt.detectorSelected(this.shapes.get(this.selectedShape).getDescriptor());
           }
         }
+    	this.repaint();
     }
     
     public void setActionListener(ActionListener al){
@@ -242,9 +308,9 @@ public class DetectorShapeView2D extends JPanel implements MouseListener , Mouse
     public void setColor(int sector, int layer, int component, int r, int g, int b){
         for(DetectorShape2D shape: this.shapes){
             if(shape.getDescriptor().getLayer()==layer &&
-                    shape.getDescriptor().getSector()==sector&&
-                    shape.getDescriptor().getComponent()==component){
-                shape.setColor(r, g, b);
+               shape.getDescriptor().getSector()==sector&&
+               shape.getDescriptor().getComponent()==component){
+               shape.setColor(r, g, b);
             }
         }
     }
@@ -417,7 +483,6 @@ public class DetectorShapeView2D extends JPanel implements MouseListener , Mouse
         int index = -1;
         for(int loop = 0; loop < this.shapes.size(); loop++){
                 if(this.shapes.get(loop).isContained(mX, mY)==true){
-                    //System.out.println(" SELECTED SHAPE = " + loop);
                     index = loop;
                     break;
                 }
@@ -429,15 +494,10 @@ public class DetectorShapeView2D extends JPanel implements MouseListener , Mouse
         if(index>=0&&index!=this.selectedShape){
             this.selectedShape = index;
             this.selectedShapeSave = index;
-            //System.out.println("SHAPE SELECTION HAS CHANGED TO " + index);
-            this.repaint();
             for(IDetectorListener lt : this.detectorListeners){
                 lt.detectorSelected(this.shapes.get(this.selectedShape).getDescriptor());
             }
-            /*
-             if(this.listener!=null){
-             this.listener.actionPerformed(new ActionEvent("PROBE",10,this.getName()));
-             }*/
+            this.repaint();
         }
         
     }

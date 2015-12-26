@@ -435,14 +435,15 @@ public class ECMon extends DetectorMonitor {
             	}
                     	
 			//System.out.println("sector,layer,pmt,adc,ped,tdc= "+is+" "+il+" "+ip+" "+adc+" "+ped+" "+tdc);
-            int ic = 0; 
-            if (il<4) ic=1; else ;ic=2; 		
-            	
+	            	
+			int ic = 1;
+			if (il>3) {ic=2 ; il=il-3;}
+		
 			if(ic==1||ic==2){
 	   	        int  iv = ic*3+il;
 	            int iss = (is-1)*10+il+(ic-1)*3;
 	   	        if(tdc>1200&&tdc<1500){
-		          uvwt[is-1][ic]=uvwt[is-1][ic]+uvw_dalitz(ic,ip,il); //Dalitz test
+		          uvwt[is-1][ic]=uvwt[is-1][il]+uvw_dalitz(ic,ip,il); //Dalitz test
 	          	  nht[is-1][iv-1]++;
 	          	  inh = nht[is-1][iv-1];
 	          	   tdcr[is-1][iv-1][inh-1] = tdc;
@@ -451,6 +452,7 @@ public class ECMon extends DetectorMonitor {
 	   	        }
 	   	        if(adc>thr){
 	          	  uvwa[is-1][ic]=uvwa[is-1][ic]+uvw_dalitz(ic,ip,il); //Dalitz test
+	          	  System.out.println("is,iv,inh="+is+" "+iv);
 	          	  nha[is-1][iv-1]++;
 	          	  inh = nha[is-1][iv-1];
 	          	   adcr[is-1][iv-1][inh-1] = adc;

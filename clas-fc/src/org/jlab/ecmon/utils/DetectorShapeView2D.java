@@ -44,7 +44,8 @@ public class DetectorShapeView2D extends JPanel implements ActionListener, Mouse
     
     public  Rectangle  drawRegion = new Rectangle();
     private JPanel bottom1;
-    public int omap=0;
+    public int ilmap=1;
+    public int  omap=0;
     private String     canvasName = "undefined";
     private List<DetectorShape2D>   shapes = new ArrayList<DetectorShape2D>();
     private Integer                 selectedShape = 1;
@@ -91,6 +92,7 @@ public class DetectorShapeView2D extends JPanel implements ActionListener, Mouse
     		ButtonGroup bG = new ButtonGroup();
     		for(int i=0; i< bn.size(); i++){
     			JRadioButton b = new JRadioButton(bn.get(i));
+    			if (i==0) b.setEnabled(true);
     			b.addActionListener(this);
     			b.setActionCommand(bn.get(i));
     			bottom1.add(b); bG.add(b);
@@ -103,12 +105,12 @@ public class DetectorShapeView2D extends JPanel implements ActionListener, Mouse
     	String name = this.getName();
     	switch(e.getActionCommand() ) {
     	case "Inner":
-    		omap=0;
+    		ilmap=1;
     		break;
     	case "Outer":
-    		omap=0;
+    		ilmap=2;
     		break;
-    	case "Counts":
+    	case "EVT":
     		omap=0;
     		break;
     	case "ADC":
@@ -118,16 +120,16 @@ public class DetectorShapeView2D extends JPanel implements ActionListener, Mouse
     		omap=0;
     		break;
     	case "ADC U":
-    		omap=6;
+    		omap=11;
     		break;
     	case "ADC V":
-    		omap=7;
+    		omap=12;
     		break;
     	case "ADC W":
-    		omap=8;
+    		omap=13;
     		break;
     	case "ADC U+V+W":
-    		omap=5;
+    		omap=9;
     		break;
     	}
     }

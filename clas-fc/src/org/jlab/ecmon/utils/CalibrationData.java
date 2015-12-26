@@ -45,13 +45,18 @@ public class CalibrationData {
     	DataFitter.FITPRINTOUT=false;
         for(int loop = 0; loop < this.graphs.size(); loop++){
             F1D func = this.functions.get(loop);
-            //double [] dataY=this.graphs.get(loop).getDataY().getArray();
+            double [] dataY=this.graphs.get(loop).getDataY().getArray();
             //double [] dataX=this.graphs.get(loop).getDataX().getArray();
-            func.setParameter(0, 100.0);
-            func.setParameter(1,-0.016);
-            func.setParLimits(0,80.,150.);
-            func.setParLimits(1,-0.03,-0.014);
-            this.graphs.get(loop).fit(this.functions.get(loop));
+            if (dataY.length>0) {
+            	int imax = Math.min(2,dataY.length-1);
+            	double p0try = dataY[imax] ; double p0min = p0try-30. ; double p0max=p0try+30.;
+            	func.setParameter(0, p0try);
+            	func.setParameter(1,-0.016);
+            	func.setParLimits(0,p0min,p0max);
+            	//func.setParLimits(1,-0.03,-0.014);
+            	func.setParLimits(1,-0.04,-0.001);
+            	this.graphs.get(loop).fit(this.functions.get(loop));
+            }
         }
         
     }

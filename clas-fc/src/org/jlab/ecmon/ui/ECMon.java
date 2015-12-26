@@ -452,7 +452,6 @@ public class ECMon extends DetectorMonitor {
 	   	        }
 	   	        if(adc>thr){
 	          	  uvwa[is-1][ic]=uvwa[is-1][ic]+uvw_dalitz(ic,ip,il); //Dalitz test
-	          	  System.out.println("is,iv,inh="+is+" "+iv);
 	          	  nha[is-1][iv-1]++;
 	          	  inh = nha[is-1][iv-1];
 	          	   adcr[is-1][iv-1][inh-1] = adc;

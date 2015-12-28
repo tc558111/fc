@@ -74,6 +74,10 @@ public class ECMonv2 extends DetectorMonitor {
 		initHistograms();
 	}
 	
+	public void close() {
+		
+	}
+	
 	public void initHistograms() {
 
 		for (int is=0;is<6;is++) {

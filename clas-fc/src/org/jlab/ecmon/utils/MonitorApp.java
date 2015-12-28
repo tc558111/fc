@@ -156,6 +156,10 @@ public class MonitorApp extends JFrame implements ActionListener {
         ET_open.addActionListener(this);
         file.add(ET_open);
         
+        JMenuItem save_histos= new JMenuItem("Save Histos");
+        save_histos.addActionListener(this);
+        file.add(save_histos);
+        
         JMenuItem load_plugin = new JMenuItem("Load Plugin");
         load_plugin.addActionListener(this);
         plugins.add(load_plugin);
@@ -198,6 +202,10 @@ public class MonitorApp extends JFrame implements ActionListener {
             filename = "";
             startButton.setText("Start");
             startButton.setEnabled(true);
+        }
+        
+        if(e.getActionCommand().compareTo("Save Histos")==0){
+        	monitoringClass.close();
         }
         
     }
@@ -259,6 +267,7 @@ public class MonitorApp extends JFrame implements ActionListener {
                 startButton.setText("Finished");
                 running = false;
                 reader.close();
+                monitoringClass.close();
             }
         }
         
@@ -293,6 +302,7 @@ public class MonitorApp extends JFrame implements ActionListener {
                 monitoringClass.analyze(1);
                 //System.out.println("--> processed events #  " + counter);
                 //System.out.println("--> " + timer.toString());
+                //monitoringClass.close();
             }
         }
         

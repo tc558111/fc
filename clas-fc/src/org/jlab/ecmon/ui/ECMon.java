@@ -6,8 +6,13 @@ import org.jlab.clas.detector.DetectorBankEntry;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas.detector.DetectorDescriptor;
 import org.jlab.clas.detector.DetectorType;
+import org.jlab.clas.tools.utils.DataUtils;
 import org.jlab.clas12.calib.DetectorShape2D;
 import org.jlab.clas12.detector.EventDecoder;
+import org.jlab.clas12.detector.FADCConfig;
+import org.jlab.clas12.detector.FADCConfigLoader;
+import org.root.group.TBrowser;
+import org.root.group.TDirectory;
 import org.root.histogram.*;
 import org.root.pad.EmbeddedCanvas;
 import org.root.attr.ColorPalette;
@@ -30,6 +35,10 @@ public class ECMon extends DetectorMonitor {
 	
 	public static ECMon monitor;
 	public static MonitorApp app;
+	public EventDecoder     decoder = new EventDecoder();
+	FADCConfigLoader          fadc  = new FADCConfigLoader();
+	TDirectory mondirectory = new TDirectory(); 
+	
 	DetectorCollection<CalibrationData> collection = new DetectorCollection<CalibrationData>();
     double[] xp  = new double[36];
     double[] yp  = new double[36]; 
@@ -44,8 +53,6 @@ public class ECMon extends DetectorMonitor {
 	int pixmap[][]       = new int[3][1296];
 	int inProcess        = 0;
 	int thr              = 20;
-	
-	public EventDecoder               decoder = new EventDecoder();
 		
     public TreeMap<Integer,H1D>      ECAL_ADCPIX  = new TreeMap<Integer,H1D>();
     public TreeMap<Integer,H1D>      ECAL_ADCPIX2 = new TreeMap<Integer,H1D>();
@@ -66,7 +73,14 @@ public class ECMon extends DetectorMonitor {
     public TreeMap<Integer,H2D>      ECAL_APIX    = new TreeMap<Integer,H2D>();
     public TreeMap<Integer,H2D>      ECAL_TPIX    = new TreeMap<Integer,H2D>();
     public TreeMap<Integer,Object>   LAYMAP       = new TreeMap<Integer,Object>();
-
+    
+	String laba[] = {"monitor/pcal/adc","monitor/ecinner/adc","monitor/ecouter/adc"}; 
+	String labt[] = {"monitor/pcal/tdc","monitor/ecinner/tdc","monitor/ecouter/tdc"}; 
+	int hid;
+	int tid       = 100000;
+	int cid       = 10000;
+	int lid       = 100;
+	
 	public ECMon(String[] args) {
 		super("ECMON","1.0","lcsmith");
 	}
@@ -74,13 +88,41 @@ public class ECMon extends DetectorMonitor {
 	public void init() {
 		inProcess=0;
 		initHistograms();
-	}
+	    fadc.load("/test/fc/fadc",10,"default");
+	    }
 	
+    public TDirectory getDir(){
+        return this.mondirectory;
+    }	
 	public void initHistograms() {
-
-		for (int is=0;is<6;is++) {			
+		
+		int    nbn1[] = {68,36,36}; 
+		double nbn2[] = {69.0,37.0,37.0}; 
+		
+		int is        = 2;
+		int iss       = (int) (is*1e7);
+		
+	    TDirectory calADC[] = new TDirectory[3];
+	    TDirectory calTDC[] = new TDirectory[3];
+	    
+		for (int ic=1 ; ic<3 ; ic++) {  //ic=0,1,2 -> PCAL,ECALinner,ECALouter
+			
+			calADC[ic] = new TDirectory(laba[ic]);
+			calTDC[ic] = new TDirectory(labt[ic]); 
+    			
+    		hid=iss+ic*cid; //FADC MIP vs strip 
+    		for (int il=1 ; il<4 ; il++) {
+    			calADC[ic].add(new H2D("A"+(int)(hid+10*tid+il*lid),50,0.0,200.0,nbn1[ic],1.0,nbn2[ic])); 
+    			calTDC[ic].add(new H2D("T"+(int)(hid+10*tid+il*lid),60,-15.0,15.0, nbn1[ic],1.0,nbn2[ic]));     		 
+    			calTDC[ic].add(new H2D("T"+(int)(hid+11*tid+il*lid),60,-15.0,15.0, nbn1[ic],1.0,nbn2[ic]));     		 
+     		}    	
+    		getDir().addDirectory(calADC[ic]);
+    		getDir().addDirectory(calTDC[ic]);
+    	}
+		
+		for (is=0;is<6;is++) {			
 			for (int lay=1 ; lay<7 ; lay++) {
-				int iss=is*10+lay;
+				iss=is*10+lay;
 				ECAL_ADC.put(iss,     new H2D("ADC_LAYER_"+iss,100,0.0,200.0,36,1.0,37.0));
 				ECAL_TDC.put(iss,     new H2D("TDC_LAYER_"+iss,100,1330.0,1370.0,36,1.0,37.0));  
 				ECAL_ADC_PIX.put(iss, new H2D("ADC_PIX_LAYER_"+iss,100,0.0,200.0,36,1.0,37.0));
@@ -95,7 +137,7 @@ public class ECMon extends DetectorMonitor {
 				ECAL_TPIX.put(iss,    new H2D("TPIX"+iss,1296,1.0,1297.0,40,1330.0,1370.0));
 			}
 			for (int lay=7; lay<9; lay++) {
-				int iss=is*10+lay;
+				iss=is*10+lay;
 				ECAL_EVTPIXA.put(iss, new H1D("EVTPIXA"+iss,1296,1.0,1297.0));
 				ECAL_EVTPIXT.put(iss, new H1D("EVTPIXT"+iss,1296,1.0,1297.0));
 				ECAL_PIXASUM.put(iss, new H1D("A_PIXSUM"+iss,1296,1.0,1297.0));
@@ -382,9 +424,10 @@ public class ECMon extends DetectorMonitor {
 		int strra[][][]  = new int[6][9][68]; 
 		int strrt[][][]  = new int[6][9][68]; 
 		int adcr[][][]   = new int[6][9][68];
-		double tdcr[][][] = new double[6][9][68];
-		double uvwa[][]   = new double[6][9];
-		double uvwt[][]   = new double[6][9];
+		double ftdcr[][][] = new double[6][9][68];
+		double tdcr[][][]  = new double[6][9][68];
+		double uvwa[][]    = new double[6][9];
+		double uvwt[][]    = new double[6][9];
 		
 		int inh;
 		
@@ -398,6 +441,7 @@ public class ECMon extends DetectorMonitor {
 					strra[is][il][ip] = 0;
 					strrt[is][il][ip] = 0;
 					 adcr[is][il][ip] = 0;
+					ftdcr[is][il][ip] = 0;
 					 tdcr[is][il][ip] = 0;
 				}
 			}
@@ -406,9 +450,9 @@ public class ECMon extends DetectorMonitor {
 		double mc_t=0.0;
 		float tdcmax=100000;
 		boolean debug=false;
-		int adc,ped;
-		double tdc;
-
+		int adc,ped,npk=0,pedref=0,timf=0,timc=0;
+		double tdc=0,tdcf=0;
+        H2D hpix;
 		// Process raw banks
 		
 		if(event.hasBank("EC::true")!=true) {
@@ -418,11 +462,14 @@ public class ECMon extends DetectorMonitor {
     		decoder.decode(event);
             List<DetectorBankEntry> strips = decoder.getDataEntries("EC");
             for(DetectorBankEntry strip : strips) {
-                adc=ped=0 ; tdc=0;
+                adc=ped=pedref=npk=timf=timc=0 ; tdc=tdcf=0;
             	//System.out.println(strip);
-            	int is = strip.getDescriptor().getSector();
-            	int il = strip.getDescriptor().getLayer();
-            	int ip = strip.getDescriptor().getComponent();
+            	int is  = strip.getDescriptor().getSector();
+            	int il  = strip.getDescriptor().getLayer();
+            	int ip  = strip.getDescriptor().getComponent();
+            	int icr = strip.getDescriptor().getCrate(); 
+            	int isl = strip.getDescriptor().getSlot(); 
+            	int ich = strip.getDescriptor().getChannel(); 
             	
             	if(strip.getType()==BankType.TDC) {
             		int[] tdcc = (int[]) strip.getDataObject();
@@ -431,10 +478,18 @@ public class ECMon extends DetectorMonitor {
             	if(strip.getType()==BankType.ADCFPGA) {
             		int[] adcc= (int[]) strip.getDataObject();
             		ped = adcc[2];
+            		npk = adcc[3];
             		adc = (adcc[1]-ped*18)/10;
+            		timf = DataUtils.getInteger(adcc[0],0,5);
+            		timc = DataUtils.getInteger(adcc[0],6,14);
+            		tdcf = timc*4.+timf*0.0625;
+            		FADCConfig config=fadc.getMap().get(icr,isl,ich);
+            		pedref = (int) config.getPedestal();
             	}
                     	
-			//System.out.println("sector,layer,pmt,adc,ped,tdc= "+is+" "+il+" "+ip+" "+adc+" "+ped+" "+tdc);
+			//System.out.println("sector,layer,pmt:"+is+" "+il+" "+ip);
+			//System.out.println("  nchan,adc,ped,pedref: "+npk+" "+adc+" "+ped+" "+pedref);
+			//System.out.println("  tdc,timc,timf: "+tdc+" "+timc+" "+timf);
 	            	
 			int ic = 1;
 			if (il>3) {ic=2 ; il=il-3;}
@@ -455,8 +510,12 @@ public class ECMon extends DetectorMonitor {
 	          	  nha[is-1][iv-1]++;
 	          	  inh = nha[is-1][iv-1];
 	          	   adcr[is-1][iv-1][inh-1] = adc;
+	          	  ftdcr[is-1][iv-1][inh-1] = tdcf;
 	          	  strra[is-1][iv-1][inh-1] = ip;
 	   		      ECAL_ADC.get(iss).fill(adc,ip,1.0);
+	   		      hid = (int) (1e7*is+10*tid+ic*cid+il*lid);
+	   		      hpix = (H2D) getDir().getDirectory(laba[ic]).getObject("A"+hid);
+	   		      hpix.fill(adc,ip);
 	   	        }
 			}
 		}
@@ -518,7 +577,9 @@ public class ECMon extends DetectorMonitor {
 		}
 		
 		//Process pixel data
-		boolean good_u, good_v, good_w, good_uvw;
+		boolean good_ua, good_va, good_wa, good_uvwa;
+		boolean good_ut, good_vt, good_wt, good_uvwt;
+		boolean good_uvwt_save=false;
 		double uvwtst;
 		int iic,l1,l2,ist;
 		
@@ -526,14 +587,17 @@ public class ECMon extends DetectorMonitor {
 			for (int ic=1; ic<3 ; ic++) {
 				iic=ic*3; l1=iic-2; l2=iic+1; ist=is*10+ic+6;
 				
-				good_u = nha[is][iic+0]==1;
-				good_v = nha[is][iic+1]==1;
-				good_w = nha[is][iic+2]==1;
+				good_ua = nha[is][iic+0]==1;
+				good_va = nha[is][iic+1]==1;
+				good_wa = nha[is][iic+2]==1;
+				good_ut = nht[is][iic+0]==1;
+				good_vt = nht[is][iic+1]==1;
+				good_wt = nht[is][iic+2]==1;
 			
-				good_uvw = good_u && good_v && good_w; //Multiplicity test (NU=NV=NW=1)
-				uvwtst = uvwa[is][ic]-2.0;
-				
-				if (good_uvw && uvwtst>0.02 && uvwtst<0.056) { 
+				good_uvwa = good_ua && good_va && good_wa; //Multiplicity test (NU=NV=NW=1)
+				good_uvwt = good_ut && good_vt && good_wt; //Multiplicity test (NU=NV=NW=1)		   			
+
+				if (good_uvwa && (uvwa[is][ic]-2.0)>0.02 && (uvwa[is][ic]-2.0)<0.056) { 
 					int pixela=pix(strra[is][iic+0][0],strra[is][iic+1][0],strra[is][iic+2][0]);
 					ECAL_EVTPIXA.get(ist).fill(pixela,1.0);
 					for (int il=l1; il<l2 ; il++){
@@ -543,17 +607,27 @@ public class ECMon extends DetectorMonitor {
 						ECAL_ADCPIX.get(iss).fill(pixela,adcr[is][il+2][0]);
 						ECAL_ADCPIX2.get(iss).fill(pixela,Math.pow(adcr[is][il+2][0],2));
 						ECAL_APIX.get(iss).fill(pixela,adcr[is][il+2][0],1.0);
+						if (good_uvwt) {
+							if(l1==1) good_uvwt_save = good_uvwt;
+							if(l1==4 && good_uvwt_save){
+								double dtiff1=tdcr[is][il-1][0]-tdcr[is][il+2][0];
+								double dtiff2=ftdcr[is][il-1][0]-ftdcr[is][il+2][0];
+							//System.out.println("il A:ip T:ip "+il+" "+strra[is][il+2][0]+" "+strrt[is][il+2][0]);
+							//System.out.println("ftdc,tdc,diff1,diff2="+ftdcr[is][il+2][0]+" "+tdcr[is][il+2][0]+" "+dtiff1+" "+dtiff2);
+							//System.out.println(" ");
+							int iil=il ; if (iil>3) iil=iil-3;
+				   		    hid = (int) (1e7*(is+1)+10*tid+ic*cid+iil*lid);
+				   		    hpix = (H2D) getDir().getDirectory(labt[ic]).getObject("T"+hid);
+				   		    hpix.fill(dtiff1,strra[is][il+2][0]);
+				   		    hid = (int) (1e7*(is+1)+11*tid+ic*cid+iil*lid);
+				   		    hpix = (H2D) getDir().getDirectory(labt[ic]).getObject("T"+hid);
+				   		    hpix.fill(dtiff2,strra[is][il+2][0]);
+							}
+						}
 					}
 				}	
 			
-				good_u = nht[is][iic+0]==1;
-				good_v = nht[is][iic+1]==1;
-				good_w = nht[is][iic+2]==1;
-			
-				good_uvw = good_u && good_v && good_w; //Multiplicity test (NU=NV=NW=1)		   			
-				uvwtst = uvwt[is][ic]-2.0;
-				
-				if (good_uvw && uvwtst>0.02 && uvwtst<0.056) { 
+				if (good_uvwt && (uvwt[is][ic]-2.0)>0.02 && (uvwt[is][ic]-2.0)<0.056) { 
 					int pixelt=pix(strrt[is][iic+0][0],strrt[is][iic+1][0],strrt[is][iic+2][0]);
 					ECAL_EVTPIXT.get(ist).fill(pixelt,1.0);
 					for (int il=l1; il<l2 ; il++){
@@ -831,6 +905,7 @@ public class ECMon extends DetectorMonitor {
 	    		app.setPluginClass(monitor);	    		
 	    		monitor.init();
 	    		monitor.initDetector(0,6,args);
+			    TBrowser browser = new TBrowser(monitor.getDir());
 	    	}
 	    });
 	}

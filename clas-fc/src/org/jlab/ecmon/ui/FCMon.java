@@ -1,9 +1,12 @@
 package org.jlab.ecmon.ui;
 
+import javax.swing.SwingUtilities;
+
 import org.jlab.clasrec.main.DetectorMonitoring;
 import org.jlab.clasrec.rec.CLASMonitoring;
 import org.jlab.clasrec.utils.ServiceConfiguration;
 import org.root.histogram.*;
+import org.jlab.ecmon.utils.MonitorApp;
 import org.jlab.evio.clas12.EvioDataBank;
 import org.jlab.evio.clas12.EvioDataEvent;
 import org.root.group.TBrowser;
@@ -444,11 +447,15 @@ public class FCMon extends DetectorMonitoring {
         }
     }
 	public static void main(String[] args){
-		   FCMon calib = new FCMon();
-		   calib.init();
-		   CLASMonitoring monitor = new CLASMonitoring("/Users/colesmith/COATJAVA/dat/fc-muon-500k-s2.evio", calib);
-		   monitor.process();
-		   calib.analyze();
-		   TBrowser browser = new TBrowser(calib.getDir()); 
+		   FCMon calib = new FCMon();		   
+		    SwingUtilities.invokeLater(new Runnable() {
+		    	public void run() {
+		 		   calib.init();
+				   CLASMonitoring monitor = new CLASMonitoring("/Users/colesmith/COATJAVA/dat/fc-muon-500k-s2.evio", calib);
+				   monitor.process();
+				   calib.analyze();
+				   TBrowser browser = new TBrowser(calib.getDir()); 
+		    	}
+		    });		   
 		}
 }

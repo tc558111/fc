@@ -53,6 +53,8 @@ public class ECMon extends DetectorMonitor {
 	int pixmap[][]       = new int[3][1296];
 	int inProcess        = 0;
 	int thr              = 20;
+	String monpath       = "/Users/colesmith/COATJAVA";
+	String monfile       = "mondirectory";
 		
     public TreeMap<Integer,H1D>      ECAL_ADCPIX  = new TreeMap<Integer,H1D>();
     public TreeMap<Integer,H1D>      ECAL_ADCPIX2 = new TreeMap<Integer,H1D>();
@@ -83,17 +85,27 @@ public class ECMon extends DetectorMonitor {
 	
 	public ECMon(String[] args) {
 		super("ECMON","1.0","lcsmith");
+		fadc.load("/test/fc/fadc",10,"default");
+		if(args.length == 1) thr = Integer.parseInt(args[0]);		
+		if(args.length == 2) monpath = args[1];		
+		System.out.println("Threshold= "+thr);
+		System.out.println("monpath= "+monpath);
 	}
 	
 	public void init() {
 		inProcess=0;
 		initHistograms();
-	    fadc.load("/test/fc/fadc",10,"default");
 	    }
+	
+	public void close() {
+		this.mondirectory.write(monpath+"/"+monfile);
+		System.out.println("Writing out histograms");
+	}
 	
     public TDirectory getDir(){
         return this.mondirectory;
     }	
+    
 	public void initHistograms() {
 		
 		int    nbn1[] = {68,36,36}; 
@@ -148,16 +160,13 @@ public class ECMon extends DetectorMonitor {
 		}
 	}
 	
-	public void initDetector(int is1, int is2, String[] args) {
+	public void initDetector(int is1, int is2) {
 		
 		System.out.println("initecgui():");
 		palette.set(3);
 		ecpixdef();
 		ecpixang();
 		ecpixmap();
-		
-		if(args.length > 0) thr = Integer.parseInt(args[0]);
-		System.out.println("Threshold="+thr);
 		
 		LAYMAP.put(0, toTreeMap(ec_cthpix));
 						
@@ -194,6 +203,7 @@ public class ECMon extends DetectorMonitor {
 		app.view.addDetectorListener(this);
 
 	}
+	
 	public DetectorShape2D getPixel(int sector, int layer, int pixel){
 
 	    DetectorShape2D shape = new DetectorShape2D(DetectorType.ECIN,sector,layer,pixel);
@@ -514,8 +524,7 @@ public class ECMon extends DetectorMonitor {
 	          	  strra[is-1][iv-1][inh-1] = ip;
 	   		      ECAL_ADC.get(iss).fill(adc,ip,1.0);
 	   		      hid = (int) (1e7*is+10*tid+ic*cid+il*lid);
-	   		      hpix = (H2D) getDir().getDirectory(laba[ic]).getObject("A"+hid);
-	   		      hpix.fill(adc,ip);
+	   		      hpix = (H2D) getDir().getDirectory(laba[ic]).getObject("A"+hid); hpix.fill(adc,ip);
 	   	        }
 			}
 		}
@@ -904,7 +913,7 @@ public class ECMon extends DetectorMonitor {
 	    		app = new MonitorApp();
 	    		app.setPluginClass(monitor);	    		
 	    		monitor.init();
-	    		monitor.initDetector(0,6,args);
+	    		monitor.initDetector(0,6);
 			    TBrowser browser = new TBrowser(monitor.getDir());
 	    	}
 	    });

@@ -40,10 +40,12 @@ public class CalibrationData {
         double[] ype = new double[size]; 
         int n=0;
         for(int loop = min; loop < max; loop++){
-            xp[n]  = loop; 
-            xpe[n] = 0.;
-            yp[n]  = data[loop];
-            ype[n] = error[loop];
+        	if (data[loop]>20) {
+        		xp[n]  = loop; 
+        		xpe[n] = 0.;
+        		yp[n]  = data[loop];
+        		ype[n] = error[loop];
+        	}
             n++;
         }
 

@@ -93,6 +93,7 @@ public class ECMon extends DetectorMonitor {
 	public void init() {
 		inProcess=0;
 		initHistograms();
+		collection.clear();
 	    }
 	
 	public void close() {
@@ -741,6 +742,7 @@ public class ECMon extends DetectorMonitor {
 		
 		TreeMap<Integer, Object> map;
 		CalibrationData fits ; 	
+		boolean doCalibration=false;
 		double meanerr[] = new double[1296];
 		int ist;
 		
@@ -750,10 +752,11 @@ public class ECMon extends DetectorMonitor {
 			for (int il=il1 ; il<il2 ; il++) {
 				double adc[]   = ECAL_PIXA.get(is*10+il).getData();
 				double adcsq[] = ECAL_PIXA2.get(is*10+il).getData();
-				
+				doCalibration = false;
 				for (int ipix=0 ; ipix<1296 ; ipix++){
 					if (cnts[ipix]>2) {
 						meanerr[ipix]=Math.sqrt((adcsq[ipix]-adc[ipix]*adc[ipix])/(cnts[ipix]-1));
+						doCalibration = true;
 					}else{
 						meanerr[ipix]=0.;
 					}
@@ -763,11 +766,13 @@ public class ECMon extends DetectorMonitor {
 				double meanmap[] = (double[]) map.get(1);
 				
 				for (int ip=ip1 ; ip<ip2 ; ip++){
-					fits = new CalibrationData(is,il,ip);
-					fits.getDescriptor().setType(DetectorType.EC);
-					fits.addGraph(this.getpixels(il,ip+1,meanmap),this.getpixels(il,ip+1,meanerr));
-					fits.analyze();
-					collection.add(fits.getDescriptor(),fits);
+					if (doCalibration){
+						fits = new CalibrationData(is,il,ip);
+						fits.getDescriptor().setType(DetectorType.EC);
+						fits.addGraph(this.getpixels(il,ip+1,meanmap),this.getpixels(il,ip+1,meanerr));
+						fits.analyze();
+						collection.add(fits.getDescriptor(),fits);
+					}
 				}
 			}
 		}
@@ -828,7 +833,11 @@ public class ECMon extends DetectorMonitor {
 				canvas.divide(2,2);
 
 				canvas.cd(0);
-				canvas.draw(collection.get(is,layer,component).getGraph(0));
+				
+				if (collection.hasEntry(is, layer, component)) {
+					
+				canvas.draw(collection.get(is,layer,component).getRawGraph(0));
+				canvas.draw(collection.get(is,layer,component).getFitGraph(0),"same");
 				canvas.draw(collection.get(is,layer,component).getFunc(0),"same");
 				
 				for (int ip=0; ip<36 ; ip++) {
@@ -843,7 +852,7 @@ public class ECMon extends DetectorMonitor {
 					xp[ip]=ip ; xpe[ip]=0. ; 
 					if (gain>0) gaine = Math.min(30,gaine); vgain[ip]  = gain; vgaine[ip] = gaine;
 		            vatt[ip] = Math.min(80, att) ; vatte[ip]=atte;
-		            vchi2[ip] = chi2 ; vchi2e[ip]=0.;   
+		            vchi2[ip] = Math.min(15, chi2) ; vchi2e[ip]=0.;   
 				}
 				
 	            GraphErrors gainGraph = new GraphErrors(xp,vgain,xpe,vgaine);
@@ -859,6 +868,8 @@ public class ECMon extends DetectorMonitor {
 	            canvas.cd(1); canvas.draw(chi2Graph); 
 	            canvas.cd(2); canvas.draw(gainGraph); canvas.draw(f1,"same"); 
 	            canvas.cd(3); canvas.draw(attGraph); 
+	            
+				}
 			}
 		}
 	}

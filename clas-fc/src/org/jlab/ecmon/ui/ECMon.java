@@ -11,6 +11,7 @@ import org.jlab.clas12.calib.DetectorShape2D;
 import org.jlab.clas12.detector.EventDecoder;
 import org.jlab.clas12.detector.FADCConfig;
 import org.jlab.clas12.detector.FADCConfigLoader;
+import org.root.func.F1D;
 import org.root.group.TBrowser;
 import org.root.group.TDirectory;
 import org.root.histogram.*;
@@ -28,6 +29,7 @@ import java.util.Arrays;
 import javax.swing.SwingUtilities;
 
 import org.jlab.evio.clas12.*;
+import org.root.data.DataSetXY;
 import org.jlab.data.io.DataEvent;
 import org.jlab.ecmon.utils.*;
 
@@ -40,10 +42,6 @@ public class ECMon extends DetectorMonitor {
 	TDirectory mondirectory = new TDirectory(); 
 	
 	DetectorCollection<CalibrationData> collection = new DetectorCollection<CalibrationData>();
-    double[] xp  = new double[36];
-    double[] yp  = new double[36]; 
-    double[] xpe = new double[36];
-    double[] ype = new double[36]; 
     
 	ColorPalette              palette = new ColorPalette();
 	
@@ -558,7 +556,8 @@ public class ECMon extends DetectorMonitor {
          	int il  = bank.getInt("view",i);  
 			    adc = bank.getInt("ADC",i);
         	   tdcc = bank.getInt("TDC",i);
-				//System.out.println("sector,layer,stack,pmt,adc,tdc= "+is+" "+il+" "+ic+" "+ip+" "+adc+" "+tdcc);
+        	   tdcf = tdcc;
+			//System.out.println("sector,layer,stack,pmt,adc,tdc= "+is+" "+il+" "+ic+" "+ip+" "+adc+" "+tdcc);
 		     
         	tdc=(((float)tdcc-(float)mc_t*1000)-tdcmax+1340000)/1000;
 		   	        	
@@ -578,8 +577,13 @@ public class ECMon extends DetectorMonitor {
 		          nha[is-1][iv-1]++;
 		          inh = nha[is-1][iv-1];
 		           adcr[is-1][iv-1][inh-1] = adc;
+		          ftdcr[is-1][iv-1][inh-1] = tdcf;
 		          strra[is-1][iv-1][inh-1] = ip;
+		          if (is==2){
 		   		  ECAL_ADC.get(iss).fill(adc,ip,1.0);
+	   		      hid = (int) (1e7*is+10*tid+ic*cid+il*lid);
+	   		      hpix = (H2D) getDir().getDirectory(laba[ic]).getObject("A"+hid); hpix.fill(adc,ip);
+		          }
 		   	    }		    	
 		    }
 		}
@@ -589,8 +593,9 @@ public class ECMon extends DetectorMonitor {
 		boolean good_ua, good_va, good_wa, good_uvwa;
 		boolean good_ut, good_vt, good_wt, good_uvwt;
 		boolean good_uvwt_save=false;
-		double uvwtst;
 		int iic,l1,l2,ist;
+		TreeMap<Integer, Object> map= (TreeMap<Integer, Object>) LAYMAP.get(0);
+		double pixelLength[] = (double[]) map.get(1);
 		
 		for (int is=0 ; is<6 ; is++) {		
 			for (int ic=1; ic<3 ; ic++) {
@@ -609,14 +614,17 @@ public class ECMon extends DetectorMonitor {
 				if (good_uvwa && (uvwa[is][ic]-2.0)>0.02 && (uvwa[is][ic]-2.0)<0.056) { 
 					int pixela=pix(strra[is][iic+0][0],strra[is][iic+1][0],strra[is][iic+2][0]);
 					ECAL_EVTPIXA.get(ist).fill(pixela,1.0);
+					
 					for (int il=l1; il<l2 ; il++){
 						int iss = is*10+il;
-						ECAL_ADC_PIX.get(iss).fill(adcr[is][il+2][0],strra[is][il+2][0],1.0);
-						ECAL_PIXASUM.get(ist).fill(pixela,adcr[is][il+2][0]);
-						ECAL_ADCPIX.get(iss).fill(pixela,adcr[is][il+2][0]);
-						ECAL_ADCPIX2.get(iss).fill(pixela,Math.pow(adcr[is][il+2][0],2));
-						ECAL_APIX.get(iss).fill(pixela,adcr[is][il+2][0],1.0);
-						if (good_uvwt) {
+						double adcc = adcr[is][il+2][0]/pixelLength[pixela-1];
+						//double adcc = adcr[is][il+2][0];
+						ECAL_ADC_PIX.get(iss).fill(adcc,strra[is][il+2][0],1.0);
+						ECAL_PIXASUM.get(ist).fill(pixela,adcc);
+						ECAL_ADCPIX.get(iss).fill(pixela,adcc);
+						ECAL_ADCPIX2.get(iss).fill(pixela,Math.pow(adcc,2));
+						ECAL_APIX.get(iss).fill(pixela,adcc,1.0);
+						if (good_uvwt&&is==1) {
 							if(l1==1) good_uvwt_save = good_uvwt;
 							if(l1==4 && good_uvwt_save){
 								double dtiff1=tdcr[is][il-1][0]-tdcr[is][il+2][0];
@@ -782,7 +790,20 @@ public class ECMon extends DetectorMonitor {
 	
 	public void canvasAttenuation(DetectorDescriptor desc, EmbeddedCanvas canvas) {
 		
-		int is        = desc.getSector();
+	    double[] xp     = new double[36];
+	    double[] xpe    = new double[36];
+	    double[] yp     = new double[36]; 
+	    double[] vgain  = new double[36];
+	    double[] vgaine = new double[36]; 
+	    double[] vatt   = new double[36];
+	    double[] vatte  = new double[36]; 
+	    double[] vchi2  = new double[36];
+	    double[] vchi2e = new double[36]; 
+	    double[] mip    = {100.,160.};
+	    
+		String otab[]={"Ui STRIPS","Vi STRIPS","Wi STRIPS","Uo STRIPS","Vo STRIPS","Wo STRIPS"};
+	    
+	    int is        = desc.getSector();
 		int layer     = desc.getLayer();
 		int component = desc.getComponent();
 		
@@ -803,20 +824,41 @@ public class ECMon extends DetectorMonitor {
 		 
 		if (layer<7) {
 			if (inProcess>0) {
-			    if (inProcess==1)  this.analyzeAttenuation(is,is+1,layer,layer+1,component,component+1); //Only analyze the mouseover component
-				canvas.divide(1,1); canvas.cd(0);
+			    if (inProcess==1)  this.analyzeAttenuation(is,is+1,layer,layer+1,0,36);  
+				canvas.divide(2,2);
+
+				canvas.cd(0);
 				canvas.draw(collection.get(is,layer,component).getGraph(0));
 				canvas.draw(collection.get(is,layer,component).getFunc(0),"same");
-/*		        yp[component]  = collection.get(1,layer,component).getFunc(0).getParameter(0);
-		        ype[component] = collection.get(1,layer,component).getFunc(0).parameter(0).error();	
-		        for(int loop = 0; loop < 36; loop++){ xp[loop] = loop; xpe[loop]=0.;}
-		        gainGraph = new GraphErrors(xp,yp,xpe,ype);		        
-		        yp[component] = -1./collection.get(1,layer,component).getFunc(0).getParameter(1);
-		        ype[component] = 1./collection.get(1,layer,component).getFunc(0).parameter(1).error();			        
-		        attGraph = new GraphErrors(xp,yp,xpe,ype);
-				canvas.cd(1); canvas.draw(gainGraph);
-				canvas.cd(2); canvas.draw(attGraph);
-*/				
+				
+				for (int ip=0; ip<36 ; ip++) {
+					double gain  = collection.get(1,layer,ip).getFunc(0).getParameter(0);
+					double gaine = collection.get(1,layer,ip).getFunc(0).parameter(0).error();	
+					double att   = -collection.get(1,layer,ip).getFunc(0).getParameter(1);
+					double atte  = collection.get(1,layer,ip).getFunc(0).parameter(1).error();
+					double chi2  = collection.get(1,layer,ip).getChi2(0);
+					
+					if (att>0) att=1./att; else att=0 ; 
+					atte = Math.min(30,att*att*atte);
+					xp[ip]=ip ; xpe[ip]=0. ; 
+					if (gain>0) gaine = Math.min(30,gaine); vgain[ip]  = gain; vgaine[ip] = gaine;
+		            vatt[ip] = Math.min(80, att) ; vatte[ip]=atte;
+		            vchi2[ip] = chi2 ; vchi2e[ip]=0.;   
+				}
+				
+	            GraphErrors gainGraph = new GraphErrors(xp,vgain,xpe,vgaine);
+	            GraphErrors  attGraph = new GraphErrors(xp,vatt,xpe,vatte);
+	            GraphErrors chi2Graph = new GraphErrors(xp,vchi2,xpe,vchi2e);
+	            F1D f1 = new F1D("p0",0,37); f1.setParameter(0,mip[io-1]); f1.setLineStyle(2);
+	            gainGraph.setMarkerStyle(2); gainGraph.setMarkerSize(6);gainGraph.setMarkerColor(2);
+	             attGraph.setMarkerStyle(2);  attGraph.setMarkerSize(6); attGraph.setMarkerColor(2);
+	            chi2Graph.setMarkerStyle(2); chi2Graph.setMarkerSize(6);chi2Graph.setMarkerColor(2);
+	            gainGraph.setXTitle(otab[lay-1]) ; gainGraph.setYTitle("PMT GAIN")    ; gainGraph.setTitle(" ");
+	             attGraph.setXTitle(otab[lay-1]) ;  attGraph.setYTitle("ATTENUATION") ;  attGraph.setTitle(" ");
+		        chi2Graph.setXTitle(otab[lay-1]) ; chi2Graph.setYTitle("FIT CHI^2")   ; chi2Graph.setTitle(" ");
+	            canvas.cd(1); canvas.draw(chi2Graph); 
+	            canvas.cd(2); canvas.draw(gainGraph); canvas.draw(f1,"same"); 
+	            canvas.cd(3); canvas.draw(attGraph); 
 			}
 		}
 	}
@@ -914,7 +956,6 @@ public class ECMon extends DetectorMonitor {
 	    		app.setPluginClass(monitor);	    		
 	    		monitor.init();
 	    		monitor.initDetector(0,6);
-			    TBrowser browser = new TBrowser(monitor.getDir());
 	    	}
 	    });
 	}

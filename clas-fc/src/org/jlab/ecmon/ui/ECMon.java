@@ -758,7 +758,7 @@ public class ECMon extends DetectorMonitor {
 						meanerr[ipix]=Math.sqrt((adcsq[ipix]-adc[ipix]*adc[ipix])/(cnts[ipix]-1));
 						doCalibration = true;
 					}else{
-						meanerr[ipix]=0.;
+						meanerr[ipix]=50.;
 					}
 				}
 				

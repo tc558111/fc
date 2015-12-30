@@ -45,8 +45,8 @@ public class CalibrationData {
         		xpe[n] = 0.;
         		yp[n]  = data[loop];
         		ype[n] = error[loop];
+        		n++;
         	}
-            n++;
         }
 
         GraphErrors  graph = new GraphErrors(xp,yp,xpe,ype);   

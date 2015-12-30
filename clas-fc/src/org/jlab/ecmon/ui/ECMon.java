@@ -754,12 +754,20 @@ public class ECMon extends DetectorMonitor {
 				double adcsq[] = ECAL_PIXA2.get(is*10+il).getData();
 				doCalibration = false;
 				for (int ipix=0 ; ipix<1296 ; ipix++){
+					meanerr[ipix]=0;
 					if (cnts[ipix]>2) {
 						meanerr[ipix]=Math.sqrt((adcsq[ipix]-adc[ipix]*adc[ipix])/(cnts[ipix]-1));
 						doCalibration = true;
-					}else{
-						meanerr[ipix]=50.;
 					}
+					if (cnts[ipix]==2) {
+						meanerr[ipix]=20.;
+						doCalibration = true;
+					}					
+					if (cnts[ipix]==1) {
+						meanerr[ipix]=50.;
+						doCalibration = true;
+					}
+					  
 				}
 				
 				map = (TreeMap<Integer, Object>)  LAYMAP.get(is*50+10+il);

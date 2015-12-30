@@ -65,7 +65,7 @@ public class CalibrationData {
          		xpfit[n]  = xpraw[loop]; 
         		xpfite[n] = xprawe[loop];
         		ypfit[n]  = ypraw[loop];
-        		ypfite[n] = Math.max(0.1,yprawe[loop]);
+        		ypfite[n] = yprawe[loop];
         		n++;
         	}
         }

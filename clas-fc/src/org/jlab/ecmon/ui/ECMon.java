@@ -456,11 +456,10 @@ public class ECMon extends DetectorMonitor {
 			}
 		}
 		
-		double mc_t=0.0;
 		float tdcmax=100000;
 		boolean debug=false;
 		int adc,ped,npk=0,pedref=0,timf=0,timc=0;
-		double tdc=0,tdcf=0;
+		double mc_t=0.,tdc=0,tdcf=0;
         H2D hpix;
 		// Process raw banks
 		
@@ -470,6 +469,7 @@ public class ECMon extends DetectorMonitor {
 					
     		decoder.decode(event);
             List<DetectorBankEntry> strips = decoder.getDataEntries("EC");
+            
             for(DetectorBankEntry strip : strips) {
                 adc=ped=pedref=npk=timf=timc=0 ; tdc=tdcf=0;
             	//System.out.println(strip);
@@ -747,14 +747,15 @@ public class ECMon extends DetectorMonitor {
 		int ist;
 		
 		for (int is=is1 ; is<is2 ; is++) {
-			if (il1<4) ist=is*10+7 ; else ist=is*10+8 ;
-			double cnts[]  = ECAL_EVTPIXA.get(ist).getData();
 			for (int il=il1 ; il<il2 ; il++) {
+				if (il<4) ist=is*10+7 ; else ist=is*10+8 ;
+				double cnts[]  = ECAL_EVTPIXA.get(ist).getData();
 				double adc[]   = ECAL_PIXA.get(is*10+il).getData();
 				double adcsq[] = ECAL_PIXA2.get(is*10+il).getData();
 				doCalibration = false;
 				for (int ipix=0 ; ipix<1296 ; ipix++){
 					meanerr[ipix]=0;
+					//if (is==1) System.out.println("il,ipix,cnts,adc = "+il+" "+ipix+" "+cnts[ipix]+" "+adc[ipix]);
 					if (cnts[ipix]>2) {
 						meanerr[ipix]=Math.sqrt((adcsq[ipix]-adc[ipix]*adc[ipix])/(cnts[ipix]-1));
 						doCalibration = true;
@@ -837,11 +838,10 @@ public class ECMon extends DetectorMonitor {
 		 
 		if (layer<7) {
 			if (inProcess>0) {
-			    if (inProcess==1)  this.analyzeAttenuation(is,is+1,layer,layer+1,0,36);  
+			    if (inProcess==1)  {this.analyzeAttenuation(is,is+1,layer,layer+1,0,36);}
 				canvas.divide(2,2);
 
 				canvas.cd(0);
-				
 				if (collection.hasEntry(is, layer, component)) {
 					
 				canvas.draw(collection.get(is,layer,component).getRawGraph(0));

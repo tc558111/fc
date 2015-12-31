@@ -50,7 +50,10 @@ public class CalibrationData {
     		xpraw[loop]  = loop; 
     		xprawe[loop] = 0.;
     		ypraw[loop]  = data[loop];
-    		yprawe[loop] = Math.max(0.1,error[loop]);        	
+    		yprawe[loop] = Math.max(0.1,error[loop]); 
+    		if(getDescriptor().getSector()==1){
+    		//System.out.println("loop,il,ic,ypraw,ypawre = "+loop+" "+getDescriptor().getLayer()+" "+getDescriptor().getComponent()+" "+ypraw[loop]+" "+yprawe[loop]);
+    		}
         }
         
         double[] xpfit  = new double[n];

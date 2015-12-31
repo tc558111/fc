@@ -860,7 +860,7 @@ public class ECMon extends DetectorMonitor {
 					xp[ip]=ip ; xpe[ip]=0. ; 
 					if (gain>0) gaine = Math.min(30,gaine); vgain[ip]  = gain; vgaine[ip] = gaine;
 		            vatt[ip] = Math.min(80, att) ; vatte[ip]=atte;
-		            vchi2[ip] = Math.min(15, chi2) ; vchi2e[ip]=0.;   
+		            vchi2[ip] = Math.min(4, chi2) ; vchi2e[ip]=0.;   
 				}
 				
 	            GraphErrors gainGraph = new GraphErrors(xp,vgain,xpe,vgaine);
@@ -872,7 +872,7 @@ public class ECMon extends DetectorMonitor {
 	            chi2Graph.setMarkerStyle(2); chi2Graph.setMarkerSize(6);chi2Graph.setMarkerColor(2);
 	            gainGraph.setXTitle(otab[lay-1]) ; gainGraph.setYTitle("PMT GAIN")    ; gainGraph.setTitle(" ");
 	             attGraph.setXTitle(otab[lay-1]) ;  attGraph.setYTitle("ATTENUATION") ;  attGraph.setTitle(" ");
-		        chi2Graph.setXTitle(otab[lay-1]) ; chi2Graph.setYTitle("FIT CHI^2")   ; chi2Graph.setTitle(" ");
+		        chi2Graph.setXTitle(otab[lay-1]) ; chi2Graph.setYTitle("REDUCED CHI^2") ; chi2Graph.setTitle(" ");
 	            canvas.cd(1); canvas.draw(chi2Graph); 
 	            canvas.cd(2); canvas.draw(gainGraph); canvas.draw(f1,"same"); 
 	            canvas.cd(3); canvas.draw(attGraph); 

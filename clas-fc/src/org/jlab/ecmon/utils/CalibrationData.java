@@ -18,6 +18,7 @@ public class CalibrationData {
     private List<F1D>          functions  = new ArrayList<F1D>();
     private List<Double>  chi2            = new ArrayList<Double>(); 
     private int dataSize; 
+    private int fitSize;
     
     public CalibrationData(int sector, int layer, int component){
         this.desc.setSectorLayerComponent(sector, layer, component);
@@ -61,6 +62,7 @@ public class CalibrationData {
         double[] xpfite = new double[n];
         double[] ypfite = new double[n];  
         
+        fitSize = n;
         // For fit graph
         n=0;
         for(int loop = 0; loop < data.length; loop++){
@@ -87,8 +89,11 @@ public class CalibrationData {
         this.fitgraphs.add(graph);
         
         graph = new GraphErrors(xpraw,ypraw,xprawe,yprawe);   
-        graph.setMarkerColor(2);
-        graph.setMarkerStyle(2);  graph.setMarkerSize(6); graph.setMarkerColor(4);
+        graph.setXTitle("Pixel Number");
+        graph.setYTitle("Mean ADC");
+        graph.setMarkerStyle(2);  
+        graph.setMarkerSize(6); 
+        graph.setMarkerColor(4);
         
         graph.setTitle("EXP FIT: Sector "+sector+" "+otab[view-1]+""+strip);        
         this.rawgraphs.add(graph);
@@ -112,8 +117,19 @@ public class CalibrationData {
             	func.setParLimits(0,p0min,p0max);
             	func.setParLimits(1,-0.5,-0.001);
             	func.setLineColor(2);
+ 
             	this.fitgraphs.get(loop).fit(this.functions.get(loop));	//Fit data
-            	this.chi2.add(DataFitter.getChiSquareFunc(this.fitgraphs.get(loop),func));
+            	double yfit,ydat,yerr,ch=0;
+            	if (fitSize>3) {
+            		for (int i=0 ; i<fitSize ; i++) {
+            			yfit = func.eval(this.fitgraphs.get(loop).getDataX(i));
+            			ydat = this.fitgraphs.get(loop).getDataY(i);
+            			yerr = this.fitgraphs.get(loop).getErrorY(i);
+            			ch   = ch + Math.pow((ydat-yfit)/yerr,2);
+            		}
+            		ch = ch/(fitSize-func.getNParams()-1);
+            	}
+            	this.chi2.add(ch);
             }
         }
         

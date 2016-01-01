@@ -95,7 +95,7 @@ public class CalibrationData {
         graph.setMarkerSize(6); 
         graph.setMarkerColor(4);
         
-        graph.setTitle("EXP FIT: Sector "+sector+" "+otab[view-1]+""+strip);        
+        graph.setTitle("EXP FIT: Sector "+sector+" "+otab[view-1]+" "+strip);        
         this.rawgraphs.add(graph);
         
         F1D f1 = new F1D("exp",0,max);

@@ -43,8 +43,7 @@ public class MonitorApp extends JFrame implements ActionListener {
     
 	public DetectorShapeTabView         view;  
 	public CanvasViewPanel        canvasView;
-	public EmbeddedCanvas             canvas;   
-	public EmbeddedCanvas             canvas1;   
+	public EmbeddedCanvas             canvas0,canvas1,canvas2,canvas3;   
     
     private JPanel bottom;
     private JButton startButton;
@@ -81,12 +80,16 @@ public class MonitorApp extends JFrame implements ActionListener {
     
     private void initComponents(){
 
-		canvas = new EmbeddedCanvas(800,400,3,1);
+		canvas0 = new EmbeddedCanvas(800,400,3,1);
 		canvas1 = new EmbeddedCanvas(800,400,2,2);
+		canvas2 = new EmbeddedCanvas(800,400,3,2);
+		canvas3 = new EmbeddedCanvas(800,400,3,2);
 		view   = new DetectorShapeTabView();
 		canvasView = new CanvasViewPanel();
-		canvasView.addCanvasLayer("Occupancy",canvas);
+		canvasView.addCanvasLayer("Occupancy",canvas0);
 		canvasView.addCanvasLayer("Attenuation",canvas1);
+		canvasView.addCanvasLayer("Pedestals",canvas2);
+		canvasView.addCanvasLayer("Timing",canvas3);
 		
     	setLayout(new BorderLayout(3,3));
     	

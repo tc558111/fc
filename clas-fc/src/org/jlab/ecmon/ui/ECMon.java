@@ -652,7 +652,7 @@ public class ECMon extends DetectorMonitor {
 								double dtiff1=tdcr[is][il-1][0]-tdcr[is][il+2][0];
 								double dtiff2=ftdcr[is][il-1][0]-ftdcr[is][il+2][0];
 							//System.out.println("il A:ip T:ip "+il+" "+strra[is][il+2][0]+" "+strrt[is][il+2][0]);
-							System.out.println("ftdc,tdc,diff1,diff2="+ftdcr[is][il+2][0]+" "+tdcr[is][il+2][0]+" "+dtiff1+" "+dtiff2);
+							//System.out.println("ftdc,tdc,diff1,diff2="+ftdcr[is][il+2][0]+" "+tdcr[is][il+2][0]+" "+dtiff1+" "+dtiff2);
 							//System.out.println(" ");
 							int iil=il ; if (iil>3) iil=iil-3;
 				   		    hid = (int) (1e7*(is+1)+10*tid+ic*cid+iil*lid);

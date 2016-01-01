@@ -12,7 +12,6 @@ import org.jlab.clas12.detector.EventDecoder;
 import org.jlab.clas12.detector.FADCConfig;
 import org.jlab.clas12.detector.FADCConfigLoader;
 import org.root.func.F1D;
-import org.root.group.TBrowser;
 import org.root.group.TDirectory;
 import org.root.histogram.*;
 import org.root.pad.EmbeddedCanvas;
@@ -121,16 +120,16 @@ public class ECMon extends DetectorMonitor {
 	    TDirectory monADC[] = new TDirectory[3];
 	    TDirectory monTDC[] = new TDirectory[3];
 	    TDirectory monPED[] = new TDirectory[3];
-	    //TDirectory monPMT[] = new TDirectory[3];
-	    //TDirectory monATT[] = new TDirectory[3];
+	    TDirectory monPMT[] = new TDirectory[3];
+	    TDirectory monATT[] = new TDirectory[3];
 	    
 		for (int ic=1 ; ic<3 ; ic++) {  //ic=0,1,2 -> PCAL,ECALinner,ECALouter
 			
 			monADC[ic] = new TDirectory(labadc[ic]);
 			monTDC[ic] = new TDirectory(labtdc[ic]); 
 			monPED[ic] = new TDirectory(labped[ic]);
-			//monPMT[ic] = new TDirectory(labpmt[ic]); 
-			//monATT[ic] = new TDirectory(labatt[ic]);
+			monPMT[ic] = new TDirectory(labpmt[ic]); 
+			monATT[ic] = new TDirectory(labatt[ic]);
     			
     		hid=iss+ic*cid;  
     		for (int il=1 ; il<4 ; il++) {
@@ -140,10 +139,8 @@ public class ECMon extends DetectorMonitor {
     			monTDC[ic].add(new H2D("TDC"+(int)(hid+11*tid+il*lid),60,-15.0,15.0,nbn1[ic],0.0,nbn2[ic]));     		 
      		}    	
     		getDir().addDirectory(monADC[ic]);
-    		getDir().addDirectory(monTDC[ic]);
     		getDir().addDirectory(monPED[ic]);
-    		//getDir().addDirectory(monPMT[ic]);
-    		//getDir().addDirectory(monATT[ic]);
+    		getDir().addDirectory(monTDC[ic]);
     	}
 		
 		for (is=0;is<6;is++) {			
@@ -655,7 +652,7 @@ public class ECMon extends DetectorMonitor {
 								double dtiff1=tdcr[is][il-1][0]-tdcr[is][il+2][0];
 								double dtiff2=ftdcr[is][il-1][0]-ftdcr[is][il+2][0];
 							//System.out.println("il A:ip T:ip "+il+" "+strra[is][il+2][0]+" "+strrt[is][il+2][0]);
-							//System.out.println("ftdc,tdc,diff1,diff2="+ftdcr[is][il+2][0]+" "+tdcr[is][il+2][0]+" "+dtiff1+" "+dtiff2);
+							System.out.println("ftdc,tdc,diff1,diff2="+ftdcr[is][il+2][0]+" "+tdcr[is][il+2][0]+" "+dtiff1+" "+dtiff2);
 							//System.out.println(" ");
 							int iil=il ; if (iil>3) iil=iil-3;
 				   		    hid = (int) (1e7*(is+1)+10*tid+ic*cid+iil*lid);
@@ -1073,7 +1070,7 @@ public class ECMon extends DetectorMonitor {
 	    		app.setPluginClass(monitor);	    		
 	    		monitor.init();
 	    		monitor.initDetector(0,6);
-	    		TBrowser browser = new TBrowser(monitor.getDir());	    	}
+	    	}
 	    });
 	}
 

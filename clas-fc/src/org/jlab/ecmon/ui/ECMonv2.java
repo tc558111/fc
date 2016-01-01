@@ -695,7 +695,7 @@ public class ECMonv2 extends DetectorMonitor {
 	public void detectorSelected(DetectorDescriptor desc) {
 		
 		this.analyze(inProcess);
-		this.canvasOccupancy(desc, app.canvas);
+		this.canvasOccupancy(desc, app.canvas0);
 		this.canvasAttenuation(desc, app.canvas1);	
 	}
 	

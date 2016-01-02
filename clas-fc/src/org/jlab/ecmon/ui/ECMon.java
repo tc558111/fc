@@ -49,7 +49,7 @@ public class ECMon extends DetectorMonitor {
 	int inProcess        = 0; //0=init 1=processing 2=end-of-run 3=post-run
 	boolean inMC         = false; //true=MC false=DATA
 	int thr              = 20;
-	String monpath       = "/Users/colesmith/COATJAVA";
+	String monpath       = System.getenv("COATJAVA");
 	String monfile       = "mondirectory";
 	String labadc[] 	 = {"monitor/pcal/adc","monitor/ecinner/adc","monitor/ecouter/adc"}; 
 	String labtdc[]    	 = {"monitor/pcal/tdc","monitor/ecinner/tdc","monitor/ecouter/tdc"}; 

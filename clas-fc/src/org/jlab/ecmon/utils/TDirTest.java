@@ -7,7 +7,7 @@ public class TDirTest {
 	
 	TDirectory         mondirectory = new TDirectory(); 	
 	
-	String monpath       = "/Users/colesmith/COATJAVA";
+	String monpath       = System.getenv("COATJAVA");
 	String monfile       = "mondirectory";
 	String labadc[] 	 = {"monitor/pcal/adc","monitor/ecinner/adc","monitor/ecouter/adc"}; 
 	String labtdc[]    	 = {"monitor/pcal/tdc","monitor/ecinner/tdc","monitor/ecouter/tdc"}; 

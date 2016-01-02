@@ -99,10 +99,11 @@ public class ECMon extends DetectorMonitor {
 	}
 	
 	public void close() {
-		this.mondirectory.write(monpath+"/"+monfile);
-		System.out.println("Writing out histograms");
+		String file=monpath+"/"+monfile;
+		this.mondirectory.write(file);
+		System.out.println("Writing out histograms to "+file);
 		
-	}
+	} 
 	
     public TDirectory getDir(){
         return this.mondirectory;

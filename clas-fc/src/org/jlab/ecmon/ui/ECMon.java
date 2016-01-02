@@ -141,6 +141,8 @@ public class ECMon extends DetectorMonitor {
     		getDir().addDirectory(monADC[ic]);
     		getDir().addDirectory(monPED[ic]);
     		getDir().addDirectory(monTDC[ic]);
+    		getDir().addDirectory(monPMT[ic]);
+    		getDir().addDirectory(monATT[ic]);
     	}
 		
 		for (is=0;is<6;is++) {			

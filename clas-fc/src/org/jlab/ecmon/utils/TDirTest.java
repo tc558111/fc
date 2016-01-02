@@ -60,15 +60,15 @@ public class TDirTest {
     		hid=iss+ic*cid;  
     		
     		for (int il=1 ; il<4 ; il++) {
-    			monADC[ic].add(new H2D("ADC"+(int)(hid+10*tid+il*lid),50,0.0,200.0,nbn1[ic],0.0,nbn2[ic])); 
+    			monADC[ic].add(new H2D("A"+(int)(hid+10*tid+il*lid),50,0.0,200.0,nbn1[ic],0.0,nbn2[ic])); 
     			monPED[ic].add(new H2D("PED"+(int)(hid+10*tid+il*lid),20,-10.,10.0,nbn1[ic],0.0,nbn2[ic])); 
-    			monTDC[ic].add(new H2D("TDC"+(int)(hid+10*tid+il*lid),60,-15.0,15.0,nbn1[ic],0.0,nbn2[ic]));     		 
-    			monTDC[ic].add(new H2D("TDC"+(int)(hid+11*tid+il*lid),60,-15.0,15.0,nbn1[ic],0.0,nbn2[ic]));     		 
+    			monTDC[ic].add(new H2D("T"+(int)(hid+10*tid+il*lid),60,-15.0,15.0,nbn1[ic],0.0,nbn2[ic]));     		 
+    			monTDC[ic].add(new H2D("T"+(int)(hid+11*tid+il*lid),60,-15.0,15.0,nbn1[ic],0.0,nbn2[ic]));     		 
      		}    	
     		getDir().addDirectory(monADC[ic]);
     		getDir().addDirectory(monPED[ic]);
-    		getDir().addDirectory(monTDC[ic]);
-    		getDir().addDirectory(monPMT[ic]);
+     		getDir().addDirectory(monTDC[ic]);
+     		getDir().addDirectory(monPMT[ic]);
     		getDir().addDirectory(monATT[ic]);
     		
 		}

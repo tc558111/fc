@@ -30,14 +30,14 @@ public class TDirTest {
         
     }	
 	
-	public void open() {
+	public void read() {
 		String file=monpath+"/"+monfile+".0.evio";	
 		TDirectory newdir = new TDirectory();
 		newdir.readFile(file);
 		TBrowser browser = new TBrowser(newdir);
 	}
     
-	public void close() {
+	public void write() {
 		String file=monpath+"/"+monfile;
 		this.mondirectory.write(file);
 		System.out.println("Writing out histograms to "+file);
@@ -87,9 +87,9 @@ public class TDirTest {
 		TDirTest monitor = new TDirTest(args);    		
 	    monitor.initHistograms();
 	     
-	    if (args.length==0) monitor.close();
-	    if (args.length>0&&args[0].equals("Write")) monitor.close();
-	    if (args.length>0&&args[0].equals("Read")) monitor.open();
+	    if (args.length==0) monitor.read();
+	    if (args.length>0&&args[0].equals("Write")) monitor.write();
+	    if (args.length>0&&args[0].equals("Read")) monitor.read();
 	    
 	}
 }

@@ -87,8 +87,6 @@ public class TDirTest {
 		TDirTest monitor = new TDirTest(args);    		
 	    monitor.initHistograms();
 	     
-	    System.out.println("arg[]="+args.length);
-	    if (args.length>0) System.out.println("args[0]="+args[0]);
 	    if (args.length==0) monitor.close();
 	    if (args.length>0&&args[0].equals("Write")) monitor.close();
 	    if (args.length>0&&args[0].equals("Read")) monitor.open();

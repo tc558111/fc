@@ -1,5 +1,6 @@
 package org.jlab.ecmon.utils;
 
+import org.root.group.TBrowser;
 import org.root.group.TDirectory;
 import org.root.histogram.H2D;
 
@@ -28,6 +29,13 @@ public class TDirTest {
         return this.mondirectory;
         
     }	
+	
+	public void open() {
+		String file=monpath+"/"+monfile+".0.evio";	
+		TDirectory newdir = new TDirectory();
+		newdir.readFile(file);
+		TBrowser browser = new TBrowser(newdir);
+	}
     
 	public void close() {
 		String file=monpath+"/"+monfile;
@@ -78,7 +86,12 @@ public class TDirTest {
 	public static void main(String[] args){		
 		TDirTest monitor = new TDirTest(args);    		
 	    monitor.initHistograms();
-	    monitor.close();
+	     
+	    System.out.println("arg[]="+args.length);
+	    if (args.length>0) System.out.println("args[0]="+args[0]);
+	    if (args.length==0) monitor.close();
+	    if (args.length>0&&args[0].equals("Write")) monitor.close();
+	    if (args.length>0&&args[0].equals("Read")) monitor.open();
 	    
 	}
 }

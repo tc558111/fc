@@ -1,10 +1,19 @@
-macro get.peds run sec det plot=0 write=0
+macro get.peds run sec det plot=0 write=0 ref=102
 
-  global/cre plot [plot]
+* Pedestal runs: 
+* S1: 102 169
+* S2: 167 185
+* S3:
+* S4:
+* S5:
+* S6:
+
+  global/cre plot [plot] ; global/cre refped [ref] ; global/cre run [run]
   exe ped.vec.init [det]
+  exe get.ped.ref [ref] [sec] [det]
   exe get.ped.run [run] [sec]
   nslots = $vlen([det])
-  message NSLOTS=[nslots]
+
   do i=1,[nslots]
     exe get.ped.fits [sec] [det] [i]
   enddo
@@ -36,13 +45,37 @@ macro ped.vec.init det
 
 return
 
+macro ped.fadc.init
+
+* FADC window settings: runno slotmin slotmax tsa tsb
+* Run numbers are MODE1 TET=0 runs to obtain pedestals
+
+  vec/cre ecalf(9,2) i 	169 3 18 3 9  4*0_
+ 			185 3 18 3 15 4*0
+  vec/cre pcalf(9,2) i  169 3 16 3 39 4*0_
+			185 3 16 3 39 4*0
+  vec/cre ftoff(9,2) i  169 3 16 3 11 4*0_
+			185 3  6 2  7 7 16 2 17
+			
+return
+
+macro ped.fadc.write run sec det
+
+  vec/cre dum(8) i ; vec/cre dum1(2) r
+  vec/cop [det]f(1,:) dum1 ; ind=$sigma(lvmax(dum1 eq [run])) 
+  vec/cop [det]f(2:9,[ind]) dum
+  vec/write dum cal/ped/[det]/forcar-s[sec]-[run]-[det].fadc format=(1x,8(1x,I4))
+  vec/del dum,dum1
+
+return
+
 macro get.ped.fits sec det n
 
   slot=[det]([n])
 
   message Processing $upper([det]) Sector [sec] slot [slot]
 
-  hid=$exec(fcCal#get.ped.hid [sec] [det] [slot])
+  hid=$exec(fcPed#get.ped.hid [sec] [det] [slot])
 
   exe 2d.get.sli [hid] x
 
@@ -54,15 +87,19 @@ macro get.ped.fits sec det n
     vec/inp ped(:,[i],[n]) [slot] $eval([i]-1) $eval(mean([i])) $eval(rms([i])) 0
   enddo
 
-  global/imp plot
+  global/imp plot,run,refped
   if [plot].eq.1 then
   zone 1 1 ; opt logz
   hi/plot 222 colz
   sigma y=array(16,0#15); sigma y=y+0.5 
   set pmci 7 ; set mscf 0.8 ; set mtyp 20
+  set txci 0 ; key 25 15 20 'RUN '//[run] ; set txci 1
   graph 16 ped(3,:,[n]) y P
   set pmci 1 ; set mtyp 24
   graph 16 mean y P
+  set pmci 2 ; set mtyp 25
+  graph 16 refped(3,:,[n]) y P
+  set txci 0 ; key 25 14 25 'RUN '//[refped] ; set txci 1
   wait
   endif
 
@@ -73,7 +110,7 @@ macro get.ped.hid sec det slot
   frag=$eval([sec]*6-5) ; off=0 ; mid=20000000
 
   case [det] in
-    (ecal) id=$eval(([frag]+[off])*100000)
+    (ecal) id=$eval(([frag]+[off]+0)*100000)
     (pcal) id=$eval(([frag]+[off]+2)*100000)
     (ftof) id=$eval(([frag]+[off]+4)*100000)
   endcase
@@ -88,5 +125,14 @@ macro 2d.get.sli id xy=x
   hi/cop [id] 222
   ys=$hinfo(222,xbins) ; xs=$hinfo(222,ybins) 
   sli[xy] 222 [[xy]s] ; hi/proj 222 
+
+return
+
+macro get.ped.ref run sec det
+
+  if $vexist(refped).eq.1 then ; vec/del refped ; endif
+  path = cal/ped/[det]
+  vec/cop ped refped
+  vec/read refped [path]/forcar-s[sec]-[run]-[det].ped
 
 return

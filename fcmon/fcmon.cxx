@@ -7,6 +7,7 @@
 #include "TriggerBoardRegs.h"	//Not required 
 #include "ttfc.h"
 #include "CrateMsgClient.h"
+#include <cmath>
 
 ClassImp(Dsc2Dlg);
 

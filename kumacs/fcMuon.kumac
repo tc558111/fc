@@ -6,6 +6,7 @@ macro run r=477 s=1 det=ec mode=full ifirst=10 ic1=4 ic2=6
   message fcMuon: Opening ntuple [ifile]
   hi/file 1 [ifile] 8191
   nt/print 10 ; global/cre ntrig $hinfo(10,'entries')
+  wait
   call [funpath]/fclib.f77
   case [mode] in 
     (full) nt/loop 10 fc() 

@@ -296,19 +296,21 @@ int main(int argc, char **argv)
 /* NSA+NSB to calculate pedestals*/
 /* From $CLON_PARMS/fadc250/adc*mode3.cnf */
 
-  int nsbt[3]={12,12,12};   /* ns */
   //int nsat[3]={76,156,60};  /* runs 170,171 */
-  int nsat[3]={60,156,44};
-  int nsb[3] ={3,3,3};      /* samples */
-  int nsa[3] ={15,39,11};
-  
+  // int nsat[4]={60,156,44,44};    /* runs 184,185 */
+  int nsbt[4]={12,12,8,8};   /* ns */
+  int nsat[4]={60,156,28,68};
+  int nsb[4] ={3,3,2,2};      /* samples */
+  int nsa[4] ={15,39,7,17};
+  int tet[4] ={20,6,20,20};
+
 /* PEDESTAL TABLES */
 
   float tabecal[22][16];
   float tabpcal[22][16];
   float tabftof[22][16];
 
-  int pedrun[6]={169,0,0,0,0,0};
+  int pedrun[6]={169,185,0,0,0,0};
 
   int columns=16;
 
@@ -666,17 +668,17 @@ a123:
 	    {
 	    GET16(data);
             datasaved[mm] = data;
-            if(mm<35) baseline += data;
-            if(mm==35)
+            if(mm<25) baseline += data;
+            if(mm==25)
 	      {
-              baseline = baseline / 35;
+              baseline = baseline / 25;
 	      //#ifdef DEBUG
               //printf("slot=%d chan=%d baseline=%f\n",slot,chan,baseline);
 	      //#endif
 	      }
-            if(mm>35 && mm<100)
+            if(mm>25 && mm<100)
               {
-              if(summing_in_progress==0 && data>(baseline+10))
+              if(summing_in_progress==0 && data>(baseline+tet[edet]))
 		{
                 summing_in_progress = 1;
                 for (ii=1;ii<(nsb[edet]+1);ii++) sum += (datasaved[mm-ii]-baseline);
@@ -789,7 +791,7 @@ a123:
       unsigned char *end;
       unsigned long long time;
       int crate,slot,trig,nchan,chan,npulses,notvalid,edge,data,count,ncol1,nrow1;
-      int oldslot = 100;
+      int oldslot = 100, iedet=0;
       int ndata0[22], data0[21][8];
       int baseline, sum, channel;
 
@@ -873,7 +875,10 @@ a123:
                 ii = adclayerftof[slot][chan] - 1;
                 jj =    adclrftof[slot][chan] - 1;
                 kk =  adcslabftof[slot][chan] - 1;
-		sum  = (float)pulse_integral-tabftof[slot][chan]*(nsa[edet]+nsb[edet]);
+	       
+                if(ii==1) iedet=2;
+		if(ii==0) iedet=3;
+		sum  = (float)pulse_integral-tabftof[slot][chan]*(nsa[iedet]+nsb[iedet]);
 	        if(ii>=0 && sum>0)
 		  {
                   adc[ii][jj][kk][nadc[ii][jj][kk]] = sum;

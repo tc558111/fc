@@ -136,7 +136,8 @@ public class DetectorShapeView2D extends JPanel implements ActionListener, Mouse
    
     
     public void start(int fps){
-    	delay = 1000 / fps;
+        delay = 10000;
+    	if (fps!=0 ) delay = 1000 / fps;
     	this.timer.setDelay(delay);
         this.timer.start();
     }

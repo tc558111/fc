@@ -39,6 +39,7 @@ public class TDirTest {
     
 	public void write() {
 		String file=monpath+"/"+monfile;
+		System.out.println(this.mondirectory.toString());
 		this.mondirectory.write(file);
 		System.out.println("Writing out histograms to "+file);
 		
@@ -87,7 +88,7 @@ public class TDirTest {
 		TDirTest monitor = new TDirTest(args);    		
 	    monitor.initHistograms();
 	     
-	    if (args.length==0) monitor.read();
+	    if (args.length==0) monitor.write();
 	    if (args.length>0&&args[0].equals("Write")) monitor.write();
 	    if (args.length>0&&args[0].equals("Read")) monitor.read();
 	    

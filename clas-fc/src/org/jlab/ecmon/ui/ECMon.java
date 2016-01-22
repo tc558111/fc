@@ -1,6 +1,8 @@
 package org.jlab.ecmon.ui;
 
+import org.jlab.geom.base.ConstantProvider;
 import org.jlab.geom.prim.Path3D;
+import org.jlab.rec.ecn.ECCommon;
 import org.jlab.clas.detector.BankType;
 import org.jlab.clas.detector.DetectorBankEntry;
 import org.jlab.clas.detector.DetectorCollection;
@@ -11,6 +13,9 @@ import org.jlab.clas12.calib.DetectorShape2D;
 import org.jlab.clas12.detector.EventDecoder;
 import org.jlab.clas12.detector.FADCConfig;
 import org.jlab.clas12.detector.FADCConfigLoader;
+import org.jlab.clasrec.main.DetectorReconstruction;
+import org.jlab.clasrec.utils.DataBaseLoader;
+import org.jlab.clasrec.utils.DatabaseConstantProvider;
 import org.root.func.F1D;
 import org.root.group.TDirectory;
 import org.root.histogram.*;
@@ -37,6 +42,7 @@ public class ECMon extends DetectorMonitor {
 	
 	public EventDecoder     decoder = new EventDecoder();
 	FADCConfigLoader          fadc  = new FADCConfigLoader();
+	DatabaseConstantProvider   ccdb = new DatabaseConstantProvider(12,"default");
 	TDirectory         mondirectory = new TDirectory(); 	
 	ColorPalette            palette = new ColorPalette();
 	
@@ -93,6 +99,8 @@ public class ECMon extends DetectorMonitor {
 	
 	public void init() {
 		inProcess=0;
+		ccdb.loadTable("/calibration/ec/attenuation");
+		ccdb.disconnect();
 		initHistograms();
 		collection.clear();
 		
@@ -830,7 +838,7 @@ public class ECMon extends DetectorMonitor {
 	
 	public void canvasPedestal(DetectorDescriptor desc, EmbeddedCanvas canvas) {
 		
-		String otab[][]={{"U STRIPS","V STRIPS","W STRIPS"},{"Ui STRIPS","Vi STRIPS","Wi STRIPS"},{"Uo STRIPS","Vo STRIPS","Wo STRIPS"}};
+		String otab[][]={{"U Strips","V Strips","W Strips"},{"U Inner Strips","V Inner Strips","W Inner Strips"},{"U Outer Strips","V Outer Strips","W Outer Strips"}};
 			 		
 		int is = desc.getSector()+1;
 		int la = desc.getLayer();
@@ -847,16 +855,20 @@ public class ECMon extends DetectorMonitor {
     		int hid = (int) (1e7*is+10*tid+ic*cid+il*lid);
     		H2D hpix = (H2D) getDir().getDirectory(labped[ic]).getObject("PED"+hid); 
     		hpix.setXTitle("PED (Ref-Measured)") ; hpix.setYTitle(otab[ic][il-1]);
-    		canvas.cd(il-1); canvas.setLogZ(); canvas.draw(hpix);
+    	 
+    		canvas.cd(il-1); canvas.setLogZ(true); canvas.draw(hpix);
+    		
     		if(la==il) {
     			F1D f1 = new F1D("p0",-10.,10.); f1.setParameter(0,ip);
     			F1D f2 = new F1D("p0",-10.,10.); f2.setParameter(0,ip+1);
     			f1.setLineColor(2); canvas.draw(f1,"same"); 
     			f2.setLineColor(2); canvas.draw(f2,"same");
-
     		}
-    		canvas.cd(il-1+3); h=hpix.sliceY(22) ; h.setFillColor(4) ; canvas.draw(h);
-    	    if(la==il) {h=hpix.sliceY(ip); h.setFillColor(2) ; canvas.draw(h);}
+    		
+			//TStyle.setOptStat(true);
+    		canvas.cd(il-1+3); h=hpix.sliceY(22) ; h.setFillColor(4) ; h.setTitle(""); h.setXTitle("STRIP "+22) ; canvas.draw(h);
+    	    if(la==il) {h=hpix.sliceY(ip); h.setFillColor(2); h.setTitle(""); h.setXTitle("STRIP "+(ip+1));canvas.draw(h);}
+			//TStyle.setOptStat(false);
 	    }
 	    
 		}
@@ -864,7 +876,7 @@ public class ECMon extends DetectorMonitor {
 	}
 	public void canvasTiming(DetectorDescriptor desc, EmbeddedCanvas canvas) {
 		
-		String otab[][]={{"U STRIPS","V STRIPS","W STRIPS"},{"Ui STRIPS","Vi STRIPS","Wi STRIPS"},{"Uo STRIPS","Vo STRIPS","Wo STRIPS"}};
+		String otab[][]={{"U Strips","V Strips","W Strips"},{"U Strips","V Strips","W Strips"},{"U Strips","V Strips","W Strips"}};
 			 		
 		int is = desc.getSector()+1;
 		int la = desc.getLayer();
@@ -887,10 +899,11 @@ public class ECMon extends DetectorMonitor {
     			F1D f2 = new F1D("p0",-15.,15.); f2.setParameter(0,ip+1);
     			f1.setLineColor(2); canvas.draw(f1,"same"); 
     			f2.setLineColor(2); canvas.draw(f2,"same");
-
     		}
-    		canvas.cd(il-1+3); h=hpix.sliceY(22) ; h.setFillColor(4) ; canvas.draw(h);
-    	    if(la==il) {h=hpix.sliceY(ip); h.setFillColor(2) ; canvas.draw(h);}
+			//TStyle.setOptStat(true);
+    		canvas.cd(il-1+3); h=hpix.sliceY(22) ; h.setFillColor(4) ; h.setTitle(""); h.setXTitle("STRIP "+22) ; canvas.draw(h);
+    	    if(la==il) {h=hpix.sliceY(ip); h.setFillColor(2); h.setTitle(""); h.setXTitle("STRIP "+(ip+1)); canvas.draw(h);}
+			//TStyle.setOptStat(false);
 	    }
 	    
 		}
@@ -906,15 +919,18 @@ public class ECMon extends DetectorMonitor {
 	    double[] vgaine = new double[36]; 
 	    double[] vatt   = new double[36];
 	    double[] vatte  = new double[36]; 
+	    double[] vattdb = new double[36];
+	    double[] vattdbe= new double[36];
 	    double[] vchi2  = new double[36];
 	    double[] vchi2e = new double[36]; 
 	    double[] mip    = {100.,160.};
 	    
-		String otab[]={"Ui STRIPS","Vi STRIPS","Wi STRIPS","Uo STRIPS","Vo STRIPS","Wo STRIPS"};
+		String otab[]={"U Inner Strips","V Inner Strips","W Inner Strips","U Outer Strips","V Outer Strips","W Outer Strips"};
+		double pixwidth[]={5.35,5.92,5.92,5.55,6.15,6.15};
 	    
 	    int is        = desc.getSector();
 		int layer     = desc.getLayer();
-		int component = desc.getComponent();
+		int ic        = desc.getComponent();
 		
 		int panel = app.view.panel1.omap;
 		int io    = app.view.panel1.ilmap;
@@ -927,53 +943,59 @@ public class ECMon extends DetectorMonitor {
 		if (panel>10) lay = panel+of;
 		
 		layer = lay;
+		int l1 = of+1;
+		int l2 = of+4;
 		
-		//		GraphErrors gainGraph, attGraph;
+		//System.out.println("layer,panel,io,of,l1,l2= "+layer+" "+panel+" "+io+" "+of+" "+l1+" "+l2);
         if (inProcess==2) {this.analyzeAttenuation(0,6,1,7,0,36);inProcess=3;}
 		 
-		if (layer<7) {
+		if (layer<7||(layer>10&&layer<17)) {
 			if (inProcess>0) {
+				if (layer>10) {layer=layer-10; lay=layer;int component = pixmap[layer-1-of][ic]; ic=component-1;}
 			    if (inProcess==1)  {this.analyzeAttenuation(is,is+1,layer,layer+1,0,36);}
-				canvas.divide(2,2);
-
-				canvas.cd(0);
-				if (collection.hasEntry(is, layer, component)) {
-					
-				canvas.draw(collection.get(is,layer,component).getRawGraph(0));
-				canvas.draw(collection.get(is,layer,component).getFitGraph(0),"same");
-				canvas.draw(collection.get(is,layer,component).getFunc(0),"same");
-				
+				if (collection.hasEntry(is, layer, ic)) {
+									
 				for (int ip=0; ip<36 ; ip++) {
 					double gain  = collection.get(1,layer,ip).getFunc(0).getParameter(0);
 					double gaine = collection.get(1,layer,ip).getFunc(0).parameter(0).error();	
 					double att   = -collection.get(1,layer,ip).getFunc(0).getParameter(1);
 					double atte  = collection.get(1,layer,ip).getFunc(0).parameter(1).error();
 					double chi2  = collection.get(1,layer,ip).getChi2(0);
-					
+					int index = ECCommon.getCalibrationIndex(is+1,layer+3,ip+1);
+					double attdb = ccdb.getDouble("/calibration/ec/attenuation/B",index);
 					if (att>0) att=1./att; else att=0 ; 
 					atte = Math.min(30,att*att*atte);
 					xp[ip]=ip ; xpe[ip]=0. ; 
 					if (gain>0) gaine = Math.min(30,gaine); vgain[ip]  = gain; vgaine[ip] = gaine;
-		            vatt[ip] = Math.min(80, att) ; vatte[ip]=atte;
+		             vatt[ip] = Math.min(80, att)*pixwidth[lay-1] ; vatte[ip]=atte*pixwidth[lay-1];
+		           vattdb[ip] = attdb; vattdbe[ip] = 0.;
 		            vchi2[ip] = Math.min(4, chi2) ; vchi2e[ip]=0.;   
 				}
 				
 	            GraphErrors gainGraph = new GraphErrors(xp,vgain,xpe,vgaine);
 	            GraphErrors  attGraph = new GraphErrors(xp,vatt,xpe,vatte);
+	            GraphErrors  attdbGraph = new GraphErrors(xp,vattdb,xpe,vattdbe);
 	            GraphErrors chi2Graph = new GraphErrors(xp,vchi2,xpe,vchi2e);
 	             
 	            gainGraph.setMarkerStyle(2); gainGraph.setMarkerSize(6); gainGraph.setMarkerColor(2);
 	             attGraph.setMarkerStyle(2);  attGraph.setMarkerSize(6);  attGraph.setMarkerColor(2);
+	           attdbGraph.setMarkerStyle(2);  attdbGraph.setMarkerSize(7);  attdbGraph.setMarkerColor(1);
 	            chi2Graph.setMarkerStyle(2); chi2Graph.setMarkerSize(6); chi2Graph.setMarkerColor(2);
-	            gainGraph.setXTitle(otab[lay-1]) ; gainGraph.setYTitle("PMT GAIN")      ; gainGraph.setTitle(" ");
-	             attGraph.setXTitle(otab[lay-1]) ;  attGraph.setYTitle("ATTENUATION")   ;  attGraph.setTitle(" ");
-		        chi2Graph.setXTitle(otab[lay-1]) ; chi2Graph.setYTitle("REDUCED CHI^2") ; chi2Graph.setTitle(" ");
+	            gainGraph.setXTitle(otab[lay-1]) ; gainGraph.setYTitle("PMT GAIN")         ; gainGraph.setTitle(" ");
+	             attGraph.setXTitle(otab[lay-1]) ;  attGraph.setYTitle("ATTENUATION (CM)") ;  attGraph.setTitle(" ");
+		        chi2Graph.setXTitle(otab[lay-1]) ; chi2Graph.setYTitle("REDUCED CHI^2")    ; chi2Graph.setTitle(" ");
 		        
 	            F1D f1 = new F1D("p0",0,37); f1.setParameter(0,mip[io-1]); f1.setLineStyle(2);
 		        
-	            canvas.cd(1);           canvas.getPad().setAxisRange(-1.,37.,0.,4.)   ; canvas.draw(chi2Graph); 
+				canvas.divide(2,2);
+				canvas.cd(0);
+				canvas.draw(collection.get(is,layer,ic).getRawGraph(0));
+				canvas.draw(collection.get(is,layer,ic).getFitGraph(0),"same");
+				canvas.draw(collection.get(is,layer,ic).getFunc(0),"same");
+				canvas.cd(1);           canvas.getPad().setAxisRange(-1.,37.,0.,4.)   ; canvas.draw(chi2Graph); 
 	            canvas.cd(2); if(!inMC) canvas.getPad().setAxisRange(-1.,37.,0.,400.) ; canvas.draw(gainGraph); canvas.draw(f1,"same"); 
-	            canvas.cd(3);           canvas.getPad().setAxisRange(-1.,37.,0.,100.) ; canvas.draw(attGraph); 
+	            canvas.cd(3);           canvas.getPad().setAxisRange(-1.,37.,0.,600.) ; canvas.draw(attGraph);  canvas.draw(attdbGraph,"same"); 
+	                                                             
 	            
 				}
 			}
@@ -982,9 +1004,9 @@ public class ECMon extends DetectorMonitor {
 	
 	public void canvasOccupancy(DetectorDescriptor desc, EmbeddedCanvas canvas) {
 				
-		int is        = desc.getSector();
-		int layer     = desc.getLayer();
-		int component = desc.getComponent();
+		int is    = desc.getSector();
+		int layer = desc.getLayer();
+		int ic    = desc.getComponent();
 		
 		int panel = app.view.panel1.omap;
 		int io    = app.view.panel1.ilmap;
@@ -1003,20 +1025,20 @@ public class ECMon extends DetectorMonitor {
 		//System.out.println("layer,panel,io,of,l1,l2= "+layer+" "+panel+" "+io+" "+of+" "+l1+" "+l2);
 		
 		int l,col0=0,col1=0,col2=0,strip=0,pixel=0;
-		String alab[]={"Ui ADC","Vi ADC","Wi ADC","Uo ADC","Vo ADC","Wo ADC"};
-		String tlab[]={"Ui TDC","Vi TDC","Wi TDC","Uo TDC","Vo TDC","Wo TDC"};
-		String otab[]={"Ui STRIPS","Vi STRIPS","Wi STRIPS","Uo STRIPS","Vo STRIPS","Wo STRIPS"};
+		//String otab[]={"U INNER STRIPS","V INNER STRIPS","W INNER STRIPS","U OUTER STRIPS","V OUTER STRIPS","W OUTER STRIPS"};
+		String lab1[]={"U ","V ","W "}, lab2[]={"Inner ","Outer "}, lab3[]={"Strip ","Pixel "},lab4[]={" ADC"," TDC"};
 		H1D h;
 		//TStyle.setOptStat(false);
 	    TStyle.setStatBoxFont(TStyle.getStatBoxFontName(),12);
 	    		
-		if (layer<7)  {col0=0 ; col1=4; col2=2;strip=component;}
-		if (layer>=7) {col0=4 ; col1=4; col2=2;pixel=component;}
+		if (layer<7)  {col0=0 ; col1=4; col2=2;strip=ic+1;}
+		if (layer>=7) {col0=4 ; col1=4; col2=2;pixel=ic+1;}
 		
 	    canvas.divide(3,3);
 	    
 	    for(int il=l1;il<l2;il++){
-	    	canvas.cd(il-1-of); h = ECAL_ADC.get(is*10+il).projectionY(); h.setXTitle(otab[il-1]); h.setFillColor(col0); canvas.draw(h);
+	    	String otab = lab1[il-1-of]+lab2[io-1]+"Strips";
+	    	canvas.cd(il-1-of); h = ECAL_ADC.get(is*10+il).projectionY(); h.setXTitle(otab); h.setFillColor(col0); canvas.draw(h);
 	    }
 	    
 	    l=layer;
@@ -1026,21 +1048,25 @@ public class ECMon extends DetectorMonitor {
 	         H1D copy = h.histClone("Copy"); copy.reset() ; 
 	         copy.setBinContent(strip, h.getBinContent(strip)); copy.setFillColor(col2); canvas.draw(copy,"same");
 	         for(int il=l1;il<l2;il++) {
-			     if(layer!=il) {canvas.cd(il+2-of); h = ECAL_ADC.get(is*10+il).sliceY(22); h.setXTitle(alab[il-1]); h.setFillColor(col0); canvas.draw(h);}
-				 if(layer!=il) {canvas.cd(il+5-of); h = ECAL_TDC.get(is*10+il).sliceY(22); h.setXTitle(tlab[il-1]); h.setFillColor(col0); canvas.draw(h);}
+	        	 String alab = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[0];String tlab = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[1];
+			     if(layer!=il) {canvas.cd(il+2-of); h = ECAL_ADC.get(is*10+il).sliceY(22); h.setXTitle(alab); h.setTitle(""); h.setFillColor(col0); canvas.draw(h);}
+				 if(layer!=il) {canvas.cd(il+5-of); h = ECAL_TDC.get(is*10+il).sliceY(22); h.setXTitle(tlab); h.setTitle(""); h.setFillColor(col0); canvas.draw(h);}
 	         }
-			 canvas.cd(l+2-of); h = ECAL_ADC.get(is*10+l).sliceY(strip);h.setXTitle(alab[l-1]); h.setFillColor(col2); canvas.draw(h);
-			 canvas.cd(l+5-of); h = ECAL_TDC.get(is*10+l).sliceY(strip);h.setXTitle(tlab[l-1]); h.setFillColor(col2); canvas.draw(h);
+        	 String alab = lab1[l-1-of]+lab2[io-1]+lab3[0]+strip+lab4[0];String tlab = lab1[l-1-of]+lab2[io-1]+lab3[0]+strip+lab4[1];
+			 canvas.cd(l+2-of); h = ECAL_ADC.get(is*10+l).sliceY(ic);h.setXTitle(alab); h.setTitle(""); h.setFillColor(col2); canvas.draw(h);
+			 canvas.cd(l+5-of); h = ECAL_TDC.get(is*10+l).sliceY(ic);h.setXTitle(tlab); h.setTitle(""); h.setFillColor(col2); canvas.draw(h);
 	    }
 	    
 	    if (layer==7||layer==8) {
 	    	for(int il=l1;il<l2;il++) {
 	    		canvas.cd(il-1-of); h = ECAL_ADC.get(is*10+il).projectionY();
 	    		H1D copy = h.histClone("Copy");
-	    		copy.reset() ; copy.setBinContent(pixmap[il-1-of][pixel]-1, h.getBinContent(pixmap[il-1-of][pixel]-1));
+	    		strip = pixmap[il-1-of][ic];
+	    		copy.reset() ; copy.setBinContent(strip-1, h.getBinContent(strip-1));
 	    		copy.setFillColor(col2); canvas.draw(copy,"same");	    		 
-	    		canvas.cd(il+2-of) ; h = ECAL_ADC.get(is*10+il).sliceY(pixmap[il-1-of][pixel]-1); h.setXTitle(alab[il-1]); h.setFillColor(col2); canvas.draw(h);
-	    		canvas.cd(il+5-of) ; h = ECAL_TDC.get(is*10+il).sliceY(pixmap[il-1-of][pixel]-1); h.setXTitle(tlab[il-1]); h.setFillColor(col2); canvas.draw(h);
+	        	String alab = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[0];String tlab = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[1];
+	    		canvas.cd(il+2-of) ; h = ECAL_ADC.get(is*10+il).sliceY(strip-1); h.setXTitle(alab); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
+	    		canvas.cd(il+5-of) ; h = ECAL_TDC.get(is*10+il).sliceY(strip-1); h.setXTitle(tlab); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
 	    	}
 	    }
 	    
@@ -1048,15 +1074,18 @@ public class ECMon extends DetectorMonitor {
 			for(int il=l1;il<l2;il++) {
 				canvas.cd(il-1-of); h = ECAL_ADC_PIX.get(is*10+il).projectionY();
 	 		    H1D copy = h.histClone("Copy");
-			    copy.reset() ; copy.setBinContent(pixmap[il-1-of][pixel]-1, h.getBinContent(pixmap[il-1-of][pixel]-1));
+	 		    strip = pixmap[il-1-of][ic];
+			    copy.reset() ; copy.setBinContent(strip-1, h.getBinContent(strip-1));
 			    copy.setFillColor(col2); canvas.draw(copy,"same");	
+	        	String alab1 = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[0];String tlab1 = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[1];
+	        	String alab2 = lab1[il-1-of]+lab2[io-1]+lab3[1]+pixel+lab4[0];String tlab2 = lab1[il-1-of]+lab2[io-1]+lab3[1]+pixel+lab4[1];
 			    if (layer<17) {
-	    		 canvas.cd(il+2-of) ; h = ECAL_ADC_PIX.get(is*10+il).sliceY(pixmap[il-1-of][pixel]-1); h.setXTitle(alab[il-1]); h.setFillColor(col2); canvas.draw(h);
-	    		 canvas.cd(il+5-of) ; h =    ECAL_APIX.get(is*10+il).sliceX(pixel)                   ; h.setXTitle(alab[il-1]); h.setFillColor(col2); canvas.draw(h);
+	    		 canvas.cd(il+2-of) ; h = ECAL_ADC_PIX.get(is*10+il).sliceY(pixmap[il-1-of][ic]-1); h.setXTitle(alab1); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
+	    		 canvas.cd(il+5-of) ; h =    ECAL_APIX.get(is*10+il).sliceX(ic)                   ; h.setXTitle(alab2); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
 			    }
 			    if (layer>16&&layer<22) {
-	    		 canvas.cd(il+2-of) ; h = ECAL_TDC_PIX.get(is*10+il).sliceY(pixmap[il-1-of][pixel]-1); h.setXTitle(tlab[il-1]); h.setFillColor(col2); canvas.draw(h);
-	    		 canvas.cd(il+5-of) ; h =    ECAL_TPIX.get(is*10+il).sliceX(pixel)                   ; h.setXTitle(tlab[il-1]); h.setFillColor(col2); canvas.draw(h);
+	    		 canvas.cd(il+2-of) ; h = ECAL_TDC_PIX.get(is*10+il).sliceY(pixmap[il-1-of][ic]-1); h.setXTitle(tlab1); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
+	    		 canvas.cd(il+5-of) ; h =    ECAL_TPIX.get(is*10+il).sliceX(ic)                   ; h.setXTitle(tlab2); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
 			    }
 			}  	 
 	     }

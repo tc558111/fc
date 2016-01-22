@@ -1,6 +1,5 @@
 package org.jlab.ecmon.ui;
 
-import org.jlab.geom.base.ConstantProvider;
 import org.jlab.geom.prim.Path3D;
 import org.jlab.rec.ecn.ECCommon;
 import org.jlab.clas.detector.BankType;
@@ -13,8 +12,6 @@ import org.jlab.clas12.calib.DetectorShape2D;
 import org.jlab.clas12.detector.EventDecoder;
 import org.jlab.clas12.detector.FADCConfig;
 import org.jlab.clas12.detector.FADCConfigLoader;
-import org.jlab.clasrec.main.DetectorReconstruction;
-import org.jlab.clasrec.utils.DataBaseLoader;
 import org.jlab.clasrec.utils.DatabaseConstantProvider;
 import org.root.func.F1D;
 import org.root.group.TDirectory;

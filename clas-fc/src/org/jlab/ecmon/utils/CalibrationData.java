@@ -16,7 +16,7 @@ public class CalibrationData {
     private List<GraphErrors>  rawgraphs  = new ArrayList<GraphErrors>();
     private List<GraphErrors>  fitgraphs  = new ArrayList<GraphErrors>();
     private List<F1D>          functions  = new ArrayList<F1D>();
-    private List<Double>  chi2            = new ArrayList<Double>(); 
+    private List<Double>             chi2 = new ArrayList<Double>(); 
     private int dataSize; 
     private int fitSize;
     
@@ -29,7 +29,7 @@ public class CalibrationData {
     public void addGraph(double[] data, double[] error){
     	
     	GraphErrors graph;
-		String otab[]={"Ui Strip","Vi Strip","Wi Strip","Uo Strip","Vo Strip","Wo Strip"};
+		String otab[]={"U Inner Strip","V Inner Strip","W Inner Strip","U Outer Strip","V Outer Strip","W Outer Strip"};
 		
 		dataSize = data.length;
 		int n, min=2 , max=dataSize-2;

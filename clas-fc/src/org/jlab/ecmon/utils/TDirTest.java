@@ -87,7 +87,7 @@ public class TDirTest {
 	public static void main(String[] args){		
 		TDirTest monitor = new TDirTest(args);    		
 	    monitor.initHistograms();
-	     
+	    
 	    if (args.length==0) monitor.write();
 	    if (args.length>0&&args[0].equals("Write")) monitor.write();
 	    if (args.length>0&&args[0].equals("Read")) monitor.read();

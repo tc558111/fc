@@ -16,6 +16,9 @@ public class FCMon extends DetectorMonitoring {
 	
 	public String laba[] = {"monitor/pcal/adc","monitor/ecinner/adc","monitor/ecouter/adc"}; 
 	public String labt[] = {"monitor/pcal/tdc","monitor/ecinner/tdc","monitor/ecouter/tdc"}; 
+	 
+	String monpath       = System.getenv("COATJAVA");
+	String monfile       = "fcmon";	
 	
 		public FCMon(){
 			super("FCMON","1.0","lcsmith");
@@ -30,7 +33,13 @@ public class FCMon extends DetectorMonitoring {
 	public void configure(ServiceConfiguration arg0) {
 		
 	}
-
+	
+	public void close() {
+		String file=monpath+"/"+monfile;
+		getDir().write(file);
+		System.out.println("Writing out histograms to "+file);
+		
+	} 
 	@Override
 	public void init() {
 		
@@ -451,9 +460,10 @@ public class FCMon extends DetectorMonitoring {
 		    SwingUtilities.invokeLater(new Runnable() {
 		    	public void run() {
 		 		   calib.init();
-				   CLASMonitoring monitor = new CLASMonitoring("/Users/colesmith/COATJAVA/dat/fc-muon-500k-s2.evio", calib);
+				   CLASMonitoring monitor = new CLASMonitoring("/Users/colesmith/COATJAVA/dat/fc-muon-500k-s2-noatt.evio", calib);
 				   monitor.process();
 				   calib.analyze();
+				   calib.close();
 				   TBrowser browser = new TBrowser(calib.getDir()); 
 		    	}
 		    });		   

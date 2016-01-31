@@ -211,9 +211,7 @@ public class ECMon extends DetectorMonitor {
 			for(int ip=0; ip<1296 ; ip++)  dv4.addShape(getPixel(is,4,ip));
 		}
 		
-		long stopTime = System.currentTimeMillis();
-		long funTime = stopTime-startTime;
-		System.out.println("initgui time= "+funTime);
+		System.out.println("initgui time= "+(System.currentTimeMillis()-startTime));
 		
 		app.view.addDetectorLayer(dv1);
 		app.view.addDetectorLayer(dv2);
@@ -1027,6 +1025,7 @@ public class ECMon extends DetectorMonitor {
 		H1D h;
 		//TStyle.setOptStat(false);
 	    TStyle.setStatBoxFont(TStyle.getStatBoxFontName(),12);
+	    TStyle.setAxisFont(TStyle.getAxisFontName(),10);
 	    		
 		if (layer<7)  {col0=0 ; col1=4; col2=2;strip=ic+1;}
 		if (layer>=7) {col0=4 ; col1=4; col2=2;pixel=ic+1;}

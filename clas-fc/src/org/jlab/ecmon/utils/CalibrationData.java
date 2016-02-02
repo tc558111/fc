@@ -115,10 +115,10 @@ public class CalibrationData {
             	func.setParameter(0, p0try);
             	func.setParameter(1,-0.0144);
             	func.setParLimits(0,p0min,p0max);
-            	func.setParLimits(1,-0.5,-0.001);
+            	func.setParLimits(1,-0.5,-0.00001);
             	func.setLineColor(2);
  
-            	this.fitgraphs.get(loop).fit(this.functions.get(loop));	//Fit data
+            	this.fitgraphs.get(loop).fit(this.functions.get(loop),"Q");	//Fit data
             	double yfit,ydat,yerr,ch=0;
             	if (fitSize>3) {
             		for (int i=0 ; i<fitSize ; i++) {

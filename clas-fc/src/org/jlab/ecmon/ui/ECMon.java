@@ -34,7 +34,6 @@ import org.jlab.ecmon.utils.*;
 
 public class ECMon extends DetectorMonitor {
 	
-	public static ECMon monitor;
 	public static MonitorApp app;
 	
 	public EventDecoder     decoder = new EventDecoder();
@@ -51,7 +50,7 @@ public class ECMon extends DetectorMonitor {
 	int pixmap[][]       = new int[3][1296];
 	int inProcess        = 0; //0=init 1=processing 2=end-of-run 3=post-run
 	boolean inMC         = false; //true=MC false=DATA
-	int thr              = 20;
+	int thr[]            = {5,5};
 	String monpath       = System.getenv("COATJAVA");
 	String monfile       = "mondirectory";
 	String labadc[] 	 = {"monitor/pcal/adc","monitor/ecinner/adc","monitor/ecouter/adc"}; 
@@ -87,8 +86,7 @@ public class ECMon extends DetectorMonitor {
 	public ECMon(String[] args) {
 		super("ECMON","1.0","lcsmith");
 		fadc.load("/test/fc/fadc",10,"default");
-		if(args.length == 1) thr = Integer.parseInt(args[0]);		
-		if(args.length == 2) monpath = args[1];		
+		if(args.length == 1) monpath = args[0];		
 		System.out.println("Threshold= "+thr);
 		System.out.println("monpath= "+monpath);
 		
@@ -537,7 +535,7 @@ public class ECMon extends DetectorMonitor {
 	          	  strrt[is-1][iv-1][inh-1] = ip;
 	          	  ECAL_TDC.get(iss).fill(tdc,ip,1.0);
 	   	        }
-	   	        if(adc>thr){
+	   	        if(adc>thr[ic-1]){
 	          	  uvwa[is-1][ic]=uvwa[is-1][ic]+uvw_dalitz(ic,ip,il); //Dalitz test
 	          	  nha[is-1][iv-1]++;
 	          	  inh = nha[is-1][iv-1];
@@ -600,7 +598,7 @@ public class ECMon extends DetectorMonitor {
 		          strrt[is-1][iv-1][inh-1] = ip;
 		          ECAL_TDC.get(iss).fill(tdc,ip,1.0);
 		   	    }
-		   	    if(adc>thr){
+		   	    if(adc>thr[ic-1]){
 		          uvwa[is-1][ic]=uvwa[is-1][ic]+uvw_dalitz(ic,ip,il); //Dalitz test
 		          nha[is-1][iv-1]++;
 		          inh = nha[is-1][iv-1];
@@ -1090,7 +1088,7 @@ public class ECMon extends DetectorMonitor {
 	
 	public static void main(String[] args){
 		
-		monitor = new ECMon(args);
+		ECMon monitor = new ECMon(args);
 		
 	    SwingUtilities.invokeLater(new Runnable() {
 	    	public void run() {

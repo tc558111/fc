@@ -486,7 +486,7 @@ public class ECMon extends DetectorMonitor {
 					
     		decoder.decode(event);
             List<DetectorBankEntry> strips = decoder.getDataEntries("EC");
-            System.out.println(" ");
+
             for(DetectorBankEntry strip : strips) {
                 adc=ped=pedref=npk=timf=timc=0 ; tdc=tdcf=0;
             	//System.out.println(strip);

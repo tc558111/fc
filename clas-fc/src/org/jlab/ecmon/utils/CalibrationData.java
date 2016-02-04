@@ -34,9 +34,9 @@ public class CalibrationData {
 		dataSize = data.length;
 		int n, min=2 , max=dataSize-2;
 		
-		if (dataSize==1) {min=0 ; max=dataSize;}
-		if (dataSize==3) {min=0 ; max=dataSize;}
-		if (dataSize==5) {min=0 ; max=dataSize;}
+		if (dataSize==1) {min=0 ; max=1;}
+		if (dataSize==3) {min=1 ; max=2;}
+		if (dataSize==5) {min=1 ; max=dataSize-1;}
 		if (dataSize==7) {min=1 ; max=dataSize-1;}
 		
         double[] xpraw  = new double[dataSize];
@@ -52,9 +52,9 @@ public class CalibrationData {
     		xprawe[loop] = 0.;
     		ypraw[loop]  = data[loop];
     		yprawe[loop] = Math.max(0.1,error[loop]); 
-    		if(getDescriptor().getSector()==1){
+    		//if(getDescriptor().getSector()==1){
     		//System.out.println("loop,il,ic,ypraw,ypawre = "+loop+" "+getDescriptor().getLayer()+" "+getDescriptor().getComponent()+" "+ypraw[loop]+" "+yprawe[loop]);
-    		}
+    		//}
         }
         
         double[] xpfit  = new double[n];
@@ -118,7 +118,7 @@ public class CalibrationData {
             	func.setParLimits(1,-0.5,-0.00001);
             	func.setLineColor(2);
  
-            	this.fitgraphs.get(loop).fit(this.functions.get(loop),"Q");	//Fit data
+            	this.fitgraphs.get(loop).fit(this.functions.get(loop),"REQ");	//Fit data
             	double yfit,ydat,yerr,ch=0;
             	if (fitSize>3) {
             		for (int i=0 ; i<fitSize ; i++) {

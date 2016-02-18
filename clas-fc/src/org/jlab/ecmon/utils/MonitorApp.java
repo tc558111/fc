@@ -81,7 +81,7 @@ public class MonitorApp extends JFrame implements ActionListener {
     
     private void initComponents(){
 
-		canvas0 = new EmbeddedCanvas(800,400,3,1);
+		canvas0 = new EmbeddedCanvas(800,400,3,3);
 		canvas1 = new EmbeddedCanvas(800,400,2,2);
 		canvas2 = new EmbeddedCanvas(800,400,3,2);
 		canvas3 = new EmbeddedCanvas(800,400,3,2);

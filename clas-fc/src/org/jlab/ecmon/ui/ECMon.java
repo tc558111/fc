@@ -846,7 +846,6 @@ public class ECMon extends DetectorMonitor {
 		int ic    = io;
 		int col2=2,col4=4,col0=0;
 		H1D h;
-		canvas.divide(3,2);
 		
 		if (is==2) {
 	    for(int il=1;il<4;il++){
@@ -885,7 +884,6 @@ public class ECMon extends DetectorMonitor {
 		int ic    = io;
 		int col2=2,col4=4,col0=0;
 		H1D h;
-		canvas.divide(3,2);
 		
 		if (is==2) {
 	    for(int il=1;il<4;il++){
@@ -986,8 +984,7 @@ public class ECMon extends DetectorMonitor {
 		        
 	            F1D f1 = new F1D("p0",0,37); f1.setParameter(0,mip[io-1]); f1.setLineStyle(2);
 		        
-				canvas.divide(2,2);
-				canvas.cd(0);
+				canvas.cd(0);canvas.getPad().setAxisRange("Y",0.,350.);
 				canvas.draw(collection.get(is,layer,ic).getRawGraph(0));
 				canvas.draw(collection.get(is,layer,ic).getFitGraph(0),"same");
 				canvas.draw(collection.get(is,layer,ic).getFunc(0),"same");
@@ -1032,9 +1029,7 @@ public class ECMon extends DetectorMonitor {
 	    		
 		if (layer<7)  {col0=0 ; col1=4; col2=2;strip=ic+1;}
 		if (layer>=7) {col0=4 ; col1=4; col2=2;pixel=ic+1;}
-		
-	    canvas.divide(3,3);
-	    
+    
 	    for(int il=l1;il<l2;il++){
 	    	String otab = lab1[il-1-of]+lab2[io-1]+"Strips";
 	    	canvas.cd(il-1-of); h = ECAL_ADC.get(is*10+il).projectionY(); h.setXTitle(otab); h.setFillColor(col0); canvas.draw(h);

@@ -9,7 +9,7 @@ import org.jlab.clas.detector.DetectorType;
 import org.jlab.clas12.calib.DetectorShape2D;
 import org.jlab.clas12.detector.EventDecoder;
 import org.root.histogram.*;
-import org.root.pad.EmbeddedCanvas;
+import org.root.basic.EmbeddedCanvas;
 import org.root.attr.ColorPalette;
 import org.root.attr.TStyle;
 
@@ -744,7 +744,6 @@ public class ECMonv2 extends DetectorMonitor {
 		if (layer<4)  {col0=0 ; col1=4; col2=2;strip=component;}
 		if (layer>=7) {col0=4 ; col1=4; col2=2;pixel=component;}
 		
-	    canvas.divide(3,3);
 	    l=1;canvas.cd(l-1); u = ECAL_ADC.get(is*10+l).projectionY(); u.setXTitle("U STRIPS"); u.setFillColor(col0); canvas.draw(u);
 	    l=2;canvas.cd(l-1); v = ECAL_ADC.get(is*10+l).projectionY(); v.setXTitle("V STRIPS"); v.setFillColor(col0); canvas.draw(v);
 	    l=3;canvas.cd(l-1); w = ECAL_ADC.get(is*10+l).projectionY(); w.setXTitle("W STRIPS"); w.setFillColor(col0); canvas.draw(w);

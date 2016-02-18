@@ -9,7 +9,7 @@ import org.jlab.clas.detector.DetectorType;
 import org.jlab.clas12.calib.DetectorShape2D;
 import org.jlab.clas12.detector.EventDecoder;
 import org.root.histogram.*;
-import org.root.pad.EmbeddedCanvas;
+import org.root.basic.EmbeddedCanvas;
 import org.root.attr.ColorPalette;
 import org.root.attr.TStyle;
 

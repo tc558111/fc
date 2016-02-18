@@ -17,5 +17,6 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="/Users/colesmith/CLAS/builds/clas12/1.2/Darwin_macosx10.10-x86_64-gcc4.2.1/coatjava-2.0-local/lib/plugins/clasrec-ec-2.0-SNAPSHOT.jar"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>

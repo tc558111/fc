@@ -14,8 +14,8 @@ import org.jlab.clas12.calib.DetectorShape2D;
 //import org.jlab.clas12.calib.DetectorShapeView2D;
 
 import org.jlab.evio.clas12.EvioDataEvent;
-import org.root.pad.EmbeddedCanvas;
-
+//import org.root.pad.EmbeddedCanvas;
+import org.root.basic.EmbeddedCanvas;
 /**
  *
  * @author gavalian

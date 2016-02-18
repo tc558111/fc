@@ -25,7 +25,8 @@ import javax.swing.JSplitPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.root.pad.EmbeddedCanvas;
+//import org.root.pad.EmbeddedCanvas;
+import org.root.basic.EmbeddedCanvas;
 import org.jlab.evio.clas12.EvioDataEvent;
 import org.jlab.evio.clas12.EvioSource;
 import org.jlab.evio.clas12.EvioETSource;

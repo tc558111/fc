@@ -5,7 +5,8 @@ import java.awt.BorderLayout;
 import javax.swing.JPanel;
 import javax.swing.JTabbedPane;
 
-import org.root.pad.EmbeddedCanvas;
+//import org.root.pad.EmbeddedCanvas;
+import org.root.basic.EmbeddedCanvas;
 
 public class CanvasViewPanel extends JPanel {
 	

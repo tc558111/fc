@@ -28,8 +28,8 @@ import org.jlab.clas12.calib.DetectorShape2D;
 import org.jlab.clas12.calib.IDetectorListener;
 //import org.jlab.clasrec.main.DetectorCalibration;
 import org.jlab.geom.prim.Path3D;
-import org.root.pad.EmbeddedCanvas;
-
+//import org.root.pad.EmbeddedCanvas;
+import org.root.basic.EmbeddedCanvas;
 /**
  *
  * @author gavalian

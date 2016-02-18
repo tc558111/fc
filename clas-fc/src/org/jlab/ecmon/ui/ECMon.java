@@ -16,7 +16,10 @@ import org.jlab.clasrec.utils.DatabaseConstantProvider;
 import org.root.func.F1D;
 import org.root.group.TDirectory;
 import org.root.histogram.*;
-import org.root.pad.EmbeddedCanvas;
+import org.root.basic.EmbeddedCanvas;
+import org.root.basic.GraphicsAxisNumber;
+import org.root.basic.DataSetFrame;
+//import org.root.pad.EmbeddedCanvas;
 import org.root.attr.ColorPalette;
 import org.root.attr.TStyle;
 
@@ -50,7 +53,7 @@ public class ECMon extends DetectorMonitor {
 	int pixmap[][]       = new int[3][1296];
 	int inProcess        = 0; //0=init 1=processing 2=end-of-run 3=post-run
 	boolean inMC         = false; //true=MC false=DATA
-	int thr[]            = {5,5};
+	int thr[]            = {15,20};
 	String monpath       = System.getenv("COATJAVA");
 	String monfile       = "mondirectory";
 	String labadc[] 	 = {"monitor/pcal/adc","monitor/ecinner/adc","monitor/ecouter/adc"}; 
@@ -567,7 +570,7 @@ public class ECMon extends DetectorMonitor {
 		if(event.hasBank("EC::dgtz")==true){
 			
 			inMC = true;	// Processing MC banks
-			
+			thr[0]=thr[1]=5;
 			int tdcc;
 			EvioDataBank bank = (EvioDataBank) event.getBank("EC::dgtz");
 			
@@ -843,6 +846,7 @@ public class ECMon extends DetectorMonitor {
 		int ic    = io;
 		int col2=2,col4=4,col0=0;
 		H1D h;
+		canvas.divide(3,2);
 		
 		if (is==2) {
 	    for(int il=1;il<4;il++){
@@ -850,7 +854,7 @@ public class ECMon extends DetectorMonitor {
     		H2D hpix = (H2D) getDir().getDirectory(labped[ic]).getObject("PED"+hid); 
     		hpix.setXTitle("PED (Ref-Measured)") ; hpix.setYTitle(otab[ic][il-1]);
     	 
-    		canvas.cd(il-1); canvas.setLogZ(true); canvas.draw(hpix);
+    		canvas.cd(il-1); canvas.setLogZ(); canvas.draw(hpix);
     		
     		if(la==il) {
     			F1D f1 = new F1D("p0",-10.,10.); f1.setParameter(0,ip);
@@ -881,6 +885,7 @@ public class ECMon extends DetectorMonitor {
 		int ic    = io;
 		int col2=2,col4=4,col0=0;
 		H1D h;
+		canvas.divide(3,2);
 		
 		if (is==2) {
 	    for(int il=1;il<4;il++){
@@ -986,11 +991,10 @@ public class ECMon extends DetectorMonitor {
 				canvas.draw(collection.get(is,layer,ic).getRawGraph(0));
 				canvas.draw(collection.get(is,layer,ic).getFitGraph(0),"same");
 				canvas.draw(collection.get(is,layer,ic).getFunc(0),"same");
+				
 				canvas.cd(1);           canvas.getPad().setAxisRange(-1.,37.,0.,4.)   ; canvas.draw(chi2Graph); 
 	            canvas.cd(2); if(!inMC) canvas.getPad().setAxisRange(-1.,37.,0.,400.) ; canvas.draw(gainGraph); canvas.draw(f1,"same"); 
-	            canvas.cd(3);           canvas.getPad().setAxisRange(-1.,37.,0.,600.) ; canvas.draw(attGraph);  canvas.draw(attdbGraph,"same"); 
-	                                                             
-	            
+	            canvas.cd(3);           canvas.getPad().setAxisRange(-1.,37.,0.,600.) ; canvas.draw(attGraph);  canvas.draw(attdbGraph,"same");                                                  
 				}
 			}
 		}
@@ -1024,7 +1028,7 @@ public class ECMon extends DetectorMonitor {
 		H1D h;
 		//TStyle.setOptStat(false);
 	    TStyle.setStatBoxFont(TStyle.getStatBoxFontName(),12);
-	    TStyle.setAxisFont(TStyle.getAxisFontName(),10);
+	    TStyle.setAxisFont(TStyle.getAxisFontName(),8);
 	    		
 		if (layer<7)  {col0=0 ; col1=4; col2=2;strip=ic+1;}
 		if (layer>=7) {col0=4 ; col1=4; col2=2;pixel=ic+1;}

@@ -16,7 +16,7 @@ import org.jlab.clasrec.utils.DatabaseConstantProvider;
 import org.root.func.F1D;
 import org.root.group.TDirectory;
 import org.root.histogram.*;
-import org.root.pad.EmbeddedCanvas;
+import org.root.basic.EmbeddedCanvas;
 import org.root.attr.ColorPalette;
 import org.root.attr.TStyle;
 
@@ -51,7 +51,7 @@ public class ECMonv0 extends DetectorMonitor {
 	int pixmap[][]       = new int[3][1296];
 	int inProcess        = 0; //0=init 1=processing 2=end-of-run 3=post-run
 	boolean inMC         = false; //true=MC false=DATA
-	int thr[]            = {15,20};
+	int thr[]            = {5,5};
 	String monpath       = System.getenv("COATJAVA");
 	String monfile       = "mondirectory";
 	String labadc[] 	 = {"monitor/pcal/adc","monitor/ecinner/adc","monitor/ecouter/adc"}; 
@@ -473,14 +473,14 @@ public class ECMonv0 extends DetectorMonitor {
 					ftdcr[is][il][ip] = 0;
 					 tdcr[is][il][ip] = 0;
 				}
-			}
-			
+			}			
 		}
 		
 		float tdcmax=100000;
 		boolean debug=false;
-		int adc,ped,npk=0,pedref=0,timf=0,timc=0;
+		int adc,ped,nsb=0,nsa=0,npk=0,pedref=0,timf=0,timc=0;
 		double mc_t=0.,tdc=0,tdcf=0;
+
         H2D hpix;
 				
 		if(event.hasBank("EC::true")!=true) {
@@ -500,6 +500,8 @@ public class ECMonv0 extends DetectorMonitor {
             	int isl = strip.getDescriptor().getSlot(); 
             	int ich = strip.getDescriptor().getChannel(); 
             	
+        		FADCConfig config=fadc.getMap().get(icr,isl,ich);
+            	
             	if(strip.getType()==BankType.TDC) {
             		int[] tdcc = (int[]) strip.getDataObject();
             		tdc = tdcc[0]*24./1000.;
@@ -508,12 +510,13 @@ public class ECMonv0 extends DetectorMonitor {
             		int[] adcc= (int[]) strip.getDataObject();
             		ped = adcc[2];
             		npk = adcc[3];
-            		adc = (adcc[1]-ped*18)/10;
+            		nsa = (int) config.getNSA();
+            		nsb = (int) config.getNSB();
+               		pedref = (int) config.getPedestal();
+            		adc = (adcc[1]-ped*(nsa+nsb))/10;
             		timf = DataUtils.getInteger(adcc[0],0,5);
             		timc = DataUtils.getInteger(adcc[0],6,14);
-            		tdcf = timc*4.+timf*0.0625;
-            		FADCConfig config=fadc.getMap().get(icr,isl,ich);
-            		pedref = (int) config.getPedestal();
+            		tdcf = timc*4.+timf*0.0625;            		
             	}
                     	
 			//System.out.println("sector,layer,pmt:"+is+" "+il+" "+ip);
@@ -565,6 +568,7 @@ public class ECMonv0 extends DetectorMonitor {
 		if(event.hasBank("EC::dgtz")==true){
 			
 			inMC = true;	// Processing MC banks
+			thr[0]=thr[1]=5;
 			
 			int tdcc;
 			EvioDataBank bank = (EvioDataBank) event.getBank("EC::dgtz");
@@ -643,8 +647,8 @@ public class ECMonv0 extends DetectorMonitor {
 					
 					for (int il=l1; il<l2 ; il++){
 						int iss = is*10+il;
-						//double adcc = adcr[is][il+2][0]/pixelLength[pixela-1];
-						double adcc = adcr[is][il+2][0];
+						double adcc = adcr[is][il+2][0]/pixelLength[pixela-1];
+						//double adcc = adcr[is][il+2][0];
 						ECAL_ADC_PIX.get(iss).fill(adcc,strra[is][il+2][0],1.0);
 						ECAL_PIXASUM.get(ist).fill(pixela,adcc);
 						ECAL_ADCPIX.get(iss).fill(pixela,adcc);
@@ -842,6 +846,7 @@ public class ECMonv0 extends DetectorMonitor {
 		int ic    = io;
 		int col2=2,col4=4,col0=0;
 		H1D h;
+		canvas.divide(3,2);
 		
 		if (is==2) {
 	    for(int il=1;il<4;il++){
@@ -849,7 +854,7 @@ public class ECMonv0 extends DetectorMonitor {
     		H2D hpix = (H2D) getDir().getDirectory(labped[ic]).getObject("PED"+hid); 
     		hpix.setXTitle("PED (Ref-Measured)") ; hpix.setYTitle(otab[ic][il-1]);
     	 
-    		canvas.cd(il-1); canvas.setLogZ(true); canvas.draw(hpix);
+    		canvas.cd(il-1); canvas.setLogZ(); canvas.draw(hpix);
     		
     		if(la==il) {
     			F1D f1 = new F1D("p0",-10.,10.); f1.setParameter(0,ip);
@@ -880,6 +885,7 @@ public class ECMonv0 extends DetectorMonitor {
 		int ic    = io;
 		int col2=2,col4=4,col0=0;
 		H1D h;
+		canvas.divide(3,2);
 		
 		if (is==2) {
 	    for(int il=1;il<4;il++){

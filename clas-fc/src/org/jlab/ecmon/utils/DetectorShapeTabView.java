@@ -48,7 +48,7 @@ public class DetectorShapeTabView extends JPanel implements ActionListener {
     private List<IDetectorListener>         detectorListeners = new ArrayList<IDetectorListener>();
     static final int FPS_MIN = 0;
     static final int FPS_MAX = 20;
-    static final int FPS_INIT = 2;
+    static final int FPS_INIT = 10;
     int fps=FPS_INIT;
     
     public DetectorShapeTabView(){

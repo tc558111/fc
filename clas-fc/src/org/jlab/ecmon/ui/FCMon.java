@@ -460,7 +460,7 @@ public class FCMon extends DetectorMonitoring {
 		    SwingUtilities.invokeLater(new Runnable() {
 		    	public void run() {
 		 		   calib.init();
-				   CLASMonitoring monitor = new CLASMonitoring("/Users/colesmith/COATJAVA/dat/fc-muon-500k-s2-noatt.evio", calib);
+				   CLASMonitoring monitor = new CLASMonitoring("/Users/colesmith/COATJAVA/dat/fc-muon-500k-s2.evio", calib);
 				   monitor.process();
 				   calib.analyze();
 				   calib.close();

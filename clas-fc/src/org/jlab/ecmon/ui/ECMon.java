@@ -27,7 +27,9 @@ import java.awt.Color;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeMap;
 import java.util.Arrays;
 
@@ -67,7 +69,7 @@ public class ECMon extends DetectorMonitor {
 	int tid       		 = 100000;
 	int cid       		 = 10000;
 	int lid       		 = 100;
-			
+		
     public TreeMap<Integer,H1D>      ECAL_ADCPIX  = new TreeMap<Integer,H1D>();
     public TreeMap<Integer,H1D>      ECAL_ADCPIX2 = new TreeMap<Integer,H1D>();
     public TreeMap<Integer,H1D>      ECAL_TDCPIX  = new TreeMap<Integer,H1D>();
@@ -137,10 +139,10 @@ public class ECMon extends DetectorMonitor {
     			
     		hid=iss+ic*cid;  
     		for (int il=1 ; il<4 ; il++) {
-    			monADC[ic].add(new H2D("ADC"+(int)(hid+10*tid+il*lid),50,0.0,200.0,nbn1[ic],0.0,nbn2[ic])); 
-    			monPED[ic].add(new H2D("PED"+(int)(hid+10*tid+il*lid),20,-10.,10.0,nbn1[ic],0.0,nbn2[ic])); 
-    			monTDC[ic].add(new H2D("TDC"+(int)(hid+10*tid+il*lid),60,-15.0,15.0,nbn1[ic],0.0,nbn2[ic]));     		 
-    			monTDC[ic].add(new H2D("TDC"+(int)(hid+11*tid+il*lid),60,-15.0,15.0,nbn1[ic],0.0,nbn2[ic]));     		 
+    			monADC[ic].add(new H2D("ADC"+(int)(hid+10*tid+il*lid),100,  0.,300.,nbn1[ic],1.0,nbn2[ic])); 
+    			monPED[ic].add(new H2D("PED"+(int)(hid+10*tid+il*lid), 20,-10., 10.,nbn1[ic],1.0,nbn2[ic])); 
+    			monTDC[ic].add(new H2D("TDC"+(int)(hid+10*tid+il*lid), 60,-15., 15.,nbn1[ic],1.0,nbn2[ic]));     		 
+    			monTDC[ic].add(new H2D("TDC"+(int)(hid+11*tid+il*lid), 60,-15., 15.,nbn1[ic],1.0,nbn2[ic]));     		 
      		}    	
     		getDir().addDirectory(monADC[ic]);
     		getDir().addDirectory(monPED[ic]);
@@ -152,30 +154,31 @@ public class ECMon extends DetectorMonitor {
 		for (is=0;is<6;is++) {			
 			for (int lay=1 ; lay<7 ; lay++) {
 				iss=is*10+lay;
-				ECAL_ADC.put(iss,     new H2D("ADC_LAYER_"+iss,100,0.0,200.0,36,1.0,37.0));
-				ECAL_TDC.put(iss,     new H2D("TDC_LAYER_"+iss,100,1330.0,1370.0,36,1.0,37.0));  
-				ECAL_ADC_PIX.put(iss, new H2D("ADC_PIX_LAYER_"+iss,100,0.0,200.0,36,1.0,37.0));
-				ECAL_TDC_PIX.put(iss, new H2D("TDC_PIX_LAYER_"+iss,100,1330.0,1370.0,36,1.0,37.0));  
-				ECAL_ADCPIX.put(iss,  new H1D("ADC_PIX"+iss,1296,1.0,1297.0));
-				ECAL_ADCPIX2.put(iss, new H1D("ADC_PIX2"+iss,1296,1.0,1297.0));
-				ECAL_PIXA.put(iss,    new H1D("A_PIX"+iss,1296,1.0,1297.0));
-				ECAL_PIXA2.put(iss,   new H1D("A_PIX2"+iss,1296,1.0,1297.0));
-				ECAL_PIXT.put(iss,    new H1D("T_PIX"+iss,1296,1.0,1297.0));
-				ECAL_TDCPIX.put(iss,  new H1D("TDC_PIX"+iss,1296,1.0,1297.0));
-				ECAL_APIX.put(iss,    new H2D("APIX"+iss,1296,1.0,1297.0,30,0.0,250.0));
-				ECAL_TPIX.put(iss,    new H2D("TPIX"+iss,1296,1.0,1297.0,40,1330.0,1370.0));
+				ECAL_ADC.put(iss,     new H2D("ADC_LAYER_"+iss,    100,   0., 200.,36,1.,37.));
+				ECAL_TDC.put(iss,     new H2D("TDC_LAYER_"+iss,    100,1330.,1370.,36,1.,37.));  
+				ECAL_ADC_PIX.put(iss, new H2D("ADC_PIX_LAYER_"+iss,100,   0., 200.,36,1.,37.));
+				ECAL_TDC_PIX.put(iss, new H2D("TDC_PIX_LAYER_"+iss,100,1330.,1370.,36,1.,37.));  
+//				ECAL_APIX.put(iss,    new H2D("APIX"+iss,         1296,   1.,1297.,30,   0., 250.));
+//				ECAL_TPIX.put(iss,    new H2D("TPIX"+iss,         1296,   1.,1297.,40,1330.,1370.));
+				ECAL_APIX.put(iss,    new H2D("APIX"+iss,           30,   0., 250.,1296, 1.,1297.));
+				ECAL_TPIX.put(iss,    new H2D("TPIX"+iss,           40,1330.,1370.,1296, 1.,1297.));
+				ECAL_ADCPIX.put(iss,  new H1D("ADC_PIX"+iss,      1296,   1.,1297.));
+				ECAL_ADCPIX2.put(iss, new H1D("ADC_PIX2"+iss,     1296,   1.,1297.));
+				ECAL_PIXA.put(iss,    new H1D("A_PIX"+iss,        1296,   1.,1297.));
+				ECAL_PIXA2.put(iss,   new H1D("A_PIX2"+iss,       1296,   1.,1297.));
+				ECAL_PIXT.put(iss,    new H1D("T_PIX"+iss,        1296,   1.,1297.));
+				ECAL_TDCPIX.put(iss,  new H1D("TDC_PIX"+iss,      1296,   1.,1297.));
 			}
 			for (int lay=7; lay<9; lay++) {
 				iss=is*10+lay;
-				ECAL_EVTPIXA.put(iss, new H1D("EVTPIXA"+iss,1296,1.0,1297.0));
-				ECAL_EVTPIXT.put(iss, new H1D("EVTPIXT"+iss,1296,1.0,1297.0));
-				ECAL_PIXASUM.put(iss, new H1D("A_PIXSUM"+iss,1296,1.0,1297.0));
-				ECAL_PIXTSUM.put(iss, new H1D("T_PIXSUM"+iss,1296,1.0,1297.0));
-				ECAL_PIXAS.put(iss,   new H1D("A_PIXAS"+iss,1296,1.0,1297.0));
-				ECAL_PIXTS.put(iss,   new H1D("T_PIXTS"+iss,1296,1.0,1297.0));
+				ECAL_EVTPIXA.put(iss, new H1D("EVTPIXA"+iss, 1296,1.,1297.));
+				ECAL_EVTPIXT.put(iss, new H1D("EVTPIXT"+iss, 1296,1.,1297.));
+				ECAL_PIXASUM.put(iss, new H1D("A_PIXSUM"+iss,1296,1.,1297.));
+				ECAL_PIXTSUM.put(iss, new H1D("T_PIXSUM"+iss,1296,1.,1297.));
+				ECAL_PIXAS.put(iss,   new H1D("A_PIXAS"+iss, 1296,1.,1297.));
+				ECAL_PIXTS.put(iss,   new H1D("T_PIXTS"+iss, 1296,1.,1297.));
 			}
 		}
-		
 	}
 	
 	public void initDetector(int is1, int is2) {
@@ -650,7 +653,7 @@ public class ECMon extends DetectorMonitor {
 						ECAL_PIXASUM.get(ist).fill(pixela,adcc);
 						ECAL_ADCPIX.get(iss).fill(pixela,adcc);
 						ECAL_ADCPIX2.get(iss).fill(pixela,Math.pow(adcc,2));
-						ECAL_APIX.get(iss).fill(pixela,adcc,1.0);
+						ECAL_APIX.get(iss).fill(adcc,pixela,1.0);
 						if (good_uvwt&&is==1) {
 							if(l1==1) good_uvwt_save = good_uvwt;
 							if(l1==4 && good_uvwt_save){
@@ -679,7 +682,7 @@ public class ECMon extends DetectorMonitor {
 						ECAL_TDC_PIX.get(iss).fill(tdcr[is][il+2][0],strrt[is][il+2][0],1.0);
 						ECAL_PIXTSUM.get(ist).fill(pixelt,tdcr[is][il+2][0]);
 						ECAL_TDCPIX.get(iss).fill(pixelt,tdcr[is][il+2][0]);
-						ECAL_TPIX.get(iss).fill(pixelt,tdcr[is][il+2][0],1.0);
+						ECAL_TPIX.get(iss).fill(tdcr[is][il+2][0],pixelt,1.0);
 					}
 				}	
 			}
@@ -1089,11 +1092,11 @@ public class ECMon extends DetectorMonitor {
 	        	String alab2 = lab1[il-1-of]+lab2[io-1]+lab3[1]+pixel+lab4[0];String tlab2 = lab1[il-1-of]+lab2[io-1]+lab3[1]+pixel+lab4[1];
 			    if (layer<17) {
 	    		 canvas.cd(il+2-of) ; h = ECAL_ADC_PIX.get(is*10+il).sliceY(pixmap[il-1-of][ic]-1); h.setXTitle(alab1); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
-	    		 canvas.cd(il+5-of) ; h =    ECAL_APIX.get(is*10+il).sliceX(ic)                   ; h.setXTitle(alab2); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
+	    		 canvas.cd(il+5-of) ; h =    ECAL_APIX.get(is*10+il).sliceY(ic)                   ; h.setXTitle(alab2); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
 			    }
 			    if (layer>16&&layer<22) {
 	    		 canvas.cd(il+2-of) ; h = ECAL_TDC_PIX.get(is*10+il).sliceY(pixmap[il-1-of][ic]-1); h.setXTitle(tlab1); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
-	    		 canvas.cd(il+5-of) ; h =    ECAL_TPIX.get(is*10+il).sliceX(ic)                   ; h.setXTitle(tlab2); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
+	    		 canvas.cd(il+5-of) ; h =    ECAL_TPIX.get(is*10+il).sliceY(ic)                   ; h.setXTitle(tlab2); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
 			    }
 			}  	 
 	     }

@@ -45,53 +45,57 @@ import org.jlab.clas.tools.utils.*;
 import org.jlab.hipo.*;
 
 /**
- *
  * @author gavalian
- * Revised by L. C. Smith in Sep-Nov 2015 for development of ECMon.java (now ECMonv2.java).
+ * Revised by L. C. Smith in Sep-Nov 2015 for development of ECMon.java.
  */
 @SuppressWarnings("serial")
 public class MonitorApp extends JFrame implements ActionListener,ChangeListener {
     
     EvioSource                       evReader;      
-    EvioETSource                     etReader;
-	String            ethost=null,etfile=null;
     boolean         isRegularFileOpen = false;
-    boolean         isEtFileOpen      = false;    
-    private TreeMap<String,EmbeddedCanvas>  paneCanvas = new TreeMap<String,EmbeddedCanvas>();
-    JTabbedPane              canvasTabbedPane;
+    private File                  file = null;
+    private String            filename = null;
+    
+    EvioETSource                     etReader;
+	String         ethost=null,etfile = null;
+    private Boolean isEtFileOpen      = false;   
+    private Boolean isRemote          = false;
+    
+    private DetectorShapeTabView detectorView;  
+	private int   selectedTabIndex    = 0;  
+	
+    private JTabbedPane      canvasTabbedPane;
     private JSplitPane             vSplitPane; 
 	private JSplitPane	           hSplitPane;
-	private JPanel             controlsPanel0;
-	private JPanel             controlsPanel1;
-	private JPanel             controlsPanel2;
-	private DetectorShapeTabView detectorView;  
-	private int            selectedTabIndex=0;      
+	
+    private TreeMap<String,EmbeddedCanvas>  paneCanvas = new TreeMap<String,EmbeddedCanvas>();
+	
+	private JPanel  controlsPanel0 = null;
     
+	private JPanel controlsPanel1  = null;
+    private JLabel   statusLabel   = null;
+    private JLabel     fileLabel   = null;
+    
+	private JPanel  controlsPanel2 = null;
     private JButton  buttonPrev    = null;
     private JButton  buttonNext    = null;
     private JButton  buttonNextFFW = null;
     private JButton  buttonStop    = null;
-//    private JButton  startButton   = null;
-    private JLabel   statusLabel   = null;
-    private JLabel     fileLabel   = null;
-    private JSpinner spinnerDelay  = null;
+    private JSpinner spinnerDelay  = null;	
+    	
     private Timer    processTimer  = null;
-    private  Integer    threadDelay   = 0;
-    private JSlider  framesPerSecond;
+    private  Integer   threadDelay = 0;
     
+    private JSlider  framesPerSecond;
     static final int FPS_MIN = 0;
     static final int FPS_MAX = 20;
     static final int FPS_INIT = 2;
     
     private volatile boolean running;
+    public boolean isSingleEvent=false;
 //    private ProcessEvio processEvio;
-    private File file;
-    private String filename;
     private IDetectorProcessor processorClass = null;
     private DetectorMonitor   monitoringClass = null;
-    
-    private Boolean isRemote = false;
-    boolean frozen = false;
     
     public MonitorApp(int xsize, int ysize){
         super("BrowserApp");
@@ -111,7 +115,7 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
 
     	this.setLayout(new BorderLayout());
     	
-		this.detectorView = new DetectorShapeTabView();
+		this.detectorView       = new DetectorShapeTabView();
 		this.canvasTabbedPane   = new JTabbedPane();	
 		
 		this.vSplitPane = new JSplitPane();		
@@ -123,14 +127,19 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
         this.hSplitPane.setSize(2000, 600);
         this.hSplitPane.setDividerLocation(800);
         
-		this.controlsPanel0 = new JPanel(new GridBagLayout()); 		
+		this.controlsPanel0 = new JPanel(new GridBagLayout());
+		
 	    this.controlsPanel1 = new JPanel();
-      	this.controlsPanel2 = new JPanel();
 		this.controlsPanel1.setBorder(BorderFactory.createTitledBorder("Event Source"));
-		this.controlsPanel2.setBorder(BorderFactory.createTitledBorder("Event Control"));
 		this.controlsPanel1.setSize(500,100);
+		
+      	this.controlsPanel2 = new JPanel();
+		this.controlsPanel2.setBorder(BorderFactory.createTitledBorder("Event Control"));
 		this.controlsPanel2.setSize(500,100);
 		
+        fileLabel   = new JLabel("");
+        statusLabel = new JLabel("No Opened File");
+        
         buttonPrev = new JButton("<");
         buttonPrev.addActionListener(this);
         buttonNext = new JButton(">");
@@ -147,30 +156,6 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
         buttonStop.setEnabled(false);
         buttonNextFFW.setEnabled(false); 
         
-        statusLabel = new JLabel("No Opened File");
-        fileLabel   = new JLabel("");
-        
-/*		startButton = new JButton();
-		startButton.setText("Load EVIO file");
-		startButton.setEnabled(false);		
-		startButton.addActionListener(new ActionListener(){
-			public void actionPerformed(ActionEvent e){
-				if (running)
-					stop();
-				else
-					start();
-			}
-		});   
-*/		
-        this.controlsPanel1.add(fileLabel);	
-        this.controlsPanel1.add(statusLabel);	
-         
-//        this.controlsPanel2.add(startButton);
-        this.controlsPanel2.add(buttonPrev);
-        this.controlsPanel2.add(buttonNext);
-        this.controlsPanel2.add(buttonNextFFW);
-        this.controlsPanel2.add(buttonStop);
-                      
         SpinnerModel model =
         new SpinnerNumberModel(0, //initial value
                                0, //min
@@ -179,9 +164,7 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
         this.spinnerDelay = new JSpinner(model);
         this.spinnerDelay.addChangeListener(this);
         
-        this.controlsPanel2.add(new JLabel("Delay (sec)"));
-        this.controlsPanel2.add(this.spinnerDelay);
-        
+/*        
         framesPerSecond = new JSlider(JSlider.HORIZONTAL,FPS_MIN,FPS_MAX,FPS_INIT);
         framesPerSecond.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent f) {
@@ -203,6 +186,29 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
         framesPerSecond.setFont(font);
         framesPerSecond.setSize(200,200);
         framesPerSecond.setVisible(true);
+        
+        startButton = new JButton();
+		startButton.setText("Load EVIO file");
+		startButton.setEnabled(false);		
+		startButton.addActionListener(new ActionListener(){
+			public void actionPerformed(ActionEvent e){
+				if (running)
+					stop();
+				else
+					start();
+			}
+		});   
+        this.controlsPanel2.add(startButton);
+*/		
+        this.controlsPanel1.add(fileLabel);	
+        this.controlsPanel1.add(statusLabel);	
+         
+        this.controlsPanel2.add(buttonPrev);
+        this.controlsPanel2.add(buttonNext);
+        this.controlsPanel2.add(buttonNextFFW);
+        this.controlsPanel2.add(buttonStop);        
+        this.controlsPanel2.add(new JLabel("Delay (sec)"));
+        this.controlsPanel2.add(this.spinnerDelay);
               
         this.controlsPanel0.setBackground(Color.LIGHT_GRAY);
 		this.controlsPanel1.setBackground(Color.LIGHT_GRAY);
@@ -289,7 +295,8 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
     			this.fileLabel.setText(" ");
     			this.etReader = null;
     		} finally {
-    			this.isEtFileOpen = true;
+    			this.isSingleEvent = false;
+    			this.isEtFileOpen  = true;
     			this.isRegularFileOpen = false;
     			this.etReader.close();
     			this.etReader.loadEvents();
@@ -309,6 +316,7 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
     	if(e.getActionCommand().compareTo("Sector 4")==0) {ethost="adcecal4";etfile="/tmp/et_sys_clasprod4";}
     	if(e.getActionCommand().compareTo("Sector 5")==0) {ethost="adcecal5";etfile="/tmp/et_sys_clasprod5";}
     	if(e.getActionCommand().compareTo("Sector 6")==0) {ethost="adcecal6";etfile="/tmp/et_sys_clasprod6";}
+    	
     	if(ethost!=null) {chooseEtFile(); isRemote=true ;}
     	
         if(e.getActionCommand().compareTo("Load EVIO File")==0){
@@ -332,11 +340,13 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
                 file = fc.getSelectedFile();
                 filename = file.getAbsolutePath();
                 isRemote = false;
+                isSingleEvent = false;
                 //startButton.setText("Start");
                 //startButton.setEnabled(true);
                 monitoringClass.init();
                 this.evReader = new EvioSource();
                 this.evReader.open(filename);
+                isRegularFileOpen = true;
                 this.buttonNext.setEnabled(true);
                 this.buttonNextFFW.setEnabled(true);
                 Integer current = this.evReader.getCurrentIndex();
@@ -348,7 +358,7 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
             }
         }
         if(e.getActionCommand().compareTo("<")==0){
-            
+            isSingleEvent = true;
             if(evReader.hasEvent()){
                 if(evReader.getCurrentIndex()>=2){
                     
@@ -374,11 +384,13 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
         }
         
         if(e.getActionCommand().compareTo(">")==0){
+        	isSingleEvent = true;
         	this.processNextEvent();
         	this.buttonPrev.setEnabled(true);
         }
         
         if(e.getActionCommand().compareTo(">>")==0){
+        	isSingleEvent = false;
         	running = true;
             class CrunchifyReminder extends TimerTask {
             	public void run() {

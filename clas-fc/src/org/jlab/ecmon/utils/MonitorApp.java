@@ -33,7 +33,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-//import org.root.pad.EmbeddedCanvas;
+//import org.root.pad.TEmbeddedCanvas;
 import org.root.basic.EmbeddedCanvas;
 import org.jlab.evio.clas12.EvioDataEvent;
 import org.jlab.evio.clas12.EvioSource;

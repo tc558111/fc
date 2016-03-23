@@ -19,7 +19,7 @@ import org.root.histogram.*;
 import org.root.basic.EmbeddedCanvas;
 import org.root.basic.GraphicsAxisNumber;
 import org.root.basic.DataSetFrame;
-//import org.root.pad.EmbeddedCanvas;
+//import org.root.pad.TEmbeddedCanvas;
 import org.root.attr.ColorPalette;
 import org.root.attr.TStyle;
 
@@ -41,43 +41,48 @@ import org.jlab.ecmon.utils.*;
 
 public class FCMon extends DetectorMonitor {
 	
-	public static MonitorApp app;
+   public static MonitorApp app;
 	
-	public EventDecoder     decoder = new EventDecoder();
-	FADCConfigLoader          fadc  = new FADCConfigLoader();
-	DatabaseConstantProvider   ccdb = new DatabaseConstantProvider(12,"default");
-	TDirectory         mondirectory = new TDirectory(); 	
-	ColorPalette            palette = new ColorPalette();
-	ECPixels                  ecPix = new ECPixels();
+   public EventDecoder     decoder = new EventDecoder();
+   FADCConfigLoader          fadc  = new FADCConfigLoader();
+   DatabaseConstantProvider   ccdb = new DatabaseConstantProvider(12,"default");
+   TDirectory         mondirectory = new TDirectory(); 	
+   ColorPalette            palette = new ColorPalette();
+   ECPixels                  ecPix = new ECPixels();
 		
-	int inProcess        = 0; //0=init 1=processing 2=end-of-run 3=post-run
-	boolean inMC         = false; //true=MC false=DATA
-	int thr[]            = {15,20};
-	String monpath       = System.getenv("COATJAVA");
-	String monfile       = "mondirectory";
-	String labadc[] 	 = {"monitor/pcal/adc","monitor/ecinner/adc","monitor/ecouter/adc"}; 
-	String labtdc[]    	 = {"monitor/pcal/tdc","monitor/ecinner/tdc","monitor/ecouter/tdc"}; 
-	String labped[] 	 = {"monitor/pcal/ped","monitor/ecinner/ped","monitor/ecouter/ped"}; 
-	String labatt[]    	 = {"monitor/pcal/att","monitor/ecinner/att","monitor/ecouter/att"}; 
-	String labpmt[] 	 = {"monitor/pcal/pmt","monitor/ecinner/pmt","monitor/ecouter/pmt"}; 
-	int hid;
-	int tid       		 = 100000;
-	int cid       		 = 10000;
-	int lid       		 = 100;
-			
-	DetectorCollection<CalibrationData> collection = new DetectorCollection<CalibrationData>();  
+   int inProcess        = 0; //0=init 1=processing 2=end-of-run 3=post-run
+   boolean inMC         = false; //true=MC false=DATA
+   int thr[]            = {15,20};
+   String monpath       = System.getenv("COATJAVA");
+   String monfile       = "mondirectory"; 
+   
+   int tid       		 = 100000;
+   int cid       		 = 10000;
+   int lid       		 = 100;
 	
-	DetectorCollection<H2D> H2_ECa_Hist = new DetectorCollection<H2D>();
-	DetectorCollection<H2D> H2_ECt_Hist = new DetectorCollection<H2D>();
-	DetectorCollection<H1D> H1_ECa_Hist = new DetectorCollection<H1D>();
-	DetectorCollection<H1D> H1_ECt_Hist = new DetectorCollection<H1D>();
-	DetectorCollection<H1D> H1_ECa_Maps = new DetectorCollection<H1D>();
-	DetectorCollection<H1D> H1_ECt_Maps = new DetectorCollection<H1D>();
-	DetectorCollection<H1D> H1_ECa_Sevd = new DetectorCollection<H1D>();
-	DetectorCollection<H1D> H1_ECt_Sevd = new DetectorCollection<H1D>();
+   int        nha[][] = new    int[6][9];
+   int        nht[][] = new    int[6][9];
+   int    strra[][][] = new    int[6][9][68]; 
+   int    strrt[][][] = new    int[6][9][68]; 
+   int     adcr[][][] = new    int[6][9][68];
+   double ftdcr[][][] = new double[6][9][68];
+   double  tdcr[][][] = new double[6][9][68];
+   double    uvwa[][] = new double[6][9];
+   double    uvwt[][] = new double[6][9];
+   
+   DetectorCollection<CalibrationData> collection = new DetectorCollection<CalibrationData>();  
 	
-	DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new DetectorCollection<TreeMap<Integer,Object>>();
-	DetectorCollection<TreeMap<Integer,Object>> Lmap_t = new DetectorCollection<TreeMap<Integer,Object>>();
+   DetectorCollection<H2D> H2_ECa_Hist = new DetectorCollection<H2D>();
+   DetectorCollection<H2D> H2_ECt_Hist = new DetectorCollection<H2D>();
+   DetectorCollection<H1D> H1_ECa_Hist = new DetectorCollection<H1D>();
+   DetectorCollection<H1D> H1_ECt_Hist = new DetectorCollection<H1D>();
+   DetectorCollection<H1D> H1_ECa_Maps = new DetectorCollection<H1D>();
+   DetectorCollection<H1D> H1_ECt_Maps = new DetectorCollection<H1D>();
+   DetectorCollection<H1D> H1_ECa_Sevd = new DetectorCollection<H1D>();
+   DetectorCollection<H1D> H1_ECt_Sevd = new DetectorCollection<H1D>();
+
+   DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new DetectorCollection<TreeMap<Integer,Object>>();
+   DetectorCollection<TreeMap<Integer,Object>> Lmap_t = new DetectorCollection<TreeMap<Integer,Object>>();
 	
 	public FCMon(String[] args) {
 		super("FCMON","1.0","lcsmith");
@@ -106,41 +111,7 @@ public class FCMon extends DetectorMonitor {
     
 	public void initHistograms() {
 		
-		int    nbn1[] = {68,36,36}; 
-		double nbn2[] = {69.0,37.0,37.0}; 
-		
-		int is        = 5;
-		int iss       = (int) (is*1e7);
-		
-	    TDirectory monADC[] = new TDirectory[3];
-	    TDirectory monTDC[] = new TDirectory[3];
-	    TDirectory monPED[] = new TDirectory[3];
-	    TDirectory monPMT[] = new TDirectory[3];
-	    TDirectory monATT[] = new TDirectory[3];
-	    
-		for (int ic=1 ; ic<3 ; ic++) {  //ic=0,1,2 -> PCAL,ECALinner,ECALouter
-			
-			monADC[ic] = new TDirectory(labadc[ic]);
-			monTDC[ic] = new TDirectory(labtdc[ic]); 
-			monPED[ic] = new TDirectory(labped[ic]);
-			monPMT[ic] = new TDirectory(labpmt[ic]); 
-			monATT[ic] = new TDirectory(labatt[ic]);
-    			
-    		hid=iss+ic*cid;  
-    		for (int il=1 ; il<4 ; il++) {
-    			monADC[ic].add(new H2D("ADC"+(int)(hid+10*tid+il*lid),100,  0.0,300.0,nbn1[ic],1.0,nbn2[ic])); 
-    			monPED[ic].add(new H2D("PED"+(int)(hid+10*tid+il*lid), 20,-10.0, 10.0,nbn1[ic],1.0,nbn2[ic])); 
-    			monTDC[ic].add(new H2D("TDC"+(int)(hid+10*tid+il*lid), 60,-15.0, 15.0,nbn1[ic],1.0,nbn2[ic]));     		 
-    			monTDC[ic].add(new H2D("TDC"+(int)(hid+11*tid+il*lid), 60,-15.0, 15.0,nbn1[ic],1.0,nbn2[ic]));    		 
-     		}    	
-    		getDir().addDirectory(monADC[ic]);
-    		getDir().addDirectory(monPED[ic]);
-    		getDir().addDirectory(monTDC[ic]);
-    		getDir().addDirectory(monPMT[ic]);
-    		getDir().addDirectory(monATT[ic]);
-    	}
-		 
-		for (is=1; is<7 ; is++) {
+		for (int is=1; is<7 ; is++) {
 			for (int il=1 ; il<7 ; il++){
 				// For Histos
 				H2_ECa_Hist.add(is, il, 0, new H2D("ECa_Hist_Raw_"+il, 100,   0., 200.,  36, 1.,  37.));
@@ -149,6 +120,9 @@ public class FCMon extends DetectorMonitor {
 				H2_ECt_Hist.add(is, il, 1, new H2D("ECt_Hist_Pix_"+il, 100,1330.,1370.,  36, 1.,  37.));
 				H2_ECa_Hist.add(is, il, 2, new H2D("ECa_Hist_Pix_"+il,  30,   0., 250.,1296, 1.,1297.));
 				H2_ECt_Hist.add(is, il, 2, new H2D("ECt_Hist_Pix_"+il,  40,1330.,1370.,1296, 1.,1297.));
+				H2_ECa_Hist.add(is, il, 3, new H2D("ECa_Hist_PED_"+il,  20, -10.0, 10.0, 36, 1.,  37.)); 
+				H2_ECt_Hist.add(is, il, 3, new H2D("ECa_Hist_TDIF_"+il, 60, -15.0, 15.0, 36, 1.,  37.)); 
+				H2_ECt_Hist.add(is, il, 4, new H2D("ECa_Hist_TDIF_"+il, 60, -15.0, 15.0, 36, 1.,  37.)); 
 				// For Layer Maps
 				H1_ECa_Maps.add(is, il, 0, new H1D("ECa_Maps_ADCPIX_"+il, 1296,  1.,1297.));
 				H1_ECa_Maps.add(is, il, 1, new H1D("ECa_Maps_PIXA_"+il,   1296,  1.,1297.));
@@ -274,17 +248,7 @@ public class FCMon extends DetectorMonitor {
 	public void processEvent(DataEvent de) {
 		
 		EvioDataEvent event = (EvioDataEvent) de;
-		
-		int nha[][]        = new int[6][9];
-		int nht[][]        = new int[6][9];
-		int strra[][][]    = new int[6][9][68]; 
-		int strrt[][][]    = new int[6][9][68]; 
-		int adcr[][][]     = new int[6][9][68];
-		double ftdcr[][][] = new double[6][9][68];
-		double tdcr[][][]  = new double[6][9][68];
-		double uvwa[][]    = new double[6][9];
-		double uvwt[][]    = new double[6][9];
-		
+		   
 		int inh;
 		
 		if (app.isSingleEvent) {
@@ -381,10 +345,7 @@ public class FCMon extends DetectorMonitor {
 	          	  ftdcr[is-1][iv-1][inh-1] = tdcf;
 	          	  strra[is-1][iv-1][inh-1] = ip;
 	          	  H2_ECa_Hist.get(is,il+(ic-1)*3,0).fill(adc,ip,1.0);
-	   		      hid = (int) (1e7*is+10*tid+ic*cid+il*lid);
-	   		      hpix = (H2D) getDir().getDirectory(labadc[ic]).getObject("ADC"+hid); hpix.fill(adc,ip);
-	   		      hid = (int) (1e7*is+10*tid+ic*cid+il*lid);
-	   		      hpix = (H2D) getDir().getDirectory(labped[ic]).getObject("PED"+hid); hpix.fill(pedref-ped,ip);
+	          	  H2_ECa_Hist.get(is,il+(ic-1)*3,3).fill(pedref-ped, ip);
 	   	        }
 			}
 		}
@@ -405,7 +366,7 @@ public class FCMon extends DetectorMonitor {
 			
 			inMC = true;	// Processing MC banks
 			thr[0]=thr[1]=5;
-			int tdcc,ishw=5;
+			int tdcc,ishw=2;
 			TreeMap<Integer,Object> map7=null,map8=null; 
 			double[]                sed7=null,sed8=null;
 			
@@ -453,15 +414,12 @@ public class FCMon extends DetectorMonitor {
 		          strra[is-1][iv-1][inh-1] = ip;
 		     
 		          H2_ECa_Hist.get(is,il+(ic-1)*3,0).fill(adc,ip,1.0);
-		          if (is==ishw) {
+		    
 		          if (app.isSingleEvent) {
 		        	  H1_ECa_Sevd.get(is,il+(ic-1)*3,0).fill(ip,adc);
 		        	  if(ic==1) ecPix.putpixels(il,ip,adc,sed7);
 		        	  if(ic==2) ecPix.putpixels(il,ip,adc,sed8);
-		          }
-	   		      hid = (int) (1e7*is+10*tid+ic*cid+il*lid);
-	   		      hpix = (H2D) getDir().getDirectory(labadc[ic]).getObject("ADC"+hid); hpix.fill(adc,ip);
-		          }
+		          }		      
 		   	    }		    	
 		    }
 		}
@@ -509,19 +467,15 @@ public class FCMon extends DetectorMonitor {
 						H1_ECa_Maps.get(is+1,il,0).fill(pixela,adcc);
 						H1_ECa_Maps.get(is+1,il,2).fill(pixela,Math.pow(adcc,2));
 
-						if (good_uvwt&&is==1) {
+						if (good_uvwt) {
 							if(l1==1) good_uvwt_save = good_uvwt;
 							if(l1==4 && good_uvwt_save){
 								double dtiff1 =  tdcr[is][il-1][0] -  tdcr[is][il+2][0];
 								double dtiff2 = ftdcr[is][il-1][0] - ftdcr[is][il+2][0];
-
-							int iil=il ; if (iil>3) iil=iil-3;
-				   		    hid = (int) (1e7*(is+1)+10*tid+ic*cid+iil*lid);
-				   		    hpix = (H2D) getDir().getDirectory(labtdc[ic]).getObject("TDC"+hid);
-				   		    hpix.fill(dtiff1,strrt[is][il+2][0]);
-				   		    hid = (int) (1e7*(is+1)+11*tid+ic*cid+iil*lid);
-				   		    hpix = (H2D) getDir().getDirectory(labtdc[ic]).getObject("TDC"+hid);
-				   		    hpix.fill(dtiff2,strrt[is][il+2][0]);
+								H2_ECt_Hist.get(is+1,il-3,3).fill(dtiff1, strrt[is][il+2][0]);
+								H2_ECt_Hist.get(is+1,il-3,4).fill(dtiff2, strrt[is][il+2][0]);
+								H2_ECt_Hist.get(is+1,il,3).fill(dtiff1, strrt[is][il+2][0]);
+								H2_ECt_Hist.get(is+1,il,4).fill(dtiff2, strrt[is][il+2][0]);
 							}
 						}
 					}
@@ -768,12 +722,12 @@ public class FCMon extends DetectorMonitor {
 		int io    = app.getDetectorView().panel1.ilmap;
 		int ic    = io;
 		int col2=2,col4=4,col0=0;
+		
 		H1D h;
 		canvas.divide(3,2);
-		if (is==2) {
+		
 	    for(int il=1;il<4;il++){
-    		int hid = (int) (1e7*is+10*tid+ic*cid+il*lid);
-    		H2D hpix = (H2D) getDir().getDirectory(labped[ic]).getObject("PED"+hid); 
+	    	H2D hpix = H2_ECa_Hist.get(is,il+(io-1)*3,3);
     		hpix.setXTitle("PED (Ref-Measured)") ; hpix.setYTitle(otab[ic][il-1]);
     	 
     		canvas.cd(il-1); canvas.setLogZ(); canvas.draw(hpix);
@@ -789,10 +743,7 @@ public class FCMon extends DetectorMonitor {
     		canvas.cd(il-1+3); h=hpix.sliceY(22) ; h.setFillColor(4) ; h.setTitle(""); h.setXTitle("STRIP "+22) ; canvas.draw(h);
     	    if(la==il) {h=hpix.sliceY(ip); h.setFillColor(2); h.setTitle(""); h.setXTitle("STRIP "+(ip+1));canvas.draw(h);}
 			//TStyle.setOptStat(false);
-	    }
-	    
-		}
-			
+	    }			
 	}
 	public void canvasTiming(DetectorDescriptor desc, EmbeddedCanvas canvas) {
 		
@@ -806,13 +757,12 @@ public class FCMon extends DetectorMonitor {
 		int io    = app.getDetectorView().panel1.ilmap;
 		int ic    = io;
 		int col2=2,col4=4,col0=0;
-		H1D h;
 		
+		H1D h;
 		canvas.divide(3,2);
-		if (is==2) {
+
 	    for(int il=1;il<4;il++){
-    		int hid = (int) (1e7*is+11*tid+ic*cid+il*lid);
-    		H2D hpix = (H2D) getDir().getDirectory(labtdc[ic]).getObject("TDC"+hid); 
+			H2D hpix = H2_ECt_Hist.get(is,il+(io-1)*3,4);
     		hpix.setXTitle("TDIF (Inner-Outer)") ; hpix.setYTitle(otab[ic][il-1]);
     		canvas.cd(il-1); canvas.setLogZ(); canvas.draw(hpix);
     		if(la==il) {
@@ -825,10 +775,7 @@ public class FCMon extends DetectorMonitor {
     		canvas.cd(il-1+3); h=hpix.sliceY(22) ; h.setFillColor(4) ; h.setTitle(""); h.setXTitle("STRIP "+22) ; canvas.draw(h);
     	    if(la==il) {h=hpix.sliceY(ip); h.setFillColor(2); h.setTitle(""); h.setXTitle("STRIP "+(ip+1)); canvas.draw(h);}
 			//TStyle.setOptStat(false);
-	    }
-	    
-		}
-			
+	    }	
 	}	
 	
 	public void canvasAttenuation(DetectorDescriptor desc, EmbeddedCanvas canvas) {
@@ -961,80 +908,80 @@ public class FCMon extends DetectorMonitor {
 		if (layer<7)  {col0=0 ; col1=4; col2=2;strip=ic+1;}
 		if (layer>=7) {col0=4 ; col1=4; col2=2;pixel=ic+1;}
     
-	    for(int il=l1;il<l2;il++){
-	    	String otab = lab1[il-1-of]+lab2[io-1]+"Strips";
-	    	canvas.cd(il-1-of); h = H2_ECa_Hist.get(is+1,il,0).projectionY(); h.setXTitle(otab); h.setFillColor(col0); canvas.draw(h);
-	    }
-	    
-	    l=layer;
-	   
-	    if (layer<7) {
-	    	 canvas.cd(l-1-of); h = H2_ECa_Hist.get(is+1,l,0).projectionY(); h.setFillColor(col1); canvas.draw(h,"same");
-	         H1D copy = h.histClone("Copy"); copy.reset() ; 
-	         copy.setBinContent(ic, h.getBinContent(ic)); copy.setFillColor(col2); canvas.draw(copy,"same");
-	         for(int il=l1;il<l2;il++) {
-	        	 String alab = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[0];String tlab = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[1];
-                 if(layer!=il) {canvas.cd(il+2-of); h = H2_ECa_Hist.get(is+1,il,0).sliceY(22); h.setXTitle(alab); h.setTitle(""); h.setFillColor(col0); canvas.draw(h);}
-                 if(layer!=il) {canvas.cd(il+5-of); h = H2_ECt_Hist.get(is+1,il,0).sliceY(22); h.setXTitle(tlab); h.setTitle(""); h.setFillColor(col0); canvas.draw(h);}
-             }
-        	 String alab = lab1[l-1-of]+lab2[io-1]+lab3[0]+strip+lab4[0];String tlab = lab1[l-1-of]+lab2[io-1]+lab3[0]+strip+lab4[1];
-			 canvas.cd(l+2-of); h = H2_ECa_Hist.get(is+1,l,0).sliceY(ic);h.setXTitle(alab); h.setTitle(""); h.setFillColor(col2); canvas.draw(h);
-			 canvas.cd(l+5-of); h = H2_ECt_Hist.get(is+1,l,0).sliceY(ic);h.setXTitle(tlab); h.setTitle(""); h.setFillColor(col2); canvas.draw(h);
-	    }
-	    
-	    if (layer==7||layer==8) {
-	    	for(int il=l1;il<l2;il++) {
-	    		canvas.cd(il-1-of); h = H2_ECa_Hist.get(is+1,il,0).projectionY();
-	    		H1D copy = h.histClone("Copy");
-	    		strip = ecPix.pixmap[il-1-of][ic];
-	    		copy.reset() ; copy.setBinContent(ic, h.getBinContent(ic));
-	    		copy.setFillColor(col2); canvas.draw(copy,"same");	    		 
-	        	String alab = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[0];String tlab = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[1];
-	    		canvas.cd(il+2-of) ; h = H2_ECa_Hist.get(is+1,il,0).sliceY(strip-1); h.setXTitle(alab); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
-	    		canvas.cd(il+5-of) ; h = H2_ECt_Hist.get(is+1,il,0).sliceY(strip-1); h.setXTitle(tlab); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
-	    	}
-	    }
-	    
+		for(int il=l1;il<l2;il++){
+			String otab = lab1[il-1-of]+lab2[io-1]+"Strips";
+			canvas.cd(il-1-of); h = H2_ECa_Hist.get(is+1,il,0).projectionY(); h.setXTitle(otab); h.setFillColor(col0); canvas.draw(h);
+			}
+		
+		l=layer;
+		
+		if (layer<7) {
+			canvas.cd(l-1-of); h = H2_ECa_Hist.get(is+1,l,0).projectionY(); h.setFillColor(col1); canvas.draw(h,"same");
+			H1D copy = h.histClone("Copy"); copy.reset() ; 
+			copy.setBinContent(ic, h.getBinContent(ic)); copy.setFillColor(col2); canvas.draw(copy,"same");
+			for(int il=l1;il<l2;il++) {
+				String alab = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[0];String tlab = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[1];
+				if(layer!=il) {canvas.cd(il+2-of); h = H2_ECa_Hist.get(is+1,il,0).sliceY(22); h.setXTitle(alab); h.setTitle(""); h.setFillColor(col0); canvas.draw(h);}
+				if(layer!=il) {canvas.cd(il+5-of); h = H2_ECt_Hist.get(is+1,il,0).sliceY(22); h.setXTitle(tlab); h.setTitle(""); h.setFillColor(col0); canvas.draw(h);}
+				}
+			String alab = lab1[l-1-of]+lab2[io-1]+lab3[0]+strip+lab4[0];String tlab = lab1[l-1-of]+lab2[io-1]+lab3[0]+strip+lab4[1];
+			canvas.cd(l+2-of); h = H2_ECa_Hist.get(is+1,l,0).sliceY(ic);h.setXTitle(alab); h.setTitle(""); h.setFillColor(col2); canvas.draw(h);
+			canvas.cd(l+5-of); h = H2_ECt_Hist.get(is+1,l,0).sliceY(ic);h.setXTitle(tlab); h.setTitle(""); h.setFillColor(col2); canvas.draw(h);
+			}
+		
+		if (layer==7||layer==8) {
+			for(int il=l1;il<l2;il++) {
+				canvas.cd(il-1-of); h = H2_ECa_Hist.get(is+1,il,0).projectionY();
+				H1D copy = h.histClone("Copy");
+				strip = ecPix.pixmap[il-1-of][ic];
+				copy.reset() ; copy.setBinContent(ic, h.getBinContent(ic));
+				copy.setFillColor(col2); canvas.draw(copy,"same");	    		 
+				String alab = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[0];String tlab = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[1];
+				canvas.cd(il+2-of) ; h = H2_ECa_Hist.get(is+1,il,0).sliceY(strip-1); h.setXTitle(alab); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
+				canvas.cd(il+5-of) ; h = H2_ECt_Hist.get(is+1,il,0).sliceY(strip-1); h.setXTitle(tlab); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
+				}
+			}
+		
 		if (layer>8) {
 			for(int il=l1;il<l2;il++) {
 				canvas.cd(il-1-of); h = H2_ECa_Hist.get(is+1,il,1).projectionY();
-	 		    H1D copy = h.histClone("Copy");
-	 		    strip = ecPix.pixmap[il-1-of][ic];
-			    copy.reset() ; copy.setBinContent(strip-1, h.getBinContent(strip-1));
-			    copy.setFillColor(col2); canvas.draw(copy,"same");	
-	        	String alab1 = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[0];String tlab1 = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[1];
-	        	String alab2 = lab1[il-1-of]+lab2[io-1]+lab3[1]+pixel+lab4[0];String tlab2 = lab1[il-1-of]+lab2[io-1]+lab3[1]+pixel+lab4[1];
-			    if (layer<17) {
-	    		 canvas.cd(il+2-of) ; h = H2_ECa_Hist.get(is+1,il,1).sliceY(ecPix.pixmap[il-1-of][ic]-1); h.setXTitle(alab1); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
-	    		 canvas.cd(il+5-of) ; h = H2_ECa_Hist.get(is+1,il,2).sliceY(ic)                   ; h.setXTitle(alab2); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
-			    }
-			    if (layer>16&&layer<22) {
-	    		 canvas.cd(il+2-of) ; h = H2_ECt_Hist.get(is+1,il,1).sliceY(ecPix.pixmap[il-1-of][ic]-1); h.setXTitle(tlab1); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
-	    		 canvas.cd(il+5-of) ; h = H2_ECt_Hist.get(is+1,il,2).sliceY(ic)                   ; h.setXTitle(tlab2); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
-			    }
-			}  	 
-	     }
-	     
+				H1D copy = h.histClone("Copy");
+				strip = ecPix.pixmap[il-1-of][ic];
+				copy.reset() ; copy.setBinContent(strip-1, h.getBinContent(strip-1));
+				copy.setFillColor(col2); canvas.draw(copy,"same");	
+				String alab1 = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[0];String tlab1 = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[1];
+				String alab2 = lab1[il-1-of]+lab2[io-1]+lab3[1]+pixel+lab4[0];String tlab2 = lab1[il-1-of]+lab2[io-1]+lab3[1]+pixel+lab4[1];
+				if (layer<17) {
+					canvas.cd(il+2-of) ; h = H2_ECa_Hist.get(is+1,il,1).sliceY(ecPix.pixmap[il-1-of][ic]-1); h.setXTitle(alab1); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
+					canvas.cd(il+5-of) ; h = H2_ECa_Hist.get(is+1,il,2).sliceY(ic)                   ; h.setXTitle(alab2); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
+					}
+				if (layer>16&&layer<22) {
+					canvas.cd(il+2-of) ; h = H2_ECt_Hist.get(is+1,il,1).sliceY(ecPix.pixmap[il-1-of][ic]-1); h.setXTitle(tlab1); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
+					canvas.cd(il+5-of) ; h = H2_ECt_Hist.get(is+1,il,2).sliceY(ic)                   ; h.setXTitle(tlab2); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
+					}
+				}  	 
+			}
+		
 	}
 	
 	public static void main(String[] args){
 		
 		FCMon monitor = new FCMon(args);
 		
-	    SwingUtilities.invokeLater(new Runnable() {
-	    	public void run() {
-	    		app = new MonitorApp(2000,600);
-	    		app.setPluginClass(monitor);	
-	    		app.addCanvas("SingleEvent");
-	    		app.addCanvas("Occupancy");
-	    		app.addCanvas("Attenuation");
-	    		app.addCanvas("Pedestals");
-	    		app.addCanvas("Timing");
-	    		app.addChangeListener();
-	    		monitor.init();
-	    		monitor.initDetector(0,6);
-	    	}
-	    });
-	}
-
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				app = new MonitorApp(2000,600);
+				app.setPluginClass(monitor);	
+				app.addCanvas("SingleEvent");
+				app.addCanvas("Occupancy");
+				app.addCanvas("Attenuation");
+				app.addCanvas("Pedestals");
+				app.addCanvas("Timing");
+				app.addChangeListener();
+				monitor.init();
+				monitor.initDetector(0,6);
+				}
+			});
+		}
+	
 }

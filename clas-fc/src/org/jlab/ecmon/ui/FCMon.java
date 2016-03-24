@@ -24,6 +24,7 @@ import org.root.attr.ColorPalette;
 import org.root.attr.TStyle;
 
 import java.awt.Color;
+import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
@@ -43,13 +44,17 @@ public class FCMon extends DetectorMonitor {
 	
    public static MonitorApp app;
 	
-   public EventDecoder     decoder = new EventDecoder();
+   EventDecoder            decoder = new EventDecoder();
    FADCConfigLoader          fadc  = new FADCConfigLoader();
    DatabaseConstantProvider   ccdb = new DatabaseConstantProvider(12,"default");
    TDirectory         mondirectory = new TDirectory(); 	
    ColorPalette            palette = new ColorPalette();
    ECPixels                  ecPix = new ECPixels();
-		
+   MyArrays               myarrays = new MyArrays();
+   
+   TreeMap<Integer,Object> map7=null,map8=null; 
+   double[]                sed7=null,sed8=null;
+   
    int inProcess        = 0; //0=init 1=processing 2=end-of-run 3=post-run
    boolean inMC         = false; //true=MC false=DATA
    int thr[]            = {15,20};
@@ -59,17 +64,7 @@ public class FCMon extends DetectorMonitor {
    int tid       		 = 100000;
    int cid       		 = 10000;
    int lid       		 = 100;
-	
-   int        nha[][] = new    int[6][9];
-   int        nht[][] = new    int[6][9];
-   int    strra[][][] = new    int[6][9][68]; 
-   int    strrt[][][] = new    int[6][9][68]; 
-   int     adcr[][][] = new    int[6][9][68];
-   double ftdcr[][][] = new double[6][9][68];
-   double  tdcr[][][] = new double[6][9][68];
-   double    uvwa[][] = new double[6][9];
-   double    uvwt[][] = new double[6][9];
-   
+      
    DetectorCollection<CalibrationData> collection = new DetectorCollection<CalibrationData>();  
 	
    DetectorCollection<H2D> H2_ECa_Hist = new DetectorCollection<H2D>();
@@ -239,200 +234,96 @@ public class FCMon extends DetectorMonitor {
 	    
 	    for(int j=0; j < 5; j++) shapePath.addPoint(xc[j],yc[j],0.0);
 	
-	    return shape;
-
+	    return shape; 
 	}
-
-	@Override
-
-	public void processEvent(DataEvent de) {
+	
+	private class MyArrays {
 		
-		EvioDataEvent event = (EvioDataEvent) de;
-		   
-		int inh;
+		int        nha[][] = new    int[6][9];
+		int        nht[][] = new    int[6][9];
+		int    strra[][][] = new    int[6][9][68]; 
+		int    strrt[][][] = new    int[6][9][68]; 
+		int     adcr[][][] = new    int[6][9][68];
+		double ftdcr[][][] = new double[6][9][68];
+		double  tdcr[][][] = new double[6][9][68];
+		double    uvwa[][] = new double[6][9];
+		double    uvwt[][] = new double[6][9];		
 		
-		if (app.isSingleEvent) {
-		for (int is=1 ; is<7 ; is++) {
-			for (int il=1 ; il<9 ; il++) {
-			  H1_ECa_Sevd.get(is,il,0).reset();
-			}
+		public MyArrays() {	
 		}
-		}
 		
-		for (int is=0 ; is<6 ; is++) {
-			for (int il=0 ; il<9 ; il++) {
-				nha[is][il]  = 0;
-				nht[is][il]  = 0;
-				uvwa[is][il] = 0;
-				uvwt[is][il] = 0;
-				for (int ip=0 ; ip<68 ; ip++) {
-					strra[is][il][ip] = 0;
-					strrt[is][il][ip] = 0;
-					 adcr[is][il][ip] = 0;
-					ftdcr[is][il][ip] = 0;
-					 tdcr[is][il][ip] = 0;
+		public void clear() {
+			
+			for (int is=0 ; is<6 ; is++) {
+				for (int il=0 ; il<9 ; il++) {
+					nha[is][il]  = 0;
+					nht[is][il]  = 0;
+					uvwa[is][il] = 0;
+					uvwt[is][il] = 0;
+					for (int ip=0 ; ip<68 ; ip++) {
+						strra[is][il][ip] = 0;
+						strrt[is][il][ip] = 0;
+						 adcr[is][il][ip] = 0;
+						ftdcr[is][il][ip] = 0;
+						 tdcr[is][il][ip] = 0;
+					}
+				}				
+			}		
+			
+			if (app.isSingleEvent) {
+				for (int is=1 ; is<7 ; is++) {
+					for (int il=1 ; il<9 ; il++) {
+						H1_ECa_Sevd.get(is,il,0).reset();
+					}
 				}
 			}
 			
 		}
 		
-		float tdcmax=100000;
-		boolean debug=false;
-		int adc,ped,nsb=0,nsa=0,npk=0,pedref=0,timf=0,timc=0;
-		double mc_t=0.,tdc=0,tdcf=0;
-        H2D hpix;
-				
-		if(event.hasBank("EC::true")!=true) {
-		
-		if (debug) event.getHandler().list();	
-					
-    		decoder.decode(event);
-            List<DetectorBankEntry> strips = decoder.getDataEntries("EC");
-
-            for(DetectorBankEntry strip : strips) {
-                adc=ped=pedref=npk=timf=timc=0 ; tdc=tdcf=0;
-            	//System.out.println(strip);
-            	int is  = strip.getDescriptor().getSector();
-            	int il  = strip.getDescriptor().getLayer();
-            	int ip  = strip.getDescriptor().getComponent();
-            	int iord= strip.getDescriptor().getOrder();
-            	int icr = strip.getDescriptor().getCrate(); 
-            	int isl = strip.getDescriptor().getSlot(); 
-            	int ich = strip.getDescriptor().getChannel(); 
-            	
-        		FADCConfig config=fadc.getMap().get(icr,isl,ich);
-            	
-            	if(strip.getType()==BankType.TDC) {
-            		int[] tdcc = (int[]) strip.getDataObject();
-            		tdc = tdcc[0]*24./1000.;
-            	}
-            	if(strip.getType()==BankType.ADCFPGA) {
-            		int[] adcc= (int[]) strip.getDataObject();
-            		ped = adcc[2];
-            		npk = adcc[3];
-            		nsa = (int) config.getNSA();
-            		nsb = (int) config.getNSB();
-               		pedref = (int) config.getPedestal();
-            		adc = (adcc[1]-ped*(nsa+nsb))/10;
-            		timf = DataUtils.getInteger(adcc[0],0,5);
-            		timc = DataUtils.getInteger(adcc[0],6,14);
-            		tdcf = timc*4.+timf*0.0625;
-             	}
-                    	
-            //System.out.println("crate,slot,chan:"+icr+" "+isl+" "+ich);
-			//System.out.println("sector,layer,pmt,order"+is+" "+il+" "+ip+" "+iord);
-			//System.out.println("  nchan,tdc,adc,ped,pedref,nsb,nsa: "+npk+" "+tdc+" "+adc+" "+ped+" "+pedref+" "+nsb+" "+nsa);
-			//System.out.println("  tdc,timc,timf: "+tdc+" "+timc+" "+timf);
-	            	
-			int ic = 1;
-			if (il>3) {ic=2 ; il=il-3;}
-		
-			if(ic==1||ic==2){
-	   	        int  iv = ic*3+il;
-	   	        if(tdc>1200&&tdc<1500){
-		          uvwt[is-1][ic]=uvwt[is-1][il]+ecPix.uvw_dalitz(ic,ip,il); //Dalitz test
-	          	  nht[is-1][iv-1]++;
-	          	  inh = nht[is-1][iv-1];
-	          	   tdcr[is-1][iv-1][inh-1] = tdc;
-	          	  strrt[is-1][iv-1][inh-1] = ip;
-	          	  H2_ECt_Hist.get(is,il+(ic-1)*3,0).fill(tdc,ip,1.0);
-	   	        }
-	   	        if(adc>thr[ic-1]){
-	          	  uvwa[is-1][ic]=uvwa[is-1][ic]+ecPix.uvw_dalitz(ic,ip,il); //Dalitz test
-	          	  nha[is-1][iv-1]++;
-	          	  inh = nha[is-1][iv-1];
-	          	   adcr[is-1][iv-1][inh-1] = adc;
-	          	  ftdcr[is-1][iv-1][inh-1] = tdcf;
-	          	  strra[is-1][iv-1][inh-1] = ip;
-	          	  H2_ECa_Hist.get(is,il+(ic-1)*3,0).fill(adc,ip,1.0);
-	          	  H2_ECa_Hist.get(is,il+(ic-1)*3,3).fill(pedref-ped, ip);
-	   	        }
-			}
-		}
-        
-		} 
-		
-		
-		
-		if(event.hasBank("EC::true")==true){
-			EvioDataBank bank  = (EvioDataBank) event.getBank("EC::true");
-			int nrows = bank.rows();
-			for(int i=0; i < nrows; i++){
-				mc_t = bank.getDouble("avgT",i);
-			}	
-		}
-					
-		if(event.hasBank("EC::dgtz")==true){
+		public void fill(int is, int il, int ip, int adc, double tdc, double tdcf) {
 			
-			inMC = true;	// Processing MC banks
-			thr[0]=thr[1]=5;
-			int tdcc,ishw=2;
-			TreeMap<Integer,Object> map7=null,map8=null; 
-			double[]                sed7=null,sed8=null;
-			
-			EvioDataBank bank = (EvioDataBank) event.getBank("EC::dgtz");
-			
-			for(int i = 0; i < bank.rows(); i++){
-				float dum = (float)bank.getInt("TDC",i)-(float)mc_t*1000;
-				if (dum<tdcmax) tdcmax=dum;
-			}	   
-			
-		   if (app.isSingleEvent) {			   			
-			   map7 = new TreeMap<Integer,Object>(H1_ECa_Sevd.get(ishw, 7, 0).toTreeMap());
-			   map8 = new TreeMap<Integer,Object>(H1_ECa_Sevd.get(ishw, 8, 0).toTreeMap());
-			   sed7 = (double[]) map7.get(5); sed8 = (double[]) map8.get(5);	
-		   }
-		   
-	    for(int i = 0; i < bank.rows(); i++){
-	    	int is  = bank.getInt("sector",i);
-        	int ip  = bank.getInt("strip",i);
-			int ic  = bank.getInt("stack",i);	 
-         	int il  = bank.getInt("view",i);  
-			    adc = bank.getInt("ADC",i);
-        	   tdcc = bank.getInt("TDC",i);
-        	   tdcf = tdcc;
-			//System.out.println("sector,layer,stack,pmt,adc,tdc= "+is+" "+il+" "+ic+" "+ip+" "+adc+" "+tdcc);
-		     
-        	tdc=(((float)tdcc-(float)mc_t*1000)-tdcmax+1340000)/1000;
-		   	        	
-		    if(ic==1||ic==2){
-	        	int  iv = ic*3+il;
-	   	        if(tdc>0){
-		          uvwt[is-1][ic]=uvwt[is-1][ic]+ecPix.uvw_dalitz(ic,ip,il); //Dalitz test
-		          nht[is-1][iv-1]++;
-		          inh = nht[is-1][iv-1];
-		           tdcr[is-1][iv-1][inh-1] = tdc;
-		          strrt[is-1][iv-1][inh-1] = ip;
-		          H2_ECt_Hist.get(is,il+(ic-1)*3,0).fill(tdc,ip,1.0);
-		   	    }
-		   	    if(adc>thr[ic-1]){
-		          uvwa[is-1][ic]=uvwa[is-1][ic]+ecPix.uvw_dalitz(ic,ip,il); //Dalitz test
-		          nha[is-1][iv-1]++;
-		          inh = nha[is-1][iv-1];
-		           adcr[is-1][iv-1][inh-1] = adc;
-		          ftdcr[is-1][iv-1][inh-1] = tdcf;
-		          strra[is-1][iv-1][inh-1] = ip;
-		     
-		          H2_ECa_Hist.get(is,il+(ic-1)*3,0).fill(adc,ip,1.0);
-		    
-		          if (app.isSingleEvent) {
-		        	  H1_ECa_Sevd.get(is,il+(ic-1)*3,0).fill(ip,adc);
-		        	  if(ic==1) ecPix.putpixels(il,ip,adc,sed7);
-		        	  if(ic==2) ecPix.putpixels(il,ip,adc,sed8);
-		          }		      
-		   	    }		    	
-		    }
-		}
-	    
-	    if (app.isSingleEvent){
-	    	map7.put(5,sed7); map8.put(5,sed8);
-	    	H1_ECa_Sevd.get(ishw,7,0).fromTreeMap(map7);
-	    	H1_ECa_Sevd.get(ishw,8,0).fromTreeMap(map8);
-	    }
-	    
+			int ic=1; if (il>3) ic=2 ;
+			int  iv = il+3;
+			if(tdc>1200&&tdc<1500){
+				uvwt[is-1][ic]=uvwt[is-1][il]+ecPix.uvw_dalitz(ic,il,ip); //Dalitz test
+	          	 nht[is-1][iv-1]++; int inh = nht[is-1][iv-1];
+	            tdcr[is-1][iv-1][inh-1] = tdc;
+	           strrt[is-1][iv-1][inh-1] = ip;
+	          	  H2_ECt_Hist.get(is,il,0).fill(tdc,ip,1.0);
+	          	  }
+	   	    if(adc>thr[ic-1]){
+	   	    	uvwa[is-1][ic]=uvwa[is-1][ic]+ecPix.uvw_dalitz(ic,il,ip); //Dalitz test
+	          	 nha[is-1][iv-1]++; int inh = nha[is-1][iv-1];
+	            adcr[is-1][iv-1][inh-1] = adc;
+	           ftdcr[is-1][iv-1][inh-1] = tdcf;
+	           strra[is-1][iv-1][inh-1] = ip;
+	          	  H2_ECa_Hist.get(is,il,0).fill(adc,ip,1.0);
+	          	  }	
 		}
 		
-		//Process pixel data
+		public void processSED() {
+			
+			for (int is=1; is<6; is++) {
+				map7 = new TreeMap<Integer,Object>(H1_ECa_Sevd.get(is, 7, 0).toTreeMap());
+				map8 = new TreeMap<Integer,Object>(H1_ECa_Sevd.get(is, 8, 0).toTreeMap());
+				sed7 = (double[]) map7.get(5); sed8 = (double[]) map8.get(5);	
+	           for (int il=1; il<7; il++ ){
+	        	   int iv = il+3;
+	        	   for (int n=1 ; n<nha[is-1][iv-1]+1 ; n++) {
+	        		   int ip=strra[is-1][iv-1][n-1]; int ad=adcr[is-1][iv-1][n-1];
+	        		   H1_ECa_Sevd.get(is,il,0).fill(ip,ad);
+	        		   if(il<4) ecPix.putpixels(il,ip,ad,sed7);
+	        		   if(il>3) ecPix.putpixels(il,ip,ad,sed8);
+	        	   }
+	           }
+	           map7.put(5,sed7); map8.put(5,sed8);
+	           H1_ECa_Sevd.get(is,7,0).fromTreeMap(map7);
+	           H1_ECa_Sevd.get(is,8,0).fromTreeMap(map8);
+			}					
+		}
+	
+		public void processPixels() {
+			
 		boolean good_ua, good_va, good_wa, good_uvwa;
 		boolean good_ut, good_vt, good_wt, good_uvwt;
 		boolean good_uvwt_save=false;
@@ -474,8 +365,8 @@ public class FCMon extends DetectorMonitor {
 								double dtiff2 = ftdcr[is][il-1][0] - ftdcr[is][il+2][0];
 								H2_ECt_Hist.get(is+1,il-3,3).fill(dtiff1, strrt[is][il+2][0]);
 								H2_ECt_Hist.get(is+1,il-3,4).fill(dtiff2, strrt[is][il+2][0]);
-								H2_ECt_Hist.get(is+1,il,3).fill(dtiff1, strrt[is][il+2][0]);
-								H2_ECt_Hist.get(is+1,il,4).fill(dtiff2, strrt[is][il+2][0]);
+								H2_ECt_Hist.get(is+1,il,3).fill(dtiff1,   strrt[is][il+2][0]);
+								H2_ECt_Hist.get(is+1,il,4).fill(dtiff2,   strrt[is][il+2][0]);
 							}
 						}
 					}
@@ -492,7 +383,105 @@ public class FCMon extends DetectorMonitor {
 					}
 				}	
 			}
+		}	
 		}
+	}
+		
+	@Override
+	public void processEvent(DataEvent de) {
+		
+		EvioDataEvent event = (EvioDataEvent) de;
+		   	 
+		this.myarrays.clear();
+		
+		float tdcmax=100000;
+		boolean debug=false;
+		int adc,ped,nsb=0,nsa=0,npk=0,pedref=0,timf=0,timc=0;
+		double mc_t=0.,tdc=0,tdcf=0;
+ 				
+		if(event.hasBank("EC::true")!=true) {
+			thr[0]=15 ; thr[1]=20;
+		
+			if (debug) event.getHandler().list();	
+					
+    		decoder.decode(event);
+            List<DetectorBankEntry> strips = decoder.getDataEntries("EC");
+
+            for(DetectorBankEntry strip : strips) {
+                adc=ped=pedref=npk=timf=timc=0 ; tdc=tdcf=0;
+             	int is  = strip.getDescriptor().getSector();
+            	int il  = strip.getDescriptor().getLayer();
+            	int ip  = strip.getDescriptor().getComponent();
+            	int iord= strip.getDescriptor().getOrder();
+            	int icr = strip.getDescriptor().getCrate(); 
+            	int isl = strip.getDescriptor().getSlot(); 
+            	int ich = strip.getDescriptor().getChannel(); 
+            	
+        		FADCConfig config=fadc.getMap().get(icr,isl,ich);
+            	
+            	if(strip.getType()==BankType.TDC) {
+            		int[] tdcc = (int[]) strip.getDataObject();
+            		tdc = tdcc[0]*24./1000.;
+            	}
+            	if(strip.getType()==BankType.ADCFPGA) {
+            		int[] adcc= (int[]) strip.getDataObject();
+            		ped = adcc[2];
+            		npk = adcc[3];
+            		nsa = (int) config.getNSA();
+            		nsb = (int) config.getNSB();
+               		pedref = (int) config.getPedestal();
+            		adc = (adcc[1]-ped*(nsa+nsb))/10;
+            		timf = DataUtils.getInteger(adcc[0],0,5);
+            		timc = DataUtils.getInteger(adcc[0],6,14);
+            		tdcf = timc*4.+timf*0.0625;
+             	}
+                    	
+//System.out.println("crate,slot,chan:"+icr+" "+isl+" "+ich);
+//System.out.println("sector,layer,pmt,order"+is+" "+il+" "+ip+" "+iord);
+//System.out.println("  nchan,tdc,adc,ped,pedref,nsb,nsa: "+npk+" "+tdc+" "+adc+" "+ped+" "+pedref+" "+nsb+" "+nsa);
+//System.out.println("  tdc,timc,timf: "+tdc+" "+timc+" "+timf);
+            	
+              	H2_ECa_Hist.get(is,il,3).fill(pedref-ped, ip);
+			    this.myarrays.fill(is, il, ip, adc, tdc, tdcf);		    
+            }
+        
+		} 
+		
+		if(event.hasBank("EC::true")==true){
+			EvioDataBank bank  = (EvioDataBank) event.getBank("EC::true");
+			int nrows = bank.rows();
+			for(int i=0; i < nrows; i++){
+				mc_t = bank.getDouble("avgT",i);
+			}	
+		}
+					
+		if(event.hasBank("EC::dgtz")==true){
+			
+			inMC = true; thr[0]=thr[1]=5;
+			
+			EvioDataBank bank = (EvioDataBank) event.getBank("EC::dgtz");
+			
+			for(int i = 0; i < bank.rows(); i++){
+				float dum = (float)bank.getInt("TDC",i)-(float)mc_t*1000;
+				if (dum<tdcmax) tdcmax=dum;
+			}	   
+		   
+		   for(int i = 0; i < bank.rows(); i++){
+			   int is  = bank.getInt("sector",i);
+			   int ip  = bank.getInt("strip",i);
+			   int ic  = bank.getInt("stack",i);	 
+			   int il  = bank.getInt("view",i);  
+			   	   adc = bank.getInt("ADC",i);
+        	  int tdcc = bank.getInt("TDC",i);
+        	      tdcf = tdcc;
+       	           tdc = (((float)tdcc-(float)mc_t*1000)-tdcmax+1340000)/1000;
+		   	        	
+        	      if(ic==1||ic==2) this.myarrays.fill(is, il+(ic-1)*3, ip, adc, tdc, tdcf);		      	   	   		    	
+		    }
+		}
+		
+		this.myarrays.processPixels();
+		if (app.isSingleEvent) this.myarrays.processSED();
 	}
  
 	public void update(DetectorShape2D shape) {
@@ -536,9 +525,11 @@ public class FCMon extends DetectorMonitor {
 		//System.out.println("comp,rmin,rmax,val="+component+" "+" "+rmin+" "+rmax+" "+val[component]);
 		double z=val[component];
 		if (z==0) color=9;
-		if (opt==1) color=(double)(z-rmin)/(rmax-rmin);
-		if (opt==2) color=(double)(Math.log10(z)-Math.log10(rmin))/(Math.log10(rmax)-Math.log10(rmin));      
-		 
+		
+		if (!app.isSingleEvent) color=(double)(z-rmin)/(rmax-rmin);
+		if ( app.isSingleEvent) color=(double)(Math.log10(z)-Math.log10(rmin+1))/(Math.log10(rmax)-Math.log10(rmin+1));
+		
+		//System.out.println(z+" "+rmin+" "+" "+rmax+" "+color);
 		if (color>1)   color=1;
 		if (color<=0)  color=0.;
 
@@ -688,7 +679,7 @@ public class FCMon extends DetectorMonitor {
 		int l2 = of+4;	
 		
 		int l,col0=0,col1=0,col2=0,strip=0,pixel=0;
-		//String otab[]={"U INNER STRIPS","V INNER STRIPS","W INNER STRIPS","U OUTER STRIPS","V OUTER STRIPS","W OUTER STRIPS"};
+		String otab[]={"U Inner Strips","V Inner Strips","W Inner Strips","U Outer Strips","V Outer Strips","W Outer Strips"};
 		String lab1[]={"U ","V ","W "}, lab2[]={"Inner ","Outer "}, lab3[]={"Strip ","Pixel "},lab4[]={" ADC"," TDC"};
 		H1D h;
 		//TStyle.setOptStat
@@ -703,9 +694,9 @@ public class FCMon extends DetectorMonitor {
 		if (layer<7)  {col0=0 ; col1=4; col2=2;strip=ic+1;}
 		if (layer>=7) {col0=4 ; col1=4; col2=2;pixel=ic+1;}
     
-	    for(int il=l1;il<l2;il++){
-	    	String otab = lab1[il-1-of]+lab2[io-1]+"Strips";
-	    	canvas.cd(il-1-of); h = H1_ECa_Sevd.get(is+1,il,0); h.setXTitle(otab); h.setFillColor(col0); canvas.draw(h);
+	    for(int il=1;il<7;il++){
+	    	canvas.cd(il-1); canvas.getPad().setAxisRange(-1.,37.,0.,300.);
+	    	h = H1_ECa_Sevd.get(is+1,il,0); h.setXTitle(otab[il-1]); h.setFillColor(col0); canvas.draw(h);
 	    }
 		
 	}

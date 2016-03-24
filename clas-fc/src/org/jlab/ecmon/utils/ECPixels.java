@@ -164,7 +164,7 @@ public class ECPixels {
 			
 		}
 		
-		public float uvw_dalitz(int ic, int ip, int il) {
+		public float uvw_dalitz(int ic, int il, int ip) {
 			float uvw=0;
 			switch (ic) {
 			case 0: //PCAL

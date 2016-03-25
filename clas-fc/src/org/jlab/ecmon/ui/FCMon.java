@@ -247,7 +247,12 @@ public class FCMon extends DetectorMonitor {
 		double ftdcr[][][] = new double[6][9][68];
 		double  tdcr[][][] = new double[6][9][68];
 		double    uvwa[][] = new double[6][9];
-		double    uvwt[][] = new double[6][9];		
+		double    uvwt[][] = new double[6][9];
+		int       mpix[][] = new    int[6][3];
+		int ecadcpix[][][] = new    int[6][9][68];
+		int ecsumpix[][][] = new    int[6][9][68];
+		int       esum[][] = new    int[6][3];
+		int  ecpixel[][][] = new    int[6][9][68];
 		
 		public MyArrays() {	
 		}
@@ -321,6 +326,39 @@ public class FCMon extends DetectorMonitor {
 	           H1_ECa_Sevd.get(is,8,0).fromTreeMap(map8);
 			}					
 		}
+		
+		public void findPixels() {
+			int u,v,w,ii;
+			
+			for (int is=0 ; is<6 ; is++) { // Loop over sectors
+				for (int io=0; io<1 ; io++) { // Loop over calorimeter layers 
+					int off = 3*io;
+					int off1 = off+3;
+					int off2 = off+4;
+					int off3 = off+5;
+					for (int i=0; i<nha[is][off1]; i++) { // Loop over U strips
+						u=strra[is][off1][i];
+						for (int j=0; j<nha[is][off2]; j++) { // Loop over V strips
+							v=strra[is][off2][j];
+							for (int k=0; k<nha[is][off3]; k++){ // Loop over W strips
+								w=strra[is][off3][k];
+								int dalitz = u+v+w;
+								if (dalitz==73||dalitz==74) { // Dalitz test
+									mpix[is][io]++; ii = mpix[is][io]-1;
+									ecadcpix[is][off1][ii] = adcr[is][off1][i];
+									ecadcpix[is][off2][ii] = adcr[is][off2][i];
+									ecadcpix[is][off3][ii] = adcr[is][off3][i];
+									
+									ecsumpix[is][io][ii] = ecadcpix[is][off1][ii]+ecadcpix[is][off2][ii]+ecadcpix[is][off3][ii];
+									    esum[is][io]     = esum[is][io]+ecsumpix[is][io][ii];
+								     ecpixel[is][io][ii] = u*(u-1)+v-w+1;
+								}
+							}
+						}
+					}
+				}
+			}
+		}
 	
 		public void processPixels() {
 			
@@ -365,8 +403,8 @@ public class FCMon extends DetectorMonitor {
 								double dtiff2 = ftdcr[is][il-1][0] - ftdcr[is][il+2][0];
 								H2_ECt_Hist.get(is+1,il-3,3).fill(dtiff1, strrt[is][il+2][0]);
 								H2_ECt_Hist.get(is+1,il-3,4).fill(dtiff2, strrt[is][il+2][0]);
-								H2_ECt_Hist.get(is+1,il,3).fill(dtiff1,   strrt[is][il+2][0]);
-								H2_ECt_Hist.get(is+1,il,4).fill(dtiff2,   strrt[is][il+2][0]);
+								H2_ECt_Hist.get(is+1,il  ,3).fill(dtiff1, strrt[is][il+2][0]);
+								H2_ECt_Hist.get(is+1,il  ,4).fill(dtiff2, strrt[is][il+2][0]);
 							}
 						}
 					}

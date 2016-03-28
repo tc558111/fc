@@ -151,7 +151,7 @@ public class ECPixels {
 				if (view==4) pixel=a*(a-1)+b-c+1;
 				if (view==5) pixel=c*(c-1)+a-b+1;
 				if (view==6) pixel=b*(b-1)+c-a+1;
-				in[pixel-1] = val;
+				if (in[pixel-1]==0) in[pixel-1] = val;
 				sum = a+b+c;
 				if(sum==73) b=b+1;
 				if(sum==74) c=c-1;

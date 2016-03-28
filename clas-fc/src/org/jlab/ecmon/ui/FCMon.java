@@ -250,9 +250,9 @@ public class FCMon extends DetectorMonitor {
 		double    uvwt[][] = new double[6][9];
 		int       mpix[][] = new    int[6][3];
 		int       esum[][] = new    int[6][3];
-		int ecadcpix[][][] = new    int[6][9][68];
-		int ecsumpix[][][] = new    int[6][9][68];
-		int  ecpixel[][][] = new    int[6][9][68];
+		int ecadcpix[][][] = new    int[6][9][1296];
+		int ecsumpix[][][] = new    int[6][9][1296];
+		int  ecpixel[][][] = new    int[6][9][1296];
 		
 		public MyArrays() {	
 		}
@@ -342,12 +342,12 @@ public class FCMon extends DetectorMonitor {
 						}
 					}
 				}
-				if (is==1){
-					System.out.println("is,inner nhit="+is+" "+nha[is][3]+","+nha[is][4]+","+nha[is][5]);
-					System.out.println("is,outer nhit="+is+" "+nha[is][6]+","+nha[is][7]+","+nha[is][8]);
-					System.out.println("mpix,ecpix="+mpix[is][0]+","+mpix[is][1]+","+ecpixel[is][0][0]+","+ecpixel[is][1][0]);
-					System.out.println(" ");
-				}
+//				if (is==1){
+//					System.out.println("is,inner nhit="+is+" "+nha[is][3]+","+nha[is][4]+","+nha[is][5]);
+//					System.out.println("is,outer nhit="+is+" "+nha[is][6]+","+nha[is][7]+","+nha[is][8]);
+//					System.out.println("mpix,ecpix="+mpix[is][0]+","+mpix[is][1]+","+ecpixel[is][0][0]+","+ecpixel[is][1][0]);
+//					System.out.println(" ");
+//				}
 			}
 		}
 	
@@ -584,7 +584,7 @@ public class FCMon extends DetectorMonitor {
 		if (app.isSingleEvent)  color=(double)(z-rmin)/(1.2*rmax-1);
 		//if ( app.isSingleEvent) color=(double)(Math.log10(z)-Math.log10(rmin+1))/(Math.log10(rmax)-Math.log10(rmin+1));
 		
-		System.out.println(z+" "+rmin+" "+" "+rmax+" "+color);
+		//System.out.println(z+" "+rmin+" "+" "+rmax+" "+color);
 		if (color>1)   color=1;
 		if (color<=0)  color=0.;
 

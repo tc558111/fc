@@ -249,9 +249,9 @@ public class FCMon extends DetectorMonitor {
 		double    uvwa[][] = new double[6][9];
 		double    uvwt[][] = new double[6][9];
 		int       mpix[][] = new    int[6][3];
+		int       esum[][] = new    int[6][3];
 		int ecadcpix[][][] = new    int[6][9][68];
 		int ecsumpix[][][] = new    int[6][9][68];
-		int       esum[][] = new    int[6][3];
 		int  ecpixel[][][] = new    int[6][9][68];
 		
 		public MyArrays() {	
@@ -260,6 +260,10 @@ public class FCMon extends DetectorMonitor {
 		public void clear() {
 			
 			for (int is=0 ; is<6 ; is++) {
+				for (int il=0 ; il<3 ; il++) {
+					mpix[is][il] = 0;
+					esum[is][il] = 0;
+				}
 				for (int il=0 ; il<9 ; il++) {
 					nha[is][il]  = 0;
 					nht[is][il]  = 0;
@@ -271,14 +275,16 @@ public class FCMon extends DetectorMonitor {
 						 adcr[is][il][ip] = 0;
 						ftdcr[is][il][ip] = 0;
 						 tdcr[is][il][ip] = 0;
+					 ecadcpix[is][il][ip] = 0;
+					  ecpixel[is][il][ip] = 0;
 					}
 				}				
 			}		
 			
 			if (app.isSingleEvent) {
-				for (int is=1 ; is<7 ; is++) {
+				for (int is=0 ; is<6 ; is++) {
 					for (int il=1 ; il<9 ; il++) {
-						H1_ECa_Sevd.get(is,il,0).reset();
+						H1_ECa_Sevd.get(is+1,il,0).reset();
 					}
 				}
 			}
@@ -306,32 +312,11 @@ public class FCMon extends DetectorMonitor {
 	          	  }	
 		}
 		
-		public void processSED() {
-			
-			for (int is=1; is<6; is++) {
-				map7 = new TreeMap<Integer,Object>(H1_ECa_Sevd.get(is, 7, 0).toTreeMap());
-				map8 = new TreeMap<Integer,Object>(H1_ECa_Sevd.get(is, 8, 0).toTreeMap());
-				sed7 = (double[]) map7.get(5); sed8 = (double[]) map8.get(5);	
-	           for (int il=1; il<7; il++ ){
-	        	   int iv = il+3;
-	        	   for (int n=1 ; n<nha[is-1][iv-1]+1 ; n++) {
-	        		   int ip=strra[is-1][iv-1][n-1]; int ad=adcr[is-1][iv-1][n-1];
-	        		   H1_ECa_Sevd.get(is,il,0).fill(ip,ad);
-	        		   if(il<4) ecPix.putpixels(il,ip,ad,sed7);
-	        		   if(il>3) ecPix.putpixels(il,ip,ad,sed8);
-	        	   }
-	           }
-	           map7.put(5,sed7); map8.put(5,sed8);
-	           H1_ECa_Sevd.get(is,7,0).fromTreeMap(map7);
-	           H1_ECa_Sevd.get(is,8,0).fromTreeMap(map8);
-			}					
-		}
-		
 		public void findPixels() {
 			int u,v,w,ii;
 			
 			for (int is=0 ; is<6 ; is++) { // Loop over sectors
-				for (int io=0; io<1 ; io++) { // Loop over calorimeter layers 
+				for (int io=0; io<2 ; io++) { // Loop over calorimeter layers 
 					int off = 3*io;
 					int off1 = off+3;
 					int off2 = off+4;
@@ -351,15 +336,42 @@ public class FCMon extends DetectorMonitor {
 									
 									ecsumpix[is][io][ii] = ecadcpix[is][off1][ii]+ecadcpix[is][off2][ii]+ecadcpix[is][off3][ii];
 									    esum[is][io]     = esum[is][io]+ecsumpix[is][io][ii];
-								     ecpixel[is][io][ii] = u*(u-1)+v-w+1;
-								}
+								     ecpixel[is][io][ii] = ecPix.pix(u,v,w); 
+								     H1_ECa_Sevd.get(is+1,io+7,0).fill(ecpixel[is][io][ii],esum[is][io]);								}
 							}
 						}
 					}
 				}
+				if (is==1){
+					System.out.println("is,inner nhit="+is+" "+nha[is][3]+","+nha[is][4]+","+nha[is][5]);
+					System.out.println("is,outer nhit="+is+" "+nha[is][6]+","+nha[is][7]+","+nha[is][8]);
+					System.out.println("mpix,ecpix="+mpix[is][0]+","+mpix[is][1]+","+ecpixel[is][0][0]+","+ecpixel[is][1][0]);
+					System.out.println(" ");
+				}
 			}
 		}
 	
+		public void processSED() {
+			
+			for (int is=0; is<6; is++) {
+				map7 = new TreeMap<Integer,Object>(H1_ECa_Sevd.get(is+1, 7, 0).toTreeMap());
+				map8 = new TreeMap<Integer,Object>(H1_ECa_Sevd.get(is+1, 8, 0).toTreeMap());
+				sed7 = (double[]) map7.get(5); sed8 = (double[]) map8.get(5);	
+	           for (int il=1; il<7; il++ ){
+	        	   int iv = il+3;
+	        	   for (int n=1 ; n<nha[is][iv-1]+1 ; n++) {
+	        		   int ip=strra[is][iv-1][n-1]; int ad=adcr[is][iv-1][n-1];
+	        		   H1_ECa_Sevd.get(is+1,il,0).fill(ip,ad);
+	        		   if(il<4) ecPix.putpixels(il,ip,ad,sed7);
+	        		   if(il>3) ecPix.putpixels(il,ip,ad,sed8);
+	        	   }
+	           }
+	           map7.put(5,sed7); map8.put(5,sed8);
+	           H1_ECa_Sevd.get(is+1,7,0).fromTreeMap(map7);
+	           H1_ECa_Sevd.get(is+1,8,0).fromTreeMap(map8);
+			}					
+		}
+		
 		public void processPixels() {
 			
 		boolean good_ua, good_va, good_wa, good_uvwa;
@@ -512,14 +524,18 @@ public class FCMon extends DetectorMonitor {
 			   	   adc = bank.getInt("ADC",i);
         	  int tdcc = bank.getInt("TDC",i);
         	      tdcf = tdcc;
-       	           tdc = (((float)tdcc-(float)mc_t*1000)-tdcmax+1340000)/1000;
-		   	        	
+       	           tdc = (((float)tdcc-(float)mc_t*1000)-tdcmax+1340000)/1000;		   	        	
         	      if(ic==1||ic==2) this.myarrays.fill(is, il+(ic-1)*3, ip, adc, tdc, tdcf);		      	   	   		    	
 		    }
 		}
 		
-		this.myarrays.processPixels();
-		if (app.isSingleEvent) this.myarrays.processSED();
+		
+		if (app.isSingleEvent) {
+			this.myarrays.findPixels();	// Process all pixels for SED
+			this.myarrays.processSED();
+		}else{
+			this.myarrays.processPixels();	// Process only single pixels 
+		}
 	}
  
 	public void update(DetectorShape2D shape) {
@@ -565,9 +581,10 @@ public class FCMon extends DetectorMonitor {
 		if (z==0) color=9;
 		
 		if (!app.isSingleEvent) color=(double)(z-rmin)/(rmax-rmin);
-		if ( app.isSingleEvent) color=(double)(Math.log10(z)-Math.log10(rmin+1))/(Math.log10(rmax)-Math.log10(rmin+1));
+		if (app.isSingleEvent)  color=(double)(z-rmin)/(1.2*rmax-1);
+		//if ( app.isSingleEvent) color=(double)(Math.log10(z)-Math.log10(rmin+1))/(Math.log10(rmax)-Math.log10(rmin+1));
 		
-		//System.out.println(z+" "+rmin+" "+" "+rmax+" "+color);
+		System.out.println(z+" "+rmin+" "+" "+rmax+" "+color);
 		if (color>1)   color=1;
 		if (color<=0)  color=0.;
 
@@ -578,9 +595,14 @@ public class FCMon extends DetectorMonitor {
         TreeMap<Integer, Object> hcontainer = new TreeMap<Integer, Object>();
         hcontainer.put(1, dat);
         double[] b = Arrays.copyOf(dat, dat.length);
-        Arrays.sort(b);
-        double min = b[0]; double max=b[b.length-1];
-        if (min<=0) min=0.0;
+        double min=100000,max=0;
+        for (int i =0 ; i < b.length; i++){
+        	if (b[i] !=0 && b[i] < min) min=b[i];
+        	if (b[i] !=0 && b[i] > max) max=b[i];
+        }
+//        Arrays.sort(b);
+  //      double min = b[0]; double max=b[b.length-1];
+//        if (min<=0) min=0.0;
         hcontainer.put(2, min);
         hcontainer.put(3, max);
         return hcontainer;        

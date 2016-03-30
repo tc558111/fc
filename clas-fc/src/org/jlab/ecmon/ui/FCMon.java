@@ -580,9 +580,10 @@ public class FCMon extends DetectorMonitor {
 		double z=val[component];
 		if (z==0) color=9;
 		
-		if (!app.isSingleEvent) color=(double)(z-rmin)/(rmax-rmin);
-		if (app.isSingleEvent)  color=(double)(z-rmin)/(1.2*rmax-1);
-		//if ( app.isSingleEvent) color=(double)(Math.log10(z)-Math.log10(rmin+1))/(Math.log10(rmax)-Math.log10(rmin+1));
+		//if (!app.isSingleEvent) color=(double)(z-rmin)/(rmax-rmin);
+		//if (app.isSingleEvent)  color=(double)(z-rmin)/(1.2*rmax-1);
+		//if ( app.isSingleEvent) color=(double)(Math.log10(z)-Math.log10(rmin))/(Math.log10(rmax)-Math.log10(rmin));
+		color=(double)(Math.log10(z)-Math.log10(app.pixMin))/(Math.log10(app.pixMax)-Math.log10(app.pixMin));
 		
 		//System.out.println(z+" "+rmin+" "+" "+rmax+" "+color);
 		if (color>1)   color=1;

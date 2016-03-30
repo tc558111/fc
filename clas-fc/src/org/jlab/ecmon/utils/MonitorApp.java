@@ -4,11 +4,11 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.io.File;
-
 import java.util.TimerTask;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -33,6 +33,7 @@ import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
+
 
 
 
@@ -87,6 +88,8 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
     private JButton  buttonStop    = null;
     private JSpinner spinnerDelay  = null;	
     	
+	private JPanel  controlsPanel3 = null;
+	
     private Timer    processTimer  = null;
     private  Integer   threadDelay = 0;
     
@@ -95,8 +98,21 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
     static final int FPS_MAX = 20;
     static final int FPS_INIT = 2;
     
+    private JSlider  pixContrastMin;
+    static final int PIX_MIN_LO   =  1;
+    static final int PIX_MIN_HI   = 20;
+    static final int PIX_MIN_INIT =  1;
+    
+    private JSlider  pixContrastMax;
+    static final int PIX_MAX_LO    =   10;
+    static final int PIX_MAX_HI    = 2000;
+    static final int PIX_MAX_INIT  =   20;
+    
     private volatile boolean running;
     public boolean isSingleEvent=false;
+    public double pixMin = PIX_MIN_INIT;
+    public double pixMax = PIX_MAX_INIT;
+    
 //    private ProcessEvio processEvio;
     private IDetectorProcessor processorClass = null;
     private DetectorMonitor   monitoringClass = null;
@@ -141,6 +157,10 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
 		this.controlsPanel2.setBorder(BorderFactory.createTitledBorder("Event Control"));
 		this.controlsPanel2.setSize(500,100);
 		
+      	this.controlsPanel3 = new JPanel();
+		this.controlsPanel3.setBorder(BorderFactory.createTitledBorder("Display Control"));
+		this.controlsPanel3.setSize(500,100);
+		
         fileLabel   = new JLabel("");
         statusLabel = new JLabel("No Opened File");
         
@@ -168,7 +188,7 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
         this.spinnerDelay = new JSpinner(model);
         this.spinnerDelay.addChangeListener(this);
         
-/*        
+        
         framesPerSecond = new JSlider(JSlider.HORIZONTAL,FPS_MIN,FPS_MAX,FPS_INIT);
         framesPerSecond.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent f) {
@@ -185,12 +205,36 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
         framesPerSecond.setMinorTickSpacing(1);
         framesPerSecond.setPaintTicks(true);
         framesPerSecond.setPaintLabels(true);
-        framesPerSecond.setBorder(BorderFactory.createEmptyBorder(0,0,10,0));
+//      framesPerSecond.setBorder(BorderFactory.createEmptyBorder(0,0,10,0));
+        framesPerSecond.setBorder(BorderFactory.createTitledBorder("FPS"));
         Font font = new Font("Serif", Font.ITALIC, 12);
         framesPerSecond.setFont(font);
-        framesPerSecond.setSize(200,200);
+        framesPerSecond.setPreferredSize(new Dimension(100,50));
         framesPerSecond.setVisible(true);
         
+        pixContrastMin = new JSlider(JSlider.HORIZONTAL,PIX_MIN_LO,PIX_MIN_HI,PIX_MIN_INIT);
+        pixContrastMin.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent f) {
+                JSlider source = (JSlider)f.getSource();                
+                        pixMin = (int)source.getValue();           
+            }            	
+        }
+        );  
+        pixContrastMin.setPreferredSize(new Dimension(100,50));
+        pixContrastMin.setBorder(BorderFactory.createTitledBorder("ZMIN"));
+        
+        pixContrastMax = new JSlider(JSlider.HORIZONTAL,PIX_MAX_LO,PIX_MAX_HI,PIX_MAX_INIT);
+        pixContrastMax.addChangeListener(new ChangeListener() {
+            public void stateChanged(ChangeEvent f) {
+                JSlider source = (JSlider)f.getSource();                
+                        pixMax = (int)source.getValue();           
+            }            	
+        }
+        );  
+        pixContrastMax.setPreferredSize(new Dimension(100,50));
+        pixContrastMax.setBorder(BorderFactory.createTitledBorder("ZMAX"));
+        
+        /*        
         startButton = new JButton();
 		startButton.setText("Load EVIO file");
 		startButton.setEnabled(false);		
@@ -213,15 +257,21 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
         this.controlsPanel2.add(buttonStop);        
         this.controlsPanel2.add(new JLabel("Delay (sec)"));
         this.controlsPanel2.add(this.spinnerDelay);
+        
+        this.controlsPanel3.add(this.framesPerSecond);
+        this.controlsPanel3.add(this.pixContrastMin);
+        this.controlsPanel3.add(this.pixContrastMax);
               
         this.controlsPanel0.setBackground(Color.LIGHT_GRAY);
 		this.controlsPanel1.setBackground(Color.LIGHT_GRAY);
 		this.controlsPanel2.setBackground(Color.LIGHT_GRAY);
+		this.controlsPanel3.setBackground(Color.LIGHT_GRAY);
 		
 		GridBagConstraints c = new GridBagConstraints();
 		c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 0.5;
         c.gridx=0 ; c.gridy=0 ; this.controlsPanel0.add(this.controlsPanel1,c);
         c.gridx=0 ; c.gridy=1 ; this.controlsPanel0.add(this.controlsPanel2,c);
+        c.gridx=0 ; c.gridy=2 ; this.controlsPanel0.add(this.controlsPanel3,c);
        
 		this.hSplitPane.setBottomComponent(this.controlsPanel0);
 		this.vSplitPane.setLeftComponent(this.hSplitPane);

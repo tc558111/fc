@@ -147,7 +147,6 @@ public class FCMon extends DetectorMonitor {
 	public void initDetector(int is1, int is2) {
 		
 		System.out.println("initecgui():");
-		palette.set(3);
 		
 		Lmap_a.add(0,0,0, toTreeMap(ecPix.ec_cthpix));
 						
@@ -561,7 +560,8 @@ public class FCMon extends DetectorMonitor {
 		if (inProcess==0){ // Assign default colors upon starting GUI (before event processing)
 			if(layer<7) colorfraction = (double)component/36;
 			if(layer>=7) colorfraction = getcolor((TreeMap<Integer, Object>) Lmap_a.get(0,0,0), component);
-		} else {   		  // Use LAYMAP to get colors of components while processing data
+		}
+		if (inProcess>0){   		  // Use Lmap_a to get colors of components while processing data
 			             colorfraction = getcolor((TreeMap<Integer, Object>) Lmap_a.get(is+1,layer,0), component);
 		}
 		if (colorfraction<0.05) colorfraction = 0.05;
@@ -576,14 +576,12 @@ public class FCMon extends DetectorMonitor {
 		double val[] =(double[]) map.get(1); 
 		double rmin  =(double)   map.get(2);
 		double rmax  =(double)   map.get(3);
-		//System.out.println("comp,rmin,rmax,val="+component+" "+" "+rmin+" "+rmax+" "+val[component]);
 		double z=val[component];
+		
 		if (z==0) color=9;
 		
-		//if (!app.isSingleEvent) color=(double)(z-rmin)/(rmax-rmin);
-		//if (app.isSingleEvent)  color=(double)(z-rmin)/(1.2*rmax-1);
-		//if ( app.isSingleEvent) color=(double)(Math.log10(z)-Math.log10(rmin))/(Math.log10(rmax)-Math.log10(rmin));
-		color=(double)(Math.log10(z)-Math.log10(app.pixMin))/(Math.log10(app.pixMax)-Math.log10(app.pixMin));
+		if (  inProcess==0)  color=(double)(z-rmin)/(rmax-rmin);
+		if (!(inProcess==0)) color=(double)(Math.log10(z)-Math.log10(app.pixMin))/(Math.log10(app.pixMax)-Math.log10(app.pixMin));
 		
 		//System.out.println(z+" "+rmin+" "+" "+rmax+" "+color);
 		if (color>1)   color=1;
@@ -596,14 +594,14 @@ public class FCMon extends DetectorMonitor {
         TreeMap<Integer, Object> hcontainer = new TreeMap<Integer, Object>();
         hcontainer.put(1, dat);
         double[] b = Arrays.copyOf(dat, dat.length);
-        double min=100000,max=0;
-        for (int i =0 ; i < b.length; i++){
-        	if (b[i] !=0 && b[i] < min) min=b[i];
-        	if (b[i] !=0 && b[i] > max) max=b[i];
-        }
-//        Arrays.sort(b);
-  //      double min = b[0]; double max=b[b.length-1];
-//        if (min<=0) min=0.0;
+//        double min=100000,max=0;
+//        for (int i =0 ; i < b.length; i++){
+//        	if (b[i] !=0 && b[i] < min) min=b[i];
+//        	if (b[i] !=0 && b[i] > max) max=b[i];
+//        }
+        Arrays.sort(b);
+        double min = b[0]; double max=b[b.length-1];
+        if (min<=0) min=0.0;
         hcontainer.put(2, min);
         hcontainer.put(3, max);
         return hcontainer;        
@@ -759,7 +757,6 @@ public class FCMon extends DetectorMonitor {
 	    	canvas.cd(il-1); canvas.getPad().setAxisRange(-1.,37.,0.,300.);
 	    	h = H1_ECa_Sevd.get(is+1,il,0); h.setXTitle(otab[il-1]); h.setFillColor(col0); canvas.draw(h);
 	    }
-		
 	}
 	
 	public void canvasPedestal(DetectorDescriptor desc, EmbeddedCanvas canvas) {
@@ -1031,7 +1028,7 @@ public class FCMon extends DetectorMonitor {
 				app.addCanvas("Timing");
 				app.addChangeListener();
 				monitor.init();
-				monitor.initDetector(0,6);
+				monitor.initDetector(1,2);
 				}
 			});
 		}

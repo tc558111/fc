@@ -8,12 +8,12 @@ import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+
 import java.io.File;
 import java.util.TimerTask;
 import java.util.TreeMap;
 import java.util.logging.Level;
-import java.util.logging.Logger;
-import java.util.Timer;
+import java.util.logging.Logger; 
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
@@ -33,10 +33,6 @@ import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-
-
-
-
 
 //import org.root.pad.TEmbeddedCanvas;
 import org.root.basic.EmbeddedCanvas;
@@ -90,8 +86,10 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
     	
 	private JPanel  controlsPanel3 = null;
 	
-    private Timer    processTimer  = null;
-    private  Integer   threadDelay = 0;
+    private java.util.Timer    processTimer  = null;
+    private javax.swing.Timer   updateTimer  = null;
+    private Integer    updateDelay = 0;
+    private Integer    threadDelay = 0;
     
     private JSlider  framesPerSecond;
     static final int FPS_MIN = 0;
@@ -122,6 +120,7 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
         this.setSize(xsize, ysize);
         this.initMenuBar();
         this.initComponents();
+        //this.initTimer();
         this.pack();
         this.setVisible(true);
     }
@@ -131,6 +130,18 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
     	this.processorClass  = mon;
     }
     
+    private void initTimer(){
+        updateDelay = 1000 / FPS_INIT;
+        updateGUIAction action = new updateGUIAction();
+        this.updateTimer = new javax.swing.Timer(updateDelay,action);  
+        this.updateTimer.start();
+    }
+     
+    private class updateGUIAction implements ActionListener {
+        public void actionPerformed(ActionEvent evt) {
+           detectorView.repaint();
+        }
+    }    
     private void initComponents(){
 
     	this.setLayout(new BorderLayout());
@@ -194,7 +205,10 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
             public void stateChanged(ChangeEvent f) {
                 JSlider source = (JSlider)f.getSource();
                 if (!source.getValueIsAdjusting()) {
-                    int fps = (int)source.getValue();
+                    int fps = (int)source.getValue(); 
+                    //int delay = 0;
+                    //if (fps!=0 ) delay = 1000 / fps;
+                    //updateTimer.setDelay(delay);
                     detectorView.setFPS(fps);
                 }
             }            	
@@ -216,7 +230,8 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
         pixContrastMin.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent f) {
                 JSlider source = (JSlider)f.getSource();                
-                        pixMin = (int)source.getValue();           
+                        pixMin = (int)source.getValue();  
+                        detectorView.repaint();
             }            	
         }
         );  
@@ -227,7 +242,8 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
         pixContrastMax.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent f) {
                 JSlider source = (JSlider)f.getSource();                
-                        pixMax = (int)source.getValue();           
+                        pixMax = (int)source.getValue();  
+                        detectorView.repaint();
             }            	
         }
         );  
@@ -294,6 +310,8 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
     public int getSelectedTabIndex(){
     	return this.selectedTabIndex;
     }
+
+    
     public void addChangeListener() {    
       canvasTabbedPane.addChangeListener(new ChangeListener() {
     	  public void stateChanged(ChangeEvent e) {
@@ -428,6 +446,7 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
            
                             try {
                                 processorClass.processEvent(event);
+                            	//this.detectorView.repaint();
                             } catch (Exception ex) {
                                 ex.printStackTrace();
                             }
@@ -441,6 +460,7 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
         	isSingleEvent = true;
         	this.processNextEvent();
         	this.buttonPrev.setEnabled(true);
+        	//this.detectorView.repaint();
         }
         
         if(e.getActionCommand().compareTo(">>")==0){
@@ -453,8 +473,8 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
             		}
             	}
             }
-            processTimer = new Timer();
-            processTimer.schedule(new CrunchifyReminder(),1,1);
+            this.processTimer = new java.util.Timer();
+            this.processTimer.schedule(new CrunchifyReminder(),1,1);
             this.buttonStop.setEnabled(true);
             this.buttonNext.setEnabled(false);
             this.buttonPrev.setEnabled(false);
@@ -477,8 +497,8 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
 
     private void killTimer(){
         if(this.processTimer!=null){
-            this.processTimer.cancel();
-            this.processTimer = null;
+           this.processTimer.cancel();
+           this.processTimer = null;
         }   	
     }
     

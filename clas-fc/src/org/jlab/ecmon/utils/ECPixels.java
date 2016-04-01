@@ -1,16 +1,96 @@
 package org.jlab.ecmon.utils;
 
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+
+import org.jlab.clas12.calib.DetectorShape2D;
+import org.jlab.ecmon.utils.ECDrawDB;
+
 public class ECPixels {
 	
-	public double ec_xpix[][][] = new double[3][1296][7];
-	public double ec_ypix[][][] = new double[3][1296][7];
+	ECDrawDB     pcaltest = new ECDrawDB();
+	DetectorShape2D shape = new DetectorShape2D();
+	PrintWriter    writer = null;
+
+	public double ec_xpix[][][] = new double[15][1296][7];
+	public double ec_ypix[][][] = new double[15][1296][7];
 	public double ec_cthpix[]   = new double[1296];
 	public int pixmap[][]       = new int[3][1296];	
 	
 	public ECPixels() {
-		this.ecpixdef();
+		this.ecpixGet(1);
+		this.ecpixrot();
 		this.ecpixang();
 		this.ecpixmap();
+	}	
+	
+	public ECPixels(int opt) {
+		this.ecpixGet(opt);
+		this.ecpixrot();
+		this.ecpixang();
+		this.ecpixmap();
+	}
+	
+	public void ecpixGet(int opt) {
+		if (opt==1) ecpixdef(); //Calculate from combinatorics
+		if (opt==2) ecpixDB();  //Calculate from Geometry DB and polygon overlap of strips
+	}
+	
+	public void ecpixDB() {
+		
+		try 
+		{
+			writer = new PrintWriter("ecuvwpix.dat");
+		} 
+		catch (FileNotFoundException e) 
+		{
+			e.printStackTrace();
+		}
+		
+		for(int sector = 0; sector < 1; sector++)
+    	{
+			System.out.println("ecpixDB: Processing Sector "+sector);
+    	for(int uPaddle = 0; uPaddle < 36; uPaddle++)
+    	{
+    		for(int vPaddle = 0; vPaddle < 36; vPaddle++)
+            {
+	            for(int wPaddle = 0; wPaddle < 36; wPaddle++)
+	            {
+	            	if(pcaltest.isValidPixel(sector, uPaddle, vPaddle, wPaddle))
+	            	{
+	            		shape = pcaltest.getPixelShape(sector, uPaddle, vPaddle, wPaddle);
+	            		int num1 = uPaddle + 1;
+	            		int num2 = vPaddle + 1;
+	            		int num3 = wPaddle + 1;
+	            		//total = pcaltest.getUPixelDistance(uPaddle, vPaddle, wPaddle) + pcaltest.getVPixelDistance(uPaddle, vPaddle, wPaddle) + pcaltest.getWPixelDistance(uPaddle, vPaddle, wPaddle);
+	            		
+	            		writer.println(num1  + "   " + num2 + "   " + num3 + "   " 
+								+ pcaltest.getUPixelDistance(uPaddle, vPaddle, wPaddle) + "   " 
+								+ pcaltest.getVPixelDistance(uPaddle, vPaddle, wPaddle) + "   "
+								+ pcaltest.getWPixelDistance(uPaddle, vPaddle, wPaddle)); 
+	            				//+ "   "	+ total);
+	            		int pixel = pix(uPaddle+1,vPaddle+1,wPaddle+1);
+	            		
+	            		for(int i = 0; i < shape.getShapePath().size(); ++i)
+        				{
+	            			double x = shape.getShapePath().point(i).x();
+	            			double y = shape.getShapePath().point(i).y();
+	            			ec_xpix[i][pixel-1][6] = x; 
+	            			ec_ypix[i][pixel-1][6] = y;
+	            			System.out.println("i,u,v,w,pix,x,y= "+i+" "+uPaddle+" "+vPaddle+" "+wPaddle+" "+pixel+" "+x+" "+y);
+
+//			            	if(uPaddle == 3 && vPaddle == 35 && wPaddle == 31) System.out.println("x: " + x + " y: " + y);
+//        					shape.getShapePath().point(i).set(x, y, 0.0);
+        				}
+//	            		UWmap.addShape(shape);
+	            	}
+	            	//}
+	            }
+            }
+
+    	}
+    	}		
+		
 	}
 	
 	public void ecpixdef() {
@@ -24,7 +104,6 @@ public class ECPixels {
 		       double[] xtrans={0.0,0.0,0.0};
 		       double[] ytrans={0.0,0.0,0.0};
 		       double[]  yflip={-20.0,0.0,0.0};
-		       double[] theta={270.0,330.0,30.0,90.0,150.0,210.0};
 	       
 		       for(int u=1; u<37; u++) {
 		           jmax = 2*u-1;
@@ -52,7 +131,14 @@ public class ECPixels {
 		                   }     
 		               }
 		           }
-		       }
+		       }		       
+		}
+	
+	    public void ecpixrot() {
+			  System.out.println("ecpixrot():");
+	    	
+		       double[] theta={270.0,330.0,30.0,90.0,150.0,210.0};
+	    	
 		       for(int is=0; is<6; is++) {
 		    	   double thet=theta[is]*3.14159/180.;
 		    	   for (int ipix=0; ipix<1296; ipix++) {
@@ -61,9 +147,8 @@ public class ECPixels {
 		    			   ec_ypix[k][ipix][is]=  -ec_xpix[k][ipix][6]*Math.sin(thet)+ec_ypix[k][ipix][6]*Math.cos(thet);
 		    		   }
 		    	   }
-		       }
-		       
-		}
+		       }	    	
+	    }
 		
 		public void ecpixang() {
 		  System.out.println("ecpixang():");

@@ -446,7 +446,8 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
            
                             try {
                                 processorClass.processEvent(event);
-                            	//this.detectorView.repaint();
+                            	monitoringClass.analyze(1);
+                                this.getDetectorView().panel1.updateGUI();
                             } catch (Exception ex) {
                                 ex.printStackTrace();
                             }
@@ -460,7 +461,8 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
         	isSingleEvent = true;
         	this.processNextEvent();
         	this.buttonPrev.setEnabled(true);
-        	//this.detectorView.repaint();
+        	monitoringClass.analyze(1);
+            this.getDetectorView().panel1.updateGUI();
         }
         
         if(e.getActionCommand().compareTo(">>")==0){

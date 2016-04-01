@@ -1028,7 +1028,7 @@ public class FCMon extends DetectorMonitor {
 				app.addCanvas("Timing");
 				app.addChangeListener();
 				monitor.init();
-				monitor.initDetector(1,2);
+				monitor.initDetector(0,1);
 				}
 			});
 		}

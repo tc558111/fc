@@ -7,18 +7,16 @@ package org.jlab.ecmon.utils;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-import javax.swing.ButtonGroup;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
-import javax.swing.JRadioButton;
 import javax.swing.JTabbedPane;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -26,9 +24,7 @@ import javax.swing.event.ChangeListener;
 import org.jlab.clas.detector.DetectorType;
 import org.jlab.clas12.calib.DetectorShape2D;
 import org.jlab.clas12.calib.IDetectorListener;
-//import org.jlab.clasrec.main.DetectorCalibration;
 import org.jlab.geom.prim.Path3D;
-//import org.root.pad.EmbeddedCanvas;
 import org.root.basic.EmbeddedCanvas;
 /**
  *
@@ -37,18 +33,19 @@ import org.root.basic.EmbeddedCanvas;
  */
 public class DetectorShapeTabView extends JPanel implements ActionListener {
     
-    private		      JTabbedPane tabbedPane;
-    private			  JPanel bottom1;
-    public  DetectorShapeView2D panel1=null;
-    private DetectorShapeView2D panel2=null;
-    private final             TreeMap<String, DetectorShapeView2D>  detectorView = new TreeMap<String, DetectorShapeView2D>();
+    private	JTabbedPane                 tabbedPane = null;
+    public  DetectorShapeView2D             panel1 = null;
+    private DetectorShapeView2D             panel2 = null;
     private DetectorCalibration  calibrationModule = null;
     private EmbeddedCanvas       drawCanvas        = null;
     private String               drawOptions       = "default";
-    private List<IDetectorListener>         detectorListeners = new ArrayList<IDetectorListener>();
-    static final int FPS_MIN = 0;
-    static final int FPS_MAX = 20;
-    static final int FPS_INIT = 3;
+    
+    private final             TreeMap<String, DetectorShapeView2D>  detectorView = new TreeMap<String, DetectorShapeView2D>();
+    
+    static final int  FPS_MIN = 0;
+    static final int  FPS_MAX = 20;
+    static final int FPS_INIT = 2;
+    
     int fps=FPS_INIT;
     
     public DetectorShapeTabView(){

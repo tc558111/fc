@@ -9,7 +9,6 @@ import java.awt.BasicStroke;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.FlowLayout;
-import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
@@ -22,7 +21,6 @@ import java.awt.event.MouseMotionListener;
 import java.awt.geom.GeneralPath;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import javax.swing.ButtonGroup;
 import javax.swing.JPanel;
@@ -31,7 +29,6 @@ import javax.swing.Timer;
 
 import org.jlab.clas12.calib.DetectorShape2D;
 import org.jlab.clas12.calib.IDetectorListener;
-import org.jlab.geom.prim.Line3D;
 import org.jlab.geom.prim.Path3D;
 import org.jlab.geom.prim.Point3D;
 
@@ -43,17 +40,19 @@ import org.jlab.geom.prim.Point3D;
 public class DetectorShapeView2D extends JPanel implements ActionListener, MouseListener , MouseMotionListener{
     
     public  Rectangle  drawRegion = new Rectangle();
-    private JPanel bottom1;
-    public int ilmap=1;
-    public int  omap=0;
-    private String     canvasName = "undefined";
+    private JPanel        bottom1 = null;
+    
+    private List<IDetectorListener> detectorListeners = new ArrayList<IDetectorListener>();
+	private ActionListener listener;
     private List<DetectorShape2D>   shapes = new ArrayList<DetectorShape2D>();
     private Integer                 selectedShape = 1;
     private Integer 			 	selectedShapeSave = -1;
-    private ActionListener          listener = null;
-    private List<IDetectorListener> detectorListeners = new ArrayList<IDetectorListener>();
     
-    static final int FPS_INIT = 2;
+    public int ilmap=1;
+    public int  omap=0;
+    private String     canvasName = "undefined";
+    
+    static final int FPS_INIT = 1;
     
     int index,indexsave,junk;
     int delay;
@@ -65,22 +64,13 @@ public class DetectorShapeView2D extends JPanel implements ActionListener, Mouse
     private List<Color>             pathColors        = new ArrayList<Color>();
     
     public boolean MOUSEOVER_CALLBACK = true;
-/*    
+
     public DetectorShapeView2D(String name){
         canvasName = name;
         addMouseListener(this);
         this.addMouseMotionListener(this);
-        delay = 1000 / FPS_INIT;
         updateGUIAction action = new updateGUIAction();
-        this.timer = new Timer(delay,action);  
-    }
-  */  
-    public DetectorShapeView2D(String name){
-        canvasName = name;
-        addMouseListener(this);
-        this.addMouseMotionListener(this);
         delay = 1000 / FPS_INIT;
-        updateGUIAction action = new updateGUIAction();
         this.timer = new Timer(delay,action);  
         
 		bottom1 = new JPanel();
@@ -92,9 +82,9 @@ public class DetectorShapeView2D extends JPanel implements ActionListener, Mouse
     		ButtonGroup bG = new ButtonGroup();
     		for(int i=0; i< bn.size(); i++){
     			JRadioButton b = new JRadioButton(bn.get(i));
-    			if (i==0) b.setEnabled(true);
     			b.addActionListener(this);
     			b.setActionCommand(bn.get(i));
+    			if (i==0) b.setEnabled(true);
     			bottom1.add(b); bG.add(b);
     		}
 		}     	
@@ -102,7 +92,6 @@ public class DetectorShapeView2D extends JPanel implements ActionListener, Mouse
     }
     
     public void actionPerformed(ActionEvent e) {
-    	String name = this.getName();
     	switch(e.getActionCommand() ) {
     	case "Inner":
     		ilmap=1;
@@ -132,6 +121,7 @@ public class DetectorShapeView2D extends JPanel implements ActionListener, Mouse
     		omap=9;
     		break;
     	}
+    	updateGUI();
     }
    
     public void start(int fps){
@@ -364,8 +354,7 @@ public class DetectorShapeView2D extends JPanel implements ActionListener, Mouse
                 path.lineTo(x, y);
             }
             path.lineTo(startx, starty);
-            
-            
+                       
             g2d.setColor(shape.getSwingColor());
             
             if(counter==this.selectedShape){

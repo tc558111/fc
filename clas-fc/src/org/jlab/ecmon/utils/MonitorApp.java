@@ -34,7 +34,6 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-//import org.root.pad.TEmbeddedCanvas;
 import org.root.basic.EmbeddedCanvas;
 import org.jlab.evio.clas12.EvioDataEvent;
 import org.jlab.evio.clas12.EvioSource;
@@ -89,7 +88,7 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
     private java.util.Timer    processTimer  = null;
     private javax.swing.Timer   updateTimer  = null;
     private Integer    updateDelay = 0;
-    private Integer    threadDelay = 0;
+    private int        threadDelay = 0;
     
     private JSlider  framesPerSecond;
     static final int FPS_MIN = 0;
@@ -191,11 +190,10 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
         buttonStop.setEnabled(false);
         buttonNextFFW.setEnabled(false); 
         
-        SpinnerModel model =
-        new SpinnerNumberModel(0, //initial value
-                               0, //min
-                               10, //max
-                               1); //step
+        SpinnerModel model = new SpinnerNumberModel(0, //initial value
+                                                    0, //min
+                                                   10, //max
+                                                 0.1); //step
         this.spinnerDelay = new JSpinner(model);
         this.spinnerDelay.addChangeListener(this);
         
@@ -210,6 +208,8 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
                     //if (fps!=0 ) delay = 1000 / fps;
                     //updateTimer.setDelay(delay);
                     detectorView.setFPS(fps);
+                	//monitoringClass.analyze(1);
+                    //getDetectorView().panel1.updateGUI();
                 }
             }            	
         }
@@ -561,7 +561,8 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
     		this.statusLabel.setText("   EVENTS IN FILE : " + nevents + "  CURRENT : " + current);
         
     		try {
-    			processorClass.processEvent(event);
+                Thread.sleep(this.threadDelay);
+                processorClass.processEvent(event);
     		} catch (Exception ex) {
     			ex.printStackTrace();
     		}
@@ -688,8 +689,10 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
 */
 	@Override
 	public void stateChanged(ChangeEvent e) {
-		// TODO Auto-generated method stub
-		
+        double delay = (double) this.spinnerDelay.getValue();
+        this.threadDelay = (int) (delay*1000);
+        isSingleEvent = false;
+        if (delay!=0) isSingleEvent=true;     		
 	}
     
 }

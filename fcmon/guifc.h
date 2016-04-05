@@ -122,7 +122,7 @@ class FCMainFrame : public TGMainFrame
   TGLayoutHints      *fMenuBarLayout, *fMenuBarItemLayout, *fMenuBarHelpLayout;
   TGLayoutHints      *fL10, *fL0, *fL1;
 
-  TGRadioButton      *fRadiob1[6],*fRadiob2[3],*fRadiob3[3]; 
+  TGRadioButton      *fRadiob1[6],*fRadiob2[4],*fRadiob3[3]; 
   TGVButtonGroup     *fButtonGroup1,*fButtonGroup2,*fButtonGroup3;
 
   IDList              IDs;           // Widget IDs generator
@@ -161,8 +161,8 @@ class Dsc2Dlg : public TGTransientFrame
   TRootEmbeddedCanvas *fE1[6], *fE2[6];
   Bool_t               fShowRates, fShowStripChart;
  
-  TGTextBuffer        *tbufsc[14][16];
-  TGTextEntry         *tentsc[14][16];
+  TGTextBuffer        *tbufsc[16][16];
+  TGTextEntry         *tentsc[16][16];
   TH1F                *fHP1[68];
   TH2F                *fHP2[68];
 

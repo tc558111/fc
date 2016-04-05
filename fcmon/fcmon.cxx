@@ -11,32 +11,32 @@
 
 ClassImp(Dsc2Dlg);
 
-Float_t  zmin=0.,zmax=2.;           // Stripchart slider initial settings
-unsigned int ksec=5,kdet=3,kcrt=0,kdbg=0;  // Initial radio button settings
-Int_t ifirst;                       // initialized in Dsc2Dlg
+Float_t  zmin=0.,zmax=2.;                  // Stripchart slider initial settings
+unsigned int ksec=6,kdet=3,kcrt=0,kdbg=0;  // Initial radio button settings
+Int_t ifirst;                              // initialized in Dsc2Dlg
 
-UInt_t scal1[2][14][16];               // Scaler readout in slot,chan
+UInt_t scal1[2][16][16];            // Scaler readout in slot,chan
 UInt_t scal2[6][2][68];             // Scaler readout in sector,det,pmt
 
-Int_t map[14]={3,4,5,6,7,8,9,10,13,14,15,16,17,18}; //index into translation table ttfc.h
+Int_t map[16]={3,4,5,6,7,8,9,10,13,14,15,16,17,18,19,20}; //index into translation table ttfc.h
 
 Double_t ttt;
 Float_t  bintime;
-Float_t  norm=0.;                       // clck/ref ref=Group 1 Ref Scaler
-Float_t clck[2]={125000000.,488281.25}; // Scaler clock DSC2,FADC
+Float_t  norm=0.;                        // clck/ref ref=Group 1 Ref Scaler
+Float_t clck[2]={125000000.,488281.25};  // Scaler clock DSC2,FADC
 int scaler_update_period[2]={1000,1000}; // milliseconds
 
-Int_t idet;                // idet=0,1,2 (ECAL,PCAL,FTOF)
-Int_t ndsc[3]={14,12,12};  // Number of DSC2 slots for idet=0,1,2
-Int_t nlay[3]={6,3,2};     // Number of layers for idet=0,1,2
-Int_t nlr[3]={1,1,2};      // Number of subdivisions for idet=0,1,2
-Int_t nsg[3]={2,1,1};      // Number of subgraphs for nlay
-Int_t npmt[3][6]={{36,36,36,36,36,36},{68,62,62,0,0,0},{62,62,23,23,0,0}}; // Number of pmts for each nlay*nlr
+Int_t idet;                  // idet=0,1,2,3 (ECAL,PCAL,FTOF,LTCC)
+Int_t ndsc[4]={14,12,12,3};  // Number of DSC2 slots for idet=0,1,2,3
+Int_t nlay[4]={6,3,2,1};     // Number of layers for idet=0,1,2,3
+Int_t  nlr[4]={1,1,2,2};     // Number of subdivisions for idet=0,1,2,3
+Int_t  nsg[4]={2,1,1,1};     // Number of subgraphs for nlay
+Int_t npmt[4][6]={{36,36,36,36,36,36},{68,62,62,0,0,0},{62,62,23,23,0,0},{18,18,0,0,0,0}}; // Number of pmts for each nlay*nlr
 
 char hostname[80];         // Name of crate 
-const char *det[] = {"tdc","adc","ecal","pcal","ftof","1","2","3","4","5","6"}; //used to construct hostname
+const char *det[] = {"tdc","adc","ecal","pcal","ftof","ecal","1","2","3","4","5","6"}; //used to construct hostname
 const char *mod[] = {"DSC2","FADC","DSC2/FADC"};
-const char *udet[] = {"ECAL","PCAL","FTOF"};
+const char *udet[] = {"ECAL","PCAL","FTOF","LTCC"};
 
 CrateMsgClient *fc_crate[2];
 int fc_crate_slots[2][22];
@@ -164,22 +164,23 @@ FCMainFrame::FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h) : TGMainFrame(p,
    AddFrame(fControlFrame, fL10);
  
    fButtonGroup1 = new TGVButtonGroup(fControlFrame,"Sector");
-   fRadiob1[0]   = new TGRadioButton(fButtonGroup1, "S1",5);
-   fRadiob1[1]   = new TGRadioButton(fButtonGroup1, "S2",6);
-   fRadiob1[2]   = new TGRadioButton(fButtonGroup1, "S3",7);
-   fRadiob1[3]   = new TGRadioButton(fButtonGroup1, "S4",8);
-   fRadiob1[4]   = new TGRadioButton(fButtonGroup1, "S5",9);
-   fRadiob1[5]   = new TGRadioButton(fButtonGroup1, "S6",10);
+   fRadiob1[0]   = new TGRadioButton(fButtonGroup1, "S1",6);
+   fRadiob1[1]   = new TGRadioButton(fButtonGroup1, "S2",7);
+   fRadiob1[2]   = new TGRadioButton(fButtonGroup1, "S3",8);
+   fRadiob1[3]   = new TGRadioButton(fButtonGroup1, "S4",9);
+   fRadiob1[4]   = new TGRadioButton(fButtonGroup1, "S5",10);
+   fRadiob1[5]   = new TGRadioButton(fButtonGroup1, "S6",11);
 
    fButtonGroup2 = new TGVButtonGroup(fControlFrame,"Detector");
    fRadiob2[0]   = new TGRadioButton(fButtonGroup2, "ECAL",2);
    fRadiob2[1]   = new TGRadioButton(fButtonGroup2, "PCAL",3);
    fRadiob2[2]   = new TGRadioButton(fButtonGroup2, "FTOF",4);
+   fRadiob2[3]   = new TGRadioButton(fButtonGroup2, "LTCC",5);
    
    fButtonGroup3 = new TGVButtonGroup(fControlFrame,"Crate");
    fRadiob3[0]   = new TGRadioButton(fButtonGroup3, "DSC2",0);
    fRadiob3[1]   = new TGRadioButton(fButtonGroup3, "FADC",1);
-   fRadiob3[2]   = new TGRadioButton(fButtonGroup3, "BOTH",11);
+   fRadiob3[2]   = new TGRadioButton(fButtonGroup3, "BOTH",12);
    
    fRadiob1[0]->SetOn();
    fRadiob2[1]->SetOn();
@@ -197,7 +198,7 @@ FCMainFrame::FCMainFrame(const TGWindow *p, UInt_t w, UInt_t h) : TGMainFrame(p,
                                                   1, 1, 1, 1));
    
    for (int i=0;i<6;i++) {fRadiob1[i]->Associate(this);}
-   for (int i=0;i<3;i++) {fRadiob2[i]->Associate(this);}
+   for (int i=0;i<4;i++) {fRadiob2[i]->Associate(this);}
    for (int i=0;i<3;i++) {fRadiob3[i]->Associate(this);}
 
    fStatusBar1 = new TGStatusBar(this,50,10);
@@ -226,9 +227,9 @@ Bool_t FCMainFrame::ProcessMessage(Long_t msg, Long_t parm1, Long_t)
      switch (GET_SUBMSG(msg)) {
      case kCM_RADIOBUTTON:
        if (parm1<2)          {kcrt=parm1; kdbg=0;}
-       if (parm1>1&&parm1<5 ) kdet=parm1;
-       if (parm1>4&&parm1<11) ksec=parm1;
-       if (parm1==11)         kdbg=1;
+       if (parm1>1&&parm1<6 ) kdet=parm1;
+       if (parm1>5&&parm1<12) ksec=parm1;
+       if (parm1==12)         kdbg=1;
      case kCM_MENUSELECT:
        break;
      case kCM_MENU:
@@ -362,12 +363,12 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
   fMain = main; // remember mainframe
    SetCleanup(kDeepCleanup);
 
-   fL1 = new TGLayoutHints(kLHintsTop    | kLHintsLeft | kLHintsExpandX,2, 2, 2, 2);
-   fL2 = new TGLayoutHints(kLHintsBottom | kLHintsRight, 2, 2, 5, 1);
-   fL3 = new TGLayoutHints(kLHintsTop    | kLHintsLeft, 5, 5, 5, 5);
-   fL4 = new TGLayoutHints(kLHintsTop    | kLHintsLeft | kLHintsExpandX | kLHintsExpandY, 5, 5, 5, 5);
-   fL5 = new TGLayoutHints(kLHintsBottom | kLHintsExpandX | kLHintsExpandY, 2, 2, 5, 1);
-   fL10 = new TGLayoutHints(kLHintsTop|kLHintsCenterX|kLHintsExpandX,2,2,2,2);
+   fL1  = new TGLayoutHints(kLHintsTop    | kLHintsLeft    | kLHintsExpandX,2, 2, 2, 2);
+   fL2  = new TGLayoutHints(kLHintsBottom | kLHintsRight,                   2, 2, 5, 1);
+   fL3  = new TGLayoutHints(kLHintsTop    | kLHintsLeft,                    5, 5, 5, 5);
+   fL4  = new TGLayoutHints(kLHintsTop    | kLHintsLeft    | kLHintsExpandX | kLHintsExpandY, 5, 5, 5, 5);
+   fL5  = new TGLayoutHints(kLHintsBottom | kLHintsExpandX | kLHintsExpandY,2, 2, 5, 1);
+   fL10 = new TGLayoutHints(kLHintsTop    | kLHintsCenterX | kLHintsExpandX,2, 2, 2, 2);
    
    AddFrame(fFrame1=new TGHorizontalFrame(this, 200, 20, kFixedWidth), fL2);
    fFrame1->AddFrame(fCancelButton=new TGTextButton(fFrame1, "&Disconnect", 1), fL1);
@@ -380,13 +381,17 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
 
    /* Slots Tab */
 
+   int ncol=ndsc[idet]/2;
+   int nsl1=0, nsl2=ndsc[idet];
+   if(idet==3) {ncol=3;  nsl1=13 ; nsl2=16;}
+
    tf = fTab->AddTab("Slots");
-   tf->SetLayoutManager(new TGMatrixLayout(tf, 0, ndsc[idet]/2, 1));
+   tf->SetLayoutManager(new TGMatrixLayout(tf, 0, ncol, 1));
 
    char sln[100],buff1[100];
-   int nsl,jj;
+   int nsl,nsli,jj;
 
-   for (nsl=0;nsl<ndsc[idet];nsl++) 
+   for (nsl=nsl1;nsl<nsl2;nsl++) 
      {
        if(kdbg==0) sprintf(sln,"Slot %d",fc_crate_slots[kcrt][nsl]);
        if(kdbg==1) sprintf(sln,"Slot %d/%d",fc_crate_slots[0][nsl],fc_crate_slots[1][nsl]);
@@ -455,6 +460,13 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
    fF51->AddFrame(fE1[3] = new TRootEmbeddedCanvas("ec4", fF51, 100, 100), fL4);
    tf->AddFrame(fF50,fL4);tf->AddFrame(fF51,fL4);
    break;
+   case 3:
+   fL4  = new TGLayoutHints(kLHintsExpandX | kLHintsExpandY);
+   fF50 = new TGCompositeFrame(tf, 60, 60, kVerticalFrame);
+   fF50->AddFrame(fE1[0] = new TRootEmbeddedCanvas("ec1", fF50, 100, 100), fL4);
+   fF50->AddFrame(fE1[1] = new TRootEmbeddedCanvas("ec2", fF50, 100, 100), fL4);
+   tf->AddFrame(fF50,fL4);
+   break;
    }
 
    int nplt=nlay[idet]*nlr[idet]/nsg[idet];
@@ -508,6 +520,13 @@ Dsc2Dlg::Dsc2Dlg(const TGWindow *p, FCMainFrame *main,
    fF51b->AddFrame(fE2[2] = new TRootEmbeddedCanvas("ec3", fF51b, 100, 100), fL4);
    fF51b->AddFrame(fE2[3] = new TRootEmbeddedCanvas("ec4", fF51b, 100, 100), fL4);
    tf->AddFrame(fF50b,fL4);tf->AddFrame(fF51b,fL4);
+   break;
+   case 3:
+   fL4 = new TGLayoutHints(kLHintsExpandX | kLHintsExpandY);
+   fF50b = new TGCompositeFrame(tf, 60, 60, kVerticalFrame);
+   fF50b->AddFrame(fE2[0] = new TRootEmbeddedCanvas("ec1", fF50b, 100, 100), fL4);
+   fF50b->AddFrame(fE2[1] = new TRootEmbeddedCanvas("ec2", fF50b, 100, 100), fL4);
+   tf->AddFrame(fF50b,fL4);
    break;
    }
 
@@ -661,8 +680,11 @@ void Dsc2Dlg::ReadVME()
   unsigned int *buf;
   int len,slot,off[2][2]={{68,16},{51,0}};
   norm = 1.0;
+
+  int ii1=0, ii2=ndsc[idet];
+  if(idet==3) {ii1=13 ; ii2=16;}
   
-  for(ii=0; ii<ndsc[idet]; ii++) 
+  for(ii=ii1; ii<ii2; ii++) 
     {
       slot=fc_crate_slots[kcrt][ii];
       ref[ii]=clck[kcrt];
@@ -676,6 +698,7 @@ void Dsc2Dlg::ReadVME()
           case 0: i=adclayerecal[map[ii]][jj]-1 ; j=0                        ; k=adcstripecal[map[ii]][jj]-1 ;break;
           case 1: i=adclayerpcal[map[ii]][jj]-1 ; j=0                        ; k=adcstrippcal[map[ii]][jj]-1 ;break;
           case 2: i=adclayerftof[map[ii]][jj]-1 ; j=adclrftof[map[ii]][jj]-1 ; k=adcslabftof[map[ii]][jj]-1  ;break;
+          case 3: i=0                           ; j=adclrltcc[map[ii]][jj]-1 ; k=adcstripltcc[map[ii]][jj]-1 ;break;
           }
           scal1[kcrt][ii][jj]=(Int_t)(((Float_t)scal1[kcrt][ii][jj])*norm) ; scal2[i][j][k]=scal1[kcrt][ii][jj];
         }
@@ -690,24 +713,28 @@ void Dsc2Dlg::MakeHistos()
   Char_t tit[10];  
   Int_t nplot,np;
 
-  const char *htit1[3][6]={{"ECAL Ui SCALERS vs STRIP","ECAL Vi SCALERS vs STRIP","ECAL Wi SCALERS vs STRIP",
+  const char *htit1[4][6]={{"ECAL Ui SCALERS vs STRIP","ECAL Vi SCALERS vs STRIP","ECAL Wi SCALERS vs STRIP",
 			    "ECAL Uo SCALERS vs STRIP","ECAL Vo SCALERS vs STRIP","ECAL Wo SCALERS vs STRIP"},
 			   {"PCAL U  SCALERS vs STRIP","PCAL V  SCALERS vs STRIP","PCAL W  SCALERS vs STRIP",
 			    " "," "," "},
 			   {"FTOF1B LEFT SCALERS vs BAR","FTOF1B RIGHT SCALERS vs BAR",
-			    "FTOF1A LEFT SCALERS vs BAR","FTOF1A RIGHT SCALERS vs BAR"," "," "}};
+			    "FTOF1A LEFT SCALERS vs BAR","FTOF1A RIGHT SCALERS vs BAR"," "," "},
+			   {"LTCC LEFT SCALERS vs BAR","LTCC RIGHT SCALERS vs BAR"," "," "," "," "}};
 
-  const char *htit2[3][6]={{"ECAL Ui SCALERS vs TIME","ECAL Vi SCALERS vs TIME","ECAL Wi SCALERS vs TIME",
+
+  const char *htit2[4][6]={{"ECAL Ui SCALERS vs TIME","ECAL Vi SCALERS vs TIME","ECAL Wi SCALERS vs TIME",
 			    "ECAL Uo SCALERS vs TIME","ECAL Vo SCALERS vs TIME","ECAL Wo SCALERS vs TIME"},
 			   {"PCAL U  SCALERS vs TIME","PCAL V  SCALERS vs TIME","PCAL W  SCALERS vs TIME",
 			    " "," "," "},
 			   {"FTOF1B LEFT SCALERS vs TIME","FTOF1B RIGHT SCALERS vs TIME",
-			    "FTOF1A LEFT SCALERS vs TIME","FTOF1A RIGHT SCALERS vs TIME"," "," "}};
+			    "FTOF1A LEFT SCALERS vs TIME","FTOF1A RIGHT SCALERS vs TIME"," "," "},
+			   {"LTCC LEFT SCALERS vs TIME","LTCC RIGHT SCALERS vs TIME"," "," "," "," "}};
 
-  const char *htit3[3][6]={{"EC INNER U STRIP NUMBER","EC INNER V STRIP NUMBER","EC INNER W STRIP NUMBER",
+  const char *htit3[4][6]={{"EC INNER U STRIP NUMBER","EC INNER V STRIP NUMBER","EC INNER W STRIP NUMBER",
 			    "EC OUTER V STRIP NUMBER","EC OUTER V STRIP NUMBER","EC OUTER W STRIP NUMBER"},
 			   {"PCAL U STRIP NUMBER","PCAL V STRIP NUMBER","PCAL W STRIP NUMBER"," "," "," "},
-			   {"FTOF1B LEFT BAR","FTOF1B RIGHT BAR","FTOF1A LEFT BAR","FTOF1A RIGHT BAR"," "," "}};
+			   {"FTOF1B LEFT BAR","FTOF1B RIGHT BAR","FTOF1A LEFT BAR","FTOF1A RIGHT BAR"," "," "},
+			   {"LTCC LEFT PMT","LTCC RIGHT PMT"," "," "," "," "}};
  
   gROOT->SetStyle("Plain");
   gStyle->SetPalette(53);
@@ -750,8 +777,10 @@ void Dsc2Dlg::UpdateGUI()
 {
    Int_t ii,jj;
    Char_t str[10];
-   if(kdbg==0) for(ii=0; ii<ndsc[idet]; ii++) {for(jj=0; jj<16; jj++){sprintf(str,"%8d",scal1[kcrt][ii][jj]);tentsc[ii][jj]->SetText(str);}}
-   if(kdbg==1) for(ii=0; ii<ndsc[idet]; ii++) {for(jj=0; jj<16; jj++){sprintf(str,"%4d/%4d",scal1[0][ii][jj],scal1[1][ii][jj]);tentsc[ii][jj]->SetText(str);}}
+   int ii1=0, ii2=ndsc[idet];
+   if(idet==3) {ii1=13 ; ii2=16;}
+   if(kdbg==0) for(ii=ii1; ii<ii2; ii++) {for(jj=0; jj<16; jj++){sprintf(str,"%8d",scal1[kcrt][ii][jj]);tentsc[ii][jj]->SetText(str);}}
+   if(kdbg==1) for(ii=ii1; ii<ii2; ii++) {for(jj=0; jj<16; jj++){sprintf(str,"%4d/%4d",scal1[0][ii][jj],scal1[1][ii][jj]);tentsc[ii][jj]->SetText(str);}}
 }
 
 void Dsc2Dlg::FillHistos()

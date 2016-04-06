@@ -481,7 +481,7 @@ public class FCMon extends DetectorMonitor {
             		tdc = tdcc[0]*24./1000.;
             	}
             	
-            	if(strip.getType()==BankType.ADCFPGA) {
+            	if(strip.getType()==BankType.ADCFPGA) { // FADC MODE 7
             		int[] adcc= (int[]) strip.getDataObject();
             		ped = adcc[2];
             		npk = adcc[3];
@@ -491,9 +491,12 @@ public class FCMon extends DetectorMonitor {
             		tdcf = timc*4.+timf*0.0625;
              	}
             	
-            	if(strip.getType()==BankType.ADCPULSE) {
-            		fitter.setParams(tet,nsb,nsa);
+            	if(strip.getType()==BankType.ADCPULSE) { // FADC MODE 1
+            		fitter.setParams(tet,nsb,nsa,1,15);
             		short[] pulse = (short[]) strip.getDataObject();
+            		fitter.fit(pulse);
+            		adc = fitter.adc/10;
+            		ped = fitter.ped;
             		for (int i=0 ; i< pulse.length ; i++) {
             			H2_ECa_Hist.get(is,il,5).fill(i,ip,pulse[i]-pedref);
             			if (app.isSingleEvent) H2_ECa_Sevd.get(is,il,0).fill(i,ip,pulse[i]-pedref);
@@ -555,26 +558,42 @@ public class FCMon extends DetectorMonitor {
 	
 	private class FADCFitter {
 		
-		int tet,tsb,tsa,adc,ped;
+		int tet,nsb,nsa,p1,p2;
+		int mmsum,summing_in_progress;
+		public int ped;
+		public int adc;
 		
 		public FADCFitter() {	
 		}
 		
-		public FADCFitter(int tet, int tsb, int tsa) {
-			this.setParams(tet,tsb,tsa);
+		public FADCFitter(int tet, int tsb, int tsa, int p1, int p2) {
+			this.setParams(tet,tsb,tsa,p1,p2);
 		}
 		
-		public final void setParams(int tet, int tsb, int tsa) {
+		public final void setParams(int tet, int nsb, int nsa, int p1, int p2) {
 			this.tet = tet;
-			this.tsb = tsb;
-			this.tsa = tsa;						
+			this.nsb = nsb;
+			this.nsa = nsa;	
+			this.p1  = p1;
+			this.p2  = p2;
 		}
-
 		
 		public void fit(short[] pulse) {
-			
+			ped=0;adc=0;mmsum=0;summing_in_progress=0;
+			for (int mm=0; mm<pulse.length; mm++) {
+				if(mm>p1 && mm<=p2)  ped+=pulse[mm];
+				if(mm==p2)           ped=ped/(p2-p1);
+				if(mm>p2 && mm<100) {
+					if ((summing_in_progress==0) && pulse[mm]>ped+this.tet) {
+					  summing_in_progress=1;
+					  for (int ii=1; ii<this.nsb+1;ii++) adc+=(pulse[mm-ii]-ped);
+					  mmsum=this.nsb;
+					}
+					if(summing_in_progress>0 && mmsum>(this.nsa+this.nsb)) summing_in_progress=-1;
+					if(summing_in_progress>0) {adc+=(pulse[mm]-ped); mmsum++;}
+				}
+			}
 		}
-	  
 	}
  
 	public void update(DetectorShape2D shape) {

@@ -29,12 +29,14 @@ struct {
 
 int quest_[100];
 
-#define max1A 23
-#define max1B 64
+#define max1A  23
+#define max1B  64
 #define maxPC 192
 #define maxEC 216
+#define maxCC  18
 #define maxEC2 50
 #define maxPC2 50
+#define maxCC2 36
 #define maxSC  20
 
 int    nSC1A;
@@ -67,6 +69,14 @@ int  stripEC[maxEC];
 int    tdcEC[maxEC];
 int    adcEC[maxEC];
 
+int      nCC;
+int    secCC[maxCC];
+int     idCC[maxCC];
+int     tCCL[maxCC];
+int     tCCR[maxCC];
+int     aCCL[maxCC];
+int     aCCR[maxCC];
+    
 int      nEC2;
 int   slotEC[maxEC2];
 int   chanEC[maxEC2];
@@ -89,6 +99,14 @@ float  pedSC[maxSC];
 int     t0SC[maxSC];
 int    adcSC[maxSC][100];
 
+int      nCC2;
+int    idCC2[maxCC2];
+int   slotCC[maxCC2];
+int   chanCC[maxCC2];
+float  pedCC[maxCC2];
+int     t0CC[maxCC2];
+int   adcCC2[maxCC2][100];
+
 int nECi,nECo;
 
 static int nslabs[3]={62,23,5};
@@ -106,6 +124,10 @@ static int npl[3],adcrp[3][68],strrp[3][68];
 static int neadc[6][36], eadc[6][36][NHITSEC];
 static int netdc[6][36], etdc[6][36][NHITSEC];
 static int nel[6],adcre[6][36],strre[6][36];
+#define NHITSCC 36
+static int ncadc[2][18], cadc[2][18][NHITSCC];
+static int nctdc[2][18], ctdc[2][18][NHITSCC];
+static int ncl[2],adcrc[2][18],strrc[2][18];
 
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 
@@ -253,8 +275,23 @@ int main(int argc, char **argv)
    hbname_(&idnt,"ECAL",&tdcEC,"TDCEC(nEC):I",4L,12L);
    hbname_(&idnt,"ECAL",&adcEC,"ADCEC(nEC):I",4L,12L);
 
+   hbname_(&idnt,"LTCC",&nCC,"nCC[0,18]:I",4L,11L);
+   hbname_(&idnt,"LTCC",&secCC,"secCC(nCC)[1,6]:I",4L,17L);
+   hbname_(&idnt,"LTCC",&idCC,"idCC(nCC)[1,18]:I",4L,17L);
+   hbname_(&idnt,"LTCC",&tCCL,"tCCL(nCC):I",4L,11L);
+   hbname_(&idnt,"LTCC",&tCCR,"tCCR(nCC):I",4L,11L);
+   hbname_(&idnt,"LTCC",&aCCL,"aCCL(nCC):I",4L,11L);
+   hbname_(&idnt,"LTCC",&aCCR,"aCCR(nCC):I",4L,11L);
+
    if (dofadc) 
    {
+   hbname_(&idnt,"FADC",&nCC2,"nCC2[0,50]:I",4L,12L);
+   hbname_(&idnt,"FADC",&slotCC,"slotCC(nCC2)[18,20]:I",4L,21L);
+   hbname_(&idnt,"FADC",&chanCC,"chanCC(nCC2)[0,15]:I",4L,20L);
+   hbname_(&idnt,"FADC",&pedCC,"pedCC(nCC2)",4L,11L);
+   hbname_(&idnt,"FADC",&t0CC,"t0CC(nCC2)[0,100]:I",4L,19L);
+   hbname_(&idnt,"FADC",&adcCC2,"RAWCC(100,nCC2):I",4L,17L);
+
    hbname_(&idnt,"FADC",&nEC2,"nEC2[0,50]:I",4L,12L);
    hbname_(&idnt,"FADC",&slotEC,"slotEC(nEC2)[0,18]:I",4L,20L);
    hbname_(&idnt,"FADC",&chanEC,"chanEC(nEC2)[0,15]:I",4L,20L);
@@ -501,7 +538,18 @@ a123:
       bufptr = buf;
     }
 
-   /* Clear ECAL,PCAL,FTOF counters */
+   /* Clear LTCC,ECAL,PCAL,FTOF counters */
+
+    for(jj=0; jj<2; jj++)
+    {
+      for(kk=0; kk<18; kk++)
+        {
+        ncadc[jj][kk] = 0;
+        nctdc[jj][kk] = 0;
+	strrc[jj][kk] = 0;
+	}
+      ncl[jj]=0;
+    }
 
     for(ii=0; ii<6; ii++)
     {
@@ -537,12 +585,13 @@ a123:
       }
     }
 
-    nEC2 = nPC2 = nSC = 0;
+    nEC2 = nPC2 = nSC = nCC = nCC2 = 0;
     tdcref = 0;
 
-    /*TDCs*/
     for(fragment=1; fragment<=36; fragment++)
       {
+
+    /*TDCs*/
     if((ind1 = evNlink(bufptr,  fragment, 0xe107,  0, &nbytes)) > 0)
       {
       int half,chip,chan,bco,val,chan1,edge,nw,tdcl,tdcr;
@@ -574,6 +623,7 @@ a123:
         edge = (word>>26)&0x1;
 	chan = (word>>19)&0x7F;
         val = (word&0x3FFFF)*TDCLSB;
+
         if(slot==16 && chan==63)
 	  {
           if(tdcref==0){tdcref=val;}
@@ -583,7 +633,6 @@ a123:
           ii = tdclayerecal[slot][chan]-1;
 	  kk = tdcstripecal[slot][chan]-1;
           etdc[ii][kk][netdc[ii][kk]] = val;
-          strre[ii][nel[ii]]=kk+1;nel[ii]++;
 	  netdc[ii][kk]++;
 	  }
         if(detector==2 || detector==5)
@@ -591,7 +640,6 @@ a123:
           ii = tdclayerpcal[slot][chan]-1;
 	  kk = tdcstrippcal[slot][chan]-1;
           ptdc[ii][kk][nptdc[ii][kk]] = val;
-          strrp[ii][npl[ii]]=kk+1;npl[ii]++;
 	  nptdc[ii][kk]++;
 	  }
         if(detector==3 || detector==0)
@@ -623,8 +671,7 @@ a123:
       int oldslot = 100;
       int thr=15;
       int ndata0[22], data0[21][8];
-      int sum, channel, summing_in_progress, mmsum, mmt0;
-      float baseline;
+      int baseline, sum, channel, summing_in_progress, mmsum, mmt0;
       int datasaved[1000];
 
 #ifdef DEBUG
@@ -640,6 +687,7 @@ a123:
       detector = (fragment/2)%6 + 1;
 
       edet = -1;
+
       if(detector==1 || detector==4) edet=0;
       if(detector==2 || detector==5) edet=1;
       if(detector==3 || detector==6) edet=2;
@@ -660,9 +708,7 @@ a123:
 	  {
           GET8(chan);
           GET32(nsamples);
-#ifdef DEBUG
-          printf("  chan=%d, nsamples=%d\n",chan,nsamples);
-#endif
+
           baseline = sum = summing_in_progress = mmsum = mmt0 = 0;
           for(mm=0; mm<nsamples; mm++)
 	    {
@@ -673,7 +719,7 @@ a123:
 	      {
               baseline = baseline / 25;
 	      //#ifdef DEBUG
-              //printf("slot=%d chan=%d baseline=%f\n",slot,chan,baseline);
+              //if (edet==1) printf("slot=%d chan=%d baseline=%f\n",slot,chan,baseline);
 	      //#endif
 	      }
             if(mm>25 && mm<100)
@@ -688,7 +734,7 @@ a123:
 	      if(summing_in_progress>0 && mmsum>(nsa[edet]+nsb[edet]))
 		{
 		summing_in_progress = -1;
-                //printf("det=%d sum=%d tsa+tsb=%d\n",edet,sum,nsa[edet]+nsb[edet]);
+                //if (edet==1) printf("det=%d sum=%d tsa+tsb=%d\n",edet,sum,nsa[edet]+nsb[edet]);
 		}
               if(summing_in_progress>0 && data<baseline)
 	        {
@@ -702,6 +748,9 @@ a123:
 	      }
 	    }
 
+	  if (edet==0&&((slot==18&&chan>11)||slot==19||slot==20)) {edet=3;} //LTCC
+	      
+
 	  /* fill raw adc pulse hist only if there was a pulse */
 
 	      if(edet==0)
@@ -712,7 +761,8 @@ a123:
 		  {
 		  eadc[ii][kk][neadc[ii][kk]] = sum;
 		  neadc[ii][kk]++;
-                 
+                  if (sum>100) {strre[ii][nel[ii]]=kk+1;nel[ii]++;}
+
 		  if (dofadc)
 		    {
 		    if (nEC2>=0&&nEC2<maxEC2) 
@@ -732,9 +782,10 @@ a123:
 		ii = adclayerpcal[slot][chan]-1;
 		kk = adcstrippcal[slot][chan]-1;
 		if(ii>=0 && sum>0)
-		  {
+		  {	  
 		  padc[ii][kk][npadc[ii][kk]] = sum;
 		  npadc[ii][kk]++;
+		  if (sum>100) {strrp[ii][npl[ii]]=kk+1;npl[ii]++;}
 
 		  if (dofadc)
 		    {
@@ -775,7 +826,28 @@ a123:
 		    }
 		  }
 		}
-	      
+	      if(edet==3)
+		{
+		jj =    adclrltcc[slot][chan]-1;
+		kk = adcstripltcc[slot][chan]-1;
+		if(jj>=0 && sum>0)
+		  {
+		  cadc[jj][kk][ncadc[jj][kk]] = sum;
+		  ncadc[jj][kk]++;
+		  if (dofadc)
+		    {
+		    if (nCC2<maxCC2) 
+		    {
+		    slotCC[nCC2]=slot;
+		    chanCC[nCC2]=chan;
+		    pedCC[nCC2]=baseline;
+		    t0CC[nCC2]=mmt0;
+		    for(jj=0;jj<100;jj++) adcCC2[nCC2][jj]=datasaved[jj];
+		    nCC2++;
+		    }
+		    }
+		  }
+		}	      
             } 
 #ifdef DEBUG
         printf("end loop: b08=0x%08x\n",b08);
@@ -784,9 +856,9 @@ a123:
      }
 	
     /* ADC pulsed mode bank */
-    if((ind1 = evNlink(bufptr, fragment, 0xe103, 0, &nbytes)) > 0)
+    if((ind1 = evNlink(bufptr, fragment, 0xe102, 0, &nbytes)) > 0)
     {
-      unsigned short pulse_time;
+      unsigned short pulse_time, pulse_min, pulse_max;
       unsigned int pulse_integral;
       unsigned char *end;
       unsigned long long time;
@@ -796,10 +868,8 @@ a123:
       int baseline, sum, channel;
 
       b08 = (unsigned char *) &bufptr[ind1];
-      b16 = (unsigned short *) &bufptr[ind1];
-      b32 = (unsigned int *) &bufptr[ind1];
-
       end = b08 + nbytes;
+
 #ifdef DEBUG
       printf("ind1=%d, nbytes=%d (from 0x%08x to 0x%08x)\n",ind1,nbytes,b32,end);
 #endif
@@ -808,18 +878,11 @@ a123:
 #ifdef DEBUG
         printf("begin while: b08=0x%08x\n",b08);
 #endif
-        b08 = (unsigned char *)b32;
-        slot = *b08 ++;
-        b32 = (unsigned int *)b08;
-        trig = *b32++;
-        b64 = (unsigned long long *)b32;
-        time = *b64++;
-        b32 = (unsigned int *)b64;
-        nchan = *b32++;
+        GET8(slot);
+        GET32(trig);
+        GET64(time);
+	GET32(nchan);
 
-#ifdef DEBUG
-        printf("slot=%d, trig=%d, time=%lld nchan=%d\n",slot,trig,time,nchan);
-#endif
         sector   = (fragment-1)/6 + 1;
         detector = (fragment/2)%6 + 1;
 
@@ -828,31 +891,26 @@ a123:
         if(detector==2 || detector==5) edet=1;
         if(detector==3 || detector==6) edet=2;
 
+	if (edet==0&&((slot==18&&chan>11)||slot==19||slot==20)) edet=3; //LTCC
+	      
         for(nn=0; nn<nchan; nn++)
 	  {
-          b08 = (unsigned char *)b32;
-          chan = (*b08 ++) /*+ 1*/;
-          b32 = (unsigned int *)b08;
-          npulses = *b32++;
-#ifdef DEBUG
-          printf("  chan=%d, npulses=%d\n",chan,npulses);
-#endif
+	      GET8(chan);
+	      GET32(npulses);
+
           for(mm=0; mm<npulses; mm++)
 	    {
-            b16 = (unsigned short *)b32;
-            pulse_time = (*b16++)>>6;
-            b32 = (unsigned int *)b16;
-            pulse_integral = *b32++;
-
-#ifdef DEBUG
-            printf(" b32=0x%08x:  pulse_time=%d pulse_integral=%d\n",b32,pulse_time,pulse_integral);
-#endif	
-
+	      GET16(pulse_time);
+	      GET32(pulse_integral);
+	      GET16(pulse_min);
+	      GET16(pulse_max);
+	
 	      if(edet==0)
 		{
-		sum  = (float)pulse_integral-tabecal[slot][chan]*(nsa[edet]+nsb[edet]);
+		sum  = (float)pulse_integral-pulse_min*(nsa[edet]+nsb[edet]);
 		ii = adclayerecal[slot][chan]-1;
 		kk = adcstripecal[slot][chan]-1;
+                if (sum>100) {strre[ii][nel[ii]]=kk+1;nel[ii]++;}
 		if(ii>=0 && sum>0)
 		  {
 		  eadc[ii][kk][neadc[ii][kk]] = sum;
@@ -861,9 +919,10 @@ a123:
 		}
 	      if(edet==1)
 		{
-		sum  = (float)pulse_integral-tabpcal[slot][chan]*(nsa[edet]+nsb[edet]);
+		sum  = (float)pulse_integral-pulse_min*(nsa[edet]+nsb[edet]);
 		ii = adclayerpcal[slot][chan]-1;
 		kk = adcstrippcal[slot][chan]-1;
+		if (sum>100) {strrp[ii][npl[ii]]=kk+1;npl[ii]++;}
 		if(ii>=0 && sum>0)
 		  {
 		  padc[ii][kk][npadc[ii][kk]] = sum;
@@ -878,16 +937,27 @@ a123:
 	       
                 if(ii==1) iedet=2;
 		if(ii==0) iedet=3;
-		sum  = (float)pulse_integral-tabftof[slot][chan]*(nsa[iedet]+nsb[iedet]);
+		sum  = (float)pulse_integral-pulse_min*(nsa[iedet]+nsb[iedet]);
 	        if(ii>=0 && sum>0)
 		  {
                   adc[ii][jj][kk][nadc[ii][jj][kk]] = sum;
                   nadc[ii][jj][kk] ++;
 		  }
 		}	      
+              if(edet==3) 
+		{
+                jj =     adclrltcc[slot][chan] - 1;
+                kk =  adcstripltcc[slot][chan] - 1;	       
+		sum  = (float)pulse_integral-pulse_min*(nsa[edet]+nsb[edet]);
+	        if(sum>0)
+		  {
+                  cadc[jj][kk][ncadc[jj][kk]] = sum;
+                  ncadc[jj][kk] ++;
+		  }
+		}	      
 	    }
 	  }
-        b08 = (unsigned char *)b32;
+        //b08 = (unsigned char *)b32;
 #ifdef DEBUG
         printf("end loop: b08=0x%08x\n",b08);
 #endif
@@ -1042,11 +1112,26 @@ a123:
           nSC1B++;
 	}
     }
+    nCC=0;
+      for(kk=0; kk<18; kk++) /* counter # */
+	{ 
+	  if(ncadc[0][kk]>0 || ncadc[1][kk]>0 )
+	    {
+	      secCC[nCC]=sec;
+	      idCC[nCC]=kk+1;
+	      tCCL[nCC]=ctdc[0][kk][0];
+	      tCCR[nCC]=ctdc[1][kk][0];
+	      aCCL[nCC]=cadc[0][kk][0];
+	      aCCR[nCC]=cadc[1][kk][0];
+	      nCC++;
+	    }
+    }
     //    if( nEC==3 || nPC==3 || nSC1A==1 || nSC1B==1 ) hfnt_(&idnt);	
     //if( nEC>=6 || nPC>=3 || (nSC1A==1 && nSC1B==1 )) {iev++ ; hfnt_(&idnt);}
     //if( good_uvw[0] || good_uvw[1] || good_uvw[2] || nSC1A==1 || nSC1B==1) {hfnt_(&idnt);}
 
-    if(nECi==3 || nECo==3 || nPC==3 || nSC1A==1 || nSC1B==1) 
+    //if (nPC<5) printf("nPC,nSC1A,nSC1B=%d,%d,%d \n",nPC,nSC1A,nSC1B);
+    if(nECi==3 || nECo==3 || nPC==3 || nSC1A==1 || nSC1B==1 || nCC>0) 
       {hfnt_(&idnt);
 	if (doevio)
 	  {

@@ -1,0 +1,4 @@
+mkdir -p ./Linux_i686_vme/bin
+gcc -g -fPIC -DLinux -DLINUX -DLinux_vme -I/usr/local/clas12/release/0.3/coda/src/rol/jvme  -I./bosio.s -I/usr/local/clas12/release/0.3/coda/common/include -D_POSIX_PTHREAD_SEMANTICS -c main/et2rzn.c -o Linux_i686_vme/bin/et2rzn.o
+g77  ./Linux_i686_vme/bin/et2rzn.o -L./Linux_i686_vme/lib -L/usr/local/clas12/release/0.3/coda/Linux_i686_vme/lib -L/apps/cernlib/2005/lib -L/usr/X11R6/lib -L/usr/lib ./Linux_i686_vme/lib/libbosio.a /usr/local/clas12/release/0.3/coda/Linux_i686_vme/lib/libevio.a /usr/local/clas12/release/0.3/coda/Linux_i686_vme/lib/libet.a -lexpat -lpthread -lrt -lresolv -lgraflib -lgrafX11 -lpacklib -lX11  -ldl -lm -lcrypt -o ./Linux_i686_vme/bin/et2rzn
+

@@ -286,7 +286,7 @@ public class CCMon extends DetectorMonitor {
             			                       H2_CCa_Hist.get(is,io,5).fill(i,ip,pulse[i]-pedref);
             			if (app.isSingleEvent) {
             				H2_CCa_Sevd.get(is,io,0).fill(i,ip,pulse[i]-pedref);
-            				if (i>=(t0-nsb)&&i<=(t0+nsa)) H2_CCa_Sevd.get(is,io,1).fill(i,ip,pulse[i]-pedref);
+            				if (adc>0&&i>=(t0-nsb)&&i<=(t0+nsa)) H2_CCa_Sevd.get(is,io,1).fill(i,ip,pulse[i]-pedref);
             			}
             		}
             	}
@@ -479,7 +479,7 @@ public class CCMon extends DetectorMonitor {
 		
 		for(int il=1;il<3;il++){
 			String xlab = "Sector "+(is+1)+otab[il-1]+"PMTs";
-			canvas.cd(il-1); h = H2_CCa_Hist.get(is+1,il,0).projectionY(); h.setXTitle(xlab); h.setFillColor(col0); canvas.draw(h,"S");
+			canvas.cd(il-1); h = H2_CCa_Hist.get(is+1,il,0).projectionY(); h.setXTitle(xlab); h.setFillColor(col0); canvas.draw(h);
 			}	
 		
 		canvas.cd(lr-1); h = H2_CCa_Hist.get(is+1,lr,0).projectionY(); h.setFillColor(col1); canvas.draw(h,"same");
@@ -492,7 +492,7 @@ public class CCMon extends DetectorMonitor {
 			//if(lr!=il) {canvas.cd(il+3); h = H2_CCt_Hist.get(is+1,il,0).sliceY(22); h.setXTitle(tlab); h.setTitle(""); h.setFillColor(col0); canvas.draw(h);}
 		}
 		String alab = otab[lr-1]+(ip+1)+lab4[0]; String tlab = otab[lr-1]+(ip+1)+lab4[1];
-		canvas.cd(lr+1); h = H2_CCa_Hist.get(is+1,lr,0).sliceY(ip);h.setXTitle(alab); h.setTitle(""); h.setFillColor(col2); canvas.draw(h);
+		canvas.cd(lr+1); h = H2_CCa_Hist.get(is+1,lr,0).sliceY(ip);h.setXTitle(alab); h.setTitle(""); h.setFillColor(col2); canvas.draw(h,"S");
 		//canvas.cd(lr+3); h = H2_CCt_Hist.get(is+1,lr,0).sliceY(ip+1);h.setXTitle(tlab); h.setTitle(""); h.setFillColor(col2); canvas.draw(h);	 	
 	}
 }

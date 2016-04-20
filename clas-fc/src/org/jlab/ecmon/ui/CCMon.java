@@ -47,6 +47,7 @@ public class CCMon extends DetectorMonitor {
 	int inProcess        = 0; //0=init 1=processing 2=end-of-run 3=post-run
 	boolean inMC         = false; //true=MC false=DATA
 	int thrcc            = 20;
+	int   tet            = 0;
 	
 	DetectorCollection<H1D> H1_CCa_Sevd = new DetectorCollection<H1D>();
 	DetectorCollection<H1D> H1_CCt_Sevd = new DetectorCollection<H1D>();
@@ -101,6 +102,7 @@ public class CCMon extends DetectorMonitor {
 				H2_CCa_Hist.add(is, il, 5, new H2D("CCa_Hist_FADC_"+il,100,   0., 100.,   18, 1., 19.));
 				H1_CCa_Sevd.add(is, il, 0, new H1D("ECa_Sed_"+il,       18,   1.,  19.));
 				H2_CCa_Sevd.add(is, il, 0, new H2D("CCa_Sed_FADC_"+il, 100,   0., 100.,   18, 1., 19.));
+				H2_CCa_Sevd.add(is, il, 1, new H2D("CCa_Sed_FADC_"+il, 100,   0., 100.,   18, 1., 19.));
 			}
 		}
 		
@@ -139,6 +141,7 @@ public class CCMon extends DetectorMonitor {
 		int mmsum,summing_in_progress;
 		public int ped;
 		public int adc;
+		public int  t0;
 		
 		public FADCFitter() {	
 		}
@@ -163,6 +166,7 @@ public class CCMon extends DetectorMonitor {
 				if(mm>p2 && mm<100) {
 					if ((summing_in_progress==0) && pulse[mm]>ped+this.tet) {
 					  summing_in_progress=1;
+					  t0 = mm;
 					  for (int ii=1; ii<this.nsb+1;ii++) adc+=(pulse[mm-ii]-ped);
 					  mmsum=this.nsb;
 					}
@@ -205,6 +209,7 @@ public class CCMon extends DetectorMonitor {
 					for (int il=1 ; il<2 ; il++) {
 						 H1_CCa_Sevd.get(is+1,il,0).reset();
 						 H2_CCa_Sevd.get(is+1,il,0).reset();
+						 H2_CCa_Sevd.get(is+1,il,1).reset();
 					}
 				}
 			}	
@@ -245,7 +250,7 @@ public class CCMon extends DetectorMonitor {
 	public void processEvent(DataEvent de) {
 		
 		EvioDataEvent event = (EvioDataEvent) de;
-		int adc=0,ped=0,nsa,nsb,tet,pedref=0,tdc=0,tdcf=0;
+		int adc=0,ped=0,t0=0,nsa,nsb,tet,pedref=0,tdc=0,tdcf=0;
 		
 		if(event.hasBank("EC::true")!=true) {
 			this.myarrays.clear();
@@ -268,15 +273,21 @@ public class CCMon extends DetectorMonitor {
          		   nsa = (int) config.getNSA();
          		   nsb = (int) config.getNSB();
          		   tet = (int) config.getTET();
+         		   tet = 60;
+         		   this.tet = tet;
          		pedref = (int) config.getPedestal();
             		fitter.setParams(tet,nsb,nsa,1,15);
             		short[] pulse = (short[]) strip.getDataObject();
             		fitter.fit(pulse);
             		adc = fitter.adc;
             		ped = fitter.ped;
+            		 t0 = fitter.t0;
             		for (int i=0 ; i< pulse.length ; i++) {
             			                       H2_CCa_Hist.get(is,io,5).fill(i,ip,pulse[i]-pedref);
-            			if (app.isSingleEvent) H2_CCa_Sevd.get(is,io,0).fill(i,ip,pulse[i]-pedref);
+            			if (app.isSingleEvent) {
+            				H2_CCa_Sevd.get(is,io,0).fill(i,ip,pulse[i]-pedref);
+            				if (i>=(t0-nsb)&&i<=(t0+nsa)) H2_CCa_Sevd.get(is,io,1).fill(i,ip,pulse[i]-pedref);
+            			}
             		}
             	}
             	
@@ -394,7 +405,7 @@ public class CCMon extends DetectorMonitor {
 		int lr = desc.getLayer();
 		int ic = desc.getComponent();
 		
-		canvas.divide(6,3);
+		canvas.divide(3,6);
 		canvas.setAxisFontSize(14);
 		canvas.setTitleFontSize(14);
 		canvas.setAxisTitleFontSize(14);
@@ -402,11 +413,16 @@ public class CCMon extends DetectorMonitor {
 		H1D h = new H1D() ; 
 		String otab[]={" Left PMT "," Right PMT "};
 		
+		F1D f1 = new F1D("p0",0.,100.); f1.setParameter(0,this.tet);
+		f1.setLineColor(2);
+		
 	    for(int ip=0;ip<18;ip++){
 	    	canvas.cd(ip); canvas.getPad().setAxisRange(0.,100.,-15.,app.pixMax);
 	        h = H2_CCa_Sevd.get(is+1,lr,0).sliceY(ip); h.setXTitle("Samples (4 ns)"); h.setYTitle("Counts");
 	    	h.setTitle("Sector "+(is+1)+otab[lr-1]+(ip+1)); h.setFillColor(4); canvas.draw(h);
-	    }		
+	        h = H2_CCa_Sevd.get(is+1,lr,1).sliceY(ip); h.setFillColor(2); canvas.draw(h,"same");
+	        canvas.draw(f1,"same");
+	  	    }		
 	}	
 	
 	public void canvasPedestal(DetectorDescriptor desc, EmbeddedCanvas canvas) {
@@ -463,7 +479,7 @@ public class CCMon extends DetectorMonitor {
 		
 		for(int il=1;il<3;il++){
 			String xlab = "Sector "+(is+1)+otab[il-1]+"PMTs";
-			canvas.cd(il-1); h = H2_CCa_Hist.get(is+1,il,0).projectionY(); h.setXTitle(xlab); h.setFillColor(col0); canvas.draw(h);
+			canvas.cd(il-1); h = H2_CCa_Hist.get(is+1,il,0).projectionY(); h.setXTitle(xlab); h.setFillColor(col0); canvas.draw(h,"S");
 			}	
 		
 		canvas.cd(lr-1); h = H2_CCa_Hist.get(is+1,lr,0).projectionY(); h.setFillColor(col1); canvas.draw(h,"same");

@@ -148,12 +148,9 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
 		this.detectorView       = new DetectorShapeTabView();
 		this.canvasTabbedPane   = new JTabbedPane();	
 		
-		this.vSplitPane = new JSplitPane();		
-		this.vSplitPane.setRightComponent(this.canvasTabbedPane);
-		
+		this.vSplitPane = new JSplitPane();				
 		this.hSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-		this.hSplitPane.setTopComponent(this.detectorView);
-				
+		
         this.hSplitPane.setSize(2000, 600);
         this.hSplitPane.setDividerLocation(800);
         
@@ -289,8 +286,11 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
         c.gridx=0 ; c.gridy=1 ; this.controlsPanel0.add(this.controlsPanel2,c);
         c.gridx=0 ; c.gridy=2 ; this.controlsPanel0.add(this.controlsPanel3,c);
        
-		this.hSplitPane.setBottomComponent(this.controlsPanel0);
 		this.vSplitPane.setLeftComponent(this.hSplitPane);
+		this.vSplitPane.setRightComponent(this.canvasTabbedPane);
+		this.hSplitPane.setTopComponent(this.detectorView);				
+		this.hSplitPane.setBottomComponent(this.controlsPanel0);
+
 		this.add(this.vSplitPane,BorderLayout.CENTER);
     }
     public void addCanvas(String name){
@@ -470,7 +470,7 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
         	running = true;
             class CrunchifyReminder extends TimerTask {
             	public void run() {
-            		for (int i=1 ; i<500 ; i++) {
+            		for (int i=1 ; i<200 ; i++) {
                       processNextEvent();
             		}
             	}

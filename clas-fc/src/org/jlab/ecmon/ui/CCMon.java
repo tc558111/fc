@@ -397,6 +397,7 @@ public class CCMon extends DetectorMonitor {
 		canvas.divide(6,3);
 		canvas.setAxisFontSize(14);
 		canvas.setTitleFontSize(14);
+		canvas.setAxisTitleFontSize(14);
 		
 		H1D h = new H1D() ; 
 		String otab[]={" Left PMT "," Right PMT "};
@@ -420,6 +421,9 @@ public class CCMon extends DetectorMonitor {
 		String otab[]={" Left PMT "," Right PMT "};
  		
 		canvas.divide(2,2);
+		canvas.setAxisFontSize(14);
+		canvas.setTitleFontSize(14);
+		canvas.setAxisTitleFontSize(14);
 		
 	    for(int il=1;il<3;il++){
 	    	H2D hpix = H2_CCa_Hist.get(is+1,il,3);
@@ -435,8 +439,8 @@ public class CCMon extends DetectorMonitor {
     		}
     		
     		canvas.cd(il-1+2);
-    		            h=hpix.sliceY(12); h.setFillColor(4); h.setTitle(""); h.setXTitle("Sector "+(is+1)+otab[lr-1]+12)    ; canvas.draw(h);
-    	    if(lr==il) {h=hpix.sliceY(ip); h.setFillColor(2); h.setTitle(""); h.setXTitle("Sector "+(is+1)+otab[lr-1]+(ip+1)); canvas.draw(h);}
+    		            h=hpix.sliceY(12); h.setFillColor(4); h.setTitle(""); h.setXTitle("Sector "+(is+1)+otab[il-1]+12)    ; canvas.draw(h);
+    	    if(lr==il) {h=hpix.sliceY(ip); h.setFillColor(2); h.setTitle(""); h.setXTitle("Sector "+(is+1)+otab[il-1]+(ip+1)); canvas.draw(h);}
 	    }			
 	}
 	public void canvasOccupancy(DetectorDescriptor desc, EmbeddedCanvas canvas) {
@@ -453,6 +457,7 @@ public class CCMon extends DetectorMonitor {
 		
 		canvas.divide(2,2);
 		canvas.setAxisFontSize(14);
+		canvas.setAxisTitleFontSize(14);
 		canvas.setTitleFontSize(14);
 		canvas.setStatBoxFontSize(12);
 		

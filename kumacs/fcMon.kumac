@@ -15,7 +15,7 @@ macro plothw run=484 sec=5 det=ecal opt=ped zca=100 linlog=log path=forcar/rzh/f
 
   case [opt] in
     (ped) mid=20000000 ; off=0 ; v=all.adc   ; atit=ADC CHAN. ; exe get.ped [pedref] [sec] [det]
-    (raw) mid=10000000 ; off=0 ; v=all.adc   ; atit=SAMPLES (4 NS/CH)
+    (raw) mid=10000000 ; off=0 ; v=all.adc   ; atit=SAMPLES (4 NS/CH) ; exe get.tsab [det]
     (adc) mid=30000000 ; off=0 ; v=all.adc   ; atit=ADC CHAN.
     (tdc) mid=0        ; off=1 ; v=[det].tdc ; atit=TDC CHAN.
   endcase
@@ -35,6 +35,23 @@ macro plothw run=484 sec=5 det=ecal opt=ped zca=100 linlog=log path=forcar/rzh/f
   opt [linlog]z ; col=colz
 
   exe plot.[v] 
+
+return
+
+macro get.tsab det
+
+*  int nsbt[4]={12,12,8,8};   /* ns */
+*  int nsat[4]={60,156,28,68};
+*  int nsb[4] ={3,3,2,2};      /* samples */
+*  int nsa[4] ={15,39,7,17};
+*  int tet[4] ={20,6,20,20};  
+
+  global/cre y0,y1,y2,y2a,y2b
+  case [det] in
+    (ecal) y0=42 ; y1=[y0]-3 ; y2=[y0]+15
+    (pcal) y0=45 ; y1=[y0]-3 ; y2=[y0]+39
+    (ftof) y0=36 ; y1=[y0]-2 ; y2a=[y0]+7 ; y2b=[y0]+17
+  endcase
 
 return
 
@@ -68,12 +85,21 @@ macro plot.all.adc
   n1=$vlen(sl);n2=[n1]-1
   do n=1,[n1]
   if [n].gt.2 then ; col=col ; endif
-  hid=$eval([mid]+[id]+sl([n])*1000)
+  sln=sl([n])
+  hid=$eval([mid]+[id]+[sln]*1000)
   min [hid] 1 ; max [hid] [zscal]
   if [optt].eq.ped then ; min [hid] 0.1 ; max [hid] 100 ; endif
   if [n].ge.[n2] then ; set yval 0 ; endif
   opt utit ; title_gl '' U
-  hi/plot [hid] [col] ; if [optt].eq.ped then ; exe plot.ped $eval(np([n])) ; endif
+  hi/plot [hid] [col] 
+  if [optt].eq.ped then ; exe plot.ped $eval(np([n])) ; endif
+  if [optt].eq.raw then ; global/imp y* ; 
+    case [dett] in
+      (ecal,pcal)                  line [y0] 0 [y0] 16 ; line [y1] 0 [y1] 16 ; line [y2]  0. [y2]  16 
+      (ftof) if [sln].le.6 then ; line [y0] 0 [y0] 16 ; line [y1] 0 [y1] 16 ; line [y2a] 0. [y2a] 16 ; endif
+	     if [sln].gt.6 then ; line [y0] 0 [y0] 16 ; line [y1] 0 [y1] 16 ; line [y2b] 0. [y2b] 16 ; endif
+    endcase
+  endif 
   xmax=$grafinfo('wnxmax')
   if [n].ge.[n2] then ;  atitle [atit] ; endif
   if [dett].eq.pcal then

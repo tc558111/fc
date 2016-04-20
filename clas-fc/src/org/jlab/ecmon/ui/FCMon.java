@@ -83,7 +83,7 @@ public class FCMon extends DetectorMonitor {
 	
 	public FCMon(String[] args) {
 		super("FCMON","1.0","lcsmith");
-		fadc.load("/test/fc/fadc",10,"default");
+		fadc.load("/daq/fadc/ec",10,"default");
 		ccdb.loadTable("/calibration/ec/attenuation");
 		ccdb.disconnect();
 		if(args.length == 1) monpath = args[0];		
@@ -498,7 +498,7 @@ public class FCMon extends DetectorMonitor {
             		adc = fitter.adc/10;
             		ped = fitter.ped;
             		for (int i=0 ; i< pulse.length ; i++) {
-            			H2_ECa_Hist.get(is,il,5).fill(i,ip,pulse[i]-pedref);
+            			                       H2_ECa_Hist.get(is,il,5).fill(i,ip,pulse[i]-pedref);
             			if (app.isSingleEvent) H2_ECa_Sevd.get(is,il,0).fill(i,ip,pulse[i]-pedref);
             		}
             	}  
@@ -784,6 +784,8 @@ public class FCMon extends DetectorMonitor {
 		int is    = desc.getSector();
 		int layer = desc.getLayer();
 		int ic    = desc.getComponent();
+		
+		if (layer>6) return;
 		
 		int panel = app.getDetectorView().panel1.omap;
 		int io    = app.getDetectorView().panel1.ilmap;
@@ -1125,7 +1127,7 @@ public class FCMon extends DetectorMonitor {
 				app.addCanvas("Timing");
 				app.addChangeListener();
 				monitor.init();
-				monitor.initDetector(1,2);
+				monitor.initDetector(0,6);
 				}
 			});
 		}

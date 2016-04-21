@@ -96,26 +96,26 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
     static final int FPS_INIT = 2;
     
     private JSlider  pixContrastMin;
-    static final int PIX_MIN_LO   =  1;
-    static final int PIX_MIN_HI   = 20;
-    static final int PIX_MIN_INIT =  1;
+    static final int PIX_MIN_LO   =  10;
+    static final int PIX_MIN_HI   = 100;
+    static final int PIX_MIN_INIT =  10;
     
     private JSlider  pixContrastMax;
-    static final int PIX_MAX_LO    =   10;
-    static final int PIX_MAX_HI    = 2000;
+    static final int PIX_MAX_LO    =    1;
+    static final int PIX_MAX_HI    =  100;
     static final int PIX_MAX_INIT  =   20;
     
     private volatile boolean running;
     public boolean isSingleEvent=false;
-    public double pixMin = PIX_MIN_INIT;
-    public double pixMax = PIX_MAX_INIT;
+    public double pixMin = PIX_MIN_INIT*0.01;
+    public double pixMax = PIX_MAX_INIT*0.01;
     
 //    private ProcessEvio processEvio;
     private IDetectorProcessor processorClass = null;
     private DetectorMonitor   monitoringClass = null;
     
-    public MonitorApp(int xsize, int ysize){
-        super("BrowserApp");
+    public MonitorApp(String name, int xsize, int ysize){
+        super(name);
         this.setSize(xsize, ysize);
         this.initMenuBar();
         this.initComponents();
@@ -227,7 +227,7 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
         pixContrastMin.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent f) {
                 JSlider source = (JSlider)f.getSource();                
-                        pixMin = (int)source.getValue();  
+                        pixMin = 0.01*source.getValue();  
                         detectorView.repaint();
             }            	
         }
@@ -239,7 +239,7 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
         pixContrastMax.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent f) {
                 JSlider source = (JSlider)f.getSource();                
-                        pixMax = (int)source.getValue();  
+                        pixMax = 0.01*source.getValue();  
                         detectorView.repaint();
             }            	
         }
@@ -345,9 +345,9 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
         JMenuItem s6 = new JMenuItem("Sector 6") ; s6.addActionListener(this);ET_open.add(s6);
         file.add(ET_open);
         
-        JMenuItem save_histos= new JMenuItem("Save Histos");
-        save_histos.addActionListener(this);
-        file.add(save_histos);
+        JMenuItem clear_histos= new JMenuItem("Clear Histos");
+        clear_histos.addActionListener(this);
+        file.add(clear_histos);
         
         JMenuItem load_plugin = new JMenuItem("Load Plugin");
         load_plugin.addActionListener(this);
@@ -491,8 +491,8 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
             this.buttonPrev.setEnabled(true);
         }
         
-        if(e.getActionCommand().compareTo("Save Histos")==0){
-        	monitoringClass.close();
+        if(e.getActionCommand().compareTo("Clear Histos")==0){
+        	monitoringClass.reset();
         }
         
     }

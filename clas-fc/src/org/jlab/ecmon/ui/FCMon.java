@@ -96,6 +96,10 @@ public class FCMon extends DetectorMonitor {
 		collection.clear();	
 	}
 	
+	public void reset() {
+		
+	}
+	
 	public void close() {
 		String file=monpath+"/"+monfile;
 		this.mondirectory.write(file);
@@ -1117,7 +1121,7 @@ public class FCMon extends DetectorMonitor {
 		
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				app = new MonitorApp(2000,600);
+				app = new MonitorApp("FCMon",2000,600);
 				app.setPluginClass(monitor);
 				app.addCanvas("Mode1");
 				app.addCanvas("SingleEvent");

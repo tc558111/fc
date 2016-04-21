@@ -48,6 +48,7 @@ public class CCMon extends DetectorMonitor {
 	boolean inMC         = false; //true=MC false=DATA
 	int thrcc            = 20;
 	int   tet            = 0;
+	int ipsave           = 0;
 	
 	DetectorCollection<H1D> H1_CCa_Sevd = new DetectorCollection<H1D>();
 	DetectorCollection<H1D> H1_CCt_Sevd = new DetectorCollection<H1D>();
@@ -68,12 +69,13 @@ public class CCMon extends DetectorMonitor {
 		
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				app = new MonitorApp(2000,600);
+				app = new MonitorApp("CCMon",2000,600);
 				app.setPluginClass(monitor);
 				app.addCanvas("Mode1");
 				app.addCanvas("SingleEvent");
 				app.addCanvas("Occupancy");			 
 				app.addCanvas("Pedestals");
+				app.addCanvas("Summary");
 				app.addChangeListener();
 				monitor.init();
 				monitor.initDetector(0,6);
@@ -106,6 +108,22 @@ public class CCMon extends DetectorMonitor {
 			}
 		}
 		
+	}
+	
+	@Override
+	public void reset() {
+		this.clearHistograms();
+	}
+	
+	public void clearHistograms() {
+		
+		for (int is=0 ; is<6 ; is++) {
+			for (int il=1 ; il<2 ; il++) {
+				 H2_CCa_Hist.get(is+1,il,0).reset();
+				 H2_CCa_Hist.get(is+1,il,3).reset();
+				 H2_CCa_Hist.get(is+1,il,5).reset();
+			}
+		}		
 	}
 	
 	public void initDetector(int is1, int is2) {
@@ -335,7 +353,11 @@ public class CCMon extends DetectorMonitor {
 		if (z==0) color=9;
 		
 		if (  inProcess==0)  color=(double)(z-rmin)/(rmax-rmin);
-		if (!(inProcess==0)) color=(double)(Math.log10(z)-Math.log10(app.pixMin))/(Math.log10(app.pixMax)-Math.log10(app.pixMin));
+		
+		if (!(inProcess==0)) {
+			if (!app.isSingleEvent) color=(double)(Math.log10(z)-Math.log10(rmin*app.pixMin))/(Math.log10(rmax*app.pixMax)-Math.log10(rmin*app.pixMin));
+			if ( app.isSingleEvent) color=(double)(Math.log10(z)-Math.log10(rmin*app.pixMin))/(Math.log10(4000.)-Math.log10(rmin*app.pixMin));
+		}
 		
 		//System.out.println(z+" "+rmin+" "+" "+rmax+" "+color);
 		if (color>1)   color=1;
@@ -355,14 +377,14 @@ public class CCMon extends DetectorMonitor {
         TreeMap<Integer, Object> hcontainer = new TreeMap<Integer, Object>();
         hcontainer.put(1, dat);
         double[] b = Arrays.copyOf(dat, dat.length);
-//        double min=100000,max=0;
-//        for (int i =0 ; i < b.length; i++){
-//        	if (b[i] !=0 && b[i] < min) min=b[i];
-//        	if (b[i] !=0 && b[i] > max) max=b[i];
-//        }
-        Arrays.sort(b);
-        double min = b[0]; double max=b[b.length-1];
-        if (min<=0) min=0.0;
+        double min=100000,max=0;
+        for (int i =0 ; i < b.length; i++){
+        	if (b[i] !=0 && b[i] < min) min=b[i];
+        	if (b[i] !=0 && b[i] > max) max=b[i];
+        }
+//        Arrays.sort(b);
+//        double min = b[0]; double max=b[b.length-1];
+        if (min<=0) min=0.01;
         hcontainer.put(2, min);
         hcontainer.put(3, max);
         return hcontainer;        
@@ -372,8 +394,8 @@ public class CCMon extends DetectorMonitor {
 		
 		for (int is=1;is<7;is++) {
 			for (int il=1 ; il<3 ; il++) {
-				Lmap_a.add(is,il,0, toTreeMap(H2_CCa_Hist.get(is,il,0).projectionY().getData()));    //Strip View ADC 
-				if (app.isSingleEvent) Lmap_a.add(is,il,0,  toTreeMap(H1_CCa_Sevd.get(is,il,0).getData())); 			
+				if (!app.isSingleEvent) Lmap_a.add(is,il,0, toTreeMap(H2_CCa_Hist.get(is,il,0).projectionY().getData())); //Strip View ADC 
+				if  (app.isSingleEvent) Lmap_a.add(is,il,0, toTreeMap(H1_CCa_Sevd.get(is,il,0).getData())); 			
 			}
 		}	
 	}
@@ -393,8 +415,11 @@ public class CCMon extends DetectorMonitor {
 		  this.canvasOccupancy(desc,   app.getCanvas("Occupancy"));
 		  break;
 		case 3:
-		  this.canvasPedestal(desc,    app.getCanvas("Pedestals"));	
-		  break;
+			  this.canvasPedestal(desc,    app.getCanvas("Pedestals"));	
+			  break;
+		case 4:
+			  this.canvasSummary(desc,    app.getCanvas("Summary"));	
+			  break;
 		}	 
 		
 	}
@@ -417,7 +442,7 @@ public class CCMon extends DetectorMonitor {
 		f1.setLineColor(2);
 		
 	    for(int ip=0;ip<18;ip++){
-	    	canvas.cd(ip); canvas.getPad().setAxisRange(0.,100.,-15.,app.pixMax);
+	    	canvas.cd(ip); canvas.getPad().setAxisRange(0.,100.,-15.,4000*app.pixMax);
 	        h = H2_CCa_Sevd.get(is+1,lr,0).sliceY(ip); h.setXTitle("Samples (4 ns)"); h.setYTitle("Counts");
 	    	h.setTitle("Sector "+(is+1)+otab[lr-1]+(ip+1)); h.setFillColor(4); canvas.draw(h);
 	        h = H2_CCa_Sevd.get(is+1,lr,1).sliceY(ip); h.setFillColor(2); canvas.draw(h,"same");
@@ -459,40 +484,91 @@ public class CCMon extends DetectorMonitor {
     	    if(lr==il) {h=hpix.sliceY(ip); h.setFillColor(2); h.setTitle(""); h.setXTitle("Sector "+(is+1)+otab[il-1]+(ip+1)); canvas.draw(h);}
 	    }			
 	}
+	
 	public void canvasOccupancy(DetectorDescriptor desc, EmbeddedCanvas canvas) {
 		
 		int is = desc.getSector();
 		int lr = desc.getLayer();
 		int ip = desc.getComponent();
-		
+	
 		int col0=0,col1=4,col2=2;
 		
-		H1D h;
-		String otab[]={" Left PMT "," Right PMT "};
+		H1D h1;  
+		String otab[]={" Left "," Right "};
 		String lab4[]={" ADC"," TDC"};		
+		String xlab,ylab;
 		
-		canvas.divide(2,2);
+		canvas.divide(2,3);
 		canvas.setAxisFontSize(14);
 		canvas.setAxisTitleFontSize(14);
 		canvas.setTitleFontSize(14);
 		canvas.setStatBoxFontSize(12);
 		
+		H2D h2a = H2_CCa_Hist.get(is+1,1,0); h2a.setYTitle(otab[0]+"PMTs") ; h2a.setXTitle(otab[0]+"PMT"+lab4[0]);
+		H2D h2b = H2_CCa_Hist.get(is+1,2,0); h2b.setYTitle(otab[1]+"PMTs") ; h2b.setXTitle(otab[1]+"PMT"+lab4[0]);
+		canvas.cd(0); canvas.getPad().setAxisRange(0.,2000.,1.,19.) ; canvas.setLogZ(); canvas.draw(h2a); 
+		canvas.cd(1); canvas.getPad().setAxisRange(0.,2000.,1.,19.) ; canvas.setLogZ(); canvas.draw(h2b); 
+		
+		canvas.cd(lr-1);
+		
+		F1D f1 = new F1D("p0",0.,2000.); f1.setParameter(0,ip+1);
+		F1D f2 = new F1D("p0",0.,2000.); f2.setParameter(0,ip+2);
+		f1.setLineColor(2); canvas.draw(f1,"same"); 
+		f2.setLineColor(2); canvas.draw(f2,"same");
+		
 		for(int il=1;il<3;il++){
-			String xlab = "Sector "+(is+1)+otab[il-1]+"PMTs";
-			canvas.cd(il-1); h = H2_CCa_Hist.get(is+1,il,0).projectionY(); h.setXTitle(xlab); h.setFillColor(col0); canvas.draw(h);
+			xlab = "Sector "+(is+1)+otab[il-1]+"PMTs";
+			canvas.cd(il+1); h1 = H2_CCa_Hist.get(is+1,il,0).projectionY(); h1.setXTitle(xlab); h1.setFillColor(col0); canvas.draw(h1);
 			}	
 		
-		canvas.cd(lr-1); h = H2_CCa_Hist.get(is+1,lr,0).projectionY(); h.setFillColor(col1); canvas.draw(h,"same");
-		H1D copy = h.histClone("Copy"); copy.reset() ; 
-		copy.setBinContent(ip, h.getBinContent(ip)); copy.setFillColor(col2); canvas.draw(copy,"same");
+		canvas.cd(lr+1); h1 = H2_CCa_Hist.get(is+1,lr,0).projectionY(); h1.setFillColor(col1); canvas.draw(h1,"same");
+		H1D copy = h1.histClone("Copy"); copy.reset() ; 
+		copy.setBinContent(ip, h1.getBinContent(ip)); copy.setFillColor(col2); canvas.draw(copy,"same");
 		
 		for(int il=1;il<3;il++) {
-			String alab = otab[il-1]+(ip+1)+lab4[0]; String tlab = otab[il-1]+(ip+1)+lab4[1];
-			if(lr!=il) {canvas.cd(il+1); h = H2_CCa_Hist.get(is+1,il,0).sliceY(11); h.setXTitle(alab); h.setTitle(""); h.setFillColor(col0); canvas.draw(h);}
+			String alab = otab[il-1]+"PMT "+11+lab4[0]; String tlab = otab[il-1]+(ip+1)+lab4[1];
+			if(lr!=il) {canvas.cd(il+3); h1 = H2_CCa_Hist.get(is+1,il,0).sliceY(11); h1.setXTitle(alab); h1.setTitle(""); h1.setFillColor(col0); canvas.draw(h1);}
 			//if(lr!=il) {canvas.cd(il+3); h = H2_CCt_Hist.get(is+1,il,0).sliceY(22); h.setXTitle(tlab); h.setTitle(""); h.setFillColor(col0); canvas.draw(h);}
 		}
-		String alab = otab[lr-1]+(ip+1)+lab4[0]; String tlab = otab[lr-1]+(ip+1)+lab4[1];
-		canvas.cd(lr+1); h = H2_CCa_Hist.get(is+1,lr,0).sliceY(ip);h.setXTitle(alab); h.setTitle(""); h.setFillColor(col2); canvas.draw(h,"S");
+		String alab = otab[lr-1]+"PMT "+(ip+1)+lab4[0]; String tlab = otab[lr-1]+(ip+1)+lab4[1];
+		canvas.cd(lr+3); h1 = H2_CCa_Hist.get(is+1,lr,0).sliceY(ip);h1.setXTitle(alab); h1.setTitle(""); h1.setFillColor(col2); canvas.draw(h1,"S");
 		//canvas.cd(lr+3); h = H2_CCt_Hist.get(is+1,lr,0).sliceY(ip+1);h.setXTitle(tlab); h.setTitle(""); h.setFillColor(col2); canvas.draw(h);	 	
+	}
+	
+	public void canvasSummary(DetectorDescriptor desc, EmbeddedCanvas canvas) {
+		
+		int is = desc.getSector();
+		int lr = desc.getLayer();
+		int ip = desc.getComponent();
+		
+		int il=1,col0=0,col1=4,col2=2;
+		
+		H1D h;
+		String alab;
+		String otab[]={" Left PMT "," Right PMT "};
+		String lab4[]={" ADC"," TDC"};		
+		
+		canvas.divide(6,6);
+		canvas.setAxisFontSize(12);
+		canvas.setAxisTitleFontSize(12);
+		canvas.setTitleFontSize(14);
+		canvas.setStatBoxFontSize(10);
+		
+		il = 1; 
+		
+		for(int iip=0;iip<18;iip++) {
+			alab = otab[il-1]+(iip+1)+lab4[0];
+			canvas.cd(iip); h = H2_CCa_Hist.get(is+1,il,0).sliceY(iip); h.setXTitle(alab); h.setTitle(""); h.setFillColor(col1); canvas.draw(h);
+		}
+
+		il = 2;
+		
+		for(int iip=0;iip<18;iip++) {
+			alab = otab[il-1]+(iip+1)+lab4[0];
+			canvas.cd(18+iip); h = H2_CCa_Hist.get(is+1,il,0).sliceY(iip); h.setXTitle(alab); h.setTitle(""); h.setFillColor(col1); canvas.draw(h);
+		}
+		
+		canvas.cd((lr-1)*18+ip); h = H2_CCa_Hist.get(is+1,lr,0).sliceY(ip); h.setTitle(""); h.setFillColor(col2); canvas.draw(h,"same"); 	
+
 	}
 }

@@ -2,6 +2,8 @@ package org.clas.fcmon.tools;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
@@ -9,6 +11,7 @@ import java.awt.Font;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.io.File;
+import java.util.List;
 import java.util.TimerTask;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -16,6 +19,8 @@ import java.util.logging.Logger;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.ButtonGroup;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -24,16 +29,20 @@ import javax.swing.JButton;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
+import javax.swing.JRadioButton;
 import javax.swing.JSlider;
 import javax.swing.JSpinner;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
 import javax.swing.SpinnerModel;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SpringLayout;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.root.basic.EmbeddedCanvas;
+import org.root.group.SpringUtilities;
 import org.clas.fcmon.tools.DetectorShapeTabView;
 import org.jlab.evio.clas12.EvioDataEvent;
 import org.jlab.evio.clas12.EvioSource;
@@ -69,6 +78,8 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
 	
     private TreeMap<String,EmbeddedCanvas>  paneCanvas = new TreeMap<String,EmbeddedCanvas>();
 	
+    //private JPanel  sectorControl  = null;
+    
 	private JPanel  controlsPanel0 = null;
     
 	private JPanel controlsPanel1  = null;
@@ -81,8 +92,10 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
     private JButton  buttonNextFFW = null;
     private JButton  buttonStop    = null;
     private JSpinner spinnerDelay  = null;	
-    	
+    
 	private JPanel  controlsPanel3 = null;
+	private JPanel  controlsPanel4 = null;
+	public  Mode7Emulation      m7 = null;
 	
     private java.util.Timer    processTimer  = null;
     private javax.swing.Timer   updateTimer  = null;
@@ -109,15 +122,24 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
     public double pixMin = PIX_MIN_INIT*0.01;
     public double pixMax = PIX_MAX_INIT*0.01;
     
+    public int mode7User_pedref=0;
+    public int mode7User_tet=0;
+    public int mode7User_nsa=0;
+    public int mode7User_nsb=0;
+    public int mode7CCDB_tet=0;
+    public int mode7CCDB_nsa=0;
+    public int mode7CCDB_nsb=0;
+    
 //    private ProcessEvio processEvio;
     private IDetectorProcessor processorClass = null;
     private DetectorMonitor   monitoringClass = null;
     
     public MonitorApp(String name, int xsize, int ysize){
         super(name);
-        this.setSize(xsize, ysize);
+        this.setPreferredSize(new Dimension(xsize, ysize));
         this.initMenuBar();
         this.initComponents();
+        this.addChangeListener();
         //this.initTimer();
         this.pack();
         this.setVisible(true);
@@ -146,26 +168,22 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
     	
 		this.detectorView       = new DetectorShapeTabView();
 		this.canvasTabbedPane   = new JTabbedPane();	
-		
-		this.vSplitPane = new JSplitPane();				
-		this.hSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-		
-        this.hSplitPane.setSize(2000, 600);
-        this.hSplitPane.setDividerLocation(800);
         
+//		this.sectorControl  = new JPanel();
+		
 		this.controlsPanel0 = new JPanel(new GridBagLayout());
 		
 	    this.controlsPanel1 = new JPanel();
 		this.controlsPanel1.setBorder(BorderFactory.createTitledBorder("Event Source"));
-		this.controlsPanel1.setSize(500,100);
 		
       	this.controlsPanel2 = new JPanel();
 		this.controlsPanel2.setBorder(BorderFactory.createTitledBorder("Event Control"));
-		this.controlsPanel2.setSize(500,100);
 		
       	this.controlsPanel3 = new JPanel();
 		this.controlsPanel3.setBorder(BorderFactory.createTitledBorder("Display Control"));
-		this.controlsPanel3.setSize(500,100);
+		
+      	this.controlsPanel4 = new JPanel();
+		this.controlsPanel4.setBorder(BorderFactory.createTitledBorder("Mode 7 Emulation"));
 		
         fileLabel   = new JLabel("");
         statusLabel = new JLabel("No Opened File");
@@ -260,6 +278,22 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
 		});   
         this.controlsPanel2.add(startButton);
 */		
+
+	    
+/*
+        bG = new ButtonGroup();
+        
+        for (int i=1;i<8;i++) {
+        	String ss = "S"+i;
+        	if (i==7) ss="All";
+        	JRadioButton b = new JRadioButton(ss);
+        	b.addActionListener(this);
+        	b.setActionCommand(ss);
+        	if (i==7) b.setEnabled(true);
+        	sectorControl.add(b); bG.add(b);
+        }
+*/
+        
         this.controlsPanel1.add(fileLabel);	
         this.controlsPanel1.add(statusLabel);	
          
@@ -273,25 +307,97 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
         this.controlsPanel3.add(this.framesPerSecond);
         this.controlsPanel3.add(this.pixContrastMin);
         this.controlsPanel3.add(this.pixContrastMax);
-              
+        
+        m7 = new Mode7Emulation(); m7.setBackground(Color.LIGHT_GRAY);
+        this.controlsPanel4.add(m7);
+		
         this.controlsPanel0.setBackground(Color.LIGHT_GRAY);
 		this.controlsPanel1.setBackground(Color.LIGHT_GRAY);
 		this.controlsPanel2.setBackground(Color.LIGHT_GRAY);
 		this.controlsPanel3.setBackground(Color.LIGHT_GRAY);
+		this.controlsPanel4.setBackground(Color.LIGHT_GRAY);
+
 		
 		GridBagConstraints c = new GridBagConstraints();
 		c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 0.5;
+//        c.gridx=0 ; c.gridy=0 ; this.controlsPanel0.add(this.sectorControl,c);
         c.gridx=0 ; c.gridy=0 ; this.controlsPanel0.add(this.controlsPanel1,c);
         c.gridx=0 ; c.gridy=1 ; this.controlsPanel0.add(this.controlsPanel2,c);
         c.gridx=0 ; c.gridy=2 ; this.controlsPanel0.add(this.controlsPanel3,c);
-       
+        c.gridx=0 ; c.gridy=3 ; this.controlsPanel0.add(this.controlsPanel4,c);
+        		
+// Basic GUI layout
+        
+		this.hSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);		
+        this.hSplitPane.setDividerLocation(600);  
+		this.hSplitPane.setTopComponent(this.detectorView);				
+		this.hSplitPane.setBottomComponent(this.controlsPanel0);		
+        
+		this.vSplitPane = new JSplitPane();			
 		this.vSplitPane.setLeftComponent(this.hSplitPane);
 		this.vSplitPane.setRightComponent(this.canvasTabbedPane);
-		this.hSplitPane.setTopComponent(this.detectorView);				
-		this.hSplitPane.setBottomComponent(this.controlsPanel0);
 
 		this.add(this.vSplitPane,BorderLayout.CENTER);
     }
+    
+    public class Mode7Emulation extends JPanel implements ActionListener,ItemListener{
+    	
+    	ButtonGroup   bG3  = new ButtonGroup();
+        JRadioButton  bG3a = new JRadioButton("CCDB"); 
+    	JRadioButton  bG3b = new JRadioButton("User");
+    	JCheckBox       cb = new JCheckBox("RefPeds");
+	    public JTextField     nsa = new JTextField(3);
+	    public JTextField     nsb = new JTextField(3);
+	    public JTextField     tet = new JTextField(3);
+	    
+	    public int useCCDB = 1;
+    	
+    	private Mode7Emulation() {
+    		
+    		this.add(bG3a); bG3.add(bG3a);
+    		this.add(bG3b); bG3.add(bG3b);
+       
+    		bG3a.setActionCommand("CCDB"); bG3a.addActionListener(this); 
+    		bG3b.setActionCommand("User"); bG3b.addActionListener(this);
+    		this.add(new JLabel("TET"));this.add(tet);tet.setActionCommand("TET");tet.addActionListener(this);
+    		this.add(new JLabel("NSB"));this.add(nsb);nsb.setActionCommand("NSB");nsb.addActionListener(this);
+    		this.add(new JLabel("NSA"));this.add(nsa);nsa.setActionCommand("NSA");nsa.addActionListener(this);
+    		this.add(cb);cb.addItemListener(this);
+    		bG3a.setSelected(true);cb.setSelected(false);
+    	}
+
+		@Override
+		public void actionPerformed(ActionEvent e) {			
+	        if(e.getActionCommand().compareTo("TET")==0) {
+	        	this.useCCDB=0;bG3b.setSelected(true);
+    			mode7User_tet = Integer.parseInt(tet.getText());
+    			detectorView.repaint();
+	        }		 
+	        if(e.getActionCommand().compareTo("NSA")==0) {
+	        	this.useCCDB=0;bG3b.setSelected(true);
+    			mode7User_nsa = Integer.parseInt(nsa.getText());
+	        }		 
+	        if(e.getActionCommand().compareTo("NSB")==0) {
+	        	this.useCCDB=0;;bG3b.setSelected(true);
+    			mode7User_nsb = Integer.parseInt(nsb.getText());
+	        }		 
+	        if(e.getActionCommand().compareTo("CCDB")==0) {
+	        	this.useCCDB=1;	bG3a.setSelected(true);
+	        	tet.setText(Integer.toString(mode7CCDB_tet));
+	        	nsa.setText(Integer.toString(mode7CCDB_nsa));
+	        	nsb.setText(Integer.toString(mode7CCDB_nsb));
+	        	mode7User_tet=0;mode7User_nsa=0;mode7User_nsb=0;
+	        	detectorView.repaint();
+	        }
+		}
+		@Override
+		public void itemStateChanged(ItemEvent e) {
+			if (e.getStateChange()==ItemEvent.DESELECTED) mode7User_pedref=0;
+			if (e.getStateChange()==ItemEvent.SELECTED)   mode7User_pedref=1;			
+		}
+	    
+    }    
+    
     public void addCanvas(String name){
         EmbeddedCanvas canvas = new EmbeddedCanvas();
         this.paneCanvas.put(name, canvas);
@@ -300,16 +406,16 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
     public EmbeddedCanvas getCanvas(String name){
         return this.paneCanvas.get(name);
     }    
-    public DetectorShapeTabView  getDetectorView(){
+    public DetectorShapeTabView getDetectorView(){
         return this.detectorView;
     }    
     public JPanel getControlPanel(){
         return this.controlsPanel1;
-    }        
+    }       
+
     public int getSelectedTabIndex(){
     	return this.selectedTabIndex;
     }
-
     
     public void addChangeListener() {    
       canvasTabbedPane.addChangeListener(new ChangeListener() {
@@ -380,7 +486,14 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
     }
    
     public void actionPerformed(ActionEvent e) {
-        
+        if(e.getActionCommand().compareTo("S1")==0)   monitoringClass.initDetector(0,1);
+        if(e.getActionCommand().compareTo("S2")==0)   monitoringClass.initDetector(1,2);
+        if(e.getActionCommand().compareTo("S3")==0)   monitoringClass.initDetector(2,3);
+        if(e.getActionCommand().compareTo("S4")==0)   monitoringClass.initDetector(3,4);
+        if(e.getActionCommand().compareTo("S5")==0)   monitoringClass.initDetector(4,5);
+        if(e.getActionCommand().compareTo("S6")==0)   monitoringClass.initDetector(5,6);
+        if(e.getActionCommand().compareTo("All")==0)  monitoringClass.initDetector(0,6);
+    	
     	if(e.getActionCommand().compareTo("Sector 1")==0) {ethost="adcecal1";etfile="/tmp/et_sys_clasprod1";}
     	if(e.getActionCommand().compareTo("Sector 2")==0) {ethost="adcecal2";etfile="/tmp/et_sys_clasprod2";}
     	if(e.getActionCommand().compareTo("Sector 3")==0) {ethost="adcecal3";etfile="/tmp/et_sys_clasprod3";}

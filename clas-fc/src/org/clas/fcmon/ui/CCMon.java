@@ -33,8 +33,7 @@ import org.root.histogram.H2D;
 
 public class CCMon extends DetectorMonitor {
 	
-	public static MonitorApp app;
-		
+	static MonitorApp       app;		
 	EventDecoder            decoder = new EventDecoder();
 	FADCConfigLoader          fadc  = new FADCConfigLoader();
 	FADCFitter              fitter  = new FADCFitter();
@@ -44,11 +43,11 @@ public class CCMon extends DetectorMonitor {
 	CCPixels                  ccPix = new CCPixels();
 	MyArrays               myarrays = new MyArrays();
 
-	int inProcess        = 0; //0=init 1=processing 2=end-of-run 3=post-run
-	boolean inMC         = false; //true=MC false=DATA
-	int thrcc            = 20;
-	int   tet            = 0;
-	int ipsave           = 0;
+	int inProcess          = 0; //0=init 1=processing 2=end-of-run 3=post-run
+	boolean inMC           = false; //true=MC false=DATA
+	int thrcc              = 20;
+	int nsa,nsb,tet,p1,p2,pedref  = 0;
+	int ipsave             = 0;
 	
 	DetectorCollection<H1D> H1_CCa_Sevd = new DetectorCollection<H1D>();
 	DetectorCollection<H1D> H1_CCt_Sevd = new DetectorCollection<H1D>();
@@ -69,14 +68,13 @@ public class CCMon extends DetectorMonitor {
 		
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				app = new MonitorApp("CCMon",2000,600);
+				app = new MonitorApp("CCMon",1800,900);
 				app.setPluginClass(monitor);
 				app.addCanvas("Mode1");
 				app.addCanvas("SingleEvent");
 				app.addCanvas("Occupancy");			 
 				app.addCanvas("Pedestals");
 				app.addCanvas("Summary");
-				app.addChangeListener();
 				monitor.init();
 				monitor.initDetector(0,6);
 				}
@@ -87,6 +85,11 @@ public class CCMon extends DetectorMonitor {
 	public void init() {
 	  inProcess = 0;
 	  initHistograms();
+	  configMode7(1,18,12);
+	  app.m7.tet.setText(Integer.toString(this.tet));
+   	  app.m7.nsa.setText(Integer.toString(this.nsa));
+   	  app.m7.nsb.setText(Integer.toString(this.nsb));
+
 	}
 	
 	@Override
@@ -118,7 +121,7 @@ public class CCMon extends DetectorMonitor {
 	public void clearHistograms() {
 		
 		for (int is=0 ; is<6 ; is++) {
-			for (int il=1 ; il<2 ; il++) {
+			for (int il=1 ; il<3 ; il++) {
 				 H2_CCa_Hist.get(is+1,il,0).reset();
 				 H2_CCa_Hist.get(is+1,il,3).reset();
 				 H2_CCa_Hist.get(is+1,il,5).reset();
@@ -128,7 +131,7 @@ public class CCMon extends DetectorMonitor {
 	
 	public void initDetector(int is1, int is2) {
 		
-		DetectorShapeView2D  dv1 = new DetectorShapeView2D("LTCC");
+        DetectorShapeView2D  dv1 = new DetectorShapeView2D("LTCC");
 		
 		for(int is=is1; is<is2; is++) {
 			for(int ip=0; ip<18 ; ip++)    dv1.addShape(getMirror(is,1,ip));
@@ -136,7 +139,6 @@ public class CCMon extends DetectorMonitor {
 		}		
 		app.getDetectorView().addDetectorLayer(dv1);
 		app.getDetectorView().addDetectorListener(this);
-		
 	}
 
 	
@@ -151,48 +153,6 @@ public class CCMon extends DetectorMonitor {
 	    	shapePath.addPoint(ccPix.cc_xpix[j][mirror+off][sector],ccPix.cc_ypix[j][mirror+off][sector],0.0);
 	    }
 	    return shape;		
-	}
-	
-	private class FADCFitter {
-		
-		int tet,nsb,nsa,p1,p2;
-		int mmsum,summing_in_progress;
-		public int ped;
-		public int adc;
-		public int  t0;
-		
-		public FADCFitter() {	
-		}
-		
-		public FADCFitter(int tet, int tsb, int tsa, int p1, int p2) {
-			this.setParams(tet,tsb,tsa,p1,p2);
-		}
-		
-		public final void setParams(int tet, int nsb, int nsa, int p1, int p2) {
-			this.tet = tet;
-			this.nsb = nsb;
-			this.nsa = nsa;	
-			this.p1  = p1;
-			this.p2  = p2;
-		}
-		
-		public void fit(short[] pulse) {
-			ped=0;adc=0;mmsum=0;summing_in_progress=0;
-			for (int mm=0; mm<pulse.length; mm++) {
-				if(mm>p1 && mm<=p2)  ped+=pulse[mm];
-				if(mm==p2)           ped=ped/(p2-p1);
-				if(mm>p2 && mm<100) {
-					if ((summing_in_progress==0) && pulse[mm]>ped+this.tet) {
-					  summing_in_progress=1;
-					  t0 = mm;
-					  for (int ii=1; ii<this.nsb+1;ii++) adc+=(pulse[mm-ii]-ped);
-					  mmsum=this.nsb;
-					}
-					if(summing_in_progress>0 && mmsum>(this.nsa+this.nsb)) summing_in_progress=-1;
-					if(summing_in_progress>0) {adc+=(pulse[mm]-ped); mmsum++;}
-				}
-			}
-		}
 	}
 	
 	private class MyArrays {
@@ -224,7 +184,7 @@ public class CCMon extends DetectorMonitor {
 			
 			if (app.isSingleEvent) {
 				for (int is=0 ; is<6 ; is++) {
-					for (int il=1 ; il<2 ; il++) {
+					for (int il=1 ; il<3 ; il++) {
 						 H1_CCa_Sevd.get(is+1,il,0).reset();
 						 H2_CCa_Sevd.get(is+1,il,0).reset();
 						 H2_CCa_Sevd.get(is+1,il,1).reset();
@@ -264,11 +224,55 @@ public class CCMon extends DetectorMonitor {
 
 	}
 	
+	public void configMode7(int cr, int sl, int ch) {
+   		FADCConfig config=fadc.getMap().get(cr,sl,ch);
+		   this.nsa    = (int) config.getNSA();
+		   this.nsb    = (int) config.getNSB();
+		   this.tet    = (int) config.getTET();
+	       this.pedref = (int) config.getPedestal();
+		   app.mode7CCDB_tet=this.tet;
+		   app.mode7CCDB_nsa=this.nsa;
+		   app.mode7CCDB_nsb=this.nsb;
+		   if (app.mode7User_tet>0) this.tet=app.mode7User_tet;
+		   if (app.mode7User_nsa>0) this.nsa=app.mode7User_nsa;
+		   if (app.mode7User_nsb>0) this.nsb=app.mode7User_nsb;
+	}
+	
+	private class FADCFitter {
+		
+		int p1=1,p2=15;
+		int mmsum,summing_in_progress;
+		int t0,adc,ped,pedsum;
+		
+		public FADCFitter() {	
+		}
+		
+		public void fit(int nsa, int nsb, int tet, short[] pulse) {
+			pedsum=0;adc=0;mmsum=0;summing_in_progress=0;
+			for (int mm=0; mm<pulse.length; mm++) {
+				if(mm>p1 && mm<=p2)  pedsum+=pulse[mm];
+				if(mm==p2)           pedsum=pedsum/(p2-p1);
+				if (app.mode7User_pedref==0) ped=pedsum;
+				if (app.mode7User_pedref==1) ped=pedref;
+				if(mm>p2) {
+					if ((summing_in_progress==0) && pulse[mm]>ped+tet) {
+					  summing_in_progress=1;
+					  t0 = mm;
+					  for (int ii=1; ii<nsb+1;ii++) adc+=(pulse[mm-ii]-ped);
+					  mmsum=nsb;
+					}
+					if(summing_in_progress>0 && mmsum>(nsa+nsb)) summing_in_progress=-1;
+					if(summing_in_progress>0) {adc+=(pulse[mm]-ped); mmsum++;}
+				}
+			}
+		}
+	}
+	
 	@Override
 	public void processEvent(DataEvent de) {
 		
 		EvioDataEvent event = (EvioDataEvent) de;
-		int adc=0,ped=0,t0=0,nsa,nsb,tet,pedref=0,tdc=0,tdcf=0;
+		int tdc=0,tdcf=0;
 		
 		if(event.hasBank("EC::true")!=true) {
 			this.myarrays.clear();
@@ -283,40 +287,25 @@ public class CCMon extends DetectorMonitor {
             	int il  = strip.getDescriptor().getLayer();
             	int ip  = strip.getDescriptor().getComponent();
             	int io  = strip.getDescriptor().getOrder()+1;            
-//  			  System.out.println("crate,slot,chan:"+icr+" "+isl+" "+ich);
-//  			  System.out.println("sector,layer,pmt,order"+is+" "+il+" "+ip+" "+io);
             	
             	if(strip.getType()==BankType.ADCPULSE) { // FADC MODE 1
-            		FADCConfig config=fadc.getMap().get(icr,isl,ich);
-         		   nsa = (int) config.getNSA();
-         		   nsb = (int) config.getNSB();
-         		   tet = (int) config.getTET();
-         		   tet = 60;
-         		   this.tet = tet;
-         		pedref = (int) config.getPedestal();
-            		fitter.setParams(tet,nsb,nsa,1,15);
             		short[] pulse = (short[]) strip.getDataObject();
-            		fitter.fit(pulse);
-            		adc = fitter.adc;
-            		ped = fitter.ped;
-            		 t0 = fitter.t0;
+             		this.configMode7(icr,isl,ich);
+            		fitter.fit(this.nsa,this.nsb,this.tet,pulse);
             		for (int i=0 ; i< pulse.length ; i++) {
-            			                       H2_CCa_Hist.get(is,io,5).fill(i,ip,pulse[i]-pedref);
+            			H2_CCa_Hist.get(is,io,5).fill(i,ip,pulse[i]-this.pedref);
             			if (app.isSingleEvent) {
-            				H2_CCa_Sevd.get(is,io,0).fill(i,ip,pulse[i]-pedref);
-            				if (adc>0&&i>=(t0-nsb)&&i<=(t0+nsa)) H2_CCa_Sevd.get(is,io,1).fill(i,ip,pulse[i]-pedref);
+            				H2_CCa_Sevd.get(is,io,0).fill(i,ip,pulse[i]-this.pedref);
+            				int w1 = fitter.t0-this.nsb ; int w2 = fitter.t0+this.nsa;
+            				if (fitter.adc>0&&i>=w1&&i<=w2) H2_CCa_Sevd.get(is,io,1).fill(i,ip,pulse[i]-this.pedref);
             			}
             		}
-            	}
-            	
-              	H2_CCa_Hist.get(is,io,3).fill(pedref-ped, ip);
-			    this.myarrays.fill(is, io, ip, adc, tdc, tdcf);		  
-            }
-            
-		}
-		
-		if (app.isSingleEvent) this.myarrays.processSED();
-		
+            	}           	
+              	H2_CCa_Hist.get(is,io,3).fill(this.pedref-fitter.ped, ip);
+			    this.myarrays.fill(is, io, ip, fitter.adc, tdc, tdcf);		  
+            }            
+		}		
+		if (app.isSingleEvent) this.myarrays.processSED();		
 	}
 
 
@@ -438,15 +427,20 @@ public class CCMon extends DetectorMonitor {
 		H1D h = new H1D() ; 
 		String otab[]={" Left PMT "," Right PMT "};
 		
+		if (app.mode7User_tet>0)  this.tet=app.mode7User_tet;
+		if (app.mode7User_tet==0) this.tet=app.mode7CCDB_tet;
+		
 		F1D f1 = new F1D("p0",0.,100.); f1.setParameter(0,this.tet);
 		f1.setLineColor(2);
+		F1D f2 = new F1D("p0",0.,100.); f2.setParameter(0,app.mode7CCDB_tet);
+		f2.setLineColor(4);f2.setLineStyle(2);
 		
 	    for(int ip=0;ip<18;ip++){
 	    	canvas.cd(ip); canvas.getPad().setAxisRange(0.,100.,-15.,4000*app.pixMax);
 	        h = H2_CCa_Sevd.get(is+1,lr,0).sliceY(ip); h.setXTitle("Samples (4 ns)"); h.setYTitle("Counts");
 	    	h.setTitle("Sector "+(is+1)+otab[lr-1]+(ip+1)); h.setFillColor(4); canvas.draw(h);
 	        h = H2_CCa_Sevd.get(is+1,lr,1).sliceY(ip); h.setFillColor(2); canvas.draw(h,"same");
-	        canvas.draw(f1,"same");
+	        canvas.draw(f1,"same");canvas.draw(f2,"same");
 	  	    }		
 	}	
 	

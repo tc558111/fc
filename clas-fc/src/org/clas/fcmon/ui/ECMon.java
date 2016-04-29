@@ -40,7 +40,7 @@ import javax.swing.SwingUtilities;
 import org.jlab.evio.clas12.*;
 import org.jlab.data.io.DataEvent;
 
-public class FCMon extends DetectorMonitor {
+public class ECMon extends DetectorMonitor {
 	
    public static MonitorApp app;
 	
@@ -81,13 +81,33 @@ public class FCMon extends DetectorMonitor {
    DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new DetectorCollection<TreeMap<Integer,Object>>();
    DetectorCollection<TreeMap<Integer,Object>> Lmap_t = new DetectorCollection<TreeMap<Integer,Object>>();
 	
-	public FCMon(String[] args) {
+	public ECMon(String[] args) {
 		super("FCMON","1.0","lcsmith");
 		fadc.load("/daq/fadc/ec",10,"default");
 		ccdb.loadTable("/calibration/ec/attenuation");
 		ccdb.disconnect();
 		if(args.length == 1) monpath = args[0];		
 		System.out.println("monpath= "+monpath);		
+	}
+	
+	public static void main(String[] args){
+		
+		ECMon monitor = new ECMon(args);
+		
+		SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				app = new MonitorApp("ECMon",1800,900);
+				app.setPluginClass(monitor);
+				app.addCanvas("Mode1");
+				app.addCanvas("SingleEvent");
+				app.addCanvas("Occupancy");
+				app.addCanvas("Attenuation");
+				app.addCanvas("Pedestals");
+				app.addCanvas("Timing");
+				monitor.init();
+				monitor.initDetector(0,6);
+				}
+			});
 	}
 	
 	public void init() {
@@ -1114,26 +1134,5 @@ public class FCMon extends DetectorMonitor {
 			}
 		
 	}
-	
-	public static void main(String[] args){
-		
-		FCMon monitor = new FCMon(args);
-		
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				app = new MonitorApp("FCMon",2000,600);
-				app.setPluginClass(monitor);
-				app.addCanvas("Mode1");
-				app.addCanvas("SingleEvent");
-				app.addCanvas("Occupancy");
-				app.addCanvas("Attenuation");
-				app.addCanvas("Pedestals");
-				app.addCanvas("Timing");
-				app.addChangeListener();
-				monitor.init();
-				monitor.initDetector(0,6);
-				}
-			});
-		}
 	
 }

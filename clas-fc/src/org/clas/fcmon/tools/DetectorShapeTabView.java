@@ -79,6 +79,10 @@ public class DetectorShapeTabView extends JPanel implements ActionListener {
         this.drawOptions = options;
     }
     
+    public void reset() {
+        this.detectorView.clear();	
+    }
+    
     public void setCalibrationModule(DetectorCalibration calib){
         this.calibrationModule = calib;
         List<DetectorShapeView2D>  views = calib.getDetectorShapes();
@@ -94,7 +98,7 @@ public class DetectorShapeTabView extends JPanel implements ActionListener {
         detectorView.put(view.getName(), view);
         view.setActionListener(this);
     }
-    
+   
     
     public void addDetectorListener(IDetectorListener lt){
         for(Map.Entry<String, DetectorShapeView2D> entry : this.detectorView.entrySet()){

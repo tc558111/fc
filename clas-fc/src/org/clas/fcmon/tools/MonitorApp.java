@@ -213,6 +213,7 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
         
         
         framesPerSecond = new JSlider(JSlider.HORIZONTAL,FPS_MIN,FPS_MAX,FPS_INIT);
+        framesPerSecond.setBackground(Color.LIGHT_GRAY);
         framesPerSecond.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent f) {
                 JSlider source = (JSlider)f.getSource();
@@ -241,6 +242,8 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
         framesPerSecond.setVisible(true);
         
         pixContrastMin = new JSlider(JSlider.HORIZONTAL,PIX_MIN_LO,PIX_MIN_HI,PIX_MIN_INIT);
+        pixContrastMin.setBackground(Color.LIGHT_GRAY);
+
         pixContrastMin.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent f) {
                 JSlider source = (JSlider)f.getSource();                
@@ -253,6 +256,8 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
         pixContrastMin.setBorder(BorderFactory.createTitledBorder("ZMIN"));
         
         pixContrastMax = new JSlider(JSlider.HORIZONTAL,PIX_MAX_LO,PIX_MAX_HI,PIX_MAX_INIT);
+        pixContrastMax.setBackground(Color.LIGHT_GRAY);
+        
         pixContrastMax.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent f) {
                 JSlider source = (JSlider)f.getSource();                
@@ -316,7 +321,6 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
 		this.controlsPanel2.setBackground(Color.LIGHT_GRAY);
 		this.controlsPanel3.setBackground(Color.LIGHT_GRAY);
 		this.controlsPanel4.setBackground(Color.LIGHT_GRAY);
-
 		
 		GridBagConstraints c = new GridBagConstraints();
 		c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 0.5;
@@ -342,18 +346,20 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
     
     public class Mode7Emulation extends JPanel implements ActionListener,ItemListener{
     	
-    	ButtonGroup   bG3  = new ButtonGroup();
-        JRadioButton  bG3a = new JRadioButton("CCDB"); 
-    	JRadioButton  bG3b = new JRadioButton("User");
-    	JCheckBox       cb = new JCheckBox("RefPeds");
-	    public JTextField     nsa = new JTextField(3);
-	    public JTextField     nsb = new JTextField(3);
-	    public JTextField     tet = new JTextField(3);
+    	ButtonGroup       bG3  = new ButtonGroup();
+        JRadioButton      bG3a = new JRadioButton("CCDB"); 
+    	JRadioButton      bG3b = new JRadioButton("User");
+    	JCheckBox           cb = new JCheckBox("RefPeds");
+	    public JTextField  nsa = new JTextField(3); 
+	    public JTextField  nsb = new JTextField(3);
+	    public JTextField  tet = new JTextField(3);
 	    
 	    public int useCCDB = 1;
     	
     	private Mode7Emulation() {
     		
+    		bG3a.setBackground(Color.LIGHT_GRAY);
+    		bG3b.setBackground(Color.LIGHT_GRAY);
     		this.add(bG3a); bG3.add(bG3a);
     		this.add(bG3b); bG3.add(bG3b);
        
@@ -362,7 +368,7 @@ public class MonitorApp extends JFrame implements ActionListener,ChangeListener 
     		this.add(new JLabel("TET"));this.add(tet);tet.setActionCommand("TET");tet.addActionListener(this);
     		this.add(new JLabel("NSB"));this.add(nsb);nsb.setActionCommand("NSB");nsb.addActionListener(this);
     		this.add(new JLabel("NSA"));this.add(nsa);nsa.setActionCommand("NSA");nsa.addActionListener(this);
-    		this.add(cb);cb.addItemListener(this);
+    		this.add(cb); cb.setBackground(Color.LIGHT_GRAY); cb.addItemListener(this);
     		bG3a.setSelected(true);cb.setSelected(false);
     	}
 

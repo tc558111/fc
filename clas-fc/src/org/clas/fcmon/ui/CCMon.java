@@ -103,7 +103,7 @@ public class CCMon extends DetectorMonitor {
 			for (int il=1 ; il<3 ; il++){
 				H2_CCa_Hist.add(is, il, 0, new H2D("CCa_Hist_Raw_"+il, 100,   0., 2000.,  18, 1., 19.));
 				H2_CCt_Hist.add(is, il, 0, new H2D("CCt_Hist_Raw_"+il, 100,1330., 1370.,   1, 1., 19.));
-				H2_CCa_Hist.add(is, il, 3, new H2D("CCa_Hist_PED_"+il,  60, -30.,  30.,   18, 1., 19.)); 
+				H2_CCa_Hist.add(is, il, 3, new H2D("CCa_Hist_PED_"+il,  40, -20.,  20.,   18, 1., 19.)); 
 				H2_CCa_Hist.add(is, il, 5, new H2D("CCa_Hist_FADC_"+il,100,   0., 100.,   18, 1., 19.));
 				H1_CCa_Sevd.add(is, il, 0, new H1D("ECa_Sed_"+il,       18,   1.,  19.));
 				H2_CCa_Sevd.add(is, il, 0, new H2D("CCa_Sed_FADC_"+il, 100,   0., 100.,   18, 1., 19.));
@@ -474,8 +474,8 @@ public class CCMon extends DetectorMonitor {
     		}
     		
     		canvas.cd(il-1+2);
-    		            h=hpix.sliceY(12); h.setFillColor(4); h.setTitle(""); h.setXTitle("Sector "+(is+1)+otab[il-1]+12)    ; canvas.draw(h);
-    	    if(lr==il) {h=hpix.sliceY(ip); h.setFillColor(2); h.setTitle(""); h.setXTitle("Sector "+(is+1)+otab[il-1]+(ip+1)); canvas.draw(h);}
+    		            h=hpix.sliceY(12); h.setFillColor(4); h.setTitle(""); h.setXTitle("Sector "+(is+1)+otab[il-1]+12)    ; canvas.draw(h,"S");
+    	    if(lr==il) {h=hpix.sliceY(ip); h.setFillColor(2); h.setTitle(""); h.setXTitle("Sector "+(is+1)+otab[il-1]+(ip+1)); canvas.draw(h,"S");}
 	    }			
 	}
 	
@@ -521,7 +521,7 @@ public class CCMon extends DetectorMonitor {
 		
 		for(int il=1;il<3;il++) {
 			String alab = otab[il-1]+"PMT "+11+lab4[0]; String tlab = otab[il-1]+(ip+1)+lab4[1];
-			if(lr!=il) {canvas.cd(il+3); h1 = H2_CCa_Hist.get(is+1,il,0).sliceY(11); h1.setXTitle(alab); h1.setTitle(""); h1.setFillColor(col0); canvas.draw(h1);}
+			if(lr!=il) {canvas.cd(il+3); h1 = H2_CCa_Hist.get(is+1,il,0).sliceY(11); h1.setXTitle(alab); h1.setTitle(""); h1.setFillColor(col0); canvas.draw(h1,"S");}
 			//if(lr!=il) {canvas.cd(il+3); h = H2_CCt_Hist.get(is+1,il,0).sliceY(22); h.setXTitle(tlab); h.setTitle(""); h.setFillColor(col0); canvas.draw(h);}
 		}
 		String alab = otab[lr-1]+"PMT "+(ip+1)+lab4[0]; String tlab = otab[lr-1]+(ip+1)+lab4[1];

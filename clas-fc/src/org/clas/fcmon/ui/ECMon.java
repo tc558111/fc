@@ -42,7 +42,7 @@ import org.jlab.data.io.DataEvent;
 
 public class ECMon extends DetectorMonitor {
 	
-   public static MonitorApp app;
+   static MonitorApp           app = new MonitorApp("ECMon",1800,950);		
 	
    EventDecoder            decoder = new EventDecoder();
    FADCConfigLoader          fadc  = new FADCConfigLoader();
@@ -82,7 +82,7 @@ public class ECMon extends DetectorMonitor {
    DetectorCollection<TreeMap<Integer,Object>> Lmap_t = new DetectorCollection<TreeMap<Integer,Object>>();
 	
 	public ECMon(String[] args) {
-		super("FCMON","1.0","lcsmith");
+		super("ECMON","1.0","lcsmith");
 		fadc.load("/daq/fadc/ec",10,"default");
 		ccdb.loadTable("/calibration/ec/attenuation");
 		ccdb.disconnect();
@@ -96,8 +96,8 @@ public class ECMon extends DetectorMonitor {
 		
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				app = new MonitorApp("ECMon",1800,900);
 				app.setPluginClass(monitor);
+				app.init();
 				app.addCanvas("Mode1");
 				app.addCanvas("SingleEvent");
 				app.addCanvas("Occupancy");
@@ -308,7 +308,7 @@ public class ECMon extends DetectorMonitor {
 				}				
 			}		
 			
-			if (app.isSingleEvent) {
+			if (app.isSingleEvent()) {
 				for (int is=0 ; is<6 ; is++) {
 					for (int il=1 ; il<9 ; il++) {
 						         H1_ECa_Sevd.get(is+1,il,0).reset();
@@ -523,7 +523,7 @@ public class ECMon extends DetectorMonitor {
             		ped = fitter.ped;
             		for (int i=0 ; i< pulse.length ; i++) {
             			                       H2_ECa_Hist.get(is,il,5).fill(i,ip,pulse[i]-pedref);
-            			if (app.isSingleEvent) H2_ECa_Sevd.get(is,il,0).fill(i,ip,pulse[i]-pedref);
+            			if (app.isSingleEvent()) H2_ECa_Sevd.get(is,il,0).fill(i,ip,pulse[i]-pedref);
             		}
             	}  
             	
@@ -572,7 +572,7 @@ public class ECMon extends DetectorMonitor {
 		    }
 		}
 				
-		if (app.isSingleEvent) {
+		if (app.isSingleEvent()) {
 			this.myarrays.findPixels();	    // Process all pixels for SED
 			this.myarrays.processSED();
 		} else {
@@ -663,8 +663,9 @@ public class ECMon extends DetectorMonitor {
 		
 		if (z==0) color=9;
 		
+		double pixMin = app.displayControl.pixMin; double pixMax = app.displayControl.pixMax;
 		if (  inProcess==0)  color=(double)(z-rmin)/(rmax-rmin);
-		if (!(inProcess==0)) color=(double)(Math.log10(z)-Math.log10(app.pixMin))/(Math.log10(app.pixMax)-Math.log10(app.pixMin));
+		if (!(inProcess==0)) color=(double)(Math.log10(z)-Math.log10(pixMin))/(Math.log10(pixMax)-Math.log10(pixMin));
 		
 		//System.out.println(z+" "+rmin+" "+" "+rmax+" "+color);
 		if (color>1)   color=1;
@@ -715,7 +716,7 @@ public class ECMon extends DetectorMonitor {
 		    Lmap_a.add(is,10,0, toTreeMap(H1_ECa_Maps.get(is,8,2).getData())); //Pixel U+V+W Outer Energy    
 		    Lmap_t.add(is, 7,2, toTreeMap(H1_ECt_Maps.get(is,7,2).getData())); //Pixel U+V+W Inner Time  
 		    Lmap_t.add(is, 8,2, toTreeMap(H1_ECt_Maps.get(is,8,2).getData())); //Pixel U+V+W Outer Time 
-			if (app.isSingleEvent){
+			if (app.isSingleEvent()){
 				for (int il=1 ; il<9 ; il++) Lmap_a.add(is,il,0,  toTreeMap(H1_ECa_Sevd.get(is,il,0).getData())); 
 			}
 		}

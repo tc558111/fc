@@ -33,7 +33,7 @@ import org.root.histogram.H2D;
 
 public class CCMon extends DetectorMonitor {
 	
-	static MonitorApp       app;		
+    static MonitorApp           app = new MonitorApp("LTCCMon",1800,950);		
 	EventDecoder            decoder = new EventDecoder();
 	FADCConfigLoader          fadc  = new FADCConfigLoader();
 	FADCFitter              fitter  = new FADCFitter();
@@ -68,8 +68,8 @@ public class CCMon extends DetectorMonitor {
 		
 		SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
-				app = new MonitorApp("CCMon",1800,900);
 				app.setPluginClass(monitor);
+				app.init();
 				app.addCanvas("Mode1");
 				app.addCanvas("SingleEvent");
 				app.addCanvas("Occupancy");			 
@@ -86,9 +86,9 @@ public class CCMon extends DetectorMonitor {
 	  inProcess = 0;
 	  initHistograms();
 	  configMode7(1,18,12);
-	  app.m7.tet.setText(Integer.toString(this.tet));
-   	  app.m7.nsa.setText(Integer.toString(this.nsa));
-   	  app.m7.nsb.setText(Integer.toString(this.nsb));
+	  app.mode7Emulation.tet.setText(Integer.toString(this.tet));
+   	  app.mode7Emulation.nsa.setText(Integer.toString(this.nsa));
+   	  app.mode7Emulation.nsb.setText(Integer.toString(this.nsb));
 
 	}
 	
@@ -182,7 +182,7 @@ public class CCMon extends DetectorMonitor {
 				}
 			}
 			
-			if (app.isSingleEvent) {
+			if (app.isSingleEvent()) {
 				for (int is=0 ; is<6 ; is++) {
 					for (int il=1 ; il<3 ; il++) {
 						 H1_CCa_Sevd.get(is+1,il,0).reset();
@@ -230,12 +230,12 @@ public class CCMon extends DetectorMonitor {
 		   this.nsb    = (int) config.getNSB();
 		   this.tet    = (int) config.getTET();
 	       this.pedref = (int) config.getPedestal();
-		   app.mode7CCDB_tet=this.tet;
-		   app.mode7CCDB_nsa=this.nsa;
-		   app.mode7CCDB_nsb=this.nsb;
-		   if (app.mode7User_tet>0) this.tet=app.mode7User_tet;
-		   if (app.mode7User_nsa>0) this.nsa=app.mode7User_nsa;
-		   if (app.mode7User_nsb>0) this.nsb=app.mode7User_nsb;
+		   app.mode7Emulation.CCDB_tet=this.tet;
+		   app.mode7Emulation.CCDB_nsa=this.nsa;
+		   app.mode7Emulation.CCDB_nsb=this.nsb;
+		   if (app.mode7Emulation.User_tet>0) this.tet=app.mode7Emulation.User_tet;
+		   if (app.mode7Emulation.User_nsa>0) this.nsa=app.mode7Emulation.User_nsa;
+		   if (app.mode7Emulation.User_nsb>0) this.nsb=app.mode7Emulation.User_nsb;
 	}
 	
 	private class FADCFitter {
@@ -252,8 +252,8 @@ public class CCMon extends DetectorMonitor {
 			for (int mm=0; mm<pulse.length; mm++) {
 				if(mm>p1 && mm<=p2)  pedsum+=pulse[mm];
 				if(mm==p2)           pedsum=pedsum/(p2-p1);
-				if (app.mode7User_pedref==0) ped=pedsum;
-				if (app.mode7User_pedref==1) ped=pedref;
+				if (app.mode7Emulation.User_pedref==0) ped=pedsum;
+				if (app.mode7Emulation.User_pedref==1) ped=pedref;
 				if(mm>p2) {
 					if ((summing_in_progress==0) && pulse[mm]>ped+tet) {
 					  summing_in_progress=1;
@@ -294,7 +294,7 @@ public class CCMon extends DetectorMonitor {
             		fitter.fit(this.nsa,this.nsb,this.tet,pulse);
             		for (int i=0 ; i< pulse.length ; i++) {
             			H2_CCa_Hist.get(is,io,5).fill(i,ip,pulse[i]-this.pedref);
-            			if (app.isSingleEvent) {
+            			if (app.isSingleEvent()) {
             				H2_CCa_Sevd.get(is,io,0).fill(i,ip,pulse[i]-this.pedref);
             				int w1 = fitter.t0-this.nsb ; int w2 = fitter.t0+this.nsa;
             				if (fitter.adc>0&&i>=w1&&i<=w2) H2_CCa_Sevd.get(is,io,1).fill(i,ip,pulse[i]-this.pedref);
@@ -305,7 +305,7 @@ public class CCMon extends DetectorMonitor {
 			    this.myarrays.fill(is, io, ip, fitter.adc, tdc, tdcf);		  
             }            
 		}		
-		if (app.isSingleEvent) this.myarrays.processSED();		
+		if (app.isSingleEvent()) this.myarrays.processSED();		
 	}
 
 
@@ -342,10 +342,10 @@ public class CCMon extends DetectorMonitor {
 		if (z==0) color=9;
 		
 		if (  inProcess==0)  color=(double)(z-rmin)/(rmax-rmin);
-		
+		double pixMin = app.displayControl.pixMin ; double pixMax = app.displayControl.pixMax;
 		if (!(inProcess==0)) {
-			if (!app.isSingleEvent) color=(double)(Math.log10(z)-Math.log10(rmin*app.pixMin))/(Math.log10(rmax*app.pixMax)-Math.log10(rmin*app.pixMin));
-			if ( app.isSingleEvent) color=(double)(Math.log10(z)-Math.log10(rmin*app.pixMin))/(Math.log10(4000.)-Math.log10(rmin*app.pixMin));
+			if (!app.isSingleEvent()) color=(double)(Math.log10(z)-Math.log10(rmin*pixMin))/(Math.log10(rmax*pixMax)-Math.log10(rmin*pixMin));
+			if ( app.isSingleEvent()) color=(double)(Math.log10(z)-Math.log10(rmin*pixMin))/(Math.log10(4000.)-Math.log10(rmin*pixMin));
 		}
 		
 		//System.out.println(z+" "+rmin+" "+" "+rmax+" "+color);
@@ -383,8 +383,8 @@ public class CCMon extends DetectorMonitor {
 		
 		for (int is=1;is<7;is++) {
 			for (int il=1 ; il<3 ; il++) {
-				if (!app.isSingleEvent) Lmap_a.add(is,il,0, toTreeMap(H2_CCa_Hist.get(is,il,0).projectionY().getData())); //Strip View ADC 
-				if  (app.isSingleEvent) Lmap_a.add(is,il,0, toTreeMap(H1_CCa_Sevd.get(is,il,0).getData())); 			
+				if (!app.isSingleEvent()) Lmap_a.add(is,il,0, toTreeMap(H2_CCa_Hist.get(is,il,0).projectionY().getData())); //Strip View ADC 
+				if  (app.isSingleEvent()) Lmap_a.add(is,il,0, toTreeMap(H1_CCa_Sevd.get(is,il,0).getData())); 			
 			}
 		}	
 	}
@@ -427,16 +427,16 @@ public class CCMon extends DetectorMonitor {
 		H1D h = new H1D() ; 
 		String otab[]={" Left PMT "," Right PMT "};
 		
-		if (app.mode7User_tet>0)  this.tet=app.mode7User_tet;
-		if (app.mode7User_tet==0) this.tet=app.mode7CCDB_tet;
+		if (app.mode7Emulation.User_tet>0)  this.tet=app.mode7Emulation.User_tet;
+		if (app.mode7Emulation.User_tet==0) this.tet=app.mode7Emulation.CCDB_tet;
 		
 		F1D f1 = new F1D("p0",0.,100.); f1.setParameter(0,this.tet);
 		f1.setLineColor(2);
-		F1D f2 = new F1D("p0",0.,100.); f2.setParameter(0,app.mode7CCDB_tet);
+		F1D f2 = new F1D("p0",0.,100.); f2.setParameter(0,app.mode7Emulation.CCDB_tet);
 		f2.setLineColor(4);f2.setLineStyle(2);
 		
 	    for(int ip=0;ip<18;ip++){
-	    	canvas.cd(ip); canvas.getPad().setAxisRange(0.,100.,-15.,4000*app.pixMax);
+	    	canvas.cd(ip); canvas.getPad().setAxisRange(0.,100.,-15.,4000*app.displayControl.pixMax);
 	        h = H2_CCa_Sevd.get(is+1,lr,0).sliceY(ip); h.setXTitle("Samples (4 ns)"); h.setYTitle("Counts");
 	    	h.setTitle("Sector "+(is+1)+otab[lr-1]+(ip+1)); h.setFillColor(4); canvas.draw(h);
 	        h = H2_CCa_Sevd.get(is+1,lr,1).sliceY(ip); h.setFillColor(2); canvas.draw(h,"same");

@@ -24,10 +24,10 @@ import org.jlab.evio.clas12.EvioSource;
 
 public class EventControl extends JPanel implements ActionListener, ChangeListener {
 	
-	JPanel    eventSource = new JPanel();
-	JPanel   eventControl = new JPanel();
-	JLabel      fileLabel = new JLabel("");
-	JLabel    statusLabel = new JLabel("No Opened File");       
+    JPanel    eventSource = new JPanel();
+    JPanel   eventControl = new JPanel();
+    JLabel      fileLabel = new JLabel("");
+    JLabel    statusLabel = new JLabel("No Opened File");       
 	
     EvioSource                       evReader;      
     boolean  isRegularFileOpen = false;
@@ -35,7 +35,7 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
     String            filename = null;
     
     EvioETSource                     etReader;
-	String         ethost=null,etfile = null;
+    String         ethost=null,etfile = null;
     public Boolean isEtFileOpen = false;
     public Boolean     isRemote = false;
     Boolean             running = false;
@@ -45,61 +45,61 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
     File          eviofile = null;
     String    eviofilename = null;	 
     
-	JButton    buttonPrev = new JButton("<");
-	JButton    buttonNext = new JButton(">");
-	JButton buttonNextFFW = new JButton(">>");
-	JButton    buttonStop = new JButton("||");
+    JButton    buttonPrev = new JButton("<");
+    JButton    buttonNext = new JButton(">");
+    JButton buttonNextFFW = new JButton(">>");
+    JButton    buttonStop = new JButton("||");
 	
-	SpinnerModel    model = new SpinnerNumberModel(0,0,10,0.1);
-	JSpinner spinnerDelay = new JSpinner(model);
-	int       threadDelay = 0;
-	private java.util.Timer    processTimer  = null;	
+    SpinnerModel    model = new SpinnerNumberModel(0,0,10,0.1);
+    JSpinner spinnerDelay = new JSpinner(model);
+    int       threadDelay = 0;
+    private java.util.Timer    processTimer  = null;	
 	
-	DetectorMonitor monitoringClass;
-	DetectorShapeTabView detectorView;
+    DetectorMonitor monitoringClass;
+    DetectorShapeTabView detectorView;
 	
-	public void setPluginClass(DetectorMonitor monitoringClass, DetectorShapeTabView detectorView) {
-		this.monitoringClass = monitoringClass;
-		this.detectorView = detectorView;
-	}
+    public void setPluginClass(DetectorMonitor monitoringClass, DetectorShapeTabView detectorView) {
+      this.monitoringClass = monitoringClass;
+      this.detectorView = detectorView;
+    }
 	
-	public EventControl(){
+    public EventControl(){
 		
-		this.setBackground(Color.LIGHT_GRAY);
-		this.eventSource.setBackground(Color.LIGHT_GRAY);
-		this.eventControl.setBackground(Color.LIGHT_GRAY);
-		this.fileLabel.setBackground(Color.LIGHT_GRAY);
-		this.statusLabel.setBackground(Color.LIGHT_GRAY);
-        this.eventSource.add(fileLabel);	
-        this.eventSource.add(statusLabel);	
+      this.setBackground(Color.LIGHT_GRAY);
+      this.eventSource.setBackground(Color.LIGHT_GRAY);
+      this.eventControl.setBackground(Color.LIGHT_GRAY);
+      this.fileLabel.setBackground(Color.LIGHT_GRAY);
+      this.statusLabel.setBackground(Color.LIGHT_GRAY);
+      this.eventSource.add(fileLabel);	
+      this.eventSource.add(statusLabel);	
 
-        this.eventControl.add(buttonPrev);
-        this.eventControl.add(buttonNext);
-        this.eventControl.add(buttonNextFFW);
-        this.eventControl.add(buttonStop);        
-        this.eventControl.add(new JLabel("Delay (sec)"));
-        this.eventControl.add(this.spinnerDelay);
+      this.eventControl.add(buttonPrev);
+      this.eventControl.add(buttonNext);
+      this.eventControl.add(buttonNextFFW);
+      this.eventControl.add(buttonStop);        
+      this.eventControl.add(new JLabel("Delay (sec)"));
+      this.eventControl.add(this.spinnerDelay);
         	  
-        this.setLayout(new BorderLayout());
-		this.add(eventSource,BorderLayout.CENTER);
-		this.add(eventControl,BorderLayout.PAGE_END);
+      this.setLayout(new BorderLayout());
+      this.add(eventSource,BorderLayout.CENTER);
+      this.add(eventControl,BorderLayout.PAGE_END);
 
-		buttonPrev.addActionListener(this);
-		buttonNext.addActionListener(this);        
-		buttonNextFFW.addActionListener(this);        
-		buttonStop.addActionListener(this);   
-		spinnerDelay.addChangeListener(this);			
+      buttonPrev.addActionListener(this);
+      buttonNext.addActionListener(this);        
+      buttonNextFFW.addActionListener(this);        
+      buttonStop.addActionListener(this);   
+      spinnerDelay.addChangeListener(this);			
 
-		buttonNext.setEnabled(false);
-		buttonPrev.setEnabled(false);
-		buttonStop.setEnabled(false);
-		buttonNextFFW.setEnabled(false); 			
-	}
+      buttonNext.setEnabled(false);
+      buttonPrev.setEnabled(false);
+      buttonStop.setEnabled(false);
+      buttonNextFFW.setEnabled(false); 			
+    }
 
     public void openEtFile(String ethost, String etfile) { 
-    	this.etfile=etfile;
-    	this.ethost=ethost;
-    	if(etfile!=null){
+      this.etfile=etfile;
+      this.ethost=ethost;
+      if(etfile!=null){
     		try {
     			etReader = new EvioETSource(ethost);
     			etReader.open(etfile);
@@ -109,24 +109,20 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
     			this.fileLabel.setText(" ");
     			etReader = null;
     		} finally {
-    			this.proceedEt();
+    			isRemote	  = true;
+    			isSingleEvent = false;
+    			isEtFileOpen  = true;
+    			isRegularFileOpen = false;
+    			etReader.close();
+    			etReader.loadEvents();
+    			buttonNext.setEnabled(true);
+    			buttonPrev.setEnabled(false);
+    			buttonNextFFW.setEnabled(true);
+    			buttonStop.setEnabled(false);
     		}    
     	}
     }
-    
-    private void proceedEt() {
-    	isRemote	  = true;
-		isSingleEvent = false;
-		isEtFileOpen  = true;
-		isRegularFileOpen = false;
-		etReader.close();
-		etReader.loadEvents();
-		buttonNext.setEnabled(true);
-		buttonPrev.setEnabled(false);
-		buttonNextFFW.setEnabled(true);
-		buttonStop.setEnabled(false);	    	
-    }
-        
+ 
     public void openEvioFile(File eviofile) {
     	isRemote = false;
         isSingleEvent = false;

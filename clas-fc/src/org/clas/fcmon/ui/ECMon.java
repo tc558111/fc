@@ -59,6 +59,7 @@ public class ECMon extends DetectorMonitor {
    int inProcess        = 0; //0=init 1=processing 2=end-of-run 3=post-run
    boolean inMC         = false; //true=MC false=DATA
    int thr[]            = {15,20};
+   int nsa,nsb,tet,p1,p2,pedref  = 0;
    String monpath       = System.getenv("COATJAVA");
    String monfile       = "mondirectory"; 
    
@@ -112,8 +113,13 @@ public class ECMon extends DetectorMonitor {
 	
 	public void init() {
 		inProcess=0;
+		inMC=false;
 		initHistograms();
-		collection.clear();	
+		  configMode7(1,3,1);
+		  app.mode7Emulation.tet.setText(Integer.toString(this.tet));
+	   	  app.mode7Emulation.nsa.setText(Integer.toString(this.nsa));
+	   	  app.mode7Emulation.nsb.setText(Integer.toString(this.nsb));
+	   	  collection.clear();	
 	}
 	
 	public void reset() {
@@ -156,6 +162,7 @@ public class ECMon extends DetectorMonitor {
 				H1_ECa_Sevd.add(is, il, 0, new H1D("ECa_Sed_"+il, 36,  1.,37.));
 				H1_ECt_Sevd.add(is, il, 0, new H1D("ECt_Sed_"+il, 36,  1.,37.));
 				H2_ECa_Sevd.add(is, il, 0, new H2D("ECa_Sed_FADC_"+il,100, 0., 100., 36, 1., 37.));
+				H2_ECa_Sevd.add(is, il, 1, new H2D("ECa_Sed_FADC_"+il,100, 0., 100., 36, 1., 37.));
 			}
 			for (int il=7 ; il<9 ; il++){
 				// For Non-Layer Maps
@@ -311,8 +318,8 @@ public class ECMon extends DetectorMonitor {
 			if (app.isSingleEvent()) {
 				for (int is=0 ; is<6 ; is++) {
 					for (int il=1 ; il<9 ; il++) {
-						         H1_ECa_Sevd.get(is+1,il,0).reset();
-						if(il<7) H2_ECa_Sevd.get(is+1,il,0).reset();
+				        H1_ECa_Sevd.get(is+1,il,0).reset();
+						if(il<7) {H2_ECa_Sevd.get(is+1,il,0).reset();H2_ECa_Sevd.get(is+1,il,1).reset();}
 					}
 				}
 			}
@@ -464,7 +471,50 @@ public class ECMon extends DetectorMonitor {
 		}	
 		}
 	}
+	public void configMode7(int cr, int sl, int ch) {
+   		FADCConfig config=fadc.getMap().get(cr,sl,ch);
+		   this.nsa    = (int) config.getNSA();
+		   this.nsb    = (int) config.getNSB();
+		   this.tet    = (int) config.getTET();
+	       this.pedref = (int) config.getPedestal();
+		   app.mode7Emulation.CCDB_tet=this.tet;
+		   app.mode7Emulation.CCDB_nsa=this.nsa;
+		   app.mode7Emulation.CCDB_nsb=this.nsb;
+		   if (app.mode7Emulation.User_tet>0) this.tet=app.mode7Emulation.User_tet;
+		   if (app.mode7Emulation.User_nsa>0) this.nsa=app.mode7Emulation.User_nsa;
+		   if (app.mode7Emulation.User_nsb>0) this.nsb=app.mode7Emulation.User_nsb;
+	}
+	
+	private class FADCFitter {
 		
+		int p1=1,p2=15;
+		int mmsum,summing_in_progress;
+		int t0,adc,ped,pedsum;
+		
+		public FADCFitter() {	
+		}
+		
+		public void fit(int nsa, int nsb, int tet, short[] pulse) {
+			pedsum=0;adc=0;mmsum=0;summing_in_progress=0;
+			for (int mm=0; mm<pulse.length; mm++) {
+				if(mm>p1 && mm<=p2)  pedsum+=pulse[mm];
+				if(mm==p2)           pedsum=pedsum/(p2-p1);
+				if (app.mode7Emulation.User_pedref==0) ped=pedsum;
+				if (app.mode7Emulation.User_pedref==1) ped=pedref;
+				if(mm>p2) {
+					if ((summing_in_progress==0) && pulse[mm]>ped+tet) {
+					  summing_in_progress=1;
+					  t0 = mm;
+					  for (int ii=1; ii<nsb+1;ii++) adc+=(pulse[mm-ii]-ped);
+					  mmsum=nsb;
+					}
+					if(summing_in_progress>0 && mmsum>(nsa+nsb)) summing_in_progress=-1;
+					if(summing_in_progress>0) {adc+=(pulse[mm]-ped); mmsum++;}
+				}
+			}
+		}
+	} 
+	
 	@Override
 	public void processEvent(DataEvent de) {
 		
@@ -472,7 +522,7 @@ public class ECMon extends DetectorMonitor {
 		   	 		
 		float tdcmax=100000;
 		boolean debug=false;
-		int adc,ped,nsb=0,nsa=0,tet=0,npk=0,pedref=0,timf=0,timc=0;
+		int adc,ped,npk=0,pedref=0,timf=0,timc=0;
 		double mc_t=0.,tdc=0,tdcf=0;
  				
 		if(event.hasBank("EC::true")!=true) {
@@ -486,48 +536,46 @@ public class ECMon extends DetectorMonitor {
 
             for(DetectorBankEntry strip : strips) {
                 adc=ped=pedref=npk=timf=timc=0 ; tdc=tdcf=0;
+            	int icr = strip.getDescriptor().getCrate(); 
+            	int isl = strip.getDescriptor().getSlot(); 
+            	int ich = strip.getDescriptor().getChannel(); 
              	int is  = strip.getDescriptor().getSector();
             	int il  = strip.getDescriptor().getLayer();
             	int ip  = strip.getDescriptor().getComponent();
             	int iord= strip.getDescriptor().getOrder();
-            	int icr = strip.getDescriptor().getCrate(); 
-            	int isl = strip.getDescriptor().getSlot(); 
-            	int ich = strip.getDescriptor().getChannel(); 
             	
-            	if(strip.getType()!=BankType.TDC) { // FADC MODE 7 or 1
-            		FADCConfig config=fadc.getMap().get(icr,isl,ich);
-            		   nsa = (int) config.getNSA();
-            		   nsb = (int) config.getNSB();
-            		   tet = (int) config.getTET();
-            		pedref = (int) config.getPedestal();
-            	} else {
+            	if(strip.getType()==BankType.TDC) { 
             		int[] tdcc = (int[]) strip.getDataObject(); 
             		tdc = tdcc[0]*24./1000.;        
             	}
             	
             	if(strip.getType()==BankType.ADCFPGA) { // FADC MODE 7
+             		this.configMode7(icr,isl,ich);
             		int[] adcc= (int[]) strip.getDataObject();
             		ped = adcc[2];
             		npk = adcc[3];
-            		adc = (adcc[1]-ped*(nsa+nsb))/10;
+            		adc = (adcc[1]-ped*(this.nsa+this.nsb))/10;
             		timf = DataUtils.getInteger(adcc[0],0,5);
             		timc = DataUtils.getInteger(adcc[0],6,14);
             		tdcf = timc*4.+timf*0.0625;
              	}
             	
             	if(strip.getType()==BankType.ADCPULSE) { // FADC MODE 1
-            		fitter.setParams(tet,nsb,nsa,1,15);
             		short[] pulse = (short[]) strip.getDataObject();
-            		fitter.fit(pulse);
+             		this.configMode7(icr,isl,ich);
+            		fitter.fit(this.nsa,this.nsb,this.tet,pulse);            		
             		adc = fitter.adc/10;
             		ped = fitter.ped;
             		for (int i=0 ; i< pulse.length ; i++) {
-            			                       H2_ECa_Hist.get(is,il,5).fill(i,ip,pulse[i]-pedref);
-            			if (app.isSingleEvent()) H2_ECa_Sevd.get(is,il,0).fill(i,ip,pulse[i]-pedref);
+            			  H2_ECa_Hist.get(is,il,5).fill(i,ip,pulse[i]-this.pedref);
+            	      if (app.isSingleEvent()) {
+            	    	  H2_ECa_Sevd.get(is,il,0).fill(i,ip,pulse[i]-this.pedref);
+             				int w1 = fitter.t0-this.nsb ; int w2 = fitter.t0+this.nsa;
+            				if (fitter.adc>0&&i>=w1&&i<=w2) H2_ECa_Sevd.get(is,il,1).fill(i,ip,pulse[i]-this.pedref);            	      }
             		}
             	}  
             	
-              	H2_ECa_Hist.get(is,il,3).fill(pedref-ped, ip);
+              	if (ped>0) H2_ECa_Hist.get(is,il,3).fill(this.pedref-ped, ip);
 			    this.myarrays.fill(is, il, ip, adc, tdc, tdcf);		  
 			    
 			  //System.out.println("crate,slot,chan:"+icr+" "+isl+" "+ich);
@@ -579,46 +627,7 @@ public class ECMon extends DetectorMonitor {
 			this.myarrays.processPixels();	// Process only single pixels 
 		}
 	}
-	
-	private class FADCFitter {
-		
-		int tet,nsb,nsa,p1,p2;
-		int mmsum,summing_in_progress;
-		public int ped;
-		public int adc;
-		
-		public FADCFitter() {	
-		}
-		
-		public FADCFitter(int tet, int tsb, int tsa, int p1, int p2) {
-			this.setParams(tet,tsb,tsa,p1,p2);
-		}
-		
-		public final void setParams(int tet, int nsb, int nsa, int p1, int p2) {
-			this.tet = tet;
-			this.nsb = nsb;
-			this.nsa = nsa;	
-			this.p1  = p1;
-			this.p2  = p2;
-		}
-		
-		public void fit(short[] pulse) {
-			ped=0;adc=0;mmsum=0;summing_in_progress=0;
-			for (int mm=0; mm<pulse.length; mm++) {
-				if(mm>p1 && mm<=p2)  ped+=pulse[mm];
-				if(mm==p2)           ped=ped/(p2-p1);
-				if(mm>p2 && mm<100) {
-					if ((summing_in_progress==0) && pulse[mm]>ped+this.tet) {
-					  summing_in_progress=1;
-					  for (int ii=1; ii<this.nsb+1;ii++) adc+=(pulse[mm-ii]-ped);
-					  mmsum=this.nsb;
-					}
-					if(summing_in_progress>0 && mmsum>(this.nsa+this.nsb)) summing_in_progress=-1;
-					if(summing_in_progress>0) {adc+=(pulse[mm]-ped); mmsum++;}
-				}
-			}
-		}
-	}
+
  
 	public void update(DetectorShape2D shape) {
 		
@@ -663,9 +672,12 @@ public class ECMon extends DetectorMonitor {
 		
 		if (z==0) color=9;
 		
-		double pixMin = app.displayControl.pixMin; double pixMax = app.displayControl.pixMax;
 		if (  inProcess==0)  color=(double)(z-rmin)/(rmax-rmin);
-		if (!(inProcess==0)) color=(double)(Math.log10(z)-Math.log10(pixMin))/(Math.log10(pixMax)-Math.log10(pixMin));
+		double pixMin = app.displayControl.pixMin ; double pixMax = app.displayControl.pixMax;
+		if (!(inProcess==0)) {
+			if (!app.isSingleEvent()) color=(double)(Math.log10(z)-pixMin*Math.log10(rmin))/(pixMax*Math.log10(rmax)-pixMin*Math.log10(rmin));
+			if ( app.isSingleEvent()) color=(double)(Math.log10(z)-pixMin*Math.log10(rmin))/(pixMax*Math.log10(4000.)-pixMin*Math.log10(rmin));
+		}
 		
 		//System.out.println(z+" "+rmin+" "+" "+rmax+" "+color);
 		if (color>1)   color=1;
@@ -678,14 +690,14 @@ public class ECMon extends DetectorMonitor {
         TreeMap<Integer, Object> hcontainer = new TreeMap<Integer, Object>();
         hcontainer.put(1, dat);
         double[] b = Arrays.copyOf(dat, dat.length);
-//        double min=100000,max=0;
-//        for (int i =0 ; i < b.length; i++){
-//        	if (b[i] !=0 && b[i] < min) min=b[i];
-//        	if (b[i] !=0 && b[i] > max) max=b[i];
-//        }
-        Arrays.sort(b);
-        double min = b[0]; double max=b[b.length-1];
-        if (min<=0) min=0.0;
+        double min=100000,max=0;
+        for (int i =0 ; i < b.length; i++){
+        	if (b[i] !=0 && b[i] < min) min=b[i];
+        	if (b[i] !=0 && b[i] > max) max=b[i];
+        }
+       // Arrays.sort(b);
+       // double min = b[0]; double max=b[b.length-1];
+        if (min<=0) min=0.01;
         hcontainer.put(2, min);
         hcontainer.put(3, max);
         return hcontainer;        
@@ -778,7 +790,7 @@ public class ECMon extends DetectorMonitor {
 		this.analyze(inProcess);
 		switch (app.getSelectedTabIndex()) {
 		case 0:
-		  this.canvasMode1(desc, app.getCanvas("Mode1"));
+		  if(!inMC) this.canvasMode1(desc, app.getCanvas("Mode1"));
 		  break;
 		case 1:
 		  this.canvasSingleEvent(desc, app.getCanvas("SingleEvent"));
@@ -790,7 +802,7 @@ public class ECMon extends DetectorMonitor {
 		  this.canvasAttenuation(desc, app.getCanvas("Attenuation"));
 		  break;
 		case 4:
-		  this.canvasPedestal(desc,    app.getCanvas("Pedestals"));	
+		  if(!inMC)this.canvasPedestal(desc,    app.getCanvas("Pedestals"));	
 		  break;
 		case 5:
 		  this.canvasTiming(desc,      app.getCanvas("Timing"));	
@@ -833,10 +845,20 @@ public class ECMon extends DetectorMonitor {
 		H1D h = new H1D() ; 
 		String otab[]={"U Inner Strip","V Inner Strip","W Inner Strip","U Outer Strip","V Outer Strip","W Outer Strip"};
 		
+		if (app.mode7Emulation.User_tet>0)  this.tet=app.mode7Emulation.User_tet;
+		if (app.mode7Emulation.User_tet==0) this.tet=app.mode7Emulation.CCDB_tet;
+		
+		F1D f1 = new F1D("p0",0.,100.); f1.setParameter(0,this.tet);
+		f1.setLineColor(2);
+		F1D f2 = new F1D("p0",0.,100.); f2.setParameter(0,app.mode7Emulation.CCDB_tet);
+		f2.setLineColor(4);f2.setLineStyle(2);	
+		
 	    for(int ip=0;ip<36;ip++){
-	    	canvas.cd(ip); canvas.getPad().setAxisRange(0.,100.,-15.,400.);
+	    	canvas.cd(ip); canvas.getPad().setAxisRange(0.,100.,-15.,4000*app.displayControl.pixMax);
 	        h = H2_ECa_Sevd.get(is+1,layer,0).sliceY(ip); h.setXTitle("Sample (4 ns)"); h.setYTitle("Counts");
 	    	h.setTitle(otab[layer-1]+" "+(ip+1)); h.setFillColor(4); canvas.draw(h);
+	        h = H2_ECa_Sevd.get(is+1,layer,1).sliceY(ip); h.setFillColor(2); canvas.draw(h,"same");
+	        canvas.draw(f1,"same");canvas.draw(f2,"same");
 	    }		
 	}
 	
@@ -865,7 +887,7 @@ public class ECMon extends DetectorMonitor {
 		String lab1[]={"U ","V ","W "}, lab2[]={"Inner ","Outer "}, lab3[]={"Strip ","Pixel "},lab4[]={" ADC"," TDC"};
 		H1D h;
 		//TStyle.setOptStat
-		canvas.divide(6,3);
+		canvas.divide(3,3);
 		canvas.setAxisFontSize(14);
 		canvas.setTitleFontSize(14);
 		canvas.setStatBoxFontSize(12);
@@ -877,7 +899,7 @@ public class ECMon extends DetectorMonitor {
 		if (layer>=7) {col0=4 ; col1=4; col2=2;pixel=ic+1;}
     
 	    for(int il=1;il<7;il++){
-	    	canvas.cd(il-1); canvas.getPad().setAxisRange(-1.,37.,0.,300.);
+	    	canvas.cd(il-1); canvas.getPad().setAxisRange(-1.,37.,0.,1500*app.displayControl.pixMax);
 	    	h = H1_ECa_Sevd.get(is+1,il,0); h.setXTitle(otab[il-1]); h.setFillColor(col0); canvas.draw(h);
 	    }
 	}
@@ -913,7 +935,7 @@ public class ECMon extends DetectorMonitor {
     		
 			//TStyle.setOptStat(true);
     		canvas.cd(il-1+3); h=hpix.sliceY(22) ; h.setFillColor(4) ; h.setTitle(""); h.setXTitle("STRIP "+22) ; canvas.draw(h);
-    	    if(la==il) {h=hpix.sliceY(ip); h.setFillColor(2); h.setTitle(""); h.setXTitle("STRIP "+(ip+1));canvas.draw(h);}
+    	    if(la==il) {h=hpix.sliceY(ip); h.setFillColor(2); h.setTitle(""); h.setXTitle("STRIP "+(ip+1));canvas.draw(h,"S");}
 			//TStyle.setOptStat(false);
 	    }			
 	}
@@ -945,7 +967,7 @@ public class ECMon extends DetectorMonitor {
     		}
 			//TStyle.setOptStat(true);
     		canvas.cd(il-1+3); h=hpix.sliceY(22) ; h.setFillColor(4) ; h.setTitle(""); h.setXTitle("STRIP "+22) ; canvas.draw(h);
-    	    if(la==il) {h=hpix.sliceY(ip); h.setFillColor(2); h.setTitle(""); h.setXTitle("STRIP "+(ip+1)); canvas.draw(h);}
+    	    if(la==il) {h=hpix.sliceY(ip); h.setFillColor(2); h.setTitle(""); h.setXTitle("STRIP "+(ip+1)); canvas.draw(h,"S");}
 			//TStyle.setOptStat(false);
 	    }	
 	}	

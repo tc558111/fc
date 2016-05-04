@@ -8,13 +8,8 @@ package org.clas.fcmon.fx;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
+
 import javafx.application.Application;
-import static javafx.application.Application.launch;
-import static javafx.application.Application.launch;
-import static javafx.application.Application.launch;
-import static javafx.application.Application.launch;
-import static javafx.application.Application.launch;
-import static javafx.application.Application.launch;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.Group;
@@ -31,12 +26,9 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
-import javafx.scene.shape.Box;
-import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
-import javafx.scene.shape.Sphere;
-import javafx.scene.shape.TriangleMesh;
 import javafx.stage.Stage;
+
 import org.jlab.clasrec.utils.DataBaseLoader;
 import org.jlab.detector.geant4.DCGeant4Factory;
 import org.jlab.detector.geant4.FTOFGeant4Factory;
@@ -50,6 +42,7 @@ import org.jlab.geom.prim.Transformation3D;
  *
  * @author gavalian
  */
+@SuppressWarnings("restriction")
 public class CLAS12GeometryViewer extends Application {
     
     

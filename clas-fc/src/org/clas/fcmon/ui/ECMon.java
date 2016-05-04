@@ -663,18 +663,19 @@ public class ECMon extends DetectorMonitor {
 	}
 
 	public double getcolor(TreeMap<Integer,Object> map, int component) {
-		double color=9;
-		int opt=1;
+		
+		double color=0;
+		
 		double val[] =(double[]) map.get(1); 
 		double rmin  =(double)   map.get(2);
 		double rmax  =(double)   map.get(3);
 		double z=val[component];
 		
-		if (z==0) color=9;
+		if (z==0) return 0;
 		
-		if (  inProcess==0)  color=(double)(z-rmin)/(rmax-rmin);
+		if (inProcess==0)  color=(double)(z-rmin)/(rmax-rmin);
 		double pixMin = app.displayControl.pixMin ; double pixMax = app.displayControl.pixMax;
-		if (!(inProcess==0)) {
+		if (inProcess!=0) {
 			if (!app.isSingleEvent()) color=(double)(Math.log10(z)-pixMin*Math.log10(rmin))/(pixMax*Math.log10(rmax)-pixMin*Math.log10(rmin));
 			if ( app.isSingleEvent()) color=(double)(Math.log10(z)-pixMin*Math.log10(rmin))/(pixMax*Math.log10(4000.)-pixMin*Math.log10(rmin));
 		}
@@ -702,7 +703,13 @@ public class ECMon extends DetectorMonitor {
         hcontainer.put(3, max);
         return hcontainer;        
 	}
-		
+			
+	@Override
+	public void analyze(int process) {		
+		this.inProcess = process;
+		if (process==1 || process==2)  this.analyzeOccupancy();	 
+	}
+	
 	public void analyzeOccupancy() {
 		
 		// il=1-3 (U,V,W Inner strips) il=4-6 (U,V,W Outer Strips) il=7 (Inner Pixels) il=8 (Outer Pixels)
@@ -802,20 +809,13 @@ public class ECMon extends DetectorMonitor {
 		  this.canvasAttenuation(desc, app.getCanvas("Attenuation"));
 		  break;
 		case 4:
-		  if(!inMC)this.canvasPedestal(desc,    app.getCanvas("Pedestals"));	
+		  if(!inMC) this.canvasPedestal(desc, app.getCanvas("Pedestals"));	
 		  break;
 		case 5:
 		  this.canvasTiming(desc,      app.getCanvas("Timing"));	
 		}
 	}
-	
-	public void analyze(int process) {
-		
-		this.inProcess = process;
-		if (process==1)  this.analyzeOccupancy();	 //Don't analyze until event counter sets process flag
-		if (process==2)  this.analyzeOccupancy();	 //Final analysis for end of run 		
-	}
-	
+
 	public void canvasMode1(DetectorDescriptor desc, EmbeddedCanvas canvas) {
 		
 		int is    = desc.getSector();

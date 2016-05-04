@@ -332,20 +332,21 @@ public class CCMon extends DetectorMonitor {
 	}
 	
 	public double getcolor(TreeMap<Integer,Object> map, int component) {
-		double color=9;
-		int opt=1;
+		
+		double color = 0;
+		
 		double val[] =(double[]) map.get(1); 
 		double rmin  =(double)   map.get(2);
 		double rmax  =(double)   map.get(3);
 		double z=val[component];
 		
-		if (z==0) color=9;
+		if (z==0) return 0;
 		
-		if (  inProcess==0)  color=(double)(z-rmin)/(rmax-rmin);
+		if (inProcess==0)  color=(double)(z-rmin)/(rmax-rmin);
 		double pixMin = app.displayControl.pixMin ; double pixMax = app.displayControl.pixMax;
-		if (!(inProcess==0)) {
-			if (!app.isSingleEvent()) color=(double)(Math.log10(z)-Math.log10(rmin*pixMin))/(Math.log10(rmax*pixMax)-Math.log10(rmin*pixMin));
-			if ( app.isSingleEvent()) color=(double)(Math.log10(z)-Math.log10(rmin*pixMin))/(Math.log10(4000.)-Math.log10(rmin*pixMin));
+		if (inProcess!=0) {
+			if (!app.isSingleEvent()) color=(double)(Math.log10(z)-pixMin*Math.log10(rmin))/(pixMax*Math.log10(rmax)-pixMin*Math.log10(rmin));
+			if ( app.isSingleEvent()) color=(double)(Math.log10(z)-pixMin*Math.log10(rmin))/(pixMax*Math.log10(4000.)-pixMin*Math.log10(rmin));
 		}
 		
 		//System.out.println(z+" "+rmin+" "+" "+rmax+" "+color);
@@ -354,13 +355,7 @@ public class CCMon extends DetectorMonitor {
 
 		return color;
 	}
-	
-	@Override
-	public void analyze(int process) {
-		this.inProcess = process;
-		if (process==1||process==2) this.analyzeOccupancy();
-		
-	}
+
 	
 	public TreeMap<Integer, Object> toTreeMap(double dat[]) {
         TreeMap<Integer, Object> hcontainer = new TreeMap<Integer, Object>();
@@ -378,6 +373,13 @@ public class CCMon extends DetectorMonitor {
         hcontainer.put(3, max);
         return hcontainer;        
 	}	
+		
+	@Override
+	public void analyze(int process) {
+		this.inProcess = process;
+		if (process==1||process==2) this.analyzeOccupancy();
+		
+	}
 	
 	public void analyzeOccupancy() {
 		

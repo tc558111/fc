@@ -8,8 +8,13 @@ package org.clas.fcmon.fx;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
-
 import javafx.application.Application;
+import static javafx.application.Application.launch;
+import static javafx.application.Application.launch;
+import static javafx.application.Application.launch;
+import static javafx.application.Application.launch;
+import static javafx.application.Application.launch;
+import static javafx.application.Application.launch;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.scene.Group;
@@ -26,9 +31,12 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
+import javafx.scene.shape.Box;
+import javafx.scene.shape.DrawMode;
 import javafx.scene.shape.MeshView;
+import javafx.scene.shape.Sphere;
+import javafx.scene.shape.TriangleMesh;
 import javafx.stage.Stage;
-
 import org.jlab.clasrec.utils.DataBaseLoader;
 import org.jlab.detector.geant4.DCGeant4Factory;
 import org.jlab.detector.geant4.FTOFGeant4Factory;
@@ -42,7 +50,6 @@ import org.jlab.geom.prim.Transformation3D;
  *
  * @author gavalian
  */
-@SuppressWarnings("restriction")
 public class CLAS12GeometryViewer extends Application {
     
     
@@ -95,9 +102,9 @@ public class CLAS12GeometryViewer extends Application {
         splitPane.getItems().addAll(treePane,pane);
         splitPane.setDividerPositions(0.2);
 
-        //this.addDetector("FTOF");
+        this.addDetector("FTOF");
         //this.test();
-        this.testFTOF();
+        //this.testFTOF();
         //this.testDC();
         //this.testBST();
         //final Scene scene = new Scene(pane, 880, 880, true);
@@ -181,12 +188,12 @@ public class CLAS12GeometryViewer extends Application {
     
     public void test(){
         MeshStore store = new MeshStore();
-        Mesh3D  box = Mesh3D.box(20, 20, 30);
+        Mesh3D  box = Mesh3D.box(100, 25, 35);
         
         //Geant4Basic  shape = new Geant4Basic("","box",20,20,80);
         //MeshView mesh = Geant4Mesh.makeMeshBox(shape);
-        box.translateXYZ(40.0, 0.0, 120.0);
-        box.rotateZ(Math.toRadians(45.0));
+        //box.translateXYZ(40.0, 0.0, 120.0);
+        box.rotateZ(Math.toRadians(30.0));
         MeshView mesh = box.getMeshView();
         mesh.setMaterial(store.getMaterials().get(2));
         this.root.getChildren().add(mesh);

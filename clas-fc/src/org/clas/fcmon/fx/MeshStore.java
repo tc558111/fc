@@ -17,6 +17,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.paint.Material;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.MeshView;
+import org.jlab.containers.HashCollection;
 import org.jlab.geom.geant.Geant4Basic;
 import org.jlab.geom.geant.Geant4Mesh;
 
@@ -30,10 +31,13 @@ public class MeshStore {
     MeshView  motherMesh = null;
     
     Map<String,MeshView>  meshStore = new TreeMap<String,MeshView>();
+    HashCollection<MeshView>  meshCollection = new HashCollection<MeshView>();
+    
     private   Boolean     isVisible = true;
     private  Map<Integer,Material>   materials = new HashMap<Integer,Material>();
     
     public MeshStore(){
+        
         PhongMaterial matb = new PhongMaterial();
         matb.setDiffuseColor(new Color(0.2,0.2,0.9,1.0));
         matb.setSpecularColor(new Color(0.2,0.2,0.9,1.0));

@@ -102,9 +102,9 @@ public class CLAS12GeometryViewer extends Application {
         splitPane.getItems().addAll(treePane,pane);
         splitPane.setDividerPositions(0.2);
 
-        this.addDetector("FTOF");
+        //this.addDetector("FTOF");
         //this.test();
-        //this.testFTOF();
+        this.testFTOF();
         //this.testDC();
         //this.testBST();
         //final Scene scene = new Scene(pane, 880, 880, true);

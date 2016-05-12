@@ -40,23 +40,11 @@ import org.jlab.geom.prim.Point3D;
 public class DetectorShapeView2D extends JPanel implements ActionListener, MouseListener , MouseMotionListener{
     
     public  Rectangle  drawRegion = new Rectangle();
-    private JPanel        bottom1 = null;
-    
-    private List<IDetectorListener> detectorListeners = new ArrayList<IDetectorListener>();
-	private ActionListener listener;
+    private String     canvasName = "undefined";
     private List<DetectorShape2D>   shapes = new ArrayList<DetectorShape2D>();
     private Integer                 selectedShape = 1;
-    private Integer 			 	selectedShapeSave = -1;
-    
-    public int ilmap=1;
-    public int  omap=0;
-    private String     canvasName = "undefined";
-    
-    static final int FPS_INIT = 1;
-    
-    int index,indexsave,junk;
-    int delay;
-    Timer timer;
+	private ActionListener listener = null;
+    private List<IDetectorListener> detectorListeners = new ArrayList<IDetectorListener>();
     
     private List<Point3D>           markerPoints      = new ArrayList<Point3D>(); 
     private List<Color>             markerColors      = new ArrayList<Color>(); 
@@ -64,27 +52,40 @@ public class DetectorShapeView2D extends JPanel implements ActionListener, Mouse
     private List<Color>             pathColors        = new ArrayList<Color>();
     
     public boolean MOUSEOVER_CALLBACK = true;
-
+    
+    //lcs
+    private JPanel bottom1 = null; 
+    private Integer selectedShapeSave = -1;    
+    public int ilmap=1;
+    public int  omap=0;    
+    static final int FPS_INIT = 1; 
+    int index,indexsave,junk;
+    int delay;    
+    Timer timer;
+    
     public DetectorShapeView2D(String name){
         canvasName = name;
         addMouseListener(this);
         this.addMouseMotionListener(this);
+//lcs: Initiate minimum refresh at FPS_INIT rate
         updateGUIAction action = new updateGUIAction();
         delay = 1000 / FPS_INIT;
-        this.timer = new Timer(delay,action);  
-        
+        this.timer = new Timer(delay,action);          
 		bottom1 = new JPanel();
+		bottom1.setBackground(Color.LIGHT_GRAY);
 		bottom1.setLayout(new FlowLayout());
     }
     
+//lcs: Add buttons for flagging shape color (events,adc,etc.) of panel
     public void addRB(List<List<String>> buttons){
     	for(List<String> bn : buttons){
     		ButtonGroup bG = new ButtonGroup();
     		for(int i=0; i< bn.size(); i++){
     			JRadioButton b = new JRadioButton(bn.get(i));
+    			b.setBackground(Color.LIGHT_GRAY);
     			b.addActionListener(this);
     			b.setActionCommand(bn.get(i));
-    			if (i==0) b.setEnabled(true);
+    			if (i==0) b.setSelected(true);
     			bottom1.add(b); bG.add(b);
     		}
 		}     	
@@ -123,7 +124,7 @@ public class DetectorShapeView2D extends JPanel implements ActionListener, Mouse
     	}
     	updateGUI();
     }
-   
+ //lcs: FPS slider controls refresh rate of this view  
     public void start(int fps){
         delay = 10000;
     	if (fps!=0 ) delay = 1000 / fps;
@@ -344,13 +345,13 @@ public class DetectorShapeView2D extends JPanel implements ActionListener, Mouse
             GeneralPath path = new GeneralPath();
             int npoints = shape.getShapePath().size();
             Point3D  startpoint = shape.getShapePath().point(0);
-            int startx = this.getX( (int) startpoint.x(), width);
-            int starty = this.getY( (int) startpoint.y(), height);
+            int startx = this.getX( (float) startpoint.x(), width);
+            int starty = this.getY( (float) startpoint.y(), height);
             path.moveTo(startx, starty);
             for(int p = 1; p < npoints; p++){
                 Point3D  point = shape.getShapePath().point(p);
-                int x = this.getX( (int) point.x(), width);
-                int y = this.getY( (int) point.y(), height);
+                float x = this.getX((float) point.x(), width);
+                float y = this.getY((float) point.y(), height);
                 path.lineTo(x, y);
             }
             path.lineTo(startx, starty);
@@ -469,7 +470,7 @@ public class DetectorShapeView2D extends JPanel implements ActionListener, Mouse
 
     public void mouseDragged(MouseEvent e) {    }
 
-    
+ //lcs: Enable repaint() for mouse motion (but only if mouse enters new shape)   
     public void callbackMouseCoordinates(double mX, double mY){
         int index = -1;
         for(int loop = 0; loop < this.shapes.size(); loop++){

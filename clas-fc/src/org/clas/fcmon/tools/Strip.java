@@ -31,28 +31,6 @@ public class Strip {
     public void addH2D(int sector, int layer, int component, H2D h2) {
     	stripH2D.add(sector,layer,component,h2);   	
     }
-    
-	public void putPixels(int view, int strip, int val, double[] in){
-		int numpix,a,b,c,sum,pixel=1;
-		numpix = 2*strip-1;
-		a = strip;
-		b = 37-a;
-		c = 36;
-		
-		for (int j=0; j<numpix ; j++) {
-			if (view==1) pixel=a*(a-1)+b-c+1;
-			if (view==2) pixel=c*(c-1)+a-b+1;
-			if (view==3) pixel=b*(b-1)+c-a+1;
-			if (view==4) pixel=a*(a-1)+b-c+1;
-			if (view==5) pixel=c*(c-1)+a-b+1;
-			if (view==6) pixel=b*(b-1)+c-a+1;
-			if (in[pixel-1]==0) in[pixel-1] = val;
-			sum = a+b+c;
-			if(sum==73) b=b+1;
-			if(sum==74) c=c-1;
-		}
-		
-	}	
 	
     public void putpixels(int layer, int strip, int val, double[] in) {
     	Integer[] dum = this.getPixels(0,layer,strip); 

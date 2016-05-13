@@ -42,7 +42,7 @@ import org.jlab.data.io.DataEvent;
 
 public class PCMon extends DetectorMonitor {
 	
-   static MonitorApp           app = new MonitorApp("ECMon",1800,950);		
+   static MonitorApp           app = new MonitorApp("PCMon",1800,950);		
 	
    EventDecoder            decoder = new EventDecoder();
    FADCConfigLoader          fadc  = new FADCConfigLoader();
@@ -142,43 +142,45 @@ public class PCMon extends DetectorMonitor {
     
 	public void initHistograms() {
 		
+		int nstr = 68 ; double nend = nstr+1;  int npix = 6765; double pend = npix+1;
+		
 		for (int is=1; is<7 ; is++) {
 			for (int il=1 ; il<7 ; il++){
 				// For Histos
-				H2_PCa_Hist.add(is, il, 0, new H2D("PCa_Hist_Raw_"+il, 100,   0., 200.,  36, 1.,  37.));
-				H2_PCt_Hist.add(is, il, 0, new H2D("PCt_Hist_Raw_"+il, 100,1330.,1370.,  36, 1.,  37.));
-				H2_PCa_Hist.add(is, il, 1, new H2D("PCa_Hist_Pix_"+il, 100,   0., 200.,  36, 1.,  37.));
-				H2_PCt_Hist.add(is, il, 1, new H2D("PCt_Hist_Pix_"+il, 100,1330.,1370.,  36, 1.,  37.));
-				H2_PCa_Hist.add(is, il, 2, new H2D("PCa_Hist_Pix_"+il,  25,   0., 250.,1296, 1.,1297.));
-				H2_PCt_Hist.add(is, il, 2, new H2D("PCt_Hist_Pix_"+il,  40,1330.,1370.,1296, 1.,1297.));
-				H2_PCa_Hist.add(is, il, 3, new H2D("PCa_Hist_PED_"+il,  20, -10.,  10.,  36, 1.,  37.)); 
-				H2_PCt_Hist.add(is, il, 3, new H2D("PCa_Hist_TDIF_"+il, 60, -15.,  15.,  36, 1.,  37.)); 
-				H2_PCt_Hist.add(is, il, 4, new H2D("PCa_Hist_TDIF_"+il, 60, -15.,  15.,  36, 1.,  37.)); 
-				H2_PCa_Hist.add(is, il, 5, new H2D("PCa_Hist_FADC_"+il,100,   0., 100.,  36, 1.,  37.));
+				H2_PCa_Hist.add(is, il, 0, new H2D("PCa_Hist_Raw_"+il, 100,   0., 200.,  nstr, 1., nend));
+				H2_PCt_Hist.add(is, il, 0, new H2D("PCt_Hist_Raw_"+il, 100,1330.,1370.,  nstr, 1., nend));
+				H2_PCa_Hist.add(is, il, 1, new H2D("PCa_Hist_Pix_"+il, 100,   0., 200.,  nstr, 1., nend));
+				H2_PCt_Hist.add(is, il, 1, new H2D("PCt_Hist_Pix_"+il, 100,1330.,1370.,  nstr, 1., nend));
+				H2_PCa_Hist.add(is, il, 2, new H2D("PCa_Hist_Pix_"+il,  25,   0., 250.,  npix, 1., pend));
+				H2_PCt_Hist.add(is, il, 2, new H2D("PCt_Hist_Pix_"+il,  40,1330.,1370.,  npix, 1., pend));
+				H2_PCa_Hist.add(is, il, 3, new H2D("PCa_Hist_PED_"+il,  20, -10.,  10.,  nstr, 1., nend)); 
+				H2_PCt_Hist.add(is, il, 3, new H2D("PCa_Hist_TDIF_"+il, 60, -15.,  15.,  nstr, 1., nend)); 
+				H2_PCt_Hist.add(is, il, 4, new H2D("PCa_Hist_TDIF_"+il, 60, -15.,  15.,  nstr, 1., nend)); 
+				H2_PCa_Hist.add(is, il, 5, new H2D("PCa_Hist_FADC_"+il,100,   0., 100.,  nstr, 1., nend));
 				// For Layer Maps
-				H1_PCa_Maps.add(is, il, 0, new H1D("PCa_Maps_ADCPIX_"+il, 1296,  1.,1297.));
-				H1_PCa_Maps.add(is, il, 1, new H1D("PCa_Maps_PIXA_"+il,   1296,  1.,1297.));
-				H1_PCa_Maps.add(is, il, 2, new H1D("PCa_Maps_ADCPIX2_"+il,1296,  1.,1297.));
-				H1_PCa_Maps.add(is, il, 3, new H1D("PCa_Maps_PIXA2_"+il,  1296,  1.,1297.));
-				H1_PCt_Maps.add(is, il, 0, new H1D("PCt_Maps_TDCPIX_"+il, 1296,  1.,1297.));	
-				H1_PCt_Maps.add(is, il, 1, new H1D("PCt_Maps_PIXT_"+il,   1296,  1.,1297.));	
+				H1_PCa_Maps.add(is, il, 0, new H1D("PCa_Maps_ADCPIX_"+il, npix,  1., pend));
+				H1_PCa_Maps.add(is, il, 1, new H1D("PCa_Maps_PIXA_"+il,   npix,  1., pend));
+				H1_PCa_Maps.add(is, il, 2, new H1D("PCa_Maps_ADCPIX2_"+il,npix,  1., pend));
+				H1_PCa_Maps.add(is, il, 3, new H1D("PCa_Maps_PIXA2_"+il,  npix,  1., pend));
+				H1_PCt_Maps.add(is, il, 0, new H1D("PCt_Maps_TDCPIX_"+il, npix,  1., pend));	
+				H1_PCt_Maps.add(is, il, 1, new H1D("PCt_Maps_PIXT_"+il,   npix,  1., pend));	
 				// For Single Events
-				H1_PCa_Sevd.add(is, il, 0, new H1D("PCa_Sed_"+il, 36,  1.,37.));
-				H1_PCt_Sevd.add(is, il, 0, new H1D("PCt_Sed_"+il, 36,  1.,37.));
-				H2_PCa_Sevd.add(is, il, 0, new H2D("PCa_Sed_FADC_"+il,100, 0., 100., 36, 1., 37.));
-				H2_PCa_Sevd.add(is, il, 1, new H2D("PCa_Sed_FADC_"+il,100, 0., 100., 36, 1., 37.));
+				H1_PCa_Sevd.add(is, il, 0, new H1D("PCa_Sed_"+il, nstr,  1., nend));
+				H1_PCt_Sevd.add(is, il, 0, new H1D("PCt_Sed_"+il, nstr,  1., nend));
+				H2_PCa_Sevd.add(is, il, 0, new H2D("PCa_Sed_FADC_"+il,100, 0., 100., nstr, 1., nend));
+				H2_PCa_Sevd.add(is, il, 1, new H2D("PCa_Sed_FADC_"+il,100, 0., 100., nstr, 1., nend));
 			}
 			for (int il=7 ; il<9 ; il++){
 				// For Non-Layer Maps
-				H1_PCa_Maps.add(is, il, 0, new H1D("PCa_Maps_EVTPIXA_"+il, 1296,  1.,1297.));
-				H1_PCt_Maps.add(is, il, 0, new H1D("PCt_Maps_EVTPIXT_"+il, 1296,  1.,1297.));	
-				H1_PCa_Maps.add(is, il, 1, new H1D("PCa_Maps_PIXASUM_"+il, 1296,  1.,1297.));
-				H1_PCt_Maps.add(is, il, 1, new H1D("PCt_Maps_PIXTSUM_"+il, 1296,  1.,1297.));	
-				H1_PCa_Maps.add(is, il, 2, new H1D("PCa_Maps_PIXAS_"+il,   1296,  1.,1297.));
-				H1_PCt_Maps.add(is, il, 2, new H1D("PCt_Maps_PIXTS_"+il,   1296,  1.,1297.));
+				H1_PCa_Maps.add(is, il, 0, new H1D("PCa_Maps_EVTPIXA_"+il, npix,  1.,pend));
+				H1_PCt_Maps.add(is, il, 0, new H1D("PCt_Maps_EVTPIXT_"+il, npix,  1.,pend));	
+				H1_PCa_Maps.add(is, il, 1, new H1D("PCa_Maps_PIXASUM_"+il, npix,  1.,pend));
+				H1_PCt_Maps.add(is, il, 1, new H1D("PCt_Maps_PIXTSUM_"+il, npix,  1.,pend));	
+				H1_PCa_Maps.add(is, il, 2, new H1D("PCa_Maps_PIXAS_"+il,   npix,  1.,pend));
+				H1_PCt_Maps.add(is, il, 2, new H1D("PCt_Maps_PIXTS_"+il,   npix,  1.,pend));
 				// For Single Events
-				H1_PCa_Sevd.add(is, il, 0, new H1D("ECa_Sed_"+il, 1296,  1.,1297.));
-				H1_PCt_Sevd.add(is, il, 0, new H1D("ECt_Sed_"+il, 1296,  1.,1297.));
+				H1_PCa_Sevd.add(is, il, 0, new H1D("ECa_Sed_"+il, npix,  1.,pend));
+				H1_PCt_Sevd.add(is, il, 0, new H1D("ECt_Sed_"+il, npix,  1.,pend));
 			}
 		}
 	}
@@ -349,7 +351,7 @@ public class PCMon extends DetectorMonitor {
 									
 									ecsumpix[is][io][ii] = ecadcpix[is][off1][ii]+ecadcpix[is][off2][ii]+ecadcpix[is][off3][ii];
 									    esum[is][io]     = esum[is][io]+ecsumpix[is][io][ii];
-								     ecpixel[is][io][ii] = pcPix.pix(u,v,w); 
+								     ecpixel[is][io][ii] = pcPix.pixels.getPixel(u,v,w);
 								     H1_PCa_Sevd.get(is+1,io+7,0).fill(ecpixel[is][io][ii],esum[is][io]);								}
 							}
 						}
@@ -375,8 +377,8 @@ public class PCMon extends DetectorMonitor {
 	        	   for (int n=1 ; n<nha[is][iv-1]+1 ; n++) {
 	        		   int ip=strra[is][iv-1][n-1]; int ad=adcr[is][iv-1][n-1];
 	        		   H1_PCa_Sevd.get(is+1,il,0).fill(ip,ad);
-	        		   if(il<4) pcPix.putpixels(il,ip,ad,sed7);
-	        		   if(il>3) pcPix.putpixels(il,ip,ad,sed8);
+	        		   if(il<4) pcPix.strips.putPixels(il,ip,ad,sed7);
+	        		   if(il>3) pcPix.strips.putPixels(il,ip,ad,sed8);
 	        	   }
 	           }
 	           map7.put(5,sed7); map8.put(5,sed8);
@@ -409,7 +411,7 @@ public class PCMon extends DetectorMonitor {
 				good_uvwt = good_ut && good_vt && good_wt; //Multiplicity test (NU=NV=NW=1)		   			
 
 				if (good_uvwa && (uvwa[is][ic]-2.0)>0.02 && (uvwa[is][ic]-2.0)<0.056) { 
-					int pixela=pcPix.pix(strra[is][iic+0][0],strra[is][iic+1][0],strra[is][iic+2][0]);
+					int pixela=pcPix.pixels.getPixel(strra[is][iic+0][0],strra[is][iic+1][0],strra[is][iic+2][0]);
 					H1_PCa_Maps.get(is+1,ic+6,0).fill(pixela,1.0);
 					
 					for (int il=l1; il<l2 ; il++){
@@ -436,7 +438,7 @@ public class PCMon extends DetectorMonitor {
 				}	
 			
 				if (good_uvwt && (uvwt[is][ic]-2.0)>0.02 && (uvwt[is][ic]-2.0)<0.056) { 
-					int pixelt=pcPix.pix(strrt[is][iic+0][0],strrt[is][iic+1][0],strrt[is][iic+2][0]);
+					int pixelt=pcPix.pixels.getPixel(strrt[is][iic+0][0],strrt[is][iic+1][0],strrt[is][iic+2][0]);
 					H1_PCt_Maps.get(is+1,ic+6,0).fill(pixelt,1.0);
 					for (int il=l1; il<l2 ; il++){
 						H2_PCt_Hist.get(is+1,il,1).fill(tdcr[is][il+2][0],strrt[is][il+2][0],1.0) ;
@@ -725,13 +727,11 @@ public class PCMon extends DetectorMonitor {
 		CalibrationData fits ; 	
 		boolean doCalibration=false;
 		double meanerr[] = new double[1296];
-		 
-		
+		 		
 		for (int is=is1 ; is<is2 ; is++) {
 			for (int il=il1 ; il<il2 ; il++) {
 				int ill ; if (il<4) ill=7 ; else ill=8;
-				double cnts[]  = H1_PCa_Maps.get(is+1,ill,0).getData();
-				
+				double cnts[]  = H1_PCa_Maps.get(is+1,ill,0).getData();				
 				double adc[]   = H1_PCa_Maps.get(is+1,il,1).getData();
 				double adcsq[] = H1_PCa_Maps.get(is+1,il,3).getData();
 				doCalibration = false;
@@ -760,7 +760,7 @@ public class PCMon extends DetectorMonitor {
 					if (doCalibration){
 						fits = new CalibrationData(is,il,ip);
 						fits.getDescriptor().setType(DetectorType.EC);
-						fits.addGraph(pcPix.getpixels(il,ip+1,meanmap),pcPix.getpixels(il,ip+1,meanerr));
+						fits.addGraph(pcPix.strips.getpixels(il,ip+1,meanmap),pcPix.strips.getpixels(il,ip+1,meanerr));
 						fits.analyze();
 						collection.add(fits.getDescriptor(),fits);
 					}
@@ -996,7 +996,7 @@ public class PCMon extends DetectorMonitor {
 		 
 		if (layer<7||(layer>10&&layer<17)) {
 			if (inProcess>0) {
-				if (layer>10) {layer=layer-10; lay=layer;int component = pcPix.pixmap[layer-1-of][ic]; ic=component-1;}
+				if (layer>10) {layer=layer-10; lay=layer;int component = pcPix.pixels.getStrip(layer-1-of,ic); ic=component-1;}
 			    if (inProcess==1)  {this.analyzeAttenuation(is,is+1,layer,layer+1,0,36);}
 				if (collection.hasEntry(is, layer, ic)) {
 									
@@ -1109,7 +1109,7 @@ public class PCMon extends DetectorMonitor {
 			for(int il=l1;il<l2;il++) {
 				canvas.cd(il-1-of); h = H2_PCa_Hist.get(is+1,il,0).projectionY();
 				H1D copy = h.histClone("Copy");
-				strip = pcPix.pixmap[il-1-of][ic];
+				strip = pcPix.pixels.getStrip(il-1-of,ic);
 				copy.reset() ; copy.setBinContent(ic, h.getBinContent(ic));
 				copy.setFillColor(col2); canvas.draw(copy,"same");	    		 
 				String alab = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[0];String tlab = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[1];
@@ -1122,17 +1122,17 @@ public class PCMon extends DetectorMonitor {
 			for(int il=l1;il<l2;il++) {
 				canvas.cd(il-1-of); h = H2_PCa_Hist.get(is+1,il,1).projectionY();
 				H1D copy = h.histClone("Copy");
-				strip = pcPix.pixmap[il-1-of][ic];
+				strip = pcPix.pixels.getStrip(il-1-of,ic);
 				copy.reset() ; copy.setBinContent(strip-1, h.getBinContent(strip-1));
 				copy.setFillColor(col2); canvas.draw(copy,"same");	
 				String alab1 = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[0];String tlab1 = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[1];
 				String alab2 = lab1[il-1-of]+lab2[io-1]+lab3[1]+pixel+lab4[0];String tlab2 = lab1[il-1-of]+lab2[io-1]+lab3[1]+pixel+lab4[1];
 				if (layer<17) {
-					canvas.cd(il+2-of) ; h = H2_PCa_Hist.get(is+1,il,1).sliceY(pcPix.pixmap[il-1-of][ic]-1); h.setXTitle(alab1); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
+					canvas.cd(il+2-of) ; h = H2_PCa_Hist.get(is+1,il,1).sliceY(pcPix.pixels.getStrip(il-1-of,ic)-1); h.setXTitle(alab1); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
 					canvas.cd(il+5-of) ; h = H2_PCa_Hist.get(is+1,il,2).sliceY(ic)                   ; h.setXTitle(alab2); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
 					}
 				if (layer>16&&layer<22) {
-					canvas.cd(il+2-of) ; h = H2_PCt_Hist.get(is+1,il,1).sliceY(pcPix.pixmap[il-1-of][ic]-1); h.setXTitle(tlab1); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
+					canvas.cd(il+2-of) ; h = H2_PCt_Hist.get(is+1,il,1).sliceY(pcPix.pixels.getStrip(il-1-of,ic)-1); h.setXTitle(tlab1); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
 					canvas.cd(il+5-of) ; h = H2_PCt_Hist.get(is+1,il,2).sliceY(ic)                   ; h.setXTitle(tlab2); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
 					}
 				}  	 

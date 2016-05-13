@@ -34,8 +34,8 @@ public class PCPixels {
 	public PCPixels() {
 	  System.out.println("Initializing pixels");	
 	  this.pcalDB = new CalDrawDB("PCAL");
-	  this.pcstrDB();
-      this.pcpixDB();
+	  this.pcGetStripsDB();
+      this.pcGetPixelsDB();
       System.out.println("PCPixels is done");
 	}	
 	
@@ -43,7 +43,7 @@ public class PCPixels {
 		PCPixels pix = new PCPixels();
 	}
 	
-	public void pcstrDB() {
+	public void pcGetStripsDB() {
 		
 		int pixel = 0;
 		int[]     str = {68,62,62};
@@ -53,7 +53,7 @@ public class PCPixels {
 	        System.out.println("pcstrDB: Processing Sector "+sector);
 	 		for(int layer=0; layer<3 ; layer++) {
 	 			for(int strip = 0; strip < str[layer] ; strip++) {
-	 				shape = pcalDB.getStripShape(sector, sstr[layer], strip);	            
+		 				shape = pcalDB.getStripShape(sector, sstr[layer], strip);	            
 	        		for(int i = 0; i < shape.getShapePath().size(); ++i) {
 	                	pc_xstr[i][strip][layer][6] = shape.getShapePath().point(i).x();
 	                	pc_ystr[i][strip][layer][6] = shape.getShapePath().point(i).y();
@@ -64,7 +64,7 @@ public class PCPixels {
 				
 	}
 	
-	public void pcpixDB() {
+	public void pcGetPixelsDB() {
 		
 		int pixel=0;
    	 	DetectorShapeView2D UWmap= new DetectorShapeView2D("PCAL Pixel");

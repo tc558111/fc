@@ -6,10 +6,10 @@ import org.root.histogram.H2D;
 
 public class Pixel {
 
-    private FTHashCollection<Integer> pixelStrips = null;
-    private FTHashCollection<int[]>   stripPixels = null;
-    private FTHashCollection<H1D>        pixelH1D = null;
-    private FTHashCollection<H2D>        pixelH2D = null;
+    FTHashCollection<Integer> pixelStrips = null;
+    FTHashCollection<int[]>   stripPixels = null;
+    FTHashCollection<H1D>        pixelH1D = null;
+    FTHashCollection<H2D>        pixelH2D = null;
     
     public Pixel() {
     	this.pixelStrips = new FTHashCollection(3);
@@ -31,6 +31,17 @@ public class Pixel {
     public void addH2D(H2D h2, int pixel) {
     	pixelH2D.add(h2, pixel);   	
     }
+    
+    public int getPixel(int u, int v, int w) {
+    	return pixelStrips.getItem(u,v,w);
+    }
+    
+    public int getStrip(int layer, int pixel) {
+    	int[] str; 
+    	str = stripPixels.getItem(pixel);
+    	return str[layer-1];	
+    }
+
     
     public static void main(String[] args) {
     	int[] str ; int pixel;

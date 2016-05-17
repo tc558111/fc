@@ -20,6 +20,7 @@ public abstract class DetectorMonitor implements IDetectorProcessor, IDetectorLi
     public abstract void analyze(int inProcess);
     public abstract void close();
     public abstract void reset();
+    public abstract void saveToFile();
 
     public String getName(){ return moduleName;}
 	

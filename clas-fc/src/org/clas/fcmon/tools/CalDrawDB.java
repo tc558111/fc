@@ -10,8 +10,8 @@ import java.awt.geom.Path2D;
 import java.awt.geom.PathIterator;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import javax.swing.JFrame;
 import javax.swing.JSplitPane;
@@ -60,8 +60,9 @@ public class CalDrawDB{
 		else if( detector.contains("ECin") )unit = 1;
 		else if( detector.contains("ECout") )unit = 2;
 		else System.err.println("Must pass in PCAL, ECin, or ECout");
-		System.out.println("Generating geometry for "+detector);
-		initVert();
+		
+//		initVert();
+		myInitVert();
 		length = 4.5;
 		angle = 62.8941;
 		anglewidth = length/Math.sin(Math.toRadians(angle));
@@ -170,32 +171,20 @@ public class CalDrawDB{
 		
 		Object[] obj = getPixelVerticies(sector, uPaddle, vPaddle, wPaddle);
 		int numpoints = (int)obj[0];
+		if (numpoints<3) return null;
+		
 		double[] x = new double[numpoints];
 		double[] y = new double[numpoints];
+		
 		System.arraycopy( (double[])obj[1], 0, x, 0, numpoints);
 		System.arraycopy( (double[])obj[2], 0, y, 0, numpoints);
-	
-        
-        DetectorShape2D  pixel = new DetectorShape2D(DetectorType.PCAL,sector,2,uPaddle * 10000 + vPaddle * 100 + wPaddle);
+	    
+        DetectorShape2D  pixel = new DetectorShape2D();
     	pixel.getShapePath().clear(); 
-        if(numpoints > 2) 
-        {
-        	for(int i = 0; i < numpoints; ++i){ 
-        		pixel.getShapePath().addPoint(x[i],  y[i],  0.0); 
-        	} 
-           
-            /*
-            if(paddle%2==0){
-                shape.setColor(180, 255, 180);
-            } else {
-                shape.setColor(180, 180, 255);
-            }
-            */
-        	return pixel;
-        }
-        else
-        	return null;
-				
+
+        for(int i = 0; i < numpoints; ++i) pixel.getShapePath().addPoint(x[i],  y[i],  0.0); 
+       
+        return pixel;				
 	}
 
 	//calls getOverlapVerticies
@@ -391,32 +380,14 @@ public class CalDrawDB{
 		
 		if(isValidOverlap(sector, "u", uPaddle,"w",wPaddle) && isValidOverlap(sector, "u", uPaddle,"v",vPaddle) && isValidOverlap(sector, "v", vPaddle,"w",wPaddle))
 		{
-		//DetectorShape2D shape1 = getOverlapShape(sector, "u", uPaddle,"w",wPaddle);
-		//DetectorShape2D shape2 = getOverlapShape(sector, "v", vPaddle,"w",wPaddle);
-		//DetectorShape2D shape3 = getOverlapShape(sector, "u", uPaddle,"v",vPaddle);
-		//if(shape1 != null && shape2 != null && shape3 != null)
-		//{
 			Object[] obj = getVerticies(getOverlapShape(sector, "u", uPaddle,"w",wPaddle),getStripShape(sector, "v",vPaddle));
 			
 			int numpoints = (int)obj[0];
-			//System.out.println("Strip let: " + strip1 + "Strip num: " + paddle1 + " Numpoints: " + numpoints);
 			double[] x = new double[numpoints];
 			double[] y = new double[numpoints];
 			System.arraycopy( (double[])obj[1], 0, x, 0, numpoints);
 			System.arraycopy( (double[])obj[2], 0, y, 0, numpoints);
 			return(new Object[]{numpoints, x, y});
-			/*
-			Object[] obj2 = sortVerticies(numpoints, x, y);
-			
-			int nPoints = (int)obj2[0];
-			//System.out.println("Strip let: " + strip1 + "Strip num: " + paddle1 + " Numpoints: " + numpoints);
-			double[] xnew = new double[nPoints];
-			double[] ynew = new double[nPoints];
-			System.arraycopy( (double[])obj2[1], 0, xnew, 0, nPoints);
-			System.arraycopy( (double[])obj2[2], 0, ynew, 0, nPoints);
-			
-			return(new Object[]{nPoints, xnew, ynew});
-			*/
 		}
 		else
 		{
@@ -842,7 +813,32 @@ public class CalDrawDB{
 		
 	}
 	
-	
+	private void myInitVert() {
+		ECLayer  ecLayer;
+		Point3D point1 = new Point3D();
+		int[] vertices = {0,4,5,1};
+		int suplay = unit; //PCAL ==0, ECinner ==1, ECouter==2 
+		
+        ECDetector detector  = new ECFactory().createDetectorTilted(DataBaseLoader.getGeometryConstants(DetectorType.EC, 10, "default"));
+        
+        for(int sector = 0; sector < 6; ++sector) {
+		    for(int l = 0; l<3; l++) {    	
+	        	ecLayer = detector.getSector(sector).getSuperlayer(suplay).getLayer(l);
+	        	int n = 0;
+		    	for(ScintillatorPaddle paddle1 : ecLayer.getAllComponents()) {
+		    		for(int j=0; j<4 ; j++) {
+		    			point1.copy(paddle1.getVolumePoint(vertices[j]));
+		    			point1.rotateZ(sector * Math.PI/3.0);
+		    			point1.translateXYZ(333.1042, 0.0, 0.0);
+		    			xPoint[sector][l][n][j] =  point1.x();
+		    			yPoint[sector][l][n][j] = -point1.y();
+		    		}
+	    			n++;
+		    	}
+		    }
+        }
+	}
+		
 	private void initVert()
 	{
 		ECLayer  ecLayer;
@@ -881,7 +877,7 @@ public class CalDrawDB{
 	        	{
 	        		//first paddle of l layer
 	        		paddle = ecLayer.getComponent(0); 
-	        		
+	        		paddle.toString();
 	        		//point1
 	        		point1.copy(paddle.getVolumePoint(0));
 	        		poly1.addVertex(new Point2D(point1.x(),  point1.y())); 
@@ -976,15 +972,15 @@ public class CalDrawDB{
 	        		yshift = wwidth * Math.sin(a);
 	        	}
 	        	
-	        	//System.out.println("numstrips: " + numstrips[l]);
+	        	System.out.println("numstrips: " + numstrips[l]);
 	        	
-	        	//System.out.println("udist: " + udist);
-	        	//System.out.println("vdist: " + vdist);
-	        	//System.out.println("wdist: " + wdist);
+	        	System.out.println("udist: " + udist);
+	        	System.out.println("vdist: " + vdist);
+	        	System.out.println("wdist: " + wdist);
 	        	
-	        	//System.out.println("uwidth: " + uwidth);
-	        	//System.out.println("vwidth: " + vwidth);
-	        	//System.out.println("wwidth: " + wwidth);
+	        	System.out.println("uwidth: " + uwidth);
+	        	System.out.println("vwidth: " + vwidth);
+	        	System.out.println("wwidth: " + wwidth);
 	        	
 	        	//System.out.println("xshift: " + xshift);
 	        	//System.out.println("yshift: " + yshift);
@@ -1001,18 +997,18 @@ public class CalDrawDB{
 	        		{
 	        			if(unit == 0 && i > 51)
 	        			{
-	        				currentpad = (numstrips[l] - i - 1) * 2; 
-	        				   nextpad = (numstrips[l] - i) * 2; 
+	        				currentpad = (numstrips[l] - 1 - i) * 2; 
+	        				nextpad = (numstrips[l] - i) * 2; 
 	        			}
 	        			else if(unit == 0)
 	        			{
-	        				currentpad = numstrips[l] - i + 16 -1; 
-	        				   nextpad = numstrips[l] - i + 16;
+	        				currentpad = numstrips[l] - 1 - i + 16; 
+	        				nextpad = numstrips[l] - i + 16;
 	        			}
 	        			else
 	        			{
-	        				currentpad = numstrips[l] - i - 1; 
-	        				   nextpad = numstrips[l] - i;
+	        				currentpad = numstrips[l] - 1 - i; 
+	        				nextpad = numstrips[l] - i;
 	        			}
 		        		//point1
 		        		shape.getShapePath().addPoint(minypoint.x() + currentpad*xshift,  minypoint.y(),  0.0); 
@@ -1039,18 +1035,18 @@ public class CalDrawDB{
 	        			if(i > 14 && unit == 0)
 	        			{
 	        				//62
-	        				currentpad = (numstrips[l] - i - 1); 
-	        				   nextpad = (numstrips[l] - i); 
+	        				currentpad = (numstrips[l] - 1 - i); 
+	        				nextpad = (numstrips[l] - i); 
 	        			}
 	        			else if(unit == 0)
 	        			{
-	        				currentpad = numstrips[l] + 15 - i*2 -2; 
-	        				   nextpad = numstrips[l] + 15 - i*2;
+	        				currentpad = numstrips[l] + 15 - 2 - i*2; 
+	        				nextpad = numstrips[l] + 15 - i*2;
 	        			}
 	        			else
 	        			{
-	        				currentpad = numstrips[l] - i - 1; 
-	        				   nextpad = numstrips[l] - i;
+	        				currentpad = numstrips[l] - 1 - i; 
+	        				nextpad = numstrips[l] - i;
 	        			}
 		        		//point1
 		        		shape.getShapePath().addPoint(minxpoint.x() + currentpad*xshift,  minxpoint.y() + currentpad*yshift,  0.0); 
@@ -1067,18 +1063,18 @@ public class CalDrawDB{
 	        			if(i > 14 && unit == 0)
 	        			{
 	        				//62
-	        				currentpad = (numstrips[l] - i - 1); 
-	        				   nextpad = (numstrips[l] - i); 
+	        				currentpad = (numstrips[l] - 1 - i); 
+	        				nextpad = (numstrips[l] - i); 
 	        			}
 	        			else if(unit == 0)
 	        			{
-	        				currentpad = numstrips[l] + 15 - i*2 -2; 
-	        				   nextpad = numstrips[l] + 15 - i*2;
+	        				currentpad = numstrips[l] + 15 - 2 - i*2; 
+	        				nextpad = numstrips[l] + 15 - i*2;
 	        			}
 	        			else
 	        			{
-	        				currentpad = numstrips[l] - i - 1; 
-	        				   nextpad = numstrips[l] - i;
+	        				currentpad = numstrips[l] - 1 - i; 
+	        				nextpad = numstrips[l] - i;
 	        			}
 		        		//point1
 		        		shape.getShapePath().addPoint(minxpoint.x() + currentpad*xshift,  minxpoint.y() + currentpad*yshift,  0.0); 
@@ -1133,6 +1129,9 @@ public class CalDrawDB{
 		double[] x = new double[vert1size * vert2size];
 		double[] y = new double[vert1size * vert2size];
 		
+		double[] x2 = new double[vert1size * vert2size];
+		double[] y2 = new double[vert1size * vert2size];
+		
 		double[] xtemp1 = new double[vert1size];
 		double[] ytemp1 = new double[vert1size];
 		
@@ -1153,7 +1152,7 @@ public class CalDrawDB{
 		}
 		
 		
-		/////////////////////////////////////////////////////////////
+		////////////////// Find Intersection //////////////////////////
 		
 		SimplePolygon2D pol1 = new SimplePolygon2D(xtemp1,ytemp1);
 		SimplePolygon2D pol2 = new SimplePolygon2D(xtemp2,ytemp2);
@@ -1162,8 +1161,10 @@ public class CalDrawDB{
 		Polygon2D pol3 = Polygons2D.intersection(pol1,pol2);
 		
 		
+		///////////// Remove Duplicate Points /////////////////////////
 		//nPoints = pol3.vertexNumber();
 		int count = 0;
+		Boolean duplicate = false;
 		for(int i = 0; i < pol3.vertexNumber(); ++i)
 		{			
 			if(i == 0)
@@ -1174,42 +1175,104 @@ public class CalDrawDB{
 			}
 			else
 			{
-				if(Math.abs(pol3.vertex(i).getX() - x[count-1]) > 0.0001 || Math.abs(pol3.vertex(i).getY() - y[count-1]) > 0.0001)
+				for(int j = 0; j < i; ++j)
+				{
+					if(Math.abs(pol3.vertex(i).getX() - x[j]) < 0.000001 && Math.abs(pol3.vertex(i).getY() - y[j]) < 0.0001)
+					{
+						duplicate = true;
+					}
+				}
+				if(!duplicate)
 				{
 					x[count] = pol3.vertex(i).getX();
 					y[count] = pol3.vertex(i).getY();
 					++count;
 				}
+				duplicate = false;
 			}
 			
 			//System.out.println("x: " + pol3.vertex(i).getX() + " y: " + pol3.vertex(i).getY());
 		}
+		
+		///////////////// Record number of points /////////////////////
+				
 		if(count > 2)
 			nPoints = count;
 		else
 			nPoints = 0;
+
+		//////////// Remove Redundant Co-linear Points ////////////////
 		
-		//System.out.println("nPoints: " + nPoints);
-		
-		//if(nPoints > 2 && Polygons2D.computeArea(pol3) < 100.0)System.out.println("area: " + Polygons2D.computeArea(pol3));
-		/*
-		if(nPoints > 2 && Math.abs(Polygons2D.computeArea(pol3)) < 2.0)
+		int count2 = 0;
+		double slopebefore, slopeafter;
+		Boolean colinear = false;
+		if(nPoints > 2)
 		{
-			nPoints = 0;
-			//System.out.println("area: " + Polygons2D.computeArea(pol3));
+			for(int i = 0; i < nPoints; ++i)
+			{			
+				if(i == 0)
+				{
+					//test slope between 
+					     	 
+					//last and zeroth point
+					if(Math.abs(x[i] - x[nPoints - 1]) < 0.000001) slopebefore = 999.0;
+					else slopebefore = (y[nPoints - 1] - y[i])/(x[nPoints - 1] - x[i]);
+					
+					//current and next
+					if(Math.abs(x[i] - x[i + 1]) < 0.000001) slopeafter = 999.0;
+					else slopeafter = (y[i + 1] - y[i])/(x[i + 1] - x[i]);
+				}
+				else if(i == nPoints -1)
+				{
+					//test slope between 
+				     
+					//previous and current
+					if(Math.abs(x[i] - x[i - 1]) < 0.000001) slopebefore = 999.0;
+					else slopebefore = (y[i - 1] - y[i])/(x[i - 1] - x[i]);
+					
+					//current and zeroth
+					if(Math.abs(x[i] - x[0]) < 0.000001) slopeafter = 999.0;
+					else slopeafter = (y[0] - y[i])/(x[0] - x[i]);
+				}
+				else 
+				{
+					//test slope between 
+					
+				    //previous and current
+					if(Math.abs(x[i] - x[i - 1]) < 0.000001) slopebefore = 999.0;
+					else slopebefore = (y[i - 1] - y[i])/(x[i - 1] - x[i]);
+					
+					//current and next
+					if(Math.abs(x[i] - x[i + 1]) < 0.000001) slopeafter = 999.0;
+					else slopeafter = (y[i + 1] - y[i])/(x[i + 1] - x[i]);
+				}
+				
+				if(Math.abs(slopeafter - slopebefore) > 0.0001)
+				{
+					x2[count2] = x[i];
+					y2[count2] = y[i];
+					++count2;
+				}
+					
+				//System.out.println("x: " + pol3.vertex(i).getX() + " y: " + pol3.vertex(i).getY());
+			}
 		}
-		*/
+		///////////////// Record number of points /////////////////////
+		
+		if(count2 > 2)
+			nPoints = count2;
+		else
+			nPoints = 0;
 
 		/////////////////////////////////////////////////////////////
 		
-		return(new Object[]{nPoints, x, y});
+		return(new Object[]{nPoints, x2, y2});
 	}
 	
 
 	public static void main(String[] args){ 
 		
-		 
-		CalDrawDB pcaltest = new CalDrawDB("PCAL");
+		CalDrawDB pcaltest = new CalDrawDB("ECin");
 		TEmbeddedCanvas         shapeCanvas= new TEmbeddedCanvas();
 		DetectorShapeTabView  view= new DetectorShapeTabView();
 		
@@ -1245,33 +1308,56 @@ public class CalDrawDB{
 		
 		
 		//draw U strips
-
+		/*
 		double areasum = 0.0;
 		DetectorShape2D shape = new DetectorShape2D();
 	 	DetectorShapeView2D Umap= new DetectorShapeView2D("PCAL U");
-	 	for(int sector = 0; sector < 1; sector++) {
-	 		for(int uPaddle = 0; uPaddle < 68; uPaddle++) {
-	            shape = pcaltest.getStripShape(sector, "u", uPaddle);	            
-		        double [] xtemp2 = new double [shape.getShapePath().size()];
-		        double [] ytemp2 = new double [shape.getShapePath().size()];	
-	        		for(int i = 0; i < shape.getShapePath().size(); ++i) {
+	 	for(int sector = 0; sector < 1; sector++)
+    	{
+	 		for(int uPaddle = 0; uPaddle < 62; uPaddle++)
+	 		{
+	            shape = pcaltest.getStripShape(sector, "w", uPaddle);
+	            
+
+		            double [] xtemp2 = new double [shape.getShapePath().size()];
+	        		double [] ytemp2 = new double [shape.getShapePath().size()];
+	        		
+	        		for(int i = 0; i < shape.getShapePath().size(); ++i)
+	        		{
 	        			xtemp2[i] = shape.getShapePath().point(i).x();
 	        			ytemp2[i] = shape.getShapePath().point(i).y();
+	        			//if(shape.getShapePath().size() > 3) 
+	        			//System.out.println("x: " + xtemp2[i] + " y: " + ytemp2[i]);
 	        		}
 	        		SimplePolygon2D pol1 = new SimplePolygon2D(xtemp2,ytemp2);
 	        		areasum += pol1.area();
+	        		
+	        		if(uPaddle == 35)
+	        			System.out.println("area: " + areasum);
 
-	                for(int i = 0; i < shape.getShapePath().size(); ++i) {
-	                	x = shape.getShapePath().point(i).x();
-	                	y = shape.getShapePath().point(i).y();
-	                	shape.getShapePath().point(i).set(x, y, 0.0);
-	                }
-	                shape.setColor((int)(255*uPaddle/68),0,0);
-	                Umap.addShape(shape);
+        		
+	            
+	            for(int i = 0; i < shape.getShapePath().size(); ++i)
+        		{
+	            	
+	            	//if(vPaddle == 0)System.out.println(shape.getShapePath().point(i).x());
+	            	//if(vPaddle == 0)System.out.println(xPoint[sector][1][vPaddle][i]);
+	            	
+        			//if(vPaddle == 0)System.out.println(shape.getShapePath().point(i).y());
+	            	
+	            	x = shape.getShapePath().point(i).x();
+	            	y = shape.getShapePath().point(i).y();
+        			shape.getShapePath().point(i).set(x, y, 0.0);
+        			//if(i == 0 && uPaddle == 67)System.out.println(shape.getShapePath().point(i).x());
+        			
+        		}
+	            Umap.addShape(shape);
+
+
 	 		}
     	}
 	    view.addDetectorLayer(Umap);
-		
+		*/
 		
 		/*
 		Object[] obj = pcaltest.getOverlapVerticies(2, "u", 67, "w", 42);
@@ -1282,10 +1368,10 @@ public class CalDrawDB{
 		System.arraycopy( (double[])obj[2], 0, y, 0, numpoints);
 		System.out.println("numpoints: " + numpoints);
 		*/
-		/*
+		
 		
 		//draw UW pane
-		
+		/*
 	    DetectorShape2D shape = new DetectorShape2D();
 	 	DetectorShapeView2D UWmap= new DetectorShapeView2D("PCAL UW");
 	 	for(int sector = 0; sector < 1; sector++)
@@ -1318,7 +1404,6 @@ public class CalDrawDB{
         					shape.getShapePath().point(i).set(x, y, 0.0);
         					//if(i == 0 && vPaddle == 67 && wPaddle == 30)System.out.println(shape.getShapePath().point(i).x());
         				}
-	            		shape.setColor(130,(int)(255*vPaddle/62.),125);
 	            		UWmap.addShape(shape);
 	            	//}
 	            }
@@ -1327,9 +1412,9 @@ public class CalDrawDB{
     	}
     	}
 	    view.addDetectorLayer(UWmap);
-	    
-		*/
-		/*
+	    */
+		
+		
 		
 		//Draw pixels
 	    
@@ -1350,13 +1435,13 @@ public class CalDrawDB{
 		
 		DetectorShape2D shape = new DetectorShape2D();
     	 	DetectorShapeView2D UWmap= new DetectorShapeView2D("PCAL Pixel");
-    	 	for(int sector = 0; sector < 1; sector++)
+    	 	for(int sector = 0; sector < 3; sector++)
 	    	{
-	    	for(int uPaddle = 0; uPaddle < 68; uPaddle++)
+	    	for(int uPaddle = 0; uPaddle < 36; uPaddle++)
 	    	{
-	    		for(int vPaddle = 0; vPaddle < 62; vPaddle++)
+	    		for(int vPaddle = 0; vPaddle < 36; vPaddle++)
 	            {
-		            for(int wPaddle = 0; wPaddle < 62; wPaddle++)
+		            for(int wPaddle = 0; wPaddle < 36; wPaddle++)
 		            {
 		            	//System.out.println("u: " + uPaddle + " v: " + vPaddle + " w: " + wPaddle);
 		            	if(pcaltest.isValidPixel(sector, uPaddle, vPaddle, wPaddle))
@@ -1370,6 +1455,7 @@ public class CalDrawDB{
 		            		
 		            		double [] xtemp2 = new double [shape.getShapePath().size()];
 		            		double [] ytemp2 = new double [shape.getShapePath().size()];
+		            		
 		            		
 		            		for(int i = 0; i < shape.getShapePath().size(); ++i)
 		            		{
@@ -1386,7 +1472,12 @@ public class CalDrawDB{
 		            		num2 = vPaddle + 1;
 		            		num3 = wPaddle + 1;
 		            		//total = pcaltest.getUPixelDistance(uPaddle, vPaddle, wPaddle) + pcaltest.getVPixelDistance(uPaddle, vPaddle, wPaddle) + pcaltest.getWPixelDistance(uPaddle, vPaddle, wPaddle);
-		            		
+		            		/*
+		            		if(pcaltest.unit != 0 && shape.getShapePath().size() == 4)
+		            			System.out.println("4 vertex: " + num1  + "   " + num2 + "   " + num3);
+		            		if(pcaltest.unit != 0 && shape.getShapePath().size() == 5)
+		            			System.out.println("5 vertex: " + num1  + "   " + num2 + "   " + num3);
+		            		*/
 		            		//System.out.println(num1  + "   " + num2 + "   " + num3);
 		            		writer.println(num1  + "   " + num2 + "   " + num3 + "   "
 									+ pcaltest.getUPixelDistance(uPaddle, vPaddle, wPaddle) + "   " 
@@ -1399,7 +1490,7 @@ public class CalDrawDB{
 		            			x = shape.getShapePath().point(i).x();
 				            	y = shape.getShapePath().point(i).y();
 	        					shape.getShapePath().point(i).set(x, y, 0.0);
-	                			System.out.println("i,u,v,w,pix,x,y= "+i+" "+uPaddle+" "+vPaddle+" "+wPaddle+" "+pixel+" "+x+" "+y);
+	                			//System.out.println("i,u,v,w,pix,x,y= "+i+" "+uPaddle+" "+vPaddle+" "+wPaddle+" "+pixel+" "+x+" "+y);
 	        				}
 		            		shape.setColor(130,(int)(255*vPaddle/62.),(int)(255*wPaddle/62.));
 		            		UWmap.addShape(shape);
@@ -1414,7 +1505,7 @@ public class CalDrawDB{
 	    	
 	    	writer.close();
 	    	
-	    */
+	    
 	    	
 	       // return UWmap;
 	    	JFrame hi = new JFrame();

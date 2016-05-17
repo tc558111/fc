@@ -23,6 +23,7 @@ import javax.swing.event.ChangeListener;
 import org.root.basic.EmbeddedCanvas;
  
 import org.clas.fcmon.tools.DetectorShapeTabView;
+import org.clas.tools.Miscellaneous;
  
 /**
  * @author gavalian
@@ -51,6 +52,7 @@ public class MonitorApp extends JFrame implements ActionListener {
 	EventControl       eventControl = null;    
 	public DisplayControl   displayControl = null;	
 	public Mode7Emulation   mode7Emulation = null;
+	Miscellaneous    extra = new Miscellaneous();
        
     DetectorMonitor   monitoringClass = null;
     
@@ -82,9 +84,13 @@ public class MonitorApp extends JFrame implements ActionListener {
 // Canvas buttons
 		
         buttonPane.setLayout(new FlowLayout());
-        JButton resetBtn = new JButton("Clear Histograms");
+        JButton resetBtn = new JButton("Clear Histos");
         resetBtn.addActionListener(this);
         buttonPane.add(resetBtn);	
+        
+        JButton saveBtn = new JButton("Save Histos");
+        saveBtn.addActionListener(this);
+        buttonPane.add(saveBtn);	
         
 // Control Panels
 		
@@ -193,6 +199,7 @@ public class MonitorApp extends JFrame implements ActionListener {
     
 	@Override
 	public void actionPerformed(ActionEvent e) {
-        if(e.getActionCommand().compareTo("Clear Histograms")==0) monitoringClass.reset();
+        if(e.getActionCommand().compareTo("Clear Histos")==0) monitoringClass.reset();
+        if(e.getActionCommand().compareTo("Save Histos")==0) monitoringClass.saveToFile();
 	}      
 }

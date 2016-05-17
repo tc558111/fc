@@ -40,7 +40,7 @@ public class DetectorShapeTabView extends JPanel implements ActionListener {
     private EmbeddedCanvas       drawCanvas        = null;
     private String               drawOptions       = "default";
     
-    private final             TreeMap<String, DetectorShapeView2D>  detectorView = new TreeMap<String, DetectorShapeView2D>();
+    private final TreeMap<String, DetectorShapeView2D>  detectorView = new TreeMap<String, DetectorShapeView2D>();
     
     static final int  FPS_MIN = 0;
     static final int  FPS_MAX = 20;
@@ -52,11 +52,11 @@ public class DetectorShapeTabView extends JPanel implements ActionListener {
         super();
         this.setPreferredSize(new Dimension(600,600));
         this.setLayout(new BorderLayout());
-        this.initComponents();
+        this.initComponents(); 
     }
     
     private void initComponents(){
-        tabbedPane = new JTabbedPane();        
+        tabbedPane = new JTabbedPane();            
         tabbedPane.addChangeListener(new ChangeListener() {
      	   public void stateChanged(ChangeEvent e) {
      	        JTabbedPane tabbedPane = (JTabbedPane) e.getSource();
@@ -196,7 +196,7 @@ public class DetectorShapeTabView extends JPanel implements ActionListener {
     }
 
     public void actionPerformed(ActionEvent e) {
-        //System.out.println("Action performed " + e.getActionCommand());
+        System.out.println("Action performed " + e.getActionCommand());
         String viewName = e.getActionCommand();
         if(detectorView.containsKey(viewName)==true){
             DetectorShapeView2D  viewer = detectorView.get(viewName);
@@ -207,7 +207,7 @@ public class DetectorShapeTabView extends JPanel implements ActionListener {
             
             DetectorShape2D shape = detectorView.get(viewName).getSelectedShape();
             if(shape!=null){
-                //System.out.println("DESCRIPTOR = " + shape.getDescriptor().toString());
+                System.out.println("DESCRIPTOR = " + shape.getDescriptor().toString());
                 
                 this.calibrationModule.draw(drawCanvas, shape.getDescriptor(), this.drawOptions);
             }

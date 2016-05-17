@@ -51,14 +51,17 @@ public class PCMon extends DetectorMonitor {
    TDirectory         mondirectory = new TDirectory(); 	
    ColorPalette            palette = new ColorPalette();
    PCPixels                  pcPix = new PCPixels();
+   Pixel                   pixels  = new Pixel();
+   Strip                   strips  = new Strip();
    MyArrays               myarrays = new MyArrays();
+   CalDrawDB               pcalDB  = new CalDrawDB("PCAL");
    
    TreeMap<Integer,Object> map7=null,map8=null; 
    double[]                sed7=null,sed8=null;
    
    int inProcess        = 0; //0=init 1=processing 2=end-of-run 3=post-run
    boolean inMC         = false; //true=MC false=DATA
-   int thr[]            = {15,20};
+   int thr[]            = {15,15,20};
    int nsa,nsb,tet,p1,p2,pedref  = 0;
    String monpath       = System.getenv("COATJAVA");
    String monfile       = "mondirectory"; 
@@ -106,7 +109,7 @@ public class PCMon extends DetectorMonitor {
 				app.addCanvas("Pedestals");
 				app.addCanvas("Timing");
 				monitor.init();
-				monitor.initDetector(0,6);
+				monitor.initDetector(1,2);
 				}
 			});
 	}
@@ -142,7 +145,7 @@ public class PCMon extends DetectorMonitor {
     
 	public void initHistograms() {
 		
-		int nstr = 68 ; double nend = nstr+1;  int npix = 6765; double pend = npix+1;
+		int nstr = 68 ; double nend = nstr+1;  int npix = 6916; double pend = npix+1;
 		
 		for (int is=1; is<7 ; is++) {
 			for (int il=1 ; il<7 ; il++){
@@ -187,9 +190,11 @@ public class PCMon extends DetectorMonitor {
 	
 	public void initDetector(int is1, int is2) {
 		
-		System.out.println("initecgui():");
+		System.out.println("initpcgui():");
 		
-
+		Lmap_a.add(0,0,0, toTreeMap(pcPix.pc_cmap));
+		Lmap_a.add(0,0,1, toTreeMap(pcPix.pc_zmap));
+		
 		List<String> b2 = new ArrayList<String>();  b2.add("EVT")   ; b2.add("ADC")   ; b2.add("TDC");
 		List<String> b3 = new ArrayList<String>();  b3.add("EVT")   ; b3.add("ADC U") ; b3.add("ADC V"); b3.add("ADC W"); b3.add("ADC U+V+W");
 		
@@ -207,7 +212,7 @@ public class PCMon extends DetectorMonitor {
 			for(int ip=0; ip<68 ; ip++)    dv1.addShape(getStrip(is,1,ip));
 			for(int ip=0; ip<62 ; ip++)    dv2.addShape(getStrip(is,2,ip));
 			for(int ip=0; ip<62 ; ip++)    dv3.addShape(getStrip(is,3,ip));		    
-			for(int ip=0; ip<6765 ; ip++)  dv4.addShape(getPixel(is,4,ip));
+			for(int ip=0; ip<6916 ; ip++)  dv4.addShape(getPixel(is,4,ip));
 		}
 		
 		System.out.println("initgui time= "+(System.currentTimeMillis()-startTime));
@@ -226,7 +231,7 @@ public class PCMon extends DetectorMonitor {
 	    DetectorShape2D shape = new DetectorShape2D(DetectorType.PCAL,sector,layer,pixel);	    
 	    Path3D shapePath = shape.getShapePath();
 	    
-	    for(int j = 0; j < 3; j++){
+	    for(int j = 0; j < pcPix.pc_nvrt[pixel][6]; j++){
 	    	shapePath.addPoint(pcPix.pc_xpix[j][pixel][sector],pcPix.pc_ypix[j][pixel][sector],0.0);
 	    }
 	    return shape;
@@ -234,21 +239,14 @@ public class PCMon extends DetectorMonitor {
 	
 	public DetectorShape2D getStrip(int sector, int layer, int str) {
 
-	    DetectorShape2D shape = new DetectorShape2D(DetectorType.PCAL,sector,layer,str);	    
+	    DetectorShape2D shape = new DetectorShape2D(DetectorType.PCAL,sector,layer,str);	
 	    Path3D shapePath = shape.getShapePath();
+		
+	    for(int j = 0; j <4; j++){
+	    	shapePath.addPoint(pcPix.pc_xstr[j][str][layer-1][sector],pcPix.pc_ystr[j][str][layer-1][sector],0.0);
+	    }	
 	    
-	    double[] xc   = new double[5];
-	    double[] yc   = new double[5];
-
-	    for(int j = 0; j < 4; j++){
-	    	xc[j] = pcPix.pc_xstr[j][str][layer-1][sector];
-	    	yc[j] = pcPix.pc_ystr[j][str][layer-1][sector];
-	    }
-	    xc[4]=xc[0]; yc[4]=yc[0];
-	    
-	    for(int j=0; j < 5; j++) shapePath.addPoint(xc[j],yc[j],0.0);
-	
-	    return shape; 
+	    return shape;
 	}
 	
 	private class MyArrays {
@@ -308,26 +306,28 @@ public class PCMon extends DetectorMonitor {
 		
 		public void fill(int is, int il, int ip, int adc, double tdc, double tdcf) {
 			
-			int ic=1; if (il>3) ic=2 ;
+			int ic=1; if (il>3) ic=2 ; //EC
 			int  iv = il+3;
+			
 			if(tdc>1200&&tdc<1500){
-				uvwt[is-1][ic]=uvwt[is-1][il]+pcPix.uvw_dalitz(ic,il,ip); //Dalitz test
+				uvwt[is-1][ic]=uvwt[is-1][il]+pcPix.uvw_dalitz(0,il,ip); //Dalitz test PCAL
 	          	 nht[is-1][iv-1]++; int inh = nht[is-1][iv-1];
 	            tdcr[is-1][iv-1][inh-1] = tdc;
 	           strrt[is-1][iv-1][inh-1] = ip;
 	          	  H2_PCt_Hist.get(is,il,0).fill(tdc,ip,1.0);
-	          	  }
-	   	    if(adc>thr[ic-1]){
-	   	    	uvwa[is-1][ic]=uvwa[is-1][ic]+pcPix.uvw_dalitz(ic,il,ip); //Dalitz test
+	        }
+	   	    if(adc>thr[ic]){
+	   	    	uvwa[is-1][ic]=uvwa[is-1][ic]+pcPix.uvw_dalitz(0,il,ip); //Dalitz test PCAL
 	          	 nha[is-1][iv-1]++; int inh = nha[is-1][iv-1];
 	            adcr[is-1][iv-1][inh-1] = adc;
 	           ftdcr[is-1][iv-1][inh-1] = tdcf;
 	           strra[is-1][iv-1][inh-1] = ip;
 	          	  H2_PCa_Hist.get(is,il,0).fill(adc,ip,1.0);
-	          	  }	
+	        }	
 		}
 		
 		public void findPixels() {
+			
 			int u,v,w,ii;
 			
 			for (int is=0 ; is<6 ; is++) { // Loop over sectors
@@ -377,8 +377,8 @@ public class PCMon extends DetectorMonitor {
 	        	   for (int n=1 ; n<nha[is][iv-1]+1 ; n++) {
 	        		   int ip=strra[is][iv-1][n-1]; int ad=adcr[is][iv-1][n-1];
 	        		   H1_PCa_Sevd.get(is+1,il,0).fill(ip,ad);
-	        		   if(il<4) pcPix.strips.putPixels(il,ip,ad,sed7);
-	        		   if(il>3) pcPix.strips.putPixels(il,ip,ad,sed8);
+	        		   if(il<4) pcPix.strips.putpixels(il,ip,ad,sed7);
+	        		   if(il>3) pcPix.strips.putpixels(il,ip,ad,sed8);
 	        	   }
 	           }
 	           map7.put(5,sed7); map8.put(5,sed8);
@@ -391,13 +391,14 @@ public class PCMon extends DetectorMonitor {
 			
 		boolean good_ua, good_va, good_wa, good_uvwa;
 		boolean good_ut, good_vt, good_wt, good_uvwt;
+		boolean good_dalitz, good_pixel;
 		boolean good_uvwt_save=false;
-		int iic,l1,l2;
-		TreeMap<Integer, Object> map= (TreeMap<Integer, Object>) Lmap_a.get(0,0,0);
+		int iic,l1,l2,pixel;
+		TreeMap<Integer, Object> map= (TreeMap<Integer, Object>) Lmap_a.get(0,0,1); //PCAL
 		double pixelLength[] = (double[]) map.get(1);
 		
 		for (int is=0 ; is<6 ; is++) {		
-			for (int ic=1; ic<3 ; ic++) {
+			for (int ic=1; ic<2 ; ic++) {  //PCAL 
 				iic=ic*3; l1=iic-2; l2=iic+1;
 				
 				good_ua = nha[is][iic+0]==1;
@@ -410,18 +411,23 @@ public class PCMon extends DetectorMonitor {
 				good_uvwa = good_ua && good_va && good_wa; //Multiplicity test (NU=NV=NW=1)
 				good_uvwt = good_ut && good_vt && good_wt; //Multiplicity test (NU=NV=NW=1)		   			
 
-				if (good_uvwa && (uvwa[is][ic]-2.0)>0.02 && (uvwa[is][ic]-2.0)<0.056) { 
-					int pixela=pcPix.pixels.getPixel(strra[is][iic+0][0],strra[is][iic+1][0],strra[is][iic+2][0]);
-					H1_PCa_Maps.get(is+1,ic+6,0).fill(pixela,1.0);
+//				good_dalitz = uvwa[is][ic]-2.0)>0.02 && (uvwa[is][ic]-2.0)<0.056 //EC 				
+				good_dalitz = Math.abs(uvwa[is][ic]-2.0)<0.1; //PCAL
+				      pixel = pcPix.pixels.getPixel(strra[is][iic+0][0],strra[is][iic+1][0],strra[is][iic+2][0]);
+				good_pixel  = pixel!=0;
+						
+			    if (good_uvwa && good_dalitz && good_pixel) { 
+
+					H1_PCa_Maps.get(is+1,ic+6,0).fill(pixel,1.0);
 					
 					for (int il=l1; il<l2 ; il++){
-						double adcc = adcr[is][il+2][0]/pixelLength[pixela-1];
+						double adcc = adcr[is][il+2][0]/pixelLength[pixel-1];
 						
 						H2_PCa_Hist.get(is+1,il,1).fill(adcc,strra[is][il+2][0],1.0) ;
-						H2_PCa_Hist.get(is+1,il,2).fill(adcc,pixela,1.0);						
-						H1_PCa_Maps.get(is+1,ic+6,1).fill(pixela,adcc);
-						H1_PCa_Maps.get(is+1,il,0).fill(pixela,adcc);
-						H1_PCa_Maps.get(is+1,il,2).fill(pixela,Math.pow(adcc,2));
+						H2_PCa_Hist.get(is+1,il,2).fill(adcc,pixel,1.0);						
+						H1_PCa_Maps.get(is+1,ic+6,1).fill(pixel,adcc);
+						H1_PCa_Maps.get(is+1,il,0).fill(pixel,adcc);
+						H1_PCa_Maps.get(is+1,il,2).fill(pixel,Math.pow(adcc,2));
 
 						if (good_uvwt) {
 							if(l1==1) good_uvwt_save = good_uvwt;
@@ -436,15 +442,18 @@ public class PCMon extends DetectorMonitor {
 						}
 					}
 				}	
+//				good_dalitz = uvwt[is][ic]-2.0)>0.02 && (uvwt[is][ic]-2.0)<0.056 //EC 				
+				good_dalitz = Math.abs(uvwt[is][ic]-2.0)<0.1; //PCAL
+				     pixel  = pcPix.pixels.getPixel(strrt[is][iic+0][0],strrt[is][iic+1][0],strrt[is][iic+2][0]);
+				good_pixel  = pixel!=0;
 			
-				if (good_uvwt && (uvwt[is][ic]-2.0)>0.02 && (uvwt[is][ic]-2.0)<0.056) { 
-					int pixelt=pcPix.pixels.getPixel(strrt[is][iic+0][0],strrt[is][iic+1][0],strrt[is][iic+2][0]);
-					H1_PCt_Maps.get(is+1,ic+6,0).fill(pixelt,1.0);
+				if (good_uvwt && good_dalitz && good_pixel) { 
+					H1_PCt_Maps.get(is+1,ic+6,0).fill(pixel,1.0);
 					for (int il=l1; il<l2 ; il++){
 						H2_PCt_Hist.get(is+1,il,1).fill(tdcr[is][il+2][0],strrt[is][il+2][0],1.0) ;
-						H2_PCt_Hist.get(is+1,il,2).fill(tdcr[is][il+2][0],pixelt,1.0);						
-						H1_PCt_Maps.get(is+1,ic+6,1).fill(pixelt,tdcr[is][il+2][0]);
-						H1_PCt_Maps.get(is+1,il,0).fill(pixelt,tdcr[is][il+2][0]);
+						H2_PCt_Hist.get(is+1,il,2).fill(tdcr[is][il+2][0],pixel,1.0);						
+						H1_PCt_Maps.get(is+1,ic+6,1).fill(pixel,tdcr[is][il+2][0]);
+						H1_PCt_Maps.get(is+1,il,0).fill(pixel,tdcr[is][il+2][0]);
 					}
 				}	
 			}
@@ -505,14 +514,14 @@ public class PCMon extends DetectorMonitor {
 		int adc,ped,npk=0,pedref=0,timf=0,timc=0;
 		double mc_t=0.,tdc=0,tdcf=0;
  				
-		if(event.hasBank("EC::true")!=true) {
+		if(event.hasBank("PCAL::true")!=true) {
 			thr[0]=15 ; thr[1]=20;
 		
 			this.myarrays.clear();
 			if (debug) event.getHandler().list();	
 					
     		decoder.decode(event);
-            List<DetectorBankEntry> strips = decoder.getDataEntries("EC");
+            List<DetectorBankEntry> strips = decoder.getDataEntries("PCAL");
 
             for(DetectorBankEntry strip : strips) {
                 adc=ped=pedref=npk=timf=timc=0 ; tdc=tdcf=0;
@@ -567,20 +576,20 @@ public class PCMon extends DetectorMonitor {
         
 		} 
 		
-		if(event.hasBank("EC::true")==true){
-			EvioDataBank bank  = (EvioDataBank) event.getBank("EC::true");
+		if(event.hasBank("PCAL::true")==true){
+			EvioDataBank bank  = (EvioDataBank) event.getBank("PCAL::true");
 			int nrows = bank.rows();
 			for(int i=0; i < nrows; i++){
 				mc_t = bank.getDouble("avgT",i);
 			}	
 		}
 					
-		if(event.hasBank("EC::dgtz")==true){
+		if(event.hasBank("PCAL::dgtz")==true){
 			
 			inMC = true; thr[0]=thr[1]=5;
 			this.myarrays.clear();
 			
-			EvioDataBank bank = (EvioDataBank) event.getBank("EC::dgtz");
+			EvioDataBank bank = (EvioDataBank) event.getBank("PCAL::dgtz");
 			
 			for(int i = 0; i < bank.rows(); i++){
 				float dum = (float)bank.getInt("TDC",i)-(float)mc_t*1000;
@@ -595,6 +604,7 @@ public class PCMon extends DetectorMonitor {
 			   	   adc = bank.getInt("ADC",i);
         	  int tdcc = bank.getInt("TDC",i);
         	      tdcf = tdcc;
+        	      //System.out.println("sector,strip,stack,view,ADC="+is+" "+ip+" "+ic+" "+il+" "+adc);
        	           tdc = (((float)tdcc-(float)mc_t*1000)-tdcmax+1340000)/1000;		   	        	
         	      if(ic==1||ic==2) this.myarrays.fill(is, il+(ic-1)*3, ip, adc, tdc, tdcf);		      	   	   		    	
 		    }
@@ -1109,7 +1119,8 @@ public class PCMon extends DetectorMonitor {
 			for(int il=l1;il<l2;il++) {
 				canvas.cd(il-1-of); h = H2_PCa_Hist.get(is+1,il,0).projectionY();
 				H1D copy = h.histClone("Copy");
-				strip = pcPix.pixels.getStrip(il-1-of,ic);
+				
+				strip = pcPix.pixels.getStrip(il-of,ic+1);
 				copy.reset() ; copy.setBinContent(ic, h.getBinContent(ic));
 				copy.setFillColor(col2); canvas.draw(copy,"same");	    		 
 				String alab = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[0];String tlab = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[1];
@@ -1122,18 +1133,18 @@ public class PCMon extends DetectorMonitor {
 			for(int il=l1;il<l2;il++) {
 				canvas.cd(il-1-of); h = H2_PCa_Hist.get(is+1,il,1).projectionY();
 				H1D copy = h.histClone("Copy");
-				strip = pcPix.pixels.getStrip(il-1-of,ic);
+				strip = pcPix.pixels.getStrip(il-of,ic+1);
 				copy.reset() ; copy.setBinContent(strip-1, h.getBinContent(strip-1));
 				copy.setFillColor(col2); canvas.draw(copy,"same");	
 				String alab1 = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[0];String tlab1 = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[1];
 				String alab2 = lab1[il-1-of]+lab2[io-1]+lab3[1]+pixel+lab4[0];String tlab2 = lab1[il-1-of]+lab2[io-1]+lab3[1]+pixel+lab4[1];
 				if (layer<17) {
-					canvas.cd(il+2-of) ; h = H2_PCa_Hist.get(is+1,il,1).sliceY(pcPix.pixels.getStrip(il-1-of,ic)-1); h.setXTitle(alab1); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
-					canvas.cd(il+5-of) ; h = H2_PCa_Hist.get(is+1,il,2).sliceY(ic)                   ; h.setXTitle(alab2); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
+					canvas.cd(il+2-of) ; h = H2_PCa_Hist.get(is+1,il,1).sliceY(strip-1); h.setXTitle(alab1); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
+					canvas.cd(il+5-of) ; h = H2_PCa_Hist.get(is+1,il,2).sliceY(ic)     ; h.setXTitle(alab2); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
 					}
 				if (layer>16&&layer<22) {
-					canvas.cd(il+2-of) ; h = H2_PCt_Hist.get(is+1,il,1).sliceY(pcPix.pixels.getStrip(il-1-of,ic)-1); h.setXTitle(tlab1); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
-					canvas.cd(il+5-of) ; h = H2_PCt_Hist.get(is+1,il,2).sliceY(ic)                   ; h.setXTitle(tlab2); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
+					canvas.cd(il+2-of) ; h = H2_PCt_Hist.get(is+1,il,1).sliceY(strip-1); h.setXTitle(tlab1); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
+					canvas.cd(il+5-of) ; h = H2_PCt_Hist.get(is+1,il,2).sliceY(ic)     ; h.setXTitle(tlab2); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
 					}
 				}  	 
 			}

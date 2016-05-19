@@ -50,7 +50,7 @@ public class ECMon extends DetectorMonitor {
    DatabaseConstantProvider   ccdb = new DatabaseConstantProvider(12,"default");
    TDirectory         mondirectory = new TDirectory(); 	
    ColorPalette            palette = new ColorPalette();
-   ECPixels                  ecPix = new ECPixels();
+   ECPixels                  ecPix = new ECPixels(1);
    MyArrays               myarrays = new MyArrays();
    
    TreeMap<Integer,Object> map7=null,map8=null; 
@@ -120,6 +120,10 @@ public class ECMon extends DetectorMonitor {
 	   	  app.mode7Emulation.nsa.setText(Integer.toString(this.nsa));
 	   	  app.mode7Emulation.nsb.setText(Integer.toString(this.nsb));
 	   	  collection.clear();	
+	}
+	
+	public void saveToFile() {
+		
 	}
 	
 	public void reset() {
@@ -216,7 +220,29 @@ public class ECMon extends DetectorMonitor {
 		app.getDetectorView().addDetectorListener(this);
 		
 	}
+	public DetectorShape2D getPixel(int sector, int layer, int pixel){
+
+	    DetectorShape2D shape = new DetectorShape2D(DetectorType.ECIN,sector,layer,pixel);	    
+	    Path3D shapePath = shape.getShapePath();
+	    
+	    for(int j = 0; j < ecPix.ec_nvrt[pixel][6]; j++){
+	    	shapePath.addPoint(ecPix.ec_xpix[j][pixel][sector],ecPix.ec_ypix[j][pixel][sector],0.0);
+	    }
+	    return shape;
+	}
 	
+	public DetectorShape2D getStrip(int sector, int layer, int str) {
+
+	    DetectorShape2D shape = new DetectorShape2D(DetectorType.ECIN,sector,layer,str);	
+	    Path3D shapePath = shape.getShapePath();
+		
+	    for(int j = 0; j <4; j++){
+	    	shapePath.addPoint(ecPix.ec_xstr[j][str][layer-1][sector],ecPix.ec_ystr[j][str][layer-1][sector],0.0);
+	    }	
+	    
+	    return shape;
+	}
+	/*
 	public DetectorShape2D getPixel(int sector, int layer, int pixel){
 
 	    DetectorShape2D shape = new DetectorShape2D(DetectorType.ECIN,sector,layer,pixel);	    
@@ -270,7 +296,7 @@ public class ECMon extends DetectorMonitor {
 	
 	    return shape; 
 	}
-	
+	*/
 	private class MyArrays {
 		
 		int        nha[][] = new    int[6][9];
@@ -777,12 +803,14 @@ public class ECMon extends DetectorMonitor {
 				
 				map = (TreeMap<Integer, Object>) Lmap_a.get(is+1,il+10,0);
 				double meanmap[] = (double[]) map.get(1);
+				double[] xpixels = new double[36];
+				for (int i=0;i<36;i++) xpixels[i]=i;
 				
 				for (int ip=ip1 ; ip<ip2 ; ip++){
 					if (doCalibration){
 						fits = new CalibrationData(is,il,ip);
 						fits.getDescriptor().setType(DetectorType.EC);
-						fits.addGraph(ecPix.getpixels(il,ip+1,meanmap),ecPix.getpixels(il,ip+1,meanerr));
+						fits.addGraph(xpixels,ecPix.getpixels(il,ip+1,meanmap),ecPix.getpixels(il,ip+1,meanerr));
 						fits.analyze();
 						collection.add(fits.getDescriptor(),fits);
 					}
@@ -797,7 +825,7 @@ public class ECMon extends DetectorMonitor {
 		this.analyze(inProcess);
 		switch (app.getSelectedTabIndex()) {
 		case 0:
-		  if(!inMC) this.canvasMode1(desc, app.getCanvas("Mode1"));
+		  this.canvasMode1(desc,       app.getCanvas("Mode1"));
 		  break;
 		case 1:
 		  this.canvasSingleEvent(desc, app.getCanvas("SingleEvent"));
@@ -809,7 +837,7 @@ public class ECMon extends DetectorMonitor {
 		  this.canvasAttenuation(desc, app.getCanvas("Attenuation"));
 		  break;
 		case 4:
-		  if(!inMC) this.canvasPedestal(desc, app.getCanvas("Pedestals"));	
+		  this.canvasPedestal(desc,    app.getCanvas("Pedestals"));	
 		  break;
 		case 5:
 		  this.canvasTiming(desc,      app.getCanvas("Timing"));	
@@ -817,6 +845,8 @@ public class ECMon extends DetectorMonitor {
 	}
 
 	public void canvasMode1(DetectorDescriptor desc, EmbeddedCanvas canvas) {
+		
+		if (inMC) return;
 		
 		int is    = desc.getSector();
 		int layer = desc.getLayer();
@@ -905,6 +935,8 @@ public class ECMon extends DetectorMonitor {
 	}
 	
 	public void canvasPedestal(DetectorDescriptor desc, EmbeddedCanvas canvas) {
+		
+		if (inMC) return;
 		
 		String otab[][]={{"U Strips","V Strips","W Strips"},{"U Inner Strips","V Inner Strips","W Inner Strips"},{"U Outer Strips","V Outer Strips","W Outer Strips"}};
 			 		
@@ -1014,7 +1046,8 @@ public class ECMon extends DetectorMonitor {
 		 
 		if (layer<7||(layer>10&&layer<17)) {
 			if (inProcess>0) {
-				if (layer>10) {layer=layer-10; lay=layer;int component = ecPix.pixmap[layer-1-of][ic]; ic=component-1;}
+//				if (layer>10) {layer=layer-10; lay=layer;int component = ecPix.pixmap[layer-1-of][ic]; ic=component-1;}
+				if (layer>10) {layer=layer-10; lay=layer;int component = ecPix.pixels.getStrip(layer-of,ic+1); ic=component-1;}
 			    if (inProcess==1)  {this.analyzeAttenuation(is,is+1,layer,layer+1,0,36);}
 				if (collection.hasEntry(is, layer, ic)) {
 									
@@ -1127,7 +1160,8 @@ public class ECMon extends DetectorMonitor {
 			for(int il=l1;il<l2;il++) {
 				canvas.cd(il-1-of); h = H2_ECa_Hist.get(is+1,il,0).projectionY();
 				H1D copy = h.histClone("Copy");
-				strip = ecPix.pixmap[il-1-of][ic];
+//		     	strip = ecPix.pixmap[il-1-of][ic];
+				strip = ecPix.pixels.getStrip(il-of,ic+1);
 				copy.reset() ; copy.setBinContent(ic, h.getBinContent(ic));
 				copy.setFillColor(col2); canvas.draw(copy,"same");	    		 
 				String alab = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[0];String tlab = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[1];
@@ -1140,17 +1174,18 @@ public class ECMon extends DetectorMonitor {
 			for(int il=l1;il<l2;il++) {
 				canvas.cd(il-1-of); h = H2_ECa_Hist.get(is+1,il,1).projectionY();
 				H1D copy = h.histClone("Copy");
-				strip = ecPix.pixmap[il-1-of][ic];
+//				strip = ecPix.pixmap[il-1-of][ic];
+				strip = ecPix.pixels.getStrip(il-of,ic+1);
 				copy.reset() ; copy.setBinContent(strip-1, h.getBinContent(strip-1));
 				copy.setFillColor(col2); canvas.draw(copy,"same");	
 				String alab1 = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[0];String tlab1 = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[1];
 				String alab2 = lab1[il-1-of]+lab2[io-1]+lab3[1]+pixel+lab4[0];String tlab2 = lab1[il-1-of]+lab2[io-1]+lab3[1]+pixel+lab4[1];
 				if (layer<17) {
-					canvas.cd(il+2-of) ; h = H2_ECa_Hist.get(is+1,il,1).sliceY(ecPix.pixmap[il-1-of][ic]-1); h.setXTitle(alab1); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
+					canvas.cd(il+2-of) ; h = H2_ECa_Hist.get(is+1,il,1).sliceY(strip-1); h.setXTitle(alab1); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
 					canvas.cd(il+5-of) ; h = H2_ECa_Hist.get(is+1,il,2).sliceY(ic)                   ; h.setXTitle(alab2); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
 					}
 				if (layer>16&&layer<22) {
-					canvas.cd(il+2-of) ; h = H2_ECt_Hist.get(is+1,il,1).sliceY(ecPix.pixmap[il-1-of][ic]-1); h.setXTitle(tlab1); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
+					canvas.cd(il+2-of) ; h = H2_ECt_Hist.get(is+1,il,1).sliceY(strip-1); h.setXTitle(tlab1); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
 					canvas.cd(il+5-of) ; h = H2_ECt_Hist.get(is+1,il,2).sliceY(ic)                   ; h.setXTitle(tlab2); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
 					}
 				}  	 

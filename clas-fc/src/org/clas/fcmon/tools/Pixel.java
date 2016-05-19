@@ -12,15 +12,24 @@ public class Pixel {
     FTHashCollection<H1D>               pixelH1D = null;
     FTHashCollection<H2D>               pixelH2D = null;
     FTHashCollection<DetectorShape2D> pixelShape = null;
+    FTHashCollection<Double>           pixelArea = null;
+    FTHashCollection<Double>          pixelUDist = null;
+    FTHashCollection<Double>          pixelVDist = null;
+    FTHashCollection<Double>          pixelWDist = null;
     
 	double[] theta={0.0,60.0,120.0,180.0,240.0,300.0};
+    double maxPixelArea = 0;
     
     public Pixel() {
-    	this.pixelStrips = new FTHashCollection(3);
-    	this.stripPixels = new FTHashCollection(1);
-    	this.pixelH1D    = new FTHashCollection(1);
-    	this.pixelH2D    = new FTHashCollection(1);
-    	this.pixelShape  = new FTHashCollection(2);
+    	this.pixelStrips = new FTHashCollection<Integer>(3);
+    	this.stripPixels = new FTHashCollection<int[]>(1);
+    	this.pixelH1D    = new FTHashCollection<H1D>(1);
+    	this.pixelH2D    = new FTHashCollection<H2D>(1);
+    	this.pixelShape  = new FTHashCollection<DetectorShape2D>(2);
+    	this.pixelArea   = new FTHashCollection<Double>(2);
+    	this.pixelUDist  = new FTHashCollection<Double>(1);
+    	this.pixelVDist  = new FTHashCollection<Double>(1);
+    	this.pixelWDist  = new FTHashCollection<Double>(1);
     }
     
     public void addTriplets(int pixel, int u, int v, int w) {
@@ -33,8 +42,8 @@ public class Pixel {
     	pixelShape.add(shape, sector, pixel);
     }
     
-    public DetectorShape2D getShape(int sector, int pixel) {
-    	return pixelShape.getItem(sector,pixel);
+    public void addArea(double area, int sector, int pixel){
+    	pixelArea.add(area, sector, pixel);
     }
     
     public DetectorShape2D rotatePixel(int sector, int pixel) {
@@ -51,10 +60,6 @@ public class Pixel {
 		return rotshape;
     }
     
-    public int getNumPixels() {
-    	return pixelShape.getMap().size();
-    }
-    
     public void addH1D(H1D h1, int pixel) {
     	pixelH1D.add(h1, pixel);   	
     }
@@ -63,12 +68,64 @@ public class Pixel {
     	pixelH2D.add(h2, pixel);   	
     }
     
+    public void setMaxPixelArea(double area) {
+    	this.maxPixelArea = area;
+    }
+    
+    public void addPixDist(double udist, double vdist, double wdist, int pixel) {
+    	pixelUDist.add(udist,pixel);
+    	pixelVDist.add(vdist,pixel);
+    	pixelWDist.add(wdist,pixel);
+    }
+    
+    public double getUdist(int pixel) {
+    	return pixelUDist.getItem(pixel);
+    }
+    
+    public double getVdist(int pixel) {
+    	return pixelVDist.getItem(pixel);
+    }
+    
+    public double getWdist(int pixel) {
+    	return pixelWDist.getItem(pixel);
+    }
+    
+    public double[] getDist(int layer) {
+    	double[] dist = new double[this.getNumPixels()];
+    	for (int pixel=0; pixel<this.getNumPixels(); pixel++) {
+      	  if (layer==1) dist[pixel] = this.getUdist(pixel+1);
+    	  if (layer==2) dist[pixel] = this.getVdist(pixel+1);
+    	  if (layer==3) dist[pixel] = this.getWdist(pixel+1);
+    	}
+    	return dist;
+    }
+    
     public int getPixel(int u, int v, int w) {
     	int pixel=0;
     	if (pixelStrips.hasItem(u,v,w)) pixel = pixelStrips.getItem(u,v,w);
     	return pixel;
     }
     
+    public int getNumPixels() {
+    	return pixelShape.getMap().size();
+    }
+    
+    public DetectorShape2D getShape(int sector, int pixel) {
+    	return pixelShape.getItem(sector,pixel);
+    }
+    
+    public double getArea(int pixel) {
+    	return pixelArea.getItem(0,pixel);
+    }
+    
+    public double getNormalizedArea(int pixel) {
+    	return pixelArea.getItem(0,pixel)/maxPixelArea;
+    }
+    
+    public int[] getTriplets(int pixel) {
+    	return stripPixels.getItem(pixel);		
+    }
+   
     public int getStrip(int layer, int pixel) {
     	int[] str; 
     	str = stripPixels.getItem(pixel);

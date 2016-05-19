@@ -26,7 +26,7 @@ public class CalibrationData {
 	
     public DetectorDescriptor getDescriptor(){ return this.desc;}
     
-    public void addGraph(double[] data, double[] error){
+    public void addGraph(double[] xdata, double[] data, double[] error){
     	
     	GraphErrors graph;
 		String otab[]={"U Inner Strip","V Inner Strip","W Inner Strip","U Outer Strip","V Outer Strip","W Outer Strip"};
@@ -45,16 +45,19 @@ public class CalibrationData {
         double[] yprawe = new double[dataSize]; 
  
         // For raw graph
-        n=0;
+        n=0; double xmin=1000. ; double xmax=0.;
+        for(int loop=0; loop < data.length; loop++) {
+        	double xx = xdata[loop];
+        	if (xx<xmin) xmin=xx;
+        	if (xx>xmax) xmax=xx;
+        }
+         
         for(int loop = 0; loop < data.length; loop++) {
-        	if(loop>=min&&loop<max&&data[loop]>20) n++;        		
-    		xpraw[loop]  = loop; 
+        	if (data[loop]>20) n++;   		
+    		xpraw[loop]  = xdata[loop]; 
     		xprawe[loop] = 0.;
     		ypraw[loop]  = data[loop];
-    		yprawe[loop] = Math.max(0.1,error[loop]); 
-    		//if(getDescriptor().getSector()==1){
-    		//System.out.println("loop,il,ic,ypraw,ypawre = "+loop+" "+getDescriptor().getLayer()+" "+getDescriptor().getComponent()+" "+ypraw[loop]+" "+yprawe[loop]);
-    		//}
+    		yprawe[loop] = 10.;
         }
         
         double[] xpfit  = new double[n];
@@ -66,7 +69,7 @@ public class CalibrationData {
         // For fit graph
         n=0;
         for(int loop = 0; loop < data.length; loop++){
-        	if(loop>=min&&loop<max&&data[loop]>20) {      		
+        	if (data[loop]>20) {
          		xpfit[n]  = xpraw[loop]; 
         		xpfite[n] = xprawe[loop];
         		ypfit[n]  = ypraw[loop];
@@ -76,7 +79,7 @@ public class CalibrationData {
         }
 
         graph = new GraphErrors(xpfit,ypfit,xpfite,ypfite);   
-        graph.setXTitle("Pixel Number");
+        graph.setXTitle("Pixel Distance (cm)");
         graph.setYTitle("Mean ADC");
         graph.setMarkerStyle(2);
         graph.setMarkerSize(8);
@@ -89,7 +92,7 @@ public class CalibrationData {
         this.fitgraphs.add(graph);
         
         graph = new GraphErrors(xpraw,ypraw,xprawe,yprawe);   
-        graph.setXTitle("Pixel Number");
+        graph.setXTitle("Pixel Distance (cm)");
         graph.setYTitle("Mean ADC");
         graph.setMarkerStyle(2);  
         graph.setMarkerSize(6); 
@@ -98,7 +101,7 @@ public class CalibrationData {
         graph.setTitle("EXP FIT: Sector "+sector+" "+otab[view-1]+" "+strip);        
         this.rawgraphs.add(graph);
         
-        F1D f1 = new F1D("exp",0,max);
+        F1D f1 = new F1D("exp",0,400);
         this.functions.add(f1);
     }
     
@@ -113,9 +116,8 @@ public class CalibrationData {
             	int imax = Math.min(2,dataY.length-1);
             	double p0try = dataY[imax] ; double p0min = p0try-30. ; double p0max=p0try+30.;
             	func.setParameter(0, p0try);
-            	func.setParameter(1,-0.0144);
+            	func.setParameter(1,-0.00277);
             	func.setParLimits(0,p0min,p0max);
-            	func.setParLimits(1,-0.5,-0.00001);
             	func.setLineColor(2);
  
             	this.fitgraphs.get(loop).fit(this.functions.get(loop),"REQ");	//Fit data
@@ -131,8 +133,7 @@ public class CalibrationData {
             	}
             	this.chi2.add(ch);
             }
-        }
-        
+        }  
     }
     
     public GraphErrors  getFitGraph(int index){return this.fitgraphs.get(index);}

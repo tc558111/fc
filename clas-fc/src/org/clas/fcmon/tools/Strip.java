@@ -41,11 +41,13 @@ public class Strip {
     } 
     
     public double[] getpixels(int layer, int strip, double[] in) {
-    	Integer[] dum = this.getPixels(0,layer,strip); 
-    	double[] out = new double[dum.length];
-    	for (int j=0; j<dum.length; j++) {
-    		int pixel = dum[j];
-    		out[j] = in[pixel-1];
+    	Integer[] pixe = this.getPixels(0,layer,strip); 
+    	double[] out = new double[pixe.length];
+    	int jmax=pixe.length;
+    	for (int j=0; j<pixe.length; j++) {
+    		jmax--;
+    		if(layer==1)   out[j] = in[pixe[j]-1];
+    		if(layer>1) out[jmax] = in[pixe[j]-1];
     	}
     	return out;
     }

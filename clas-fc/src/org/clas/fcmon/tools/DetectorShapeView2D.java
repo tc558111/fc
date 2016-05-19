@@ -103,6 +103,9 @@ public class DetectorShapeView2D extends JPanel implements ActionListener, Mouse
     	case "EVT":
     		omap=0;
     		break;
+    	case "NEVT":
+    		omap=1;
+    		break;
     	case "ADC":
     		omap=0;
     		break;
@@ -421,7 +424,7 @@ public class DetectorShapeView2D extends JPanel implements ActionListener, Mouse
     
     public void showDrawRegion(){
         System.out.println(String.format("DRAW REGION X/Y %5d %5d  W/H %6d %6d", 
-                this.drawRegion.x,this.drawRegion.y,this.drawRegion.width,this.drawRegion.height));
+        this.drawRegion.x,this.drawRegion.y,this.drawRegion.width,this.drawRegion.height));
     }
 
     public void mouseClicked(MouseEvent e) {  

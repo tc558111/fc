@@ -47,10 +47,10 @@ public class PCMon extends DetectorMonitor {
    EventDecoder            decoder = new EventDecoder();
    FADCConfigLoader          fadc  = new FADCConfigLoader();
    FADCFitter              fitter  = new FADCFitter();
-   DatabaseConstantProvider   ccdb = new DatabaseConstantProvider(12,"default");
+   DatabaseConstantProvider   ccdb = new DatabaseConstantProvider(2,"default");
    TDirectory         mondirectory = new TDirectory(); 	
    ColorPalette            palette = new ColorPalette();
-   PCPixels                  pcPix = new PCPixels();
+   PCPixels                  pcPix = new PCPixels("PCAL");
    Pixel                   pixels  = new Pixel();
    Strip                   strips  = new Strip();
    MyArrays               myarrays = new MyArrays();
@@ -181,6 +181,8 @@ public class PCMon extends DetectorMonitor {
 				H1_PCt_Maps.add(is, il, 1, new H1D("PCt_Maps_PIXTSUM_"+il, npix,  1.,pend));	
 				H1_PCa_Maps.add(is, il, 2, new H1D("PCa_Maps_PIXAS_"+il,   npix,  1.,pend));
 				H1_PCt_Maps.add(is, il, 2, new H1D("PCt_Maps_PIXTS_"+il,   npix,  1.,pend));
+				H1_PCa_Maps.add(is, il, 3, new H1D("PCa_Maps_NEVTPIXA_"+il, npix,  1.,pend));
+				H1_PCt_Maps.add(is, il, 3, new H1D("PCt_Maps_NEVTPIXT_"+il, npix,  1.,pend));	
 				// For Single Events
 				H1_PCa_Sevd.add(is, il, 0, new H1D("ECa_Sed_"+il, npix,  1.,pend));
 				H1_PCt_Sevd.add(is, il, 0, new H1D("ECt_Sed_"+il, npix,  1.,pend));
@@ -195,8 +197,8 @@ public class PCMon extends DetectorMonitor {
 		Lmap_a.add(0,0,0, toTreeMap(pcPix.pc_cmap));
 		Lmap_a.add(0,0,1, toTreeMap(pcPix.pc_zmap));
 		
-		List<String> b2 = new ArrayList<String>();  b2.add("EVT")   ; b2.add("ADC")   ; b2.add("TDC");
-		List<String> b3 = new ArrayList<String>();  b3.add("EVT")   ; b3.add("ADC U") ; b3.add("ADC V"); b3.add("ADC W"); b3.add("ADC U+V+W");
+		List<String> b2 = new ArrayList<String>();  b2.add("EVT");   b2.add("ADC")  ; b2.add("TDC");
+		List<String> b3 = new ArrayList<String>();  b3.add("EVT");   b3.add("NEVT") ; b3.add("ADC U"); b3.add("ADC V"); b3.add("ADC W"); b3.add("ADC U+V+W");
 		
 		List<List<String>> bg1 = new ArrayList<List<String>>();  bg1.add(b2);
 		List<List<String>> bg2 = new ArrayList<List<String>>();  bg2.add(b3);
@@ -231,7 +233,7 @@ public class PCMon extends DetectorMonitor {
 	    DetectorShape2D shape = new DetectorShape2D(DetectorType.PCAL,sector,layer,pixel);	    
 	    Path3D shapePath = shape.getShapePath();
 	    
-	    for(int j = 0; j < pcPix.pc_nvrt[pixel][6]; j++){
+	    for(int j = 0; j < pcPix.pc_nvrt[pixel]; j++){
 	    	shapePath.addPoint(pcPix.pc_xpix[j][pixel][sector],pcPix.pc_ypix[j][pixel][sector],0.0);
 	    }
 	    return shape;
@@ -419,6 +421,7 @@ public class PCMon extends DetectorMonitor {
 			    if (good_uvwa && good_dalitz && good_pixel) { 
 
 					H1_PCa_Maps.get(is+1,ic+6,0).fill(pixel,1.0);
+					H1_PCa_Maps.get(is+1,ic+6,3).fill(pixel,1.0/pcPix.pixels.getNormalizedArea(pixel)); //Normalized to pixel area
 					
 					for (int il=l1; il<l2 ; il++){
 						double adcc = adcr[is][il+2][0]/pixelLength[pixel-1];
@@ -449,6 +452,7 @@ public class PCMon extends DetectorMonitor {
 			
 				if (good_uvwt && good_dalitz && good_pixel) { 
 					H1_PCt_Maps.get(is+1,ic+6,0).fill(pixel,1.0);
+					H1_PCt_Maps.get(is+1,ic+6,3).fill(pixel,1.0/pcPix.pixels.getNormalizedArea(pixel)); //Normalized to pixel area
 					for (int il=l1; il<l2 ; il++){
 						H2_PCt_Hist.get(is+1,il,1).fill(tdcr[is][il+2][0],strrt[is][il+2][0],1.0) ;
 						H2_PCt_Hist.get(is+1,il,2).fill(tdcr[is][il+2][0],pixel,1.0);						
@@ -629,7 +633,9 @@ public class PCMon extends DetectorMonitor {
 		int io    = app.getDetectorView().panel1.ilmap;
 		int of    = (io-1)*3;
 		int lay=0;
+		int opt=0;
 		
+		if (panel==1) opt = 1;
 		if (layer<4)  lay = layer+of;
 		if (layer==4) lay = layer+2+io;
 		if (panel==9) lay = panel+io-1;
@@ -644,7 +650,7 @@ public class PCMon extends DetectorMonitor {
 			if(layer>=7) colorfraction = getcolor((TreeMap<Integer, Object>) Lmap_a.get(0,0,0), component);
 		}
 		if (inProcess>0){   		  // Use Lmap_a to get colors of components while processing data
-			             colorfraction = getcolor((TreeMap<Integer, Object>) Lmap_a.get(is+1,layer,0), component);
+			             colorfraction = getcolor((TreeMap<Integer, Object>) Lmap_a.get(is+1,layer,opt), component);
 		}
 		if (colorfraction<0.05) colorfraction = 0.05;
 		
@@ -725,6 +731,7 @@ public class PCMon extends DetectorMonitor {
 		    Lmap_a.add(is,10,0, toTreeMap(H1_PCa_Maps.get(is,8,2).getData())); //Pixel U+V+W Outer Energy    
 		    Lmap_t.add(is, 7,2, toTreeMap(H1_PCt_Maps.get(is,7,2).getData())); //Pixel U+V+W Inner Time  
 		    Lmap_t.add(is, 8,2, toTreeMap(H1_PCt_Maps.get(is,8,2).getData())); //Pixel U+V+W Outer Time 
+	    	Lmap_a.add(is, 7,1, toTreeMap(H1_PCa_Maps.get(is,7,3).getData())); //Pixel Events Inner Normalized  
 			if (app.isSingleEvent()){
 				for (int il=1 ; il<9 ; il++) Lmap_a.add(is,il,0,  toTreeMap(H1_PCa_Sevd.get(is,il,0).getData())); 
 			}
@@ -736,16 +743,20 @@ public class PCMon extends DetectorMonitor {
 		TreeMap<Integer, Object> map;
 		CalibrationData fits ; 	
 		boolean doCalibration=false;
-		double meanerr[] = new double[1296];
+		int numpix = pcPix.pixels.getNumPixels();
+		double meanerr[] = new double[numpix];
 		 		
 		for (int is=is1 ; is<is2 ; is++) {
 			for (int il=il1 ; il<il2 ; il++) {
 				int ill ; if (il<4) ill=7 ; else ill=8;
+				
+				//Extract raw arrays for error bar calculation
 				double cnts[]  = H1_PCa_Maps.get(is+1,ill,0).getData();				
 				double adc[]   = H1_PCa_Maps.get(is+1,il,1).getData();
 				double adcsq[] = H1_PCa_Maps.get(is+1,il,3).getData();
 				doCalibration = false;
-				for (int ipix=0 ; ipix<1296 ; ipix++){
+				
+				for (int ipix=0 ; ipix<numpix ; ipix++){
 					meanerr[ipix]=0;
 					//if (is==1) System.out.println("il,ipix,cnts,adc = "+il+" "+ipix+" "+cnts[ipix]+" "+adc[ipix]);
 					if (cnts[ipix]>1) {
@@ -765,12 +776,15 @@ public class PCMon extends DetectorMonitor {
 				
 				map = (TreeMap<Integer, Object>) Lmap_a.get(is+1,il+10,0);
 				double meanmap[] = (double[]) map.get(1);
+				double distmap[] = (double[]) pcPix.pixels.getDist(il);
 				
 				for (int ip=ip1 ; ip<ip2 ; ip++){
 					if (doCalibration){
 						fits = new CalibrationData(is,il,ip);
-						fits.getDescriptor().setType(DetectorType.EC);
-						fits.addGraph(pcPix.strips.getpixels(il,ip+1,meanmap),pcPix.strips.getpixels(il,ip+1,meanerr));
+						fits.getDescriptor().setType(DetectorType.PCAL);
+						fits.addGraph(pcPix.strips.getpixels(il,ip+1,distmap),
+								      pcPix.strips.getpixels(il,ip+1,meanmap),
+								      pcPix.strips.getpixels(il,ip+1,meanerr));
 						fits.analyze();
 						collection.add(fits.getDescriptor(),fits);
 					}
@@ -966,21 +980,22 @@ public class PCMon extends DetectorMonitor {
 	
 	public void canvasAttenuation(DetectorDescriptor desc, EmbeddedCanvas canvas) {
 		
-	    double[] xp     = new double[36];
-	    double[] xpe    = new double[36];
-	    double[] yp     = new double[36]; 
-	    double[] vgain  = new double[36];
-	    double[] vgaine = new double[36]; 
-	    double[] vatt   = new double[36];
-	    double[] vatte  = new double[36]; 
-	    double[] vattdb = new double[36];
-	    double[] vattdbe= new double[36];
-	    double[] vchi2  = new double[36];
-	    double[] vchi2e = new double[36]; 
+	    double[] xp     = new double[68];
+	    double[] xpe    = new double[68];
+	    double[] yp     = new double[68]; 
+	    double[] vgain  = new double[68];
+	    double[] vgaine = new double[68]; 
+	    double[] vatt   = new double[68];
+	    double[] vatte  = new double[68]; 
+	    double[] vattdb = new double[68];
+	    double[] vattdbe= new double[68];
+	    double[] vchi2  = new double[68];
+	    double[] vchi2e = new double[68]; 
 	    double[] mip    = {100.,160.};
 	    
 		String otab[]={"U Inner Strips","V Inner Strips","W Inner Strips","U Outer Strips","V Outer Strips","W Outer Strips"};
-		double pixwidth[]={5.35,5.92,5.92,5.55,6.15,6.15};
+		//double pixwidth[]={5.35,5.92,5.92,5.55,6.15,6.15};
+	    double pixwidth[]={1.,1.,1.,1.,1.,1.};
 	    
 	    int is        = desc.getSector();
 		int layer     = desc.getLayer();
@@ -999,30 +1014,31 @@ public class PCMon extends DetectorMonitor {
 		layer = lay;
 		int l1 = of+1;
 		int l2 = of+4;
-		
+				
 		canvas.divide(2,2);
-		//System.out.println("layer,panel,io,of,l1,l2= "+layer+" "+panel+" "+io+" "+of+" "+l1+" "+l2);
-        if (inProcess==2) {this.analyzeAttenuation(0,6,1,7,0,36);inProcess=3;}
+		//System.out.println("layer,panel,io,nstr,of,l1,l2= "+layer+" "+panel+" "+io+" "+nstr+" "+of+" "+l1+" "+l2);
+        if (inProcess==2) {this.analyzeAttenuation(1,2,1,4,0,62);inProcess=3;}
 		 
 		if (layer<7||(layer>10&&layer<17)) {
 			if (inProcess>0) {
-				if (layer>10) {layer=layer-10; lay=layer;int component = pcPix.pixels.getStrip(layer-1-of,ic); ic=component-1;}
-			    if (inProcess==1)  {this.analyzeAttenuation(is,is+1,layer,layer+1,0,36);}
+				if (layer>10) {layer=layer-10; lay=layer;int component = pcPix.pixels.getStrip(lay-of,ic); ic=component-1;}
+				int nstr = pcPix.pc_nstr[layer-1];
+			    if (inProcess==1)  {this.analyzeAttenuation(is,is+1,layer,layer+1,0,nstr);}
 				if (collection.hasEntry(is, layer, ic)) {
 									
-				for (int ip=0; ip<36 ; ip++) {
+				for (int ip=0; ip<nstr ; ip++) {
 					double gain  =  collection.get(1,layer,ip).getFunc(0).parameter(0).value();
 					double gaine =  collection.get(1,layer,ip).getFunc(0).parameter(0).error();	
-					double att   = -collection.get(1,layer,ip).getFunc(0).parameter(1).value();
+					double att   =  collection.get(1,layer,ip).getFunc(0).parameter(1).value();
 					double atte  =  collection.get(1,layer,ip).getFunc(0).parameter(1).error();
 					double chi2  =  collection.get(1,layer,ip).getChi2(0);
-					int index = ECCommon.getCalibrationIndex(is+1,layer+3,ip+1);
+					int index = ECCommon.getCalibrationIndex(is+1,layer,ip+1);
 					double attdb = ccdb.getDouble("/calibration/ec/attenuation/B",index);
-					if (att>0) att=1./att; else att=0 ; 
-					atte = Math.min(30,att*att*atte);
+					if (att!=0) att=-1./att; else att=0 ; 
+					atte = att*att*atte;
 					xp[ip]=ip ; xpe[ip]=0. ; 
-					if (gain>0) gaine = Math.min(30,gaine); vgain[ip]  = gain; vgaine[ip] = gaine;
-		             vatt[ip] = Math.min(80, att)*pixwidth[lay-1] ; vatte[ip]=atte*pixwidth[lay-1];
+					vgain[ip] = gain ; vgaine[ip] = gaine;
+		             vatt[ip] = att  ;  vatte[ip] = atte;
 		           vattdb[ip] = attdb; vattdbe[ip] = 0.;
 		            vchi2[ip] = Math.min(4, chi2) ; vchi2e[ip]=0.;   
 				}
@@ -1036,11 +1052,11 @@ public class PCMon extends DetectorMonitor {
 	             attGraph.setMarkerStyle(2);    attGraph.setMarkerSize(6);    attGraph.setMarkerColor(2);
 	           attdbGraph.setMarkerStyle(2);  attdbGraph.setMarkerSize(7);  attdbGraph.setMarkerColor(1);
 	            chi2Graph.setMarkerStyle(2);   chi2Graph.setMarkerSize(6);   chi2Graph.setMarkerColor(2);
-	            gainGraph.setXTitle(otab[lay-1]) ; gainGraph.setYTitle("PMT GAIN")         ; gainGraph.setTitle(" ");
-	             attGraph.setXTitle(otab[lay-1]) ;  attGraph.setYTitle("ATTENUATION (CM)") ;  attGraph.setTitle(" ");
+	            gainGraph.setXTitle(otab[lay-1]) ;  gainGraph.setYTitle("PMT GAIN")         ; gainGraph.setTitle(" ");
+	           attdbGraph.setXTitle(otab[lay-1]) ; attdbGraph.setYTitle("ATTENUATION (CM)") ; attdbGraph.setTitle(" ");
 		        chi2Graph.setXTitle(otab[lay-1]) ; chi2Graph.setYTitle("REDUCED CHI^2")    ; chi2Graph.setTitle(" ");
 		        
-	            F1D f1 = new F1D("p0",0,37); f1.setParameter(0,mip[io-1]); f1.setLineStyle(2);
+	            F1D f1 = new F1D("p0",0,nstr+1); f1.setParameter(0,mip[io-1]); f1.setLineStyle(2);
 		        
 	            double ymax=200; if(!inMC) ymax=350;
 				canvas.cd(0);canvas.getPad().setAxisRange("Y",0.,ymax);
@@ -1048,9 +1064,10 @@ public class PCMon extends DetectorMonitor {
 				canvas.draw(collection.get(is,layer,ic).getFitGraph(0),"same");
 				canvas.draw(collection.get(is,layer,ic).getFunc(0),"same");
 				
-				canvas.cd(1);           canvas.getPad().setAxisRange(-1.,37.,0.,4.)   ; canvas.draw(chi2Graph); 
-	            canvas.cd(2); if(!inMC) canvas.getPad().setAxisRange(-1.,37.,0.,400.) ; canvas.draw(gainGraph); canvas.draw(f1,"same"); 
-	            canvas.cd(3);           canvas.getPad().setAxisRange(-1.,37.,0.,600.) ; canvas.draw(attGraph);  canvas.draw(attdbGraph,"same");                                                  
+				double xmax = pcPix.pc_nstr[0]+1;
+				canvas.cd(1);           canvas.getPad().setAxisRange(-1.,xmax,0.,4.)   ; canvas.draw(chi2Graph) ; 
+	            canvas.cd(2); if(!inMC) canvas.getPad().setAxisRange(-1.,xmax,0.,400.) ; canvas.draw(gainGraph) ; canvas.draw(f1,"same"); 
+	            canvas.cd(3);           canvas.getPad().setAxisRange(-1.,xmax,0.,600.) ; canvas.draw(attdbGraph); canvas.draw(attGraph,"same");                                              
 				}
 			}
 		}

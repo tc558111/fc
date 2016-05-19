@@ -56,13 +56,14 @@ public class CalDrawDB{
 	private static double[][][][] yPoint = new double [6][3][68][4];
 
 	public CalDrawDB(String detector) {
-		if( detector.contains("PCAL") )unit = 0;
-		else if( detector.contains("ECin") )unit = 1;
-		else if( detector.contains("ECout") )unit = 2;
+		     if(detector.contains("PCAL"))  unit = 0;
+		else if(detector.contains("ECin"))  unit = 1;
+		else if(detector.contains("ECout")) unit = 2;
 		else System.err.println("Must pass in PCAL, ECin, or ECout");
 		
-//		initVert();
-		myInitVert();
+		if(unit==0) myInitVert();
+		if(unit>0)    initVert();
+		
 		length = 4.5;
 		angle = 62.8941;
 		anglewidth = length/Math.sin(Math.toRadians(angle));
@@ -291,7 +292,6 @@ public class CalDrawDB{
 			wPaddle = paddle1;
 		}
 
-		
 		Object[] obj = getStripVerticies(sector, strip1, paddle1);
 		int numpoints = (int)obj[0];
 		//System.out.println("Strip let: " + strip1 + "Strip num: " + paddle1 + " Numpoints: " + numpoints);
@@ -490,6 +490,8 @@ public class CalDrawDB{
         double[] xyz2 = new double[3];
         double[] xyz3 = new double[3];
         Point3D dist = new Point3D();
+        String[] spmt = {"u","v","v"};
+        int[]   nspmt = {0,1,1};
 		
 		
 		if((strip1 == "u" || strip1 == "U"))
@@ -558,18 +560,18 @@ public class CalDrawDB{
 		}
 		//case 3: W strip
 		else if(wPaddle != -1)
-		{ 
+		{   
 			if(paddle1 != 0)
 			{
-				xyz1 = getShapeCenter(getOverlapShape(0, "w", paddle1, "v", numstrips[1]-1)); //last strip
-				xyz2 = getShapeCenter(getOverlapShape(0, "w", paddle1, "v", numstrips[1]-2)); //second to last
+				xyz1 = getShapeCenter(getOverlapShape(0, "w", paddle1, spmt[unit], numstrips[nspmt[unit]]-1)); //last strip
+				xyz2 = getShapeCenter(getOverlapShape(0, "w", paddle1, spmt[unit], numstrips[nspmt[unit]]-2)); //second to last
 			}
 			else
 			{
-				xyz1 = getShapeCenter(getOverlapShape(0, "w", paddle1, "v", numstrips[1]-1)); //last strip
+				xyz1 = getShapeCenter(getOverlapShape(0, "w", paddle1, spmt[unit], numstrips[nspmt[unit]]-1)); //last strip
 				
-				xyz2 = getShapeCenter(getOverlapShape(0, "w", 1, "v", numstrips[1]-2)); //second to last
-				xyz3 = getShapeCenter(getOverlapShape(0, "w", 1, "v", numstrips[1]-1)); //second to last
+				xyz2 = getShapeCenter(getOverlapShape(0, "w", 1, spmt[unit], numstrips[nspmt[unit]]-2)); //second to last
+				xyz3 = getShapeCenter(getOverlapShape(0, "w", 1, spmt[unit], numstrips[nspmt[unit]]-1)); //second to last
 				
 				xyz2[0] = xyz1[0] + xyz2[0]-xyz3[0];
 				xyz2[1] = xyz1[1] + xyz2[1]-xyz3[1];
@@ -824,6 +826,7 @@ public class CalDrawDB{
         for(int sector = 0; sector < 6; ++sector) {
 		    for(int l = 0; l<3; l++) {    	
 	        	ecLayer = detector.getSector(sector).getSuperlayer(suplay).getLayer(l);
+        		numstrips[l] = ecLayer.getNumComponents();
 	        	int n = 0;
 		    	for(ScintillatorPaddle paddle1 : ecLayer.getAllComponents()) {
 		    		for(int j=0; j<4 ; j++) {
@@ -1137,7 +1140,7 @@ public class CalDrawDB{
 		
 		double[] xtemp2 = new double[vert2size];
 		double[] ytemp2 = new double[vert2size];
-
+ 
 		for(int i = 0; i < vert1size; ++i)
 		{
 			xtemp1[i] = shape1.getShapePath().point(i).x();
@@ -1159,7 +1162,6 @@ public class CalDrawDB{
 		//System.out.println("area: " + Polygons2D.computeArea(pol1));
 		//System.out.println("Start overlap");
 		Polygon2D pol3 = Polygons2D.intersection(pol1,pol2);
-		
 		
 		///////////// Remove Duplicate Points /////////////////////////
 		//nPoints = pol3.vertexNumber();

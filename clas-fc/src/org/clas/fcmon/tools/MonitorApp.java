@@ -25,34 +25,36 @@ import org.root.basic.EmbeddedCanvas;
 import org.clas.fcmon.tools.DetectorShapeTabView;
 import org.clas.tools.Miscellaneous;
  
-/**
+/*
  * @author gavalian
  * Revised by L. C. Smith in Sep-Nov 2015 for development of ECMon.java.
  */
+
 @SuppressWarnings("serial")
 public class MonitorApp extends JFrame implements ActionListener {
     
     DetectorShapeTabView detectorView;  
-	int   selectedTabIndex    = 0;  
+    int   selectedTabIndex    = 0;  
 	
     JTabbedPane      canvasTabbedPane;
     JSplitPane             vSplitPane; 
-	JSplitPane	           hSplitPane;
+    JSplitPane	           hSplitPane;
 	
-	JPanel  canvasPane = null;
-	JPanel  buttonPane = null;
+    JPanel  canvasPane = null;
+    JPanel  buttonPane = null;
 	
     TreeMap<String,EmbeddedCanvas>  paneCanvas = new TreeMap<String,EmbeddedCanvas>();
 	
-	JPanel  controlsPanel0 = null;        
-	JPanel  controlsPanel1 = null;
-	JPanel  controlsPanel2 = null;
-	JPanel  controlsPanel3 = null;
+    JPanel  controlsPanel0 = null;        
+    JPanel  controlsPanel1 = null;
+    JPanel  controlsPanel2 = null;
+    JPanel  controlsPanel3 = null;
 	
-	EventControl       eventControl = null;    
-	public DisplayControl   displayControl = null;	
-	public Mode7Emulation   mode7Emulation = null;
-	Miscellaneous    extra = new Miscellaneous();
+    EventControl              eventControl = null;    
+    public DisplayControl   displayControl = null;	
+    public Mode7Emulation   mode7Emulation = null;
+    
+    Miscellaneous    extra = new Miscellaneous();
        
     DetectorMonitor   monitoringClass = null;
     
@@ -74,12 +76,12 @@ public class MonitorApp extends JFrame implements ActionListener {
     
     private void initComponents(){
 
-    	this.setLayout(new BorderLayout());   
+        this.setLayout(new BorderLayout());   
     	
-		this.detectorView       = new DetectorShapeTabView();
-		this.canvasPane         = new JPanel();
-		this.canvasTabbedPane   = new JTabbedPane();	
-		this.buttonPane         = new JPanel();
+        this.detectorView       = new DetectorShapeTabView();
+        this.canvasPane         = new JPanel();
+        this.canvasTabbedPane   = new JTabbedPane();	
+        this.buttonPane         = new JPanel();
 		
 // Canvas buttons
 		
@@ -94,16 +96,16 @@ public class MonitorApp extends JFrame implements ActionListener {
         
 // Control Panels
 		
-		this.controlsPanel0 = new JPanel(new GridBagLayout());
+        this.controlsPanel0 = new JPanel(new GridBagLayout());
 		
-      	this.controlsPanel1 = new JPanel();
-		this.controlsPanel1.setBorder(BorderFactory.createTitledBorder("Event Control"));
+        this.controlsPanel1 = new JPanel();
+        this.controlsPanel1.setBorder(BorderFactory.createTitledBorder("Event Control"));
 		
-      	this.controlsPanel2 = new JPanel();
-		this.controlsPanel2.setBorder(BorderFactory.createTitledBorder("Display Control"));
+        this.controlsPanel2 = new JPanel();
+        this.controlsPanel2.setBorder(BorderFactory.createTitledBorder("Display Control"));
 		
-      	this.controlsPanel3 = new JPanel();
-		this.controlsPanel3.setBorder(BorderFactory.createTitledBorder("Mode 7 Emulation"));
+        this.controlsPanel3 = new JPanel();
+        this.controlsPanel3.setBorder(BorderFactory.createTitledBorder("Mode 7 Emulation"));
 
         eventControl   = new EventControl();   this.controlsPanel1.add(eventControl);
         displayControl = new DisplayControl(); this.controlsPanel2.add(displayControl);
@@ -116,12 +118,12 @@ public class MonitorApp extends JFrame implements ActionListener {
     	this.setJMenuBar(new FcmonMenuBar(eventControl));
 		
         this.controlsPanel0.setBackground(Color.LIGHT_GRAY);
-		this.controlsPanel1.setBackground(Color.LIGHT_GRAY);
-		this.controlsPanel2.setBackground(Color.LIGHT_GRAY);
-		this.controlsPanel3.setBackground(Color.LIGHT_GRAY);
+        this.controlsPanel1.setBackground(Color.LIGHT_GRAY);
+        this.controlsPanel2.setBackground(Color.LIGHT_GRAY);
+        this.controlsPanel3.setBackground(Color.LIGHT_GRAY);
 		
-		GridBagConstraints c = new GridBagConstraints();
-		c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 0.5;
+        GridBagConstraints c = new GridBagConstraints();
+        c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 0.5;
 		
         c.gridx=0 ; c.gridy=0 ; this.controlsPanel0.add(this.controlsPanel1,c);
         c.gridx=0 ; c.gridy=1 ; this.controlsPanel0.add(this.controlsPanel2,c);
@@ -129,20 +131,20 @@ public class MonitorApp extends JFrame implements ActionListener {
         		
 // Basic GUI layout
         
-		this.hSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);		
+        this.hSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);		
         this.hSplitPane.setDividerLocation(600);  
-		this.hSplitPane.setTopComponent(this.detectorView);				
-		this.hSplitPane.setBottomComponent(this.controlsPanel0);	
+        this.hSplitPane.setTopComponent(this.detectorView);				
+        this.hSplitPane.setBottomComponent(this.controlsPanel0);	
 		
         canvasPane.setLayout(new BorderLayout());
-		this.canvasPane.add(canvasTabbedPane,BorderLayout.CENTER);
-		this.canvasPane.add(buttonPane,BorderLayout.PAGE_END);
+        this.canvasPane.add(canvasTabbedPane,BorderLayout.CENTER);
+        this.canvasPane.add(buttonPane,BorderLayout.PAGE_END);
         
-		this.vSplitPane = new JSplitPane();			
-		this.vSplitPane.setLeftComponent(this.hSplitPane);
-		this.vSplitPane.setRightComponent(this.canvasPane);
+        this.vSplitPane = new JSplitPane();			
+        this.vSplitPane.setLeftComponent(this.hSplitPane);
+        this.vSplitPane.setRightComponent(this.canvasPane);
 
-		this.add(this.vSplitPane,BorderLayout.CENTER);
+        this.add(this.vSplitPane,BorderLayout.CENTER);
     }
     
  /*   
@@ -187,19 +189,19 @@ public class MonitorApp extends JFrame implements ActionListener {
     
     public void addChangeListener() {    
       canvasTabbedPane.addChangeListener(new ChangeListener() {
-    	  public void stateChanged(ChangeEvent e) {
-    		  if (e.getSource() instanceof JTabbedPane) {
-      	        JTabbedPane pane = (JTabbedPane) e.getSource();
-      	      selectedTabIndex = pane.getSelectedIndex();
-      	      //selectedTabName  = (String) pane.getTitleAt(selectedTabIndex);
-    		  }
-      	    }
-        });
+         public void stateChanged(ChangeEvent e) {
+         if (e.getSource() instanceof JTabbedPane) {
+           JTabbedPane pane = (JTabbedPane) e.getSource();
+           selectedTabIndex = pane.getSelectedIndex();
+           //selectedTabName  = (String) pane.getTitleAt(selectedTabIndex);
+         }
+         }
+      });
     }
     
-	@Override
-	public void actionPerformed(ActionEvent e) {
+    @Override
+    public void actionPerformed(ActionEvent e) {
         if(e.getActionCommand().compareTo("Clear Histos")==0) monitoringClass.reset();
         if(e.getActionCommand().compareTo("Save Histos")==0) monitoringClass.saveToFile();
-	}      
+    }      
 }

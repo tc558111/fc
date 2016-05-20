@@ -563,10 +563,10 @@ public class PCMon extends DetectorMonitor {
             		adc = fitter.adc/10;
             		ped = fitter.ped;
             		for (int i=0 ; i< pulse.length ; i++) {
-            			  H2_PCa_Hist.get(is,il,5).fill(i,ip,pulse[i]-this.pedref);
-            	      if (app.isSingleEvent()) {
-            	    	  H2_PCa_Sevd.get(is,il,0).fill(i,ip,pulse[i]-this.pedref);
-             				int w1 = fitter.t0-this.nsb ; int w2 = fitter.t0+this.nsa;
+            			H2_PCa_Hist.get(is,il,5).fill(i,ip,pulse[i]-this.pedref);
+            			if (app.isSingleEvent()) {
+            				H2_PCa_Sevd.get(is,il,0).fill(i,ip,pulse[i]-this.pedref);
+            				int w1 = fitter.t0-this.nsb ; int w2 = fitter.t0+this.nsa;
             				if (fitter.adc>0&&i>=w1&&i<=w2) H2_PCa_Sevd.get(is,il,1).fill(i,ip,pulse[i]-this.pedref);            	      }
             		}
             	}  
@@ -761,11 +761,11 @@ public class PCMon extends DetectorMonitor {
 				
 				for (int ipix=0 ; ipix<npix ; ipix++){
 					meanerr[ipix]=0;
-					if (cnts[ipix]>1) {
+					if (cnts[ipix]>5) {
 						meanerr[ipix]=Math.sqrt((adcsq[ipix]-adc[ipix]*adc[ipix]-8.3)/(cnts[ipix]-1)); //Sheppard's correction: c^2/12 c=10
 						doCalibration = true;
 					}				
-					if (cnts[ipix]==1) {
+					if (cnts[ipix]<6) {
 						meanerr[ipix]=8.3;
 						doCalibration = true;
 					}					  

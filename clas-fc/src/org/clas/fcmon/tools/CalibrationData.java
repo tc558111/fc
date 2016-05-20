@@ -57,7 +57,7 @@ public class CalibrationData {
     		xpraw[loop]  = xdata[loop]; 
     		xprawe[loop] = 0.;
     		ypraw[loop]  = data[loop];
-    		yprawe[loop] = 10.;
+    		yprawe[loop] = error[loop];
         }
         
         double[] xpfit  = new double[n];

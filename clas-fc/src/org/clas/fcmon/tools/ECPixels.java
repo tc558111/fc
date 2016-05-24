@@ -54,7 +54,7 @@ public class ECPixels {
 	        System.out.println("ecGetStripsDB: Processing Sector "+sector);
 	 		for(int layer=0; layer<3 ; layer++) {
 	 			for(int strip = 0; strip < str[layer] ; strip++) {
-		 			shape = ecalDB.getStripShape(sector, sstr[layer], strip);	            
+		 			shape = ecalDB.getStripShape(sector, layer, strip);	            
 	        		for(int i = 0; i < shape.getShapePath().size(); ++i) {
 	                	ec_xstr[i][strip][layer][6] = shape.getShapePath().point(i).x();
 	                	ec_ystr[i][strip][layer][6] = shape.getShapePath().point(i).y();

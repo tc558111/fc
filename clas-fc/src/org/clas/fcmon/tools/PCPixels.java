@@ -70,13 +70,11 @@ public class PCPixels {
 		
 		System.out.println("PCPixels:pcGetStripsDB()");	
 		
-		String[] sstr = {"u","v","w"};
-		
 	 	for(int sector = 0; sector < 1; sector++) {
 	        System.out.println("pcGetStripsDB: Processing Sector "+sector);
 	 		for(int layer=0; layer<3 ; layer++) {
 	 			for(int strip = 0; strip < pc_nstr[layer] ; strip++) {
-		 			shape = pcalDB.getStripShape(sector, sstr[layer], strip);	            
+		 			shape = pcalDB.getStripShape(sector, layer, strip);	            
 	        		for(int i = 0; i < shape.getShapePath().size(); ++i) {
 	                	pc_xstr[i][strip][layer][6] = shape.getShapePath().point(i).x();
 	                	pc_ystr[i][strip][layer][6] = shape.getShapePath().point(i).y();

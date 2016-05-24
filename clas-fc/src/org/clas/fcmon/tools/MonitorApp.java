@@ -23,7 +23,7 @@ import javax.swing.event.ChangeListener;
 import org.root.basic.EmbeddedCanvas;
  
 import org.clas.fcmon.tools.DetectorShapeTabView;
-import org.clas.tools.Miscellaneous;
+//import org.clas.tools.Miscellaneous;
  
 /*
  * @author gavalian
@@ -54,7 +54,7 @@ public class MonitorApp extends JFrame implements ActionListener {
     public DisplayControl   displayControl = null;	
     public Mode7Emulation   mode7Emulation = null;
     
-    Miscellaneous    extra = new Miscellaneous();
+//    Miscellaneous    extra = new Miscellaneous();
        
     DetectorMonitor   monitoringClass = null;
     

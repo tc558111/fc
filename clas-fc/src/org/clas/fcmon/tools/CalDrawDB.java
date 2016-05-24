@@ -50,6 +50,9 @@ public class CalDrawDB{
 	private double slightshift;
 	private int unit; //PCAL ==0, ECinner ==1, ECouter==2 
 	private int[] numstrips = new int[3];
+	private int[][][] validoverlap; // 3,68,62 first number is 0,1,2
+	private int[][][] validpixel; //68,62,62 for pcal
+
 	
 	//                                        [sector][u,v,w][strip number][vertex number]
 	private static double[][][][] xPoint = new double [6][3][68][4];
@@ -61,8 +64,22 @@ public class CalDrawDB{
 		else if(detector.contains("ECout")) unit = 2;
 		else System.err.println("Must pass in PCAL, ECin, or ECout");
 		
-		if(unit==0) myInitVert();
-		if(unit>0)    initVert();
+		if(unit==0)
+		{
+			myInitVert();
+			validoverlap = new int[3][68][62];
+			//[0=uw,1=uv,2=vw][first layer strip][second layer strip]
+			validpixel = new int[68][62][62];
+			//[u strip #][v strip #][w strip #]
+		}
+		if(unit>0)   
+		{
+			initVert();
+			validoverlap = new int[3][36][36];
+			//[0=uw,1=uv,2=vw][first layer strip][second layer strip]
+			validpixel = new int[36][36][36];
+			//[u strip #][v strip #][w strip #]
+		}
 		
 		length = 4.5;
 		angle = 62.8941;
@@ -93,8 +110,8 @@ public class CalDrawDB{
 		DetectorShapeView2D UWmap= new DetectorShapeView2D("PCAL UW");
 	    	for(int uPaddle = 0; uPaddle < 68; uPaddle++){
 	            for(int wPaddle = 0; wPaddle < 62; wPaddle++){
-	            	if(isValidOverlap(sector, "u", uPaddle, "w", wPaddle))
-	            		UWmap.addShape(getOverlapShape(sector, "u", uPaddle, "w", wPaddle));
+	            	if(isValidOverlap(sector, 0, uPaddle, 2, wPaddle))
+	            		UWmap.addShape(getOverlapShape(sector, 0, uPaddle, 2, wPaddle));
 	            }
 	          
 	    	}
@@ -107,8 +124,8 @@ public class CalDrawDB{
 		DetectorShapeView2D WUmap= new DetectorShapeView2D("PCAL WU");
 		   	for(int uPaddle = 0; uPaddle < 68; uPaddle++){
 		   		for(int wPaddle = 0; wPaddle < 62; wPaddle++){
-		            if(isValidOverlap(sector, "w", wPaddle, "u", uPaddle))
-		            	WUmap.addShape(getOverlapShape(sector, "w", wPaddle, "u", uPaddle));
+		            if(isValidOverlap(sector, 2, wPaddle, 0, uPaddle))
+		            	WUmap.addShape(getOverlapShape(sector, 2, wPaddle, 0, uPaddle));
 		        }
 		          
 		   	}
@@ -121,8 +138,8 @@ public class CalDrawDB{
 		DetectorShapeView2D UVmap= new DetectorShapeView2D("PCAL UV");
 		   	for(int uPaddle = 0; uPaddle < 68; uPaddle++){
 		   		for(int vPaddle = 0; vPaddle < 62; vPaddle++){
-		            if(isValidOverlap(sector, "v", vPaddle, "u", uPaddle))
-		            	UVmap.addShape(getOverlapShape(sector, "v", vPaddle, "u", uPaddle));
+		            if(isValidOverlap(sector, 1, vPaddle, 0, uPaddle))
+		            	UVmap.addShape(getOverlapShape(sector,1, vPaddle, 0, uPaddle));
 		        }
 		          
 		   	}
@@ -137,7 +154,7 @@ public class CalDrawDB{
 		DetectorShapeView2D Umap= new DetectorShapeView2D("PCAL U Strips");
 		   	for(int uPaddle = 0; uPaddle < 68; uPaddle++){
 		   		//System.out.println(uPaddle);
-		   		Umap.addShape(getStripShape(sector, "u", uPaddle));
+		   		Umap.addShape(getStripShape(sector, 0, uPaddle));
 		   	}
 		    return Umap;
 	}
@@ -148,7 +165,7 @@ public class CalDrawDB{
 		DetectorShapeView2D Vmap= new DetectorShapeView2D("PCAL V Strips");
 		   	for(int vPaddle = 0; vPaddle < 62; vPaddle++){
 		   		//System.out.println(vPaddle);
-		   		Vmap.addShape(getStripShape(sector, "v", vPaddle));
+		   		Vmap.addShape(getStripShape(sector, 1, vPaddle));
 		   	}
 		    return Vmap;
 	}
@@ -159,7 +176,7 @@ public class CalDrawDB{
 		DetectorShapeView2D Wmap= new DetectorShapeView2D("PCAL W Strips");
 		   	for(int wPaddle = 0; wPaddle < 62; wPaddle++){
 		   		//System.out.println(wPaddle);
-		   		Wmap.addShape(getStripShape(sector, "w", wPaddle));
+		   		Wmap.addShape(getStripShape(sector, 2, wPaddle));
 		   	}
 		    return Wmap;
 	}
@@ -190,34 +207,46 @@ public class CalDrawDB{
 
 	//calls getOverlapVerticies
 	//uses those 3 verticies to make a shape
-	public DetectorShape2D getOverlapShape(int sector, String strip1, int paddle1, String strip2, int paddle2){
+	//                                       sector, 0=u:1=v:2=w,  0-67:0-61:0-61, 0=u:1=v:2=w, 0-67:0-61:0-61
+	public DetectorShape2D getOverlapShape(int sector, int strip1, int paddle1, int strip2, int paddle2){
 			
 		int uPaddle = -1;
 		int vPaddle = -1;
 		int wPaddle = -1;
-		if((strip1 == "u" || strip1 == "U"))
+		//assign strip 1
+		if(strip1 == 0)
 		{
 			uPaddle = paddle1;
 		}
-		if((strip2 == "u" || strip2 == "U"))
-		{
-			uPaddle = paddle2;
-		}
-		if((strip1 == "v" || strip1 == "V"))
+		else if(strip1 == 1)
 		{
 			vPaddle = paddle1;
 		}
-		if((strip2 == "v" || strip2 == "V"))
-		{
-			vPaddle = paddle2;
-		}
-		if((strip1 == "w" || strip1 == "W"))
+		else if(strip1 == 2)
 		{
 			wPaddle = paddle1;
 		}
-		if((strip2 == "w" || strip2 == "W"))
+		else
+		{
+			System.err.println("Wrong input used for getOverlapShape layers");
+		}
+		
+		//assign strip 2
+		if(strip2 == 0)
+		{
+			uPaddle = paddle2;
+		}
+		else if(strip2 == 1)
+		{
+			vPaddle = paddle2;
+		}
+		else if(strip2 == 2)
 		{
 			wPaddle = paddle2;
+		}
+		else
+		{
+			System.err.println("Wrong input used for getOverlapShape layers");
 		}
 		
 		Object[] obj = getOverlapVerticies(sector, strip1, paddle1, strip2, paddle2);
@@ -274,22 +303,27 @@ public class CalDrawDB{
 	
 	//calls getOverlapVerticies
 	//uses those 3 verticies to make a shape
-	public DetectorShape2D getStripShape(int sector, String strip1, int paddle1){
+	public DetectorShape2D getStripShape(int sector, int strip1, int paddle1){
 			
 		int uPaddle = -1;
 		int vPaddle = -1;
 		int wPaddle = -1;
-		if((strip1 == "u" || strip1 == "U"))
+		//assign strip 1
+		if(strip1 == 0)
 		{
 			uPaddle = paddle1;
 		}
-		if((strip1 == "v" || strip1 == "V"))
+		else if(strip1 == 1)
 		{
 			vPaddle = paddle1;
 		}
-		if((strip1 == "w" || strip1 == "W"))
+		else if(strip1 == 2)
 		{
 			wPaddle = paddle1;
+		}
+		else
+		{
+			System.err.println("Wrong input used for getStripShape layers");
 		}
 
 		Object[] obj = getStripVerticies(sector, strip1, paddle1);
@@ -347,27 +381,111 @@ public class CalDrawDB{
 	//that at least 3 points exist,
 	// if so it is marked as true, else false
 	public Boolean isValidPixel(int sector, int uPaddle, int vPaddle, int wPaddle){
-		Object[] obj = getPixelVerticies(sector, uPaddle, vPaddle, wPaddle);
-		int numpoints = (int)obj[0];
 		
-        if(numpoints > 2) 
-        	return true;
-        else
-        	return false;		
+		if(validoverlap[0][uPaddle][wPaddle] == -1) return false;
+		else if(validoverlap[1][uPaddle][vPaddle] == -1) return false;
+		else if(validoverlap[2][vPaddle][wPaddle] == -1) return false;
+		else
+		{
+		
+			Object[] obj = getPixelVerticies(sector, uPaddle, vPaddle, wPaddle);
+			int numpoints = (int)obj[0];
+			
+	        if(numpoints > 2) 
+	        	return true;
+	        else
+	        	return false;	
+		}
+        	
 	}
 	
 	//calls getPixelVerticies to check
 	//that at least 3 points exist,
 	// if so it is marked as true, else false
-	public Boolean isValidOverlap(int sector, String strip1, int paddle1, String strip2, int paddle2){
-		Object[] obj = getOverlapVerticies(sector, strip1, paddle1, strip2, paddle2);
-		int numpoints = (int)obj[0];
-		//System.out.println("Blah!" + numpoints);
-		//System.out.println("numpoints: " + numpoints);
-        if(numpoints > 2) 
-        	return true;
-        else
-        	return false;		
+	public Boolean isValidOverlap(int sector, int strip1, int paddle1, int strip2, int paddle2){
+		if(strip1 > strip2)
+		{
+			int temp;
+			temp = strip1;
+			strip1 = strip2;
+			strip2 = temp;
+			
+			temp = paddle1;
+			paddle1 = paddle2;
+			paddle2 = temp; 
+		}
+		if(strip1 == 0 && strip2 == 2)
+		{
+			//UW
+			if(validoverlap[0][paddle1][paddle2] == 1) return true;
+			else if(validoverlap[0][paddle1][paddle2] == -1) return false;
+			else
+			{
+				Object[] obj = getOverlapVerticies(sector, strip1, paddle1, strip2, paddle2);
+				int numpoints = (int)obj[0];
+				
+		        if(numpoints > 2) 
+		        {
+		        	validoverlap[0][paddle1][paddle2] = 1;
+		        	return true;
+		        }
+		        else
+		        {
+		        	validoverlap[0][paddle1][paddle2] = -1;
+		        	return false;	
+		        }
+			}
+		}
+		else if(strip1 == 0 && strip2 == 1)
+		{
+			//UV
+			if(validoverlap[1][paddle1][paddle2] == 1) return true;
+			else if(validoverlap[1][paddle1][paddle2] == -1) return false;
+			else
+			{
+				Object[] obj = getOverlapVerticies(sector, strip1, paddle1, strip2, paddle2);
+				int numpoints = (int)obj[0];
+				
+		        if(numpoints > 2) 
+		        {
+		        	validoverlap[1][paddle1][paddle2] = 1;
+		        	return true;
+		        }
+		        else
+		        {
+		        	validoverlap[1][paddle1][paddle2] = -1;
+		        	return false;	
+		        }
+			}
+		}
+		else if(strip1 == 1 && strip2 == 2)
+		{
+			//VW
+			if(validoverlap[2][paddle1][paddle2] == 1) return true;
+			else if(validoverlap[2][paddle1][paddle2] == -1) return false;
+			else
+			{
+				Object[] obj = getOverlapVerticies(sector, strip1, paddle1, strip2, paddle2);
+				int numpoints = (int)obj[0];
+				
+		        if(numpoints > 2) 
+		        {
+		        	validoverlap[2][paddle1][paddle2] = 1;
+		        	return true;
+		        }
+		        else
+		        {
+		        	validoverlap[2][paddle1][paddle2] = -1;
+		        	return false;	
+		        }
+			}
+		}
+		else
+		{
+			System.err.println("Problem with isValidOverlap");
+			return false;	
+		}
+			
 	}
 
 	
@@ -378,19 +496,22 @@ public class CalDrawDB{
 	//                                     0-5         0-67         0-61          0-61
 	public Object[] getPixelVerticies(int sector, int uPaddle, int vPaddle, int wPaddle){
 		
-		if(isValidOverlap(sector, "u", uPaddle,"w",wPaddle) && isValidOverlap(sector, "u", uPaddle,"v",vPaddle) && isValidOverlap(sector, "v", vPaddle,"w",wPaddle))
+		if(isValidOverlap(sector, 0, uPaddle,2,wPaddle))// && isValidOverlap(sector, 0, uPaddle,1,vPaddle) && isValidOverlap(sector, 1, vPaddle,2,wPaddle))
 		{
-			Object[] obj = getVerticies(getOverlapShape(sector, "u", uPaddle,"w",wPaddle),getStripShape(sector, "v",vPaddle));
+			Object[] obj = getVerticies(getOverlapShape(sector, 0, uPaddle,2,wPaddle),getStripShape(sector, 1,vPaddle));
 			
 			int numpoints = (int)obj[0];
 			double[] x = new double[numpoints];
 			double[] y = new double[numpoints];
 			System.arraycopy( (double[])obj[1], 0, x, 0, numpoints);
 			System.arraycopy( (double[])obj[2], 0, y, 0, numpoints);
+			if(numpoints < 3) validpixel[uPaddle][vPaddle][wPaddle] = -1;
+			else validpixel[uPaddle][vPaddle][wPaddle] = 1;
 			return(new Object[]{numpoints, x, y});
 		}
 		else
 		{
+			validpixel[uPaddle][vPaddle][wPaddle] = -1;
 			return(new Object[]{0, 0.0, 0.0});
 		}
 		
@@ -402,8 +523,20 @@ public class CalDrawDB{
 	//second element is an array x-coordinates (double[]) of size n
 	//third element is an array y-coordinates (double[]) of size n
 
-	public Object[] getOverlapVerticies(int sector, String strip1, int paddle1, String strip2, int paddle2){
+	public Object[] getOverlapVerticies(int sector, int strip1, int paddle1, int strip2, int paddle2){
 	
+		if(strip1 > strip2)
+		{
+			int temp;
+			temp = strip1;
+			strip1 = strip2;
+			strip2 = temp;
+			
+			temp = paddle1;
+			paddle1 = paddle2;
+			paddle2 = temp; 
+		}
+		
 		Object[] obj = getVerticies(getStripShape(sector, strip1, paddle1),getStripShape(sector, strip2, paddle2));
 		
 		int numpoints = (int)obj[0];
@@ -422,36 +555,18 @@ public class CalDrawDB{
 		{
 			return(new Object[]{numpoints, 0.0, 0.0});
 		}
-		/*
-		Object[] obj2 = sortVerticies(numpoints, x, y);
-		
-		int nPoints = (int)obj2[0];
-		//System.out.println("Strip let: " + strip1 + "Strip num: " + paddle1 + " Numpoints: " + numpoints);
-		double[] xnew = new double[nPoints];
-		double[] ynew = new double[nPoints];
-		System.arraycopy( (double[])obj2[1], 0, xnew, 0, nPoints);
-		System.arraycopy( (double[])obj2[2], 0, ynew, 0, nPoints);
-
-		return(new Object[]{nPoints, xnew, ynew});
-		*/
 	}
 
-	public Object[] getStripVerticies(int sector, String strip1, int paddle1){
+	public Object[] getStripVerticies(int sector, int strip1, int paddle1){
 		int numpoints = 4;
 		int l = 0;
 		
-		if((strip1 == "u" || strip1 == "U"))
+		if(strip1 >= 0 || strip1 < 3)
 		{
-			l = 0;
+			l = strip1;
 		}
-		if((strip1 == "v" || strip1 == "V"))
-		{
-			l = 1;
-		}
-		if((strip1 == "w" || strip1 == "W"))
-		{
-			l = 2;
-		}
+		else
+			System.err.println("Error in calling getStripVerticies");
         
         return(new Object[]{numpoints, xPoint[sector][l][paddle1], yPoint[sector][l][paddle1]});
 	}
@@ -479,7 +594,7 @@ public class CalDrawDB{
 	//assuming PMT is right at edge of PCAL
 	//there is actually tens of centimeters of fibers between.
 
-	public double[] getPMTLocation(String strip1, int paddle1){
+	public double[] getPMTLocation(int strip1, int paddle1){
 		double[] center = new double[3];
 		
 		int uPaddle = -1;
@@ -491,20 +606,27 @@ public class CalDrawDB{
         double[] xyz3 = new double[3];
         Point3D dist = new Point3D();
         String[] spmt = {"u","v","v"};
-        int[]   nspmt = {0,1,1};
+        int[]   nspmt = {0,1,1}; 
+        //PCAL w is read out the side of u(0)
+        //EC inner w is read out the side of v(1)
+        //EC outer w is read out the side of v(1)
 		
 		
-		if((strip1 == "u" || strip1 == "U"))
+        if(strip1 == 0)
 		{
 			uPaddle = paddle1;
 		}
-		if((strip1 == "v" || strip1 == "V"))
+		else if(strip1 == 1)
 		{
 			vPaddle = paddle1;
 		}
-		if((strip1 == "w" || strip1 == "W"))
+		else if(strip1 == 2)
 		{
 			wPaddle = paddle1;
+		}
+		else
+		{
+			System.err.println("Wrong input used for getPMTLocation: layers");
 		}
 		
 		//case 1: U strip
@@ -512,15 +634,16 @@ public class CalDrawDB{
 		{ 
 			if(paddle1 != 0)
 			{
-				xyz1 = getShapeCenter(getOverlapShape(0, "u", paddle1, "w", numstrips[2]-1)); //last strip
-				xyz2 = getShapeCenter(getOverlapShape(0, "u", paddle1, "w", numstrips[2]-2)); //second to last
+				xyz1 = getShapeCenter(getOverlapShape(0, 0, paddle1, 2, numstrips[2]-1)); //last strip
+				xyz2 = getShapeCenter(getOverlapShape(0, 0, paddle1, 2, numstrips[2]-2)); //second to last
 			}
 			else
 			{
-				xyz1 = getShapeCenter(getOverlapShape(0, "u", paddle1, "w", numstrips[2]-1)); //last strip
+				//corner pixel have to do some funny business
+				xyz1 = getShapeCenter(getOverlapShape(0, 0, paddle1, 2, numstrips[2]-1)); //last strip
 				
-				xyz2 = getShapeCenter(getOverlapShape(0, "u", 1, "w", numstrips[2]-2)); //second to last
-				xyz3 = getShapeCenter(getOverlapShape(0, "u", 1, "w", numstrips[2]-1)); //second to last
+				xyz2 = getShapeCenter(getOverlapShape(0, 0, 1, 2, numstrips[2]-2)); //second to last
+				xyz3 = getShapeCenter(getOverlapShape(0, 0, 1, 2, numstrips[2]-1)); //second to last
 				
 				xyz2[0] = xyz1[0] + xyz2[0]-xyz3[0];
 				xyz2[1] = xyz1[1] + xyz2[1]-xyz3[1];
@@ -537,15 +660,16 @@ public class CalDrawDB{
 		{ 
 			if(paddle1 != 0)
 			{
-				xyz1 = getShapeCenter(getOverlapShape(0, "v", paddle1, "u", numstrips[0]-1)); //last strip
-				xyz2 = getShapeCenter(getOverlapShape(0, "v", paddle1, "u", numstrips[0]-2)); //second to last
+				xyz1 = getShapeCenter(getOverlapShape(0, 1, paddle1, 0, numstrips[0]-1)); //last strip
+				xyz2 = getShapeCenter(getOverlapShape(0, 1, paddle1, 0, numstrips[0]-2)); //second to last
 			}
 			else
 			{
-				xyz1 = getShapeCenter(getOverlapShape(0, "v", paddle1, "u", numstrips[0]-1)); //last strip
+				//corner pixel have to do some funny business
+				xyz1 = getShapeCenter(getOverlapShape(0, 1, paddle1, 0, numstrips[0]-1)); //last strip
 				
-				xyz2 = getShapeCenter(getOverlapShape(0, "v", 1, "u", numstrips[0]-2)); //second to last
-				xyz3 = getShapeCenter(getOverlapShape(0, "v", 1, "u", numstrips[0]-1)); //second to last
+				xyz2 = getShapeCenter(getOverlapShape(0, 1, 1, 0, numstrips[0]-2)); //second to last
+				xyz3 = getShapeCenter(getOverlapShape(0, 1, 1, 0, numstrips[0]-1)); //second to last
 				
 				xyz2[0] = xyz1[0] + xyz2[0]-xyz3[0];
 				xyz2[1] = xyz1[1] + xyz2[1]-xyz3[1];
@@ -563,15 +687,16 @@ public class CalDrawDB{
 		{   
 			if(paddle1 != 0)
 			{
-				xyz1 = getShapeCenter(getOverlapShape(0, "w", paddle1, spmt[unit], numstrips[nspmt[unit]]-1)); //last strip
-				xyz2 = getShapeCenter(getOverlapShape(0, "w", paddle1, spmt[unit], numstrips[nspmt[unit]]-2)); //second to last
+				xyz1 = getShapeCenter(getOverlapShape(0, 2, paddle1, nspmt[unit], numstrips[nspmt[unit]]-1)); //last strip
+				xyz2 = getShapeCenter(getOverlapShape(0, 2, paddle1, nspmt[unit], numstrips[nspmt[unit]]-2)); //second to last
 			}
 			else
 			{
-				xyz1 = getShapeCenter(getOverlapShape(0, "w", paddle1, spmt[unit], numstrips[nspmt[unit]]-1)); //last strip
+				//corner pixel have to do some funny business
+				xyz1 = getShapeCenter(getOverlapShape(0, 2, paddle1, nspmt[unit], numstrips[nspmt[unit]]-1)); //last strip
 				
-				xyz2 = getShapeCenter(getOverlapShape(0, "w", 1, spmt[unit], numstrips[nspmt[unit]]-2)); //second to last
-				xyz3 = getShapeCenter(getOverlapShape(0, "w", 1, spmt[unit], numstrips[nspmt[unit]]-1)); //second to last
+				xyz2 = getShapeCenter(getOverlapShape(0, 2, 1, nspmt[unit], numstrips[nspmt[unit]]-2)); //second to last
+				xyz3 = getShapeCenter(getOverlapShape(0, 2, 1, nspmt[unit], numstrips[nspmt[unit]]-1)); //second to last
 				
 				xyz2[0] = xyz1[0] + xyz2[0]-xyz3[0];
 				xyz2[1] = xyz1[1] + xyz2[1]-xyz3[1];
@@ -601,7 +726,7 @@ public class CalDrawDB{
 		
 		
 		shapecenter = getShapeCenter(getPixelShape(0,uPaddle,vPaddle,wPaddle));
-		PMTloc = getPMTLocation("u", uPaddle);
+		PMTloc = getPMTLocation(0, uPaddle);
 		
 		distance = Math.sqrt(Math.pow(shapecenter[0] - PMTloc[0],2) + Math.pow(shapecenter[1] - PMTloc[1],2));
 		//distance = Math.sqrt(Math.pow(shapecenter[0] - PMTloc[0],2) + Math.pow(shapecenter[1] - PMTloc[1],2) + Math.pow(shapecenter[2] - PMTloc[2],2));
@@ -617,7 +742,7 @@ public class CalDrawDB{
 		
 		
 		shapecenter = getShapeCenter(getPixelShape(0,uPaddle,vPaddle,wPaddle));
-		PMTloc = getPMTLocation("v", vPaddle);
+		PMTloc = getPMTLocation(1, vPaddle);
 		
 		distance = Math.sqrt(Math.pow(shapecenter[0] - PMTloc[0],2) + Math.pow(shapecenter[1] - PMTloc[1],2));
 		//distance = Math.sqrt(Math.pow(shapecenter[0] - PMTloc[0],2) + Math.pow(shapecenter[1] - PMTloc[1],2) + Math.pow(shapecenter[2] - PMTloc[2],2));
@@ -634,7 +759,7 @@ public class CalDrawDB{
 		
 		
 		shapecenter = getShapeCenter(getPixelShape(0,uPaddle,vPaddle,wPaddle));
-		PMTloc = getPMTLocation("w", wPaddle);
+		PMTloc = getPMTLocation(2, wPaddle);
 		
 		distance = Math.sqrt(Math.pow(shapecenter[0] - PMTloc[0],2) + Math.pow(shapecenter[1] - PMTloc[1],2));
 		//distance = Math.sqrt(Math.pow(shapecenter[0] - PMTloc[0],2) + Math.pow(shapecenter[1] - PMTloc[1],2) + Math.pow(shapecenter[2] - PMTloc[2],2));
@@ -647,23 +772,15 @@ public class CalDrawDB{
 	
 	//get attenuation distance
 	//                              main strip let,    main num, cross strip let, cross num
-	//                                      "u"        0-67         "w"             0-61
-	public double getOverlapDistance(String strip1, int paddle1, String strip2, int paddle2){
+	//                               0,1,2:u,v,w        0-67   0,1,2:u,v,w       0-61
+	public double getOverlapDistance(int strip1, int paddle1, int strip2, int paddle2){
 		double distance = 0;
 		double[] shapecenter = new double[3];
 		double[] PMTloc = new double[3];
-		
-		String s1 = "u";
-		String s2 = "w";
-		if(strip1.contains("u") || strip1.contains("U")) s1 = "u";
-		if(strip1.contains("v") || strip1.contains("V")) s1 = "v";
-		if(strip1.contains("w") || strip1.contains("W")) s1 = "w";
-		if(strip2.contains("u") || strip2.contains("U")) s2 = "u";
-		if(strip2.contains("v") || strip2.contains("V")) s2 = "v";
-		if(strip2.contains("w") || strip2.contains("W")) s2 = "w";
+	
 
-		System.arraycopy( (double[])getShapeCenter(getOverlapShape(0, s1, paddle1, s2, paddle2)), 0, shapecenter, 0, 3);
-		System.arraycopy( (double[])getPMTLocation(s1, paddle1), 0, PMTloc, 0, 3);
+		System.arraycopy( (double[])getShapeCenter(getOverlapShape(0, strip1, paddle1, strip2, paddle2)), 0, shapecenter, 0, 3);
+		System.arraycopy( (double[])getPMTLocation(strip1, paddle1), 0, PMTloc, 0, 3);
 		
 		distance = Math.sqrt(Math.pow(shapecenter[0] - PMTloc[0],2) + Math.pow(shapecenter[1] - PMTloc[1],2) + Math.pow(shapecenter[2] - PMTloc[2],2));
 		
@@ -975,15 +1092,15 @@ public class CalDrawDB{
 	        		yshift = wwidth * Math.sin(a);
 	        	}
 	        	
-	        	System.out.println("numstrips: " + numstrips[l]);
+	        	//System.out.println("numstrips: " + numstrips[l]);
 	        	
-	        	System.out.println("udist: " + udist);
-	        	System.out.println("vdist: " + vdist);
-	        	System.out.println("wdist: " + wdist);
+	        	//System.out.println("udist: " + udist);
+	        	//System.out.println("vdist: " + vdist);
+	        	//System.out.println("wdist: " + wdist);
 	        	
-	        	System.out.println("uwidth: " + uwidth);
-	        	System.out.println("vwidth: " + vwidth);
-	        	System.out.println("wwidth: " + wwidth);
+	        	//System.out.println("uwidth: " + uwidth);
+	        	//System.out.println("vwidth: " + vwidth);
+	        	//System.out.println("wwidth: " + wwidth);
 	        	
 	        	//System.out.println("xshift: " + xshift);
 	        	//System.out.println("yshift: " + yshift);
@@ -1274,7 +1391,7 @@ public class CalDrawDB{
 
 	public static void main(String[] args){ 
 		
-		CalDrawDB pcaltest = new CalDrawDB("ECin");
+		CalDrawDB pcaltest = new CalDrawDB("PCAL");
 		TEmbeddedCanvas         shapeCanvas= new TEmbeddedCanvas();
 		DetectorShapeTabView  view= new DetectorShapeTabView();
 		
@@ -1320,7 +1437,6 @@ public class CalDrawDB{
 	 		{
 	            shape = pcaltest.getStripShape(sector, "w", uPaddle);
 	            
-
 		            double [] xtemp2 = new double [shape.getShapePath().size()];
 	        		double [] ytemp2 = new double [shape.getShapePath().size()];
 	        		
@@ -1336,7 +1452,6 @@ public class CalDrawDB{
 	        		
 	        		if(uPaddle == 35)
 	        			System.out.println("area: " + areasum);
-
         		
 	            
 	            for(int i = 0; i < shape.getShapePath().size(); ++i)
@@ -1354,8 +1469,6 @@ public class CalDrawDB{
         			
         		}
 	            Umap.addShape(shape);
-
-
 	 		}
     	}
 	    view.addDetectorLayer(Umap);
@@ -1378,40 +1491,37 @@ public class CalDrawDB{
 	 	DetectorShapeView2D UWmap= new DetectorShapeView2D("PCAL UW");
 	 	for(int sector = 0; sector < 1; sector++)
     	{
-    	for(int uPaddle = 0; uPaddle < 68; uPaddle++)
-    	{
-    		for(int vPaddle = 0; vPaddle < 62; vPaddle++)
-            {
-	            //for(int wPaddle = 0; wPaddle < 62; wPaddle++)
-	            //{
-	            	if(pcaltest.isValidOverlap(sector, "u", uPaddle, "v", vPaddle))
-	            	{
-	            		
-	            		System.out.println("u: " + uPaddle + " v: " + vPaddle);
-	            		shape = pcaltest.getOverlapShape(sector, "u", uPaddle, "v", vPaddle);
-	            		for(int i = 0; i < shape.getShapePath().size(); ++i)
-        				{
-	        				x = shape.getShapePath().point(i).x();// * 1000.0;
-			            	y = shape.getShapePath().point(i).y();// * 1000.0;
-			            	
-			            	//if(sector == 0){ x += 302.0; y += 0.0;}
-			            	//if(sector == 1){ x += 140.0; y += 260.0;}
-			            	//if(sector == 2){ x += -140.0; y += 260.0;}
-			            	//if(sector == 3){ x += -302.0; y += 0.0;}
-			            	//if(sector == 4){ x += -140.0; y += -260.0;}
-			            	//if(sector == 5){ x += 140.0; y += -260.0;}
-			            	//x *= 1000.0;
-			            	//y *= 1000.0;
-			            	
-        					shape.getShapePath().point(i).set(x, y, 0.0);
-        					//if(i == 0 && vPaddle == 67 && wPaddle == 30)System.out.println(shape.getShapePath().point(i).x());
-        				}
-	            		UWmap.addShape(shape);
-	            	//}
+	    	for(int uPaddle = 0; uPaddle < 68; uPaddle++)
+	    	{
+	    		for(int vPaddle = 0; vPaddle < 62; vPaddle++)
+	            {
+		            	if(pcaltest.isValidOverlap(sector, 0, uPaddle, 1, vPaddle))
+		            	{
+		            		
+		            		//System.out.println("u: " + uPaddle + " v: " + vPaddle);
+		            		shape = pcaltest.getOverlapShape(sector, 0, uPaddle, 1, vPaddle);
+		            		for(int i = 0; i < shape.getShapePath().size(); ++i)
+	        				{
+		        				x = shape.getShapePath().point(i).x();// * 1000.0;
+				            	y = shape.getShapePath().point(i).y();// * 1000.0;
+				            	
+				            	//if(sector == 0){ x += 302.0; y += 0.0;}
+				            	//if(sector == 1){ x += 140.0; y += 260.0;}
+				            	//if(sector == 2){ x += -140.0; y += 260.0;}
+				            	//if(sector == 3){ x += -302.0; y += 0.0;}
+				            	//if(sector == 4){ x += -140.0; y += -260.0;}
+				            	//if(sector == 5){ x += 140.0; y += -260.0;}
+				            	//x *= 1000.0;
+				            	//y *= 1000.0;
+				            	
+	        					shape.getShapePath().point(i).set(x, y, 0.0);
+	        					//if(i == 0 && vPaddle == 67 && wPaddle == 30)System.out.println(shape.getShapePath().point(i).x());
+	        				}
+		            		shape.setColor(130,(int)(255.0*uPaddle/68.0),(int)(255.0*vPaddle/62.0));
+		            		UWmap.addShape(shape);
+		            	}
 	            }
-            }
-
-    	}
+	    	}
     	}
 	    view.addDetectorLayer(UWmap);
 	    */
@@ -1437,13 +1547,13 @@ public class CalDrawDB{
 		
 		DetectorShape2D shape = new DetectorShape2D();
     	 	DetectorShapeView2D UWmap= new DetectorShapeView2D("PCAL Pixel");
-    	 	for(int sector = 0; sector < 3; sector++)
+    	 	for(int sector = 0; sector < 1; sector++)
 	    	{
-	    	for(int uPaddle = 0; uPaddle < 36; uPaddle++)
+	    	for(int uPaddle = 0; uPaddle < 68; uPaddle++)
 	    	{
-	    		for(int vPaddle = 0; vPaddle < 36; vPaddle++)
+	    		for(int vPaddle = 0; vPaddle < 62; vPaddle++)
 	            {
-		            for(int wPaddle = 0; wPaddle < 36; wPaddle++)
+		            for(int wPaddle = 0; wPaddle < 62; wPaddle++)
 		            {
 		            	//System.out.println("u: " + uPaddle + " v: " + vPaddle + " w: " + wPaddle);
 		            	if(pcaltest.isValidPixel(sector, uPaddle, vPaddle, wPaddle))
@@ -1474,12 +1584,12 @@ public class CalDrawDB{
 		            		num2 = vPaddle + 1;
 		            		num3 = wPaddle + 1;
 		            		//total = pcaltest.getUPixelDistance(uPaddle, vPaddle, wPaddle) + pcaltest.getVPixelDistance(uPaddle, vPaddle, wPaddle) + pcaltest.getWPixelDistance(uPaddle, vPaddle, wPaddle);
-		            		/*
-		            		if(pcaltest.unit != 0 && shape.getShapePath().size() == 4)
-		            			System.out.println("4 vertex: " + num1  + "   " + num2 + "   " + num3);
-		            		if(pcaltest.unit != 0 && shape.getShapePath().size() == 5)
-		            			System.out.println("5 vertex: " + num1  + "   " + num2 + "   " + num3);
-		            		*/
+		            		
+		            		//if(pcaltest.unit != 0 && shape.getShapePath().size() == 4)
+		            		//	System.out.println("4 vertex: " + num1  + "   " + num2 + "   " + num3);
+		            		//if(pcaltest.unit != 0 && shape.getShapePath().size() == 5)
+		            		//	System.out.println("5 vertex: " + num1  + "   " + num2 + "   " + num3);
+		            		
 		            		//System.out.println(num1  + "   " + num2 + "   " + num3);
 		            		writer.println(num1  + "   " + num2 + "   " + num3 + "   "
 									+ pcaltest.getUPixelDistance(uPaddle, vPaddle, wPaddle) + "   " 

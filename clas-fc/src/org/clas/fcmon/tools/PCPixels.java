@@ -105,7 +105,6 @@ public class PCPixels {
 	            			ytemp2[i] = shape.getShapePath().point(i).y();
 		                	pc_xpix[i][pixel-1][6] = xtemp2[i];
 		                	pc_ypix[i][pixel-1][6] = ytemp2[i];
-	            			//System.out.println("i,u,v,w,pix,x,y= "+i+" "+(uStrip+1)+" "+(vStrip+1)+" "+(wStrip+1)+" "+pixel+" "+xtemp2[i]+" "+ytemp2[i]);
 	            		}
 	            		shape.setColor(130,(int)(255*vStrip/pc_nstr[1]),(int)(255*wStrip/pc_nstr[2]));	            		
 	            		pc_cmap[pixel-1] = 255*pixel/6916;
@@ -113,23 +112,32 @@ public class PCPixels {
 	            		pc_nvrt[pixel-1] = shape.getShapePath().size();
 	            		pixels.addTriplets(pixel, uStrip+1, vStrip+1, wStrip+1);
 	            		pixels.addShape(shape, sector, pixel);
+	            		double uDist = pcalDB.getUPixelDistance(uStrip, vStrip, wStrip);
+	            		double vDist = pcalDB.getVPixelDistance(uStrip, vStrip, wStrip);
+	            		double wDist = pcalDB.getWPixelDistance(uStrip, vStrip, wStrip);
 	            	    strips.addPixels(sector, 1, uStrip+1, pixel);
 	            		strips.addPixels(sector, 2, vStrip+1, pixel);
 	            		strips.addPixels(sector, 3, wStrip+1, pixel);
-		        		pixels.addPixDist(pcalDB.getUPixelDistance(uStrip, vStrip, wStrip),
-		        				          pcalDB.getVPixelDistance(uStrip, vStrip, wStrip),
-		        				          pcalDB.getWPixelDistance(uStrip, vStrip, wStrip),pixel);	
-		        		//System.out.println("pixel= "+pixel+" Udist= "+pixels.getUdist(pixel)+
-		        		//		                             " Vdist= "+pixels.getVdist(pixel)+
-		        		//		                             " Wdist= "+pixels.getWdist(pixel));
+	            	    strips.addPixDist(sector, 1, uStrip+1, (int) (uDist*100));
+	            		strips.addPixDist(sector, 2, vStrip+1, (int) (vDist*100));
+	            		strips.addPixDist(sector, 3, wStrip+1, (int) (wDist*100));
+		        		pixels.addPixDist(uDist,vDist,wDist,pixel);	
 		        		SimplePolygon2D pol1 = new SimplePolygon2D(xtemp2,ytemp2);
 		        		pixels.addArea(pol1.area(),sector,pixel);
 		        		if (pol1.area()>maxPixArea) maxPixArea = pol1.area();
-		        		//System.out.println("Pixel area, maxarea = "+pixels.getArea(pixel)+ " "+maxPixArea);
 	            	}
 	            }
     		}
     	}
+    	// Sort pixels in each strip according to distance from edge
+    	for (int lay=0; lay<3 ; lay++ ){
+    		System.out.println("PCPixels: Sorting pixels in layer "+lay);
+    		for(int strip = 0; strip < pc_nstr[lay]; strip++) {
+    			strips.getSortedPixels(0, lay+1, strip+1);
+    		}
+    	}
+    	
+   	
     	pixels.setMaxPixelArea(maxPixArea);
     	}
 	}

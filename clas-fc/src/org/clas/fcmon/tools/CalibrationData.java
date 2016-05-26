@@ -45,15 +45,9 @@ public class CalibrationData {
         double[] yprawe = new double[dataSize]; 
  
         // For raw graph
-        n=0; double xmin=1000. ; double xmax=0.;
+        n=0;          
         for(int loop=0; loop < data.length; loop++) {
-        	double xx = xdata[loop];
-        	if (xx<xmin) xmin=xx;
-        	if (xx>xmax) xmax=xx;
-        }
-         
-        for(int loop = 0; loop < data.length; loop++) {
-        	if (data[loop]>20) n++;   		
+        	if (data[loop]>20&&loop>2&&loop<data.length-2) n++;   		
     		xpraw[loop]  = xdata[loop]; 
     		xprawe[loop] = 0.;
     		ypraw[loop]  = data[loop];
@@ -69,7 +63,7 @@ public class CalibrationData {
         // For fit graph
         n=0;
         for(int loop = 0; loop < data.length; loop++){
-        	if (data[loop]>20) {
+        	if (data[loop]>20&&loop>2&&loop<data.length-2) {
          		xpfit[n]  = xpraw[loop]; 
         		xpfite[n] = xprawe[loop];
         		ypfit[n]  = ypraw[loop];
@@ -77,7 +71,6 @@ public class CalibrationData {
         		n++;
         	}
         }
-
         graph = new GraphErrors(xpfit,ypfit,xpfite,ypfite);   
         graph.setXTitle("Pixel Distance (cm)");
         graph.setYTitle("Mean ADC");
@@ -100,8 +93,7 @@ public class CalibrationData {
         
         graph.setTitle("EXP FIT: Sector "+sector+" "+otab[view-1]+" "+strip);        
         this.rawgraphs.add(graph);
-        
-        F1D f1 = new F1D("exp",0,400);
+        F1D f1 = new F1D("exp",0.,400.);
         this.functions.add(f1);
     }
     

@@ -1016,11 +1016,14 @@ public class PCMon extends DetectorMonitor {
 				
 		canvas.divide(2,2);
 		//System.out.println("layer,panel,io,nstr,of,l1,l2= "+layer+" "+panel+" "+io+" "+nstr+" "+of+" "+l1+" "+l2);
-        if (inProcess==2) {this.analyzeAttenuation(1,2,1,4,0,62);inProcess=3;}
+        if (inProcess==2) {
+        	for (int ll=0; ll<3 ; ll++) this.analyzeAttenuation(1,2,ll+1,ll+2,0,pcPix.pc_nstr[ll]);
+        	inProcess=3;
+        }
 		 
 		if (layer<7||(layer>10&&layer<17)) {
 			if (inProcess>0) {
-				if (layer>10) {layer=layer-10; lay=layer;int component = pcPix.pixels.getStrip(lay-of,ic); ic=component-1;}
+				if (layer>10) {layer=layer-10; lay=layer;int component = pcPix.pixels.getStrip(lay-of,ic+1); ic=component-1;}
 				nstr = pcPix.pc_nstr[layer-1];
 			    if (inProcess==1)  {this.analyzeAttenuation(is,is+1,layer,layer+1,0,nstr);}
 				if (collection.hasEntry(is, layer, ic)) {
@@ -1127,8 +1130,8 @@ public class PCMon extends DetectorMonitor {
 				if(layer!=il) {canvas.cd(il+5-of); h = H2_PCt_Hist.get(is+1,il,0).sliceY(22); h.setXTitle(tlab); h.setTitle(""); h.setFillColor(col0); canvas.draw(h);}
 				}
 			String alab = lab1[l-1-of]+lab2[io-1]+lab3[0]+strip+lab4[0];String tlab = lab1[l-1-of]+lab2[io-1]+lab3[0]+strip+lab4[1];
-			canvas.cd(l+2-of); h = H2_PCa_Hist.get(is+1,l,0).sliceY(ic);h.setXTitle(alab); h.setTitle(""); h.setFillColor(col2); canvas.draw(h);
-			canvas.cd(l+5-of); h = H2_PCt_Hist.get(is+1,l,0).sliceY(ic);h.setXTitle(tlab); h.setTitle(""); h.setFillColor(col2); canvas.draw(h);
+			canvas.cd(l+2-of); h = H2_PCa_Hist.get(is+1,l,0).sliceY(ic);h.setXTitle(alab); h.setTitle(""); h.setFillColor(col2); canvas.draw(h,"S");
+			canvas.cd(l+5-of); h = H2_PCt_Hist.get(is+1,l,0).sliceY(ic);h.setXTitle(tlab); h.setTitle(""); h.setFillColor(col2); canvas.draw(h,"S");
 			}
 		
 		if (layer==7||layer==8) {
@@ -1140,8 +1143,8 @@ public class PCMon extends DetectorMonitor {
 				copy.reset() ; copy.setBinContent(ic, h.getBinContent(ic));
 				copy.setFillColor(col2); canvas.draw(copy,"same");	    		 
 				String alab = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[0];String tlab = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[1];
-				canvas.cd(il+2-of) ; h = H2_PCa_Hist.get(is+1,il,0).sliceY(strip-1); h.setXTitle(alab); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
-				canvas.cd(il+5-of) ; h = H2_PCt_Hist.get(is+1,il,0).sliceY(strip-1); h.setXTitle(tlab); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
+				canvas.cd(il+2-of) ; h = H2_PCa_Hist.get(is+1,il,0).sliceY(strip-1); h.setXTitle(alab); h.setTitle("");h.setFillColor(col2); canvas.draw(h,"S");
+				canvas.cd(il+5-of) ; h = H2_PCt_Hist.get(is+1,il,0).sliceY(strip-1); h.setXTitle(tlab); h.setTitle("");h.setFillColor(col2); canvas.draw(h,"S");
 				}
 			}
 		
@@ -1155,8 +1158,8 @@ public class PCMon extends DetectorMonitor {
 				String alab1 = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[0];String tlab1 = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[1];
 				String alab2 = lab1[il-1-of]+lab2[io-1]+lab3[1]+pixel+lab4[0];String tlab2 = lab1[il-1-of]+lab2[io-1]+lab3[1]+pixel+lab4[1];
 				if (layer<17) {
-					canvas.cd(il+2-of) ; h = H2_PCa_Hist.get(is+1,il,1).sliceY(strip-1); h.setXTitle(alab1); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
-					canvas.cd(il+5-of) ; h = H2_PCa_Hist.get(is+1,il,2).sliceY(ic)     ; h.setXTitle(alab2); h.setTitle("");h.setFillColor(col2); canvas.draw(h);
+					canvas.cd(il+2-of) ; h = H2_PCa_Hist.get(is+1,il,1).sliceY(strip-1); h.setXTitle(alab1); h.setTitle("");h.setFillColor(col2); canvas.draw(h,"S");
+					canvas.cd(il+5-of) ; h = H2_PCa_Hist.get(is+1,il,2).sliceY(ic)     ; h.setXTitle(alab2); h.setTitle("");h.setFillColor(col2); canvas.draw(h,"S");
 					}
 				if (layer>16&&layer<22) {
 					canvas.cd(il+2-of) ; h = H2_PCt_Hist.get(is+1,il,1).sliceY(strip-1); h.setXTitle(tlab1); h.setTitle("");h.setFillColor(col2); canvas.draw(h);

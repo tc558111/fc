@@ -62,6 +62,7 @@ public class PCMon extends DetectorMonitor {
    boolean inMC         = false; //true=MC false=DATA
    int thr[]            = {15,15,20};
    int nsa,nsb,tet,p1,p2,pedref  = 0;
+   double PCMon_zmax    = 0;
    String monpath       = System.getenv("COATJAVA");
    String monfile       = "mondirectory"; 
    
@@ -672,6 +673,8 @@ public class PCMon extends DetectorMonitor {
 		
 		if (z==0) return 0;
 		
+		PCMon_zmax = rmax*1.2;
+		
 		if (inProcess==0)  color=(double)(z-rmin)/(rmax-rmin);
 		double pixMin = app.displayControl.pixMin ; double pixMax = app.displayControl.pixMax;
 		if (inProcess!=0) {
@@ -822,8 +825,8 @@ public class PCMon extends DetectorMonitor {
 		int is    = desc.getSector();
 		int layer = desc.getLayer();
 		int ic    = desc.getComponent();
-		
-		if (layer>6) return;
+	
+		if (layer>3) return;
 		
 		int panel = app.getDetectorView().panel1.omap;
 		int io    = app.getDetectorView().panel1.ilmap;
@@ -839,7 +842,8 @@ public class PCMon extends DetectorMonitor {
 		int l1 = of+1;
 		int l2 = of+4;	
 		
-		canvas.divide(6,6);
+		if (layer==1) canvas.divide(9,8);
+		if (layer>1)  canvas.divide(9,7);
 		canvas.setAxisFontSize(14);
 		canvas.setTitleFontSize(14);
 		
@@ -855,7 +859,7 @@ public class PCMon extends DetectorMonitor {
 		f2.setLineColor(4);f2.setLineStyle(2);	
 		
 	    for(int ip=0;ip<pcPix.pc_nstr[layer-1];ip++){
-	    	canvas.cd(ip); canvas.getPad().setAxisRange(0.,100.,-15.,4000*app.displayControl.pixMax);
+	    	canvas.cd(ip); canvas.getPad().setAxisRange(0.,100.,-15.,PCMon_zmax*app.displayControl.pixMax);
 	        h = H2_PCa_Sevd.get(is+1,layer,0).sliceY(ip); h.setXTitle("Sample (4 ns)"); h.setYTitle("Counts");
 	    	h.setTitle(otab[layer-1]+" "+(ip+1)); h.setFillColor(4); canvas.draw(h);
 	        h = H2_PCa_Sevd.get(is+1,layer,1).sliceY(ip); h.setFillColor(2); canvas.draw(h,"same");
@@ -888,7 +892,7 @@ public class PCMon extends DetectorMonitor {
 		String lab1[]={"U ","V ","W "}, lab2[]={"Inner ","Outer "}, lab3[]={"Strip ","Pixel "},lab4[]={" ADC"," TDC"};
 		H1D h;
 		//TStyle.setOptStat
-		canvas.divide(3,3);
+		canvas.divide(1,3);
 		canvas.setAxisFontSize(14);
 		canvas.setTitleFontSize(14);
 		canvas.setStatBoxFontSize(12);
@@ -898,10 +902,9 @@ public class PCMon extends DetectorMonitor {
 	    		
 		if (layer<7)  {col0=0 ; col1=4; col2=2;strip=ic+1;}
 		if (layer>=7) {col0=4 ; col1=4; col2=2;pixel=ic+1;}
-    
-		
-	    for(int il=1;il<7;il++){
-	    	canvas.cd(il-1); canvas.getPad().setAxisRange(-1.,37.,0.,1500*app.displayControl.pixMax);
+    		
+	    for(int il=1;il<4;il++){
+	    	canvas.cd(il-1); canvas.getPad().setAxisRange(-1.,pcPix.pc_nstr[il-1]+1,0.,PCMon_zmax*app.displayControl.pixMax);
 	    	h = H1_PCa_Sevd.get(is+1,il,0); h.setXTitle(otab[il-1]); h.setFillColor(col0); canvas.draw(h);
 	    }
 	}

@@ -51,8 +51,8 @@ public class PCMon extends DetectorMonitor {
    TDirectory         mondirectory = new TDirectory(); 	
    ColorPalette            palette = new ColorPalette();
 
-   CalDrawDB                pcalDB = new CalDrawDB("PCAL");
-   PCPixels                  pcPix = new PCPixels("PCAL");
+   CalDrawDB                pcalDB = new CalDrawDB("PCAL"); //or ECin
+   PCPixels                  pcPix = new PCPixels("PCAL");  //or ECin
    MyArrays               myarrays = new MyArrays();
    
    TreeMap<Integer,Object> map7=null,map8=null; 
@@ -764,11 +764,11 @@ public class PCMon extends DetectorMonitor {
 				
 				for (int ipix=0 ; ipix<npix ; ipix++){
 					meanerr[ipix]=0;
-					if (cnts[ipix]>5) {
+					if (cnts[ipix]>1) {
 						meanerr[ipix]=Math.sqrt((adcsq[ipix]-adc[ipix]*adc[ipix]-8.3)/(cnts[ipix]-1)); //Sheppard's correction: c^2/12 c=10
 						doCalibration = true;
 					}				
-					if (cnts[ipix]<6) {
+					if (cnts[ipix]==1) {
 						meanerr[ipix]=8.3;
 						doCalibration = true;
 					}					  
@@ -782,7 +782,8 @@ public class PCMon extends DetectorMonitor {
 					if (doCalibration){
 						fits = new CalibrationData(is,il,ip);
 						fits.getDescriptor().setType(DetectorType.PCAL);
-						fits.addGraph(pcPix.strips.getpixels(il,ip+1,distmap),
+						fits.addGraph(pcPix.strips.getpixels(il,ip+1,cnts),
+								      pcPix.strips.getpixels(il,ip+1,distmap),
 								      pcPix.strips.getpixels(il,ip+1,meanmap),
 								      pcPix.strips.getpixels(il,ip+1,meanerr));
 						fits.analyze();

@@ -100,6 +100,14 @@ public class Pixel {
     	return dist;
     }
     
+    public double getDist(int layer, int pixel) {
+    	double dist = 0;
+    	if (layer==1) dist = this.getUdist(pixel);
+  	  	if (layer==2) dist = this.getVdist(pixel);
+  	  	if (layer==3) dist = this.getWdist(pixel);
+  	  	return dist;
+    }
+    
     public int getPixel(int u, int v, int w) {
     	int pixel=0;
     	if (pixelStrips.hasItem(u,v,w)) pixel = pixelStrips.getItem(u,v,w);

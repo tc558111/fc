@@ -18,11 +18,11 @@ public class DisplayControl extends JPanel {
     
     static final int PIX_MIN_LO   =  10;
     static final int PIX_MIN_HI   = 100;
-    static final int PIX_MIN_INIT =  10;
+    static final int PIX_MIN_INIT =  90;
     
     static final int PIX_MAX_LO    =    1;
     static final int PIX_MAX_HI    =  150;
-    static final int PIX_MAX_INIT  =   20;
+    static final int PIX_MAX_INIT  =   80;
     
     public double pixMin = PIX_MIN_INIT*0.01;
     public double pixMax = PIX_MAX_INIT*0.01;

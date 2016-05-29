@@ -37,23 +37,23 @@ public class PCPixels {
 	public double pc_cmap[]       = new double[6916];
 	public double pc_zmap[]       = new double[6916];
 	public    int pc_nvrt[]       = new int[6916];
-	public    int pc_nstr[]       = new int[3];
+	public    int pc_nstr[]       = {36,36,36};
 	
 	int sup=0;
 	
 	public PCPixels(String det) {
 		
 	  detector  = new ECFactory().createDetectorTilted(DataBaseLoader.getGeometryConstants(DetectorType.EC, 10, "default"));
-	  if (det=="PCAL")  sup=0;
-	  if (det=="ECin")  sup=1;
-	  if (det=="ECout") sup=2;
+	  if (det=="PCAL")   sup=0;
+	  if (det=="ECin")   sup=1;
+	  if (det=="ECout")  sup=2;
 	  for (int suplay=sup ; suplay<sup+1; suplay++) {
   	    for (int layer=0; layer<3; layer++) {
   		  ecLayer = detector.getSector(0).getSuperlayer(suplay).getLayer(layer);
   		  pc_nstr[layer] = ecLayer.getAllComponents().size();
   	    }
   	  }
-	  this.pcalDB = new CalDrawDB("PCAL");
+	  this.pcalDB = new CalDrawDB(det);
 	  this.pcGetStripsDB();
 	  this.pcGetPixelsDB();
       this.pcpixrot();
@@ -93,7 +93,7 @@ public class PCPixels {
 		for(int sector=0; sector<1 ; sector++) {
     	int pixel = 0; double maxPixArea=0;
     	for(int uStrip = 0; uStrip < pc_nstr[0]; uStrip++) {	 
-    		for(int vStrip = 0; vStrip < pc_nstr[1]; vStrip++) {    			 
+    		for(int vStrip = 0; vStrip < pc_nstr[1]; vStrip++) {    			        		 			 
 	            for(int wStrip = 0; wStrip < pc_nstr[2]; wStrip++) {  
 	            	shape = pcalDB.getPixelShape(0, uStrip, vStrip, wStrip);
 	              	if(shape!=null) {	

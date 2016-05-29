@@ -61,8 +61,9 @@ public class CalDrawDB{
 	public CalDrawDB(String detector) {
 		     if(detector.contains("PCAL"))  unit = 0;
 		else if(detector.contains("ECin"))  unit = 1;
+		else if(detector.contains("EC"))    unit = 1;
 		else if(detector.contains("ECout")) unit = 2;
-		else System.err.println("Must pass in PCAL, ECin, or ECout");
+		else System.err.println("Must pass in PCAL, EC, ECin, or ECout");
 		
 		if(unit==0)
 		{
@@ -382,7 +383,7 @@ public class CalDrawDB{
 	// if so it is marked as true, else false
 	public Boolean isValidPixel(int sector, int uPaddle, int vPaddle, int wPaddle){
 		
-		if(validoverlap[0][uPaddle][wPaddle] == -1) return false;
+		     if(validoverlap[0][uPaddle][wPaddle] == -1) return false;
 		else if(validoverlap[1][uPaddle][vPaddle] == -1) return false;
 		else if(validoverlap[2][vPaddle][wPaddle] == -1) return false;
 		else
@@ -490,7 +491,7 @@ public class CalDrawDB{
 
 	
 	//returns an Object array of size 3
-	//first element is the number of verticies (n) (int)
+	//first element is the number of vertices (n) (int)
 	//second element is an array x-coordinates (double[]) of size n
 	//third element is an array y-coordinates (double[]) of size n
 	//                                     0-5         0-67         0-61          0-61
@@ -519,7 +520,7 @@ public class CalDrawDB{
 	
 	
 	//returns an Object array of size 3
-	//first element is the number of verticies (n) (int)
+	//first element is the number of vertices (n) (int)
 	//second element is an array x-coordinates (double[]) of size n
 	//third element is an array y-coordinates (double[]) of size n
 
@@ -572,7 +573,7 @@ public class CalDrawDB{
 	}
 	
 	//estimates the shape center by calculating average x, y, z
-	//from all verticies in the shape
+	//from all vertices in the shape
 
 	public double[] getShapeCenter(DetectorShape2D shape){
 		double[] center = new double[3];

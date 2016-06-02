@@ -26,7 +26,7 @@ public class CalibrationData {
 	
     public DetectorDescriptor getDescriptor(){ return this.desc;}
     
-    public void addGraph(double[] cnts, double[] xdata, double[] data, double[] error){
+    public void addGraph(double[] cnts, double[] xdata, double[] data, double[] error, boolean[] status){
     	
     	GraphErrors graph;
 		String otab[]={"U Inner Strip","V Inner Strip","W Inner Strip","U Outer Strip","V Outer Strip","W Outer Strip"};
@@ -47,7 +47,7 @@ public class CalibrationData {
         // For raw graph
         n=0;          
         for(int loop=0; loop < data.length; loop++) {
-        	if (cnts[loop]>5&&data[loop]>20&&loop>2&&loop<data.length-2) n++;   		
+        	if (cnts[loop]>5&&data[loop]>20&&!status[loop]) n++;   		
     		xpraw[loop]  = xdata[loop]; 
     		xprawe[loop] = 0.;
     		ypraw[loop]  = data[loop];
@@ -63,7 +63,7 @@ public class CalibrationData {
         // For fit graph
         n=0;
         for(int loop = 0; loop < data.length; loop++){
-        	if (cnts[loop]>5&&data[loop]>20&&loop>2&&loop<data.length-2) {
+        	if (cnts[loop]>5&&data[loop]>20&&!status[loop]) {
          		xpfit[n]  = xpraw[loop]; 
         		xpfite[n] = xprawe[loop];
         		ypfit[n]  = ypraw[loop];

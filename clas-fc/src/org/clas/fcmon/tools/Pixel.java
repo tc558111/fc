@@ -8,6 +8,7 @@ import org.root.histogram.H2D;
 public class Pixel {
 
     FTHashCollection<Integer>        pixelStrips = null;
+    FTHashCollection<Boolean>        pixelStatus = null;
     FTHashCollection<int[]>          stripPixels = null;
     FTHashCollection<H1D>               pixelH1D = null;
     FTHashCollection<H2D>               pixelH2D = null;
@@ -22,6 +23,7 @@ public class Pixel {
     
     public Pixel() {
     	this.pixelStrips = new FTHashCollection<Integer>(3);
+    	this.pixelStatus = new FTHashCollection<Boolean>(1);
     	this.stripPixels = new FTHashCollection<int[]>(1);
     	this.pixelH1D    = new FTHashCollection<H1D>(1);
     	this.pixelH2D    = new FTHashCollection<H2D>(1);
@@ -76,6 +78,14 @@ public class Pixel {
     	pixelUDist.add(udist,pixel);
     	pixelVDist.add(vdist,pixel);
     	pixelWDist.add(wdist,pixel);
+    }
+    
+    public void setPixelStatus(boolean status, int pixel) {
+    	pixelStatus.add(status, pixel);
+    }
+    
+    public boolean getPixelStatus(int pixel) {
+    	return pixelStatus.getItem(pixel);
     }
     
     public double getUdist(int pixel) {

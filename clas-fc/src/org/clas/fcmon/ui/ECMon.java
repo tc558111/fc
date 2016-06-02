@@ -1,6 +1,7 @@
 package org.clas.fcmon.ui;
 
 import org.clas.fcmon.tools.*;
+import org.clas.tools.HipoFile;
 import org.jlab.geom.prim.Path3D;
 import org.jlab.rec.ecn.ECCommon;
 import org.jlab.clas.detector.BankType;
@@ -52,8 +53,8 @@ public class ECMon extends DetectorMonitor {
    TDirectory         mondirectory = new TDirectory(); 	
    ColorPalette            palette = new ColorPalette();
 
-   CalDrawDB[]              pcalDB = new CalDrawDB[2];  
-   PCPixels[]                pcPix = new PCPixels[2];
+   CalDrawDB[]                ecDB = new CalDrawDB[2];  
+   ECPixels[]                ecPix = new ECPixels[2];
 
    MyArrays               myarrays ;
    DatabaseConstantProvider   ccdb ;
@@ -93,9 +94,9 @@ public class ECMon extends DetectorMonitor {
 	public ECMon(String det) {
 		super("ECMON","1.0","lcsmith");
 		mondet = det;
-		if (mondet=="PCAL") {detID = 0 ; moncalrun=2  ; pcalDB[0] = new CalDrawDB("PCAL")  ; pcPix[0] = new PCPixels("PCAL");}
-		if (mondet=="EC")   {detID = 1 ; moncalrun=12 ; pcalDB[0] = new CalDrawDB("ECin")  ; pcPix[0] = new PCPixels("ECin");  
-		                                                pcalDB[1] = new CalDrawDB("ECout") ; pcPix[1] = new PCPixels("ECout");}
+		if (mondet=="PCAL") {detID = 0 ; moncalrun=2  ; ecDB[0] = new CalDrawDB("PCAL")  ; ecPix[0] = new ECPixels("PCAL");}
+		if (mondet=="EC")   {detID = 1 ; moncalrun=12 ; ecDB[0] = new CalDrawDB("ECin")  ; ecPix[0] = new ECPixels("ECin");  
+		                                                ecDB[1] = new CalDrawDB("ECout") ; ecPix[1] = new ECPixels("ECout");}
 		myarrays = new MyArrays();
 		fadc.load("/daq/fadc/ec",10,"default");
 		ccdb = new DatabaseConstantProvider(moncalrun,"default");
@@ -120,6 +121,7 @@ public class ECMon extends DetectorMonitor {
 				app.addCanvas("Attenuation");
 				app.addCanvas("Pedestals");
 				app.addCanvas("Timing");
+				app.addCanvas("RawHistos");
 				monitor.init();
 				monitor.initDetector(1,2);
 				}
@@ -138,7 +140,12 @@ public class ECMon extends DetectorMonitor {
 	}
 	
 	public void saveToFile() {
-		
+		System.out.println("Saving hipofile");
+		String hipoFileName = "/Users/colesmith/junk.hipo";
+        HipoFile histofile = new HipoFile(hipoFileName);
+        histofile.addToMap("Energy_histo", this.H2_PCa_Hist);
+        histofile.writeHipoFile(hipoFileName);
+        histofile.browsFile(hipoFileName);		
 	}
 	
 	public void reset() {
@@ -157,8 +164,8 @@ public class ECMon extends DetectorMonitor {
     
 	public void initHistograms() {
 		
-		int nstr = pcPix[0].pc_nstr[0]            ; double nend = nstr+1;  
-		int npix = pcPix[0].pixels.getNumPixels() ; double pend = npix+1;
+		int nstr = ecPix[0].pc_nstr[0]            ; double nend = nstr+1;  
+		int npix = ecPix[0].pixels.getNumPixels() ; double pend = npix+1;
 		
 		for (int is=1; is<7 ; is++) {
 			for (int il=1 ; il<7 ; il++){
@@ -207,8 +214,8 @@ public class ECMon extends DetectorMonitor {
 		
 		System.out.println("initpcgui():");
 		
-		Lmap_a.add(0,0,0, toTreeMap(pcPix[0].pc_cmap));
-		Lmap_a.add(0,0,1, toTreeMap(pcPix[0].pc_zmap));
+		Lmap_a.add(0,0,0, toTreeMap(ecPix[0].pc_cmap));
+		Lmap_a.add(0,0,1, toTreeMap(ecPix[0].pc_zmap));
 		
 		List<String> b1 = new ArrayList<String>();  b1.add("Inner") ; b1.add("Outer");
 		List<String> b2 = new ArrayList<String>();  b2.add("EVT")   ; b2.add("ADC")  ; b2.add("TDC");
@@ -228,10 +235,10 @@ public class ECMon extends DetectorMonitor {
 		long startTime = System.currentTimeMillis();
 		
 		for(int is=is1; is<is2; is++) {
-			for(int ip=0; ip<pcPix[0].pc_nstr[0] ; ip++)             dv1.addShape(getStrip(is,1,ip));
-			for(int ip=0; ip<pcPix[0].pc_nstr[1] ; ip++)             dv2.addShape(getStrip(is,2,ip));
-			for(int ip=0; ip<pcPix[0].pc_nstr[2] ; ip++)             dv3.addShape(getStrip(is,3,ip));		    
-			for(int ip=0; ip<pcPix[0].pixels.getNumPixels() ; ip++)  dv4.addShape(getPixel(is,4,ip));
+			for(int ip=0; ip<ecPix[0].pc_nstr[0] ; ip++)             dv1.addShape(getStrip(is,1,ip));
+			for(int ip=0; ip<ecPix[0].pc_nstr[1] ; ip++)             dv2.addShape(getStrip(is,2,ip));
+			for(int ip=0; ip<ecPix[0].pc_nstr[2] ; ip++)             dv3.addShape(getStrip(is,3,ip));		    
+			for(int ip=0; ip<ecPix[0].pixels.getNumPixels() ; ip++)  dv4.addShape(getPixel(is,4,ip));
 		}
 		
 		System.out.println("initgui time= "+(System.currentTimeMillis()-startTime));
@@ -254,8 +261,8 @@ public class ECMon extends DetectorMonitor {
 	    
 	    Path3D shapePath = shape.getShapePath();
 	    
-	    for(int j = 0; j < pcPix[0].pc_nvrt[pixel]; j++){
-	    	shapePath.addPoint(pcPix[0].pc_xpix[j][pixel][sector],pcPix[0].pc_ypix[j][pixel][sector],0.0);
+	    for(int j = 0; j < ecPix[0].pc_nvrt[pixel]; j++){
+	    	shapePath.addPoint(ecPix[0].pc_xpix[j][pixel][sector],ecPix[0].pc_ypix[j][pixel][sector],0.0);
 	    }
 	    return shape;
 	}
@@ -270,7 +277,7 @@ public class ECMon extends DetectorMonitor {
 	    Path3D shapePath = shape.getShapePath();
 		
 	    for(int j = 0; j <4; j++){
-	    	shapePath.addPoint(pcPix[0].pc_xstr[j][str][layer-1][sector],pcPix[0].pc_ystr[j][str][layer-1][sector],0.0);
+	    	shapePath.addPoint(ecPix[0].pc_xstr[j][str][layer-1][sector],ecPix[0].pc_ystr[j][str][layer-1][sector],0.0);
 	    }	
 	    
 	    return shape;
@@ -278,8 +285,8 @@ public class ECMon extends DetectorMonitor {
 	
 	private class MyArrays {
 		
-		int nstr = pcPix[0].pc_nstr[0];
-		int npix = pcPix[0].pixels.getNumPixels();
+		int nstr = ecPix[0].pc_nstr[0];
+		int npix = ecPix[0].pixels.getNumPixels();
 		
 		int        nha[][] = new    int[6][9];
 		int        nht[][] = new    int[6][9];
@@ -344,14 +351,14 @@ public class ECMon extends DetectorMonitor {
 			int  iv = il+3;
 			
 			if(tdc>1200&&tdc<1500){
-				uvwt[is-1][ic]=uvwt[is-1][il]+pcPix[0].uvw_dalitz(ic,il,ip); //Dalitz tdc 
+				uvwt[is-1][ic]=uvwt[is-1][il]+ecPix[0].uvw_dalitz(ic,il,ip); //Dalitz tdc 
 	          	 nht[is-1][iv-1]++; int inh = nht[is-1][iv-1];
 	            tdcr[is-1][iv-1][inh-1] = tdc;
 	           strrt[is-1][iv-1][inh-1] = ip;
 	          	  H2_PCt_Hist.get(is,il,0).fill(tdc,ip,1.0);
 	        }
 	   	    if(adc>thr[ic]){
-	   	    	uvwa[is-1][ic]=uvwa[is-1][ic]+pcPix[0].uvw_dalitz(ic,il,ip); //Dalitz adc
+	   	    	uvwa[is-1][ic]=uvwa[is-1][ic]+ecPix[0].uvw_dalitz(ic,il,ip); //Dalitz adc
 	          	 nha[is-1][iv-1]++; int inh = nha[is-1][iv-1];
 	            adcr[is-1][iv-1][inh-1] = adc;
 	           ftdcr[is-1][iv-1][inh-1] = tdcf;
@@ -385,7 +392,7 @@ public class ECMon extends DetectorMonitor {
 									
 									ecsumpix[is][io][ii] = ecadcpix[is][off1][ii]+ecadcpix[is][off2][ii]+ecadcpix[is][off3][ii];
 									    esum[is][io]     = esum[is][io]+ecsumpix[is][io][ii];
-								     ecpixel[is][io][ii] = pcPix[0].pixels.getPixel(u,v,w);
+								     ecpixel[is][io][ii] = ecPix[0].pixels.getPixel(u,v,w);
 								     H1_PCa_Sevd.get(is+1,io+7,0).fill(ecpixel[is][io][ii],esum[is][io]);								}
 							}
 						}
@@ -411,8 +418,8 @@ public class ECMon extends DetectorMonitor {
 	        	   for (int n=1 ; n<nha[is][iv-1]+1 ; n++) {
 	        		   int ip=strra[is][iv-1][n-1]; int ad=adcr[is][iv-1][n-1];
 	        		   H1_PCa_Sevd.get(is+1,il,0).fill(ip,ad);
-	        		             if(il<4) pcPix[0].strips.putpixels(il,ip,ad,sed7);
-	        		   if(detID==1&&il>3) pcPix[1].strips.putpixels(il-3,ip,ad,sed8);
+	        		             if(il<4) ecPix[0].strips.putpixels(il,ip,ad,sed7);
+	        		   if(detID==1&&il>3) ecPix[1].strips.putpixels(il-3,ip,ad,sed8);
 	        	   }
 	           }
 	           map7.put(5,sed7); map8.put(5,sed8);
@@ -450,13 +457,13 @@ public class ECMon extends DetectorMonitor {
 
 //				good_dalitz = uvwa[is][ic]-2.0)>0.02 && (uvwa[is][ic]-2.0)<0.056 //EC 				
 				good_dalitz = Math.abs(uvwa[is][ic-icoff]-2.0)<0.1; //PCAL
-				      pixel = pcPix[0].pixels.getPixel(strra[is][iic+0][0],strra[is][iic+1][0],strra[is][iic+2][0]);
+				      pixel = ecPix[0].pixels.getPixel(strra[is][iic+0][0],strra[is][iic+1][0],strra[is][iic+2][0]);
 				 good_pixel = pixel!=0;
 						
 			    if (good_uvwa && good_dalitz && good_pixel) { 
 
 					H1_PCa_Maps.get(is+1,ic+6,0).fill(pixel,1.0);
-					H1_PCa_Maps.get(is+1,ic+6,3).fill(pixel,1.0/pcPix[0].pixels.getNormalizedArea(pixel)); //Normalized to pixel area
+					H1_PCa_Maps.get(is+1,ic+6,3).fill(pixel,1.0/ecPix[0].pixels.getNormalizedArea(pixel)); //Normalized to pixel area
 					
 					for (int il=l1; il<l2 ; il++){
 						double adcc = adcr[is][il+2][0]/pixelLength[pixel-1];
@@ -482,12 +489,12 @@ public class ECMon extends DetectorMonitor {
 				}	
 //				good_dalitz = uvwt[is][ic]-2.0)>0.02 && (uvwt[is][ic]-2.0)<0.056 //EC 				
 				good_dalitz = Math.abs(uvwt[is][ic-icoff]-2.0)<0.1; //PCAL
-				     pixel  = pcPix[0].pixels.getPixel(strrt[is][iic+0][0],strrt[is][iic+1][0],strrt[is][iic+2][0]);
+				     pixel  = ecPix[0].pixels.getPixel(strrt[is][iic+0][0],strrt[is][iic+1][0],strrt[is][iic+2][0]);
 				good_pixel  = pixel!=0;
 			
 				if (good_uvwt && good_dalitz && good_pixel) { 
 					H1_PCt_Maps.get(is+1,ic+6,0).fill(pixel,1.0);
-					H1_PCt_Maps.get(is+1,ic+6,3).fill(pixel,1.0/pcPix[0].pixels.getNormalizedArea(pixel)); //Normalized to pixel area
+					H1_PCt_Maps.get(is+1,ic+6,3).fill(pixel,1.0/ecPix[0].pixels.getNormalizedArea(pixel)); //Normalized to pixel area
 					for (int il=l1; il<l2 ; il++){
 						H2_PCt_Hist.get(is+1,il,1).fill(tdcr[is][il+2][0],strrt[is][il+2][0],1.0) ;
 						H2_PCt_Hist.get(is+1,il,2).fill(tdcr[is][il+2][0],pixel,1.0);						
@@ -781,8 +788,9 @@ public class ECMon extends DetectorMonitor {
 		TreeMap<Integer, Object> map;
 		CalibrationData fits ; 	
 		boolean doCalibration=false;
-		int npix = pcPix[0].pixels.getNumPixels();
-		double meanerr[] = new double[npix];
+		int npix = ecPix[0].pixels.getNumPixels();
+		double  meanerr[] = new double[npix];
+		boolean status[] = new boolean[npix];
 		 		
 		for (int is=is1 ; is<is2 ; is++) {
 			for (int il=il1 ; il<il2 ; il++) {
@@ -803,21 +811,23 @@ public class ECMon extends DetectorMonitor {
 					if (cnts[ipix]==1) {
 						meanerr[ipix]=8.3;
 						doCalibration = true;
-					}					  
+					}
+					status[ipix] = ecPix[ill-7].pixels.getPixelStatus(ipix+1);
 				}
 				
 				map = (TreeMap<Integer, Object>) Lmap_a.get(is+1,il+10,0);
 				double meanmap[] = (double[]) map.get(1);
-				double distmap[] = (double[]) pcPix[ill-7].pixels.getDist(iill);
+				double distmap[] = (double[]) ecPix[ill-7].pixels.getDist(iill);
 				
 				for (int ip=ip1 ; ip<ip2 ; ip++){
 					if (doCalibration){
 						fits = new CalibrationData(is,il,ip);
 						fits.getDescriptor().setType(DetectorType.PCAL);
-						fits.addGraph(pcPix[ill-7].strips.getpixels(iill,ip+1,cnts),
-								      pcPix[ill-7].strips.getpixels(iill,ip+1,distmap),
-								      pcPix[ill-7].strips.getpixels(iill,ip+1,meanmap),
-								      pcPix[ill-7].strips.getpixels(iill,ip+1,meanerr));
+						fits.addGraph(ecPix[ill-7].strips.getpixels(iill,ip+1,cnts),
+								      ecPix[ill-7].strips.getpixels(iill,ip+1,distmap),
+								      ecPix[ill-7].strips.getpixels(iill,ip+1,meanmap),
+								      ecPix[ill-7].strips.getpixels(iill,ip+1,meanerr),
+								      ecPix[ill-7].strips.getpixels(iill,ip+1,status));
 						fits.analyze();
 						collection.add(fits.getDescriptor(),fits);
 					}
@@ -848,7 +858,57 @@ public class ECMon extends DetectorMonitor {
 		  break;
 		case 5:
 		  this.canvasTiming(desc,      app.getCanvas("Timing"));	
+		  break;
+		case 6:
+          this.canvasRawHistos(desc,   app.getCanvas("RawHistos"));	
 		}
+	}
+	
+	public void canvasRawHistos(DetectorDescriptor desc, EmbeddedCanvas canvas) {
+		
+		String ytab[]={"U Inner Strip","V Inner Strip","W Inner Strip","U Outer Strip","V Outer Strip","W Outer Strip"};
+		String xtaba[]={"U Inner ADC","V Inner ADC","W Inner ADC","U Outer ADC","V Outer ADC","W Outer ADC"};
+		String xtabt[]={"U Inner TDC","V Inner TDC","W Inner TDC","U Outer TDC","V Outer TDC","W Outer TDC"};
+		
+		int is    = desc.getSector();
+		int layer = desc.getLayer();
+		int ic    = desc.getComponent();
+	
+		if (layer>3) return;
+		
+		int panel = app.getDetectorView().panel1.omap;
+		int io    = app.getDetectorView().panel1.ilmap;
+		int of    = (io-1)*3;
+		int lay=0;
+		
+		if (layer<4)  lay = layer+of;
+		if (layer==4) lay = layer+2+io;
+		if (panel==9) lay = panel+io-1;
+		if (panel>10) lay = panel+of;
+		
+		layer = lay;
+		int l1 = of+1;
+		int l2 = of+4;		
+		
+		canvas.divide(3,2);
+		
+		H2D h2 = new H2D() ; 
+		
+		canvas.setAxisFontSize(14);
+		canvas.setAxisTitleFontSize(14);
+		canvas.setTitleFontSize(14);
+		canvas.setStatBoxFontSize(12);
+		
+		for (int il=l1; il<l2; il++) {
+			h2 = H2_PCa_Hist.get(is+1,il,0); h2.setYTitle(ytab[il-1]) ; h2.setXTitle(xtaba[il-1]);
+			canvas.cd(il-1-of) ; canvas.setLogZ(); canvas.draw(h2); 
+		}
+		
+		for (int il=l1; il<l2; il++) {
+			h2 = H2_PCt_Hist.get(is+1,il,0); h2.setYTitle(ytab[il-1]) ; h2.setXTitle(xtabt[il-1]);
+			canvas.cd(il-1-of+3) ; canvas.setLogZ(); canvas.draw(h2); 
+		}
+				
 	}
 
 	public void canvasMode1(DetectorDescriptor desc, EmbeddedCanvas canvas) {
@@ -898,7 +958,7 @@ public class ECMon extends DetectorMonitor {
 		F1D f2 = new F1D("p0",0.,100.); f2.setParameter(0,app.mode7Emulation.CCDB_tet);
 		f2.setLineColor(4);f2.setLineStyle(2);	
 		
-	    for(int ip=0;ip<pcPix[io-1].pc_nstr[layer-of-1];ip++){
+	    for(int ip=0;ip<ecPix[io-1].pc_nstr[layer-of-1];ip++){
 	    	canvas.cd(ip); canvas.getPad().setAxisRange(0.,100.,-15.,PCMon_zmax*app.displayControl.pixMax);
 	        h = H2_PCa_Sevd.get(is+1,layer,0).sliceY(ip); h.setXTitle("Sample (4 ns)"); h.setYTitle("Counts");
 	    	h.setTitle(otab[layer-1]+" "+(ip+1)); h.setFillColor(4); canvas.draw(h);
@@ -943,7 +1003,7 @@ public class ECMon extends DetectorMonitor {
 		if (layer>=7) {col0=4 ; col1=4; col2=2;pixel=ic+1;}
     		
 	    for(int il=1;il<4;il++){
-	    	canvas.cd(il-1); canvas.getPad().setAxisRange(-1.,pcPix[0].pc_nstr[il-1]+1,0.,PCMon_zmax*app.displayControl.pixMax);
+	    	canvas.cd(il-1); canvas.getPad().setAxisRange(-1.,ecPix[0].pc_nstr[il-1]+1,0.,PCMon_zmax*app.displayControl.pixMax);
 	    	h = H1_PCa_Sevd.get(is+1,il+of,0); h.setXTitle(otab[il-1+of]); h.setFillColor(col0); canvas.draw(h);
 	    }
 	}
@@ -1018,7 +1078,7 @@ public class ECMon extends DetectorMonitor {
 	public void canvasAttenuation(DetectorDescriptor desc, EmbeddedCanvas canvas) {
 		
 		H1D mipADC = null;
-		int nstr = pcPix[0].pc_nstr[0];
+		int nstr = ecPix[0].pc_nstr[0];
 		
 	    double[] xp     = new double[nstr];
 	    double[] xpe    = new double[nstr];
@@ -1062,14 +1122,14 @@ public class ECMon extends DetectorMonitor {
 
 		//System.out.println("layer,panel,io,nstr,of,l1,l2= "+layer+" "+panel+" "+io+" "+nstr+" "+of+" "+l1+" "+l2);
         if (inProcess==2) {
-        	for (int ll=0; ll<3 ; ll++) this.analyzeAttenuation(1,2,ll+1,ll+2,0,pcPix[0].pc_nstr[ll]);
-        	if (detID==1) for (int ll=0; ll<3 ; ll++) this.analyzeAttenuation(1,2,ll+4,ll+5,0,pcPix[1].pc_nstr[ll]);
+        	for (int ll=0; ll<3 ; ll++) this.analyzeAttenuation(1,2,ll+1,ll+2,0,ecPix[0].pc_nstr[ll]);
+        	if (detID==1) for (int ll=0; ll<3 ; ll++) this.analyzeAttenuation(1,2,ll+4,ll+5,0,ecPix[1].pc_nstr[ll]);
         	inProcess=3;
         }
         
         if (layer>10) {
         	double meanmap[] = (double[]) Lmap_a.get(is+1, layer, 0).get(1);
-        	xpix[0] = pcPix[0].pixels.getDist(layer-10-of, ic+1);
+        	xpix[0] = ecPix[0].pixels.getDist(layer-10-of, ic+1);
 		    ypix[0] = meanmap[ic];
 		    xerr[0] = 0.;
 		    yerr[0] = 0.;
@@ -1079,8 +1139,8 @@ public class ECMon extends DetectorMonitor {
         
 		if (layer<7||(layer>10&&layer<17)) {
 			if (inProcess>0) {
-				if (layer>10) {layer=layer-10; lay=layer;int component = pcPix[0].pixels.getStrip(lay-of,ic+1); ic=component-1;}
-				nstr = pcPix[0].pc_nstr[layer-of-1];
+				if (layer>10) {layer=layer-10; lay=layer;int component = ecPix[0].pixels.getStrip(lay-of,ic+1); ic=component-1;}
+				nstr = ecPix[0].pc_nstr[layer-of-1];
 			    if (inProcess==1)  {this.analyzeAttenuation(is,is+1,layer,layer+1,0,nstr);}
 				if (collection.hasEntry(is, layer, ic)) {
 									
@@ -1126,7 +1186,7 @@ public class ECMon extends DetectorMonitor {
 				canvas.draw(collection.get(is,layer,ic).getFunc(0),"same");
 				canvas.draw(pixGraph,"same");
 				
-				double xmax = pcPix[0].pc_nstr[0]+1;
+				double xmax = ecPix[0].pc_nstr[0]+1;
 				canvas.cd(1);           canvas.getPad().setAxisRange(-1.,xmax,0.,4.)   ; canvas.draw(chi2Graph) ; 
 	            canvas.cd(2); if(!inMC) canvas.getPad().setAxisRange(-1.,xmax,0.,400.) ; canvas.draw(gainGraph) ; canvas.draw(f1,"same"); 
 	            canvas.cd(3);           canvas.getPad().setAxisRange(-1.,xmax,0.,600.) ; canvas.draw(attdbGraph); canvas.draw(attGraph,"same");            
@@ -1200,7 +1260,7 @@ public class ECMon extends DetectorMonitor {
 				canvas.cd(il-1-of); h = H2_PCa_Hist.get(is+1,il,0).projectionY();
 				H1D copy = h.histClone("Copy");
 				
-				strip = pcPix[0].pixels.getStrip(il-of,ic+1);
+				strip = ecPix[0].pixels.getStrip(il-of,ic+1);
 				copy.reset() ; copy.setBinContent(ic, h.getBinContent(ic));
 				copy.setFillColor(col2); canvas.draw(copy,"same");	    		 
 				String alab = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[0];String tlab = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[1];
@@ -1213,7 +1273,7 @@ public class ECMon extends DetectorMonitor {
 			for(int il=l1;il<l2;il++) {
 				canvas.cd(il-1-of); h = H2_PCa_Hist.get(is+1,il,1).projectionY();
 				H1D copy = h.histClone("Copy");
-				strip = pcPix[0].pixels.getStrip(il-of,ic+1);
+				strip = ecPix[0].pixels.getStrip(il-of,ic+1);
 				copy.reset() ; copy.setBinContent(strip-1, h.getBinContent(strip-1));
 				copy.setFillColor(col2); canvas.draw(copy,"same");	
 				String alab1 = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[0];String tlab1 = lab1[il-1-of]+lab2[io-1]+lab3[0]+strip+lab4[1];

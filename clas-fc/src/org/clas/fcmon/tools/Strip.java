@@ -62,6 +62,13 @@ public class Strip {
     	for (int j=0; j<pixe.length; j++)  out[j] = in[pixe[j]-1];
     	return out;
     }
+    
+    public boolean[] getpixels(int layer, int strip, boolean[] in) {
+    	Integer[] pixe = this.getPixels(0,layer,strip); 
+    	boolean[] out = new boolean[pixe.length]; 
+    	for (int j=0; j<pixe.length; j++)  out[j] = in[pixe[j]-1];
+    	return out;
+    }
    
     public Integer[] getPixels(int sector, int layer, int component) {
     	Integer list[] = new Integer[pixNmbr.get(sector,layer,component).size()];

@@ -17,7 +17,7 @@ public class DisplayControl extends JPanel {
     static final int FPS_INIT = 2;
     
     static final int PIX_MIN_LO   =  10;
-    static final int PIX_MIN_HI   = 100;
+    static final int PIX_MIN_HI   = 200;
     static final int PIX_MIN_INIT =  90;
     
     static final int PIX_MAX_LO    =    1;

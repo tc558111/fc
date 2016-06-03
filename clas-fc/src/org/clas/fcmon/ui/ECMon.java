@@ -87,6 +87,7 @@ public class ECMon extends DetectorMonitor {
    DetectorCollection<H1D> H1_PCa_Sevd = new DetectorCollection<H1D>();
    DetectorCollection<H1D> H1_PCt_Sevd = new DetectorCollection<H1D>();
    DetectorCollection<H2D> H2_PCa_Sevd = new DetectorCollection<H2D>();
+   DetectorCollection<H2D> H2_PC_Stat  = new DetectorCollection<H2D>();
 
    DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new DetectorCollection<TreeMap<Integer,Object>>();
    DetectorCollection<TreeMap<Integer,Object>> Lmap_t = new DetectorCollection<TreeMap<Integer,Object>>();
@@ -206,6 +207,11 @@ public class ECMon extends DetectorMonitor {
 				// For Single Events
 				H1_PCa_Sevd.add(is, il, 0, new H1D("PCa_Sed_"+il, npix,  1., pend));
 				H1_PCt_Sevd.add(is, il, 0, new H1D("PCt_Sed_"+il, npix,  1., pend));
+			}
+			for (int il=0 ; il<3 ; il++) {
+				H2_PC_Stat.add(is, il, 0, new H2D("PC_Stat_EVTS_"+il, nstr, 1., nend,  3, 1., 4.));				
+				H2_PC_Stat.add(is, il, 1, new H2D("PC_Stat_ADC_"+il,  nstr, 1., nend,  3, 1., 4.));				
+				H2_PC_Stat.add(is, il, 2, new H2D("PC_Stat_TDC_"+il,  nstr, 1., nend,  3, 1., 4.));				
 			}
 		}
 	}
@@ -343,10 +349,13 @@ public class ECMon extends DetectorMonitor {
 		
 		public void fill(int is, int il, int ip, int adc, double tdc, double tdcf) {
 			
-			int ic=0
-					; 
-			if (mondet=="EC")   {ic=1; if (il>3) ic=2;}
-			if (mondet=="PCAL")  ic=0; 
+			int ic=0,iil;
+			  
+			if (mondet=="EC")    ic=1;  
+			if (mondet=="PCAL")  ic=0;
+			
+			iil = il;
+			if (il>3) {ic=2; iil=il-3;}
 			
 			int  iv = il+3;
 			
@@ -356,6 +365,8 @@ public class ECMon extends DetectorMonitor {
 	            tdcr[is-1][iv-1][inh-1] = tdc;
 	           strrt[is-1][iv-1][inh-1] = ip;
 	          	  H2_PCt_Hist.get(is,il,0).fill(tdc,ip,1.0);
+	          	  //System.out.println(is+" "+ic+" "+ip+" "+iil+" "+tdc);
+	          	  H2_PC_Stat.get(is,ic,2).fill(ip,iil,tdc);
 	        }
 	   	    if(adc>thr[ic]){
 	   	    	uvwa[is-1][ic]=uvwa[is-1][ic]+ecPix[0].uvw_dalitz(ic,il,ip); //Dalitz adc
@@ -364,6 +375,8 @@ public class ECMon extends DetectorMonitor {
 	           ftdcr[is-1][iv-1][inh-1] = tdcf;
 	           strra[is-1][iv-1][inh-1] = ip;
 	          	  H2_PCa_Hist.get(is,il,0).fill(adc,ip,1.0);
+	          	  H2_PC_Stat.get(is,ic,0).fill(ip,iil,1.);
+	          	  H2_PC_Stat.get(is,ic,1).fill(ip,iil,adc);
 	        }	
 		}
 		
@@ -869,6 +882,7 @@ public class ECMon extends DetectorMonitor {
 		String ytab[]={"U Inner Strip","V Inner Strip","W Inner Strip","U Outer Strip","V Outer Strip","W Outer Strip"};
 		String xtaba[]={"U Inner ADC","V Inner ADC","W Inner ADC","U Outer ADC","V Outer ADC","W Outer ADC"};
 		String xtabt[]={"U Inner TDC","V Inner TDC","W Inner TDC","U Outer TDC","V Outer TDC","W Outer TDC"};
+		String iolab[]={" "+"Inner ","Outer "};
 		
 		int is    = desc.getSector();
 		int layer = desc.getLayer();
@@ -890,7 +904,7 @@ public class ECMon extends DetectorMonitor {
 		int l1 = of+1;
 		int l2 = of+4;		
 		
-		canvas.divide(3,2);
+		canvas.divide(3,3);
 		
 		H2D h2 = new H2D() ; 
 		
@@ -899,14 +913,18 @@ public class ECMon extends DetectorMonitor {
 		canvas.setTitleFontSize(14);
 		canvas.setStatBoxFontSize(12);
 		
+		for (int il=0; il<3 ; il++) {
+			h2 = H2_PC_Stat.get(is+1,detID+(io-1),il) ; h2.setYTitle(iolab[detID+(io-1)]+"View"); h2.setXTitle("Strip") ; canvas.cd(il-of); canvas.setLogZ(); canvas.draw(h2);
+		}
+		
 		for (int il=l1; il<l2; il++) {
 			h2 = H2_PCa_Hist.get(is+1,il,0); h2.setYTitle(ytab[il-1]) ; h2.setXTitle(xtaba[il-1]);
-			canvas.cd(il-1-of) ; canvas.setLogZ(); canvas.draw(h2); 
+			canvas.cd(il-of-1+3) ; canvas.setLogZ(); canvas.draw(h2); 
 		}
 		
 		for (int il=l1; il<l2; il++) {
 			h2 = H2_PCt_Hist.get(is+1,il,0); h2.setYTitle(ytab[il-1]) ; h2.setXTitle(xtabt[il-1]);
-			canvas.cd(il-1-of+3) ; canvas.setLogZ(); canvas.draw(h2); 
+			canvas.cd(il-of-1+6) ; canvas.setLogZ(); canvas.draw(h2); 
 		}
 				
 	}
@@ -1122,7 +1140,7 @@ public class ECMon extends DetectorMonitor {
 
 		//System.out.println("layer,panel,io,nstr,of,l1,l2= "+layer+" "+panel+" "+io+" "+nstr+" "+of+" "+l1+" "+l2);
         if (inProcess==2) {
-        	for (int ll=0; ll<3 ; ll++) this.analyzeAttenuation(1,2,ll+1,ll+2,0,ecPix[0].pc_nstr[ll]);
+        	              for (int ll=0; ll<3 ; ll++) this.analyzeAttenuation(1,2,ll+1,ll+2,0,ecPix[0].pc_nstr[ll]);
         	if (detID==1) for (int ll=0; ll<3 ; ll++) this.analyzeAttenuation(1,2,ll+4,ll+5,0,ecPix[1].pc_nstr[ll]);
         	inProcess=3;
         }

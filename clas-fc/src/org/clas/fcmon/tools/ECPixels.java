@@ -54,21 +54,21 @@ public class ECPixels {
   	    }
   	  }
 	  this.calDB = new CalDrawDB(det);
-	  this.pcGetStripsDB();
-	  this.pcGetPixelsDB();
-      this.pcpixrot();
+	  this.GetStripsDB();
+	  this.GetPixelsDB();
+      this.pixrot();
 //      this.testStrips();
 //      this.testPixels();
-      System.out.println("PCPixels is done");
+      System.out.println("ECPixels is done");
 	}	
 	
 	public static void main(String[] args) {
 		ECPixels pix = new ECPixels("PCAL");
 	}
 	
-	public void pcGetStripsDB() {
+	public void GetStripsDB() {
 		
-		System.out.println("PCPixels:pcGetStripsDB()");	
+		System.out.println("ECPixels:GetStripsDB()");	
 		
 	 	for(int sector = 0; sector < 1; sector++) {
 	        System.out.println("pcGetStripsDB: Processing Sector "+sector);
@@ -84,9 +84,9 @@ public class ECPixels {
     	}						
 	}
 	
-	public void pcGetPixelsDB() {
+	public void GetPixelsDB() {
 		
-        System.out.println("PCPixels:pcGetPixelsDB()");
+        System.out.println("ECPixels:GetPixelsDB()");
 		
 		DetectorShape2D shape = new DetectorShape2D();
 
@@ -106,6 +106,10 @@ public class ECPixels {
 		                	pc_xpix[i][pixel-1][6] = xtemp2[i];
 		                	pc_ypix[i][pixel-1][6] = ytemp2[i];
 	            		}
+		        		SimplePolygon2D pol1 = new SimplePolygon2D(xtemp2,ytemp2);
+	            		double uDist = calDB.getUPixelDistance(uStrip, vStrip, wStrip);
+	            		double vDist = calDB.getVPixelDistance(uStrip, vStrip, wStrip);
+	            		double wDist = calDB.getWPixelDistance(uStrip, vStrip, wStrip);
 	            		shape.setColor(130,(int)(255*vStrip/pc_nstr[1]),(int)(255*wStrip/pc_nstr[2]));	            		
 	            		pc_cmap[pixel-1] = 255*pixel/6916;
 	            		pc_zmap[pixel-1] = 1.0;
@@ -113,9 +117,6 @@ public class ECPixels {
 	            		pixels.addTriplets(pixel, uStrip+1, vStrip+1, wStrip+1);
 	            		pixels.addShape(shape, sector, pixel);
 	            		pixels.setPixelStatus(calDB.isEdgePixel(uStrip,vStrip,wStrip), pixel);
-	            		double uDist = calDB.getUPixelDistance(uStrip, vStrip, wStrip);
-	            		double vDist = calDB.getVPixelDistance(uStrip, vStrip, wStrip);
-	            		double wDist = calDB.getWPixelDistance(uStrip, vStrip, wStrip);
 	            	    strips.addPixels(sector, 1, uStrip+1, pixel);
 	            		strips.addPixels(sector, 2, vStrip+1, pixel);
 	            		strips.addPixels(sector, 3, wStrip+1, pixel);
@@ -123,7 +124,6 @@ public class ECPixels {
 	            		strips.addPixDist(sector, 2, vStrip+1, (int) (vDist*100));
 	            		strips.addPixDist(sector, 3, wStrip+1, (int) (wDist*100));
 		        		pixels.addPixDist(uDist,vDist,wDist,pixel);	
-		        		SimplePolygon2D pol1 = new SimplePolygon2D(xtemp2,ytemp2);
 		        		pixels.addArea(pol1.area(),sector,pixel);
 		        		if (pol1.area()>maxPixArea) maxPixArea = pol1.area();
 	            	}
@@ -132,13 +132,11 @@ public class ECPixels {
     	}
     	// Sort pixels in each strip according to distance from edge
     	for (int lay=0; lay<3 ; lay++ ){
-    		System.out.println("PCPixels: Sorting pixels in layer "+lay);
+    		System.out.println("ECPixels: Sorting pixels in layer "+lay);
     		for(int strip = 0; strip < pc_nstr[lay]; strip++) {
     			strips.getSortedPixels(0, lay+1, strip+1);
     		}
-    	}
-    	
-   	
+    	}   	
     	pixels.setMaxPixelArea(maxPixArea);
     	}
 	}
@@ -148,8 +146,8 @@ public class ECPixels {
 		DetectorShapeTabView view = new DetectorShapeTabView();
    	 	DetectorShapeView2D UWmap= new DetectorShapeView2D("PCAL Pixel");
    	 	
-		this.pcGetPixelsDB();
-		this.pcpixrot();
+		this.GetPixelsDB();
+		this.pixrot();
     	
     	for (int sector=0; sector<6; sector++) {
     		for (int ipix=0; ipix<pixels.getNumPixels(); ipix++) {
@@ -180,8 +178,8 @@ public class ECPixels {
 		DetectorShapeTabView view = new DetectorShapeTabView();
    	 	DetectorShapeView2D UWmap= new DetectorShapeView2D("PCAL Pixel");
    	 	
-		this.pcGetStripsDB();
-		this.pcpixrot();
+		this.GetStripsDB();
+		this.pixrot();
     	
     	for (int sector=0; sector<6; sector++) {
     		for (int istr=0; istr<pc_nstr[lay]; istr++) {
@@ -205,14 +203,14 @@ public class ECPixels {
 	    hi.setVisible(true);
 	    
 	}	
-    public void pcpixrot() {
-    	System.out.println("PCPixels:pcpixrot():");	
+    public void pixrot() {
+    	System.out.println("ECPixels:pixrot():");	
     	double[] theta={0.0,60.0,120.0,180.0,240.0,300.0};
 	    	
 		for(int is=0; is<6; is++) {
 			double thet=theta[is]*3.14159/180.;
     		double ct=Math.cos(thet) ; double st=Math.sin(thet);
-			
+			// Rotate strips
 			for (int lay=0; lay<3 ; lay++) {
 				for (int istr=0; istr<pc_nstr[lay]; istr++) {
 					for (int k=0;k<4;k++){
@@ -221,7 +219,7 @@ public class ECPixels {
 					}
 				}
 			}
-		    	   		    	   
+		    // Rotate pixels	   		    	   
 			for (int ipix=0; ipix<pixels.getNumPixels(); ipix++) {
 				for (int k=0;k<pc_nvrt[ipix];k++) {
 					pc_xpix[k][ipix][is]= -(pc_xpix[k][ipix][6]*ct+pc_ypix[k][ipix][6]*st); 

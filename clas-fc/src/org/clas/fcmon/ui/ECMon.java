@@ -49,7 +49,7 @@ public class ECMon extends DetectorMonitor {
 	
    EventDecoder            decoder = new EventDecoder();
    FADCConfigLoader          fadc  = new FADCConfigLoader();
-   FADCFitter              fitter  = new FADCFitter();
+   FADCFitter              fitter  = new FADCFitter(1,15);
    TDirectory         mondirectory = new TDirectory(); 	
    ColorPalette            palette = new ColorPalette();
 
@@ -532,36 +532,7 @@ public class ECMon extends DetectorMonitor {
 		   if (app.mode7Emulation.User_nsa>0) this.nsa=app.mode7Emulation.User_nsa;
 		   if (app.mode7Emulation.User_nsb>0) this.nsb=app.mode7Emulation.User_nsb;
 	}
-	
-	private class FADCFitter {
-		
-		int p1=1,p2=15;
-		int mmsum,summing_in_progress;
-		int t0,adc,ped,pedsum;
-		
-		public FADCFitter() {	
-		}
-		
-		public void fit(int nsa, int nsb, int tet, short[] pulse) {
-			pedsum=0;adc=0;mmsum=0;summing_in_progress=0;
-			for (int mm=0; mm<pulse.length; mm++) {
-				if(mm>p1 && mm<=p2)  pedsum+=pulse[mm];
-				if(mm==p2)           pedsum=pedsum/(p2-p1);
-				if (app.mode7Emulation.User_pedref==0) ped=pedsum;
-				if (app.mode7Emulation.User_pedref==1) ped=pedref;
-				if(mm>p2) {
-					if ((summing_in_progress==0) && pulse[mm]>ped+tet) {
-					  summing_in_progress=1;
-					  t0 = mm;
-					  for (int ii=1; ii<nsb+1;ii++) adc+=(pulse[mm-ii]-ped);
-					  mmsum=nsb;
-					}
-					if(summing_in_progress>0 && mmsum>(nsa+nsb)) summing_in_progress=-1;
-					if(summing_in_progress>0) {adc+=(pulse[mm]-ped); mmsum++;}
-				}
-			}
-		}
-	} 
+
 	
 	@Override
 	public void processEvent(DataEvent de) {
@@ -598,11 +569,12 @@ public class ECMon extends DetectorMonitor {
             	}
             	
             	if(strip.getType()==BankType.ADCFPGA) { // FADC MODE 7
-             		this.configMode7(icr,isl,ich);
             		int[] adcc= (int[]) strip.getDataObject();
             		ped = adcc[2];
             		npk = adcc[3];
-            		adc = (adcc[1]-ped*(this.nsa+this.nsb))/10;
+             		this.configMode7(icr,isl,ich);
+            		if (app.mode7Emulation.User_pedref==0) adc = (adcc[1]-ped*(this.nsa+this.nsb))/10;
+            		if (app.mode7Emulation.User_pedref==1) adc = (adcc[1]-this.pedref*(this.nsa+this.nsb))/10;
             		timf = DataUtils.getInteger(adcc[0],0,5);
             		timc = DataUtils.getInteger(adcc[0],6,14);
             		tdcf = timc*4.+timf*0.0625;
@@ -611,9 +583,10 @@ public class ECMon extends DetectorMonitor {
             	if(strip.getType()==BankType.ADCPULSE) { // FADC MODE 1
             		short[] pulse = (short[]) strip.getDataObject();
              		this.configMode7(icr,isl,ich);
-            		fitter.fit(this.nsa,this.nsb,this.tet,pulse);            		
+             		if (app.mode7Emulation.User_pedref==0) fitter.fit(this.nsa,this.nsb,this.tet,0,pulse);            		
+             		if (app.mode7Emulation.User_pedref==1) fitter.fit(this.nsa,this.nsb,this.tet,this.pedref,pulse);            		
             		adc = fitter.adc/10;
-            		ped = fitter.ped;
+            		ped = fitter.pedsum;
             		for (int i=0 ; i< pulse.length ; i++) {
             			H2_PCa_Hist.get(is,il,5).fill(i,ip,pulse[i]-this.pedref);
             			if (app.isSingleEvent()) {

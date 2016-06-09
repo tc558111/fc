@@ -115,7 +115,7 @@ public class MonitorApp extends JFrame implements ActionListener {
         displayControl.setPluginClass(this.detectorView);
         mode7Emulation.setPluginClass(this.detectorView);
         
-    	this.setJMenuBar(new FcmonMenuBar(eventControl));
+    	this.setJMenuBar(new FCMenuBar(eventControl));
 		
         this.controlsPanel0.setBackground(Color.LIGHT_GRAY);
         this.controlsPanel1.setBackground(Color.LIGHT_GRAY);

@@ -114,7 +114,7 @@ public class CalibrationData {
  
             	this.fitgraphs.get(loop).fit(this.functions.get(loop),"REQ");	//Fit data
             	double yfit,ydat,yerr,ch=0;
-            	if (fitSize>3) {
+            	if (fitSize>0) {
             		for (int i=0 ; i<fitSize ; i++) {
             			yfit = func.eval(this.fitgraphs.get(loop).getDataX(i));
             			ydat = this.fitgraphs.get(loop).getDataY(i);

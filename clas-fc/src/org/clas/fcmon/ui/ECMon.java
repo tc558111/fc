@@ -45,7 +45,7 @@ import org.jlab.data.io.DataEvent;
 public class ECMon extends DetectorMonitor {
 	
    static MonitorApp           app = new MonitorApp("ECMon",1800,950);	
-   ECMon monitor = null;
+ 
    ECAttenApp             ecAtten  = null;
    ECMode1App             ecMode1  = null;
    ECOccupancyApp      ecOccupancy = null;
@@ -53,34 +53,28 @@ public class ECMon extends DetectorMonitor {
    ECRawHistosApp      ecRawHistos = null;
    ECPedestalApp        ecPedestal = null;
    ECTimingApp            ecTiming = null;
+   
+   DatabaseConstantProvider ccdb   = null;
    EventDecoder            decoder = new EventDecoder();
    FADCConfigLoader          fadc  = new FADCConfigLoader();
    FADCFitter              fitter  = new FADCFitter(1,15);
-   TDirectory         mondirectory = new TDirectory(); 	
+
    ColorPalette            palette = new ColorPalette();
-   DatabaseConstantProvider ccdb   = null;
    
    CalDrawDB[]                ecDB = new CalDrawDB[2];  
    ECPixels[]                ecPix = new ECPixels[2];
-
    MyArrays               myarrays ;
-   
-   TreeMap<Integer,Object> map7=null,map8=null; 
-   double[]                sed7=null,sed8=null;
    
    public int inProcess        = 0; //0=init 1=processing 2=end-of-run 3=post-run
    public boolean inMC         = false; //true=MC false=DATA
-   int thr[]            = {15,15,20};
+   int    detID                = 0;
+   double PCMon_zmax           = 0;
+   
+   int thr[]                     = {15,15,20};
    int nsa,nsb,tet,p1,p2,pedref  = 0;
-   double PCMon_zmax    = 0;
-   String monpath       = System.getenv("COATJAVA");
-   String monfile       = "mondirectory"; 
+   
    String mondet        = "PCAL";
    int    moncalrun     = 0;
-   int    detID         = 0;
-   int tid       		 = 100000;
-   int cid       		 = 10000;
-   int lid       		 = 100;
       
    DetectorCollection<CalibrationData> collection = new DetectorCollection<CalibrationData>();  
 	
@@ -98,6 +92,8 @@ public class ECMon extends DetectorMonitor {
    DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new DetectorCollection<TreeMap<Integer,Object>>();
    DetectorCollection<TreeMap<Integer,Object>> Lmap_t = new DetectorCollection<TreeMap<Integer,Object>>();
 
+   TreeMap<Integer,Object> map7=null,map8=null; 
+   double[]                sed7=null,sed8=null;
    TreeMap<String,Object> glob = new TreeMap<String,Object>();
    
 	public ECMon(String det) {
@@ -118,31 +114,35 @@ public class ECMon extends DetectorMonitor {
 		String det = "PCAL";
 		ECMon monitor = new ECMon(det);
 		
-		SwingUtilities.invokeLater(new Runnable() {
-			public void run() {
-				app.setPluginClass(monitor);
-				app.init();
-				app.addCanvas("Mode1");
-				app.addCanvas("SingleEvent");
-				app.addCanvas("Occupancy");
-				app.addCanvas("Attenuation");
-				app.addCanvas("Pedestals");
-				app.addCanvas("Timing");
-				app.addCanvas("RawHistos");
-				monitor.init(monitor);
-				monitor.initDetector(1,2);
-				}
-			});
+		app.setPluginClass(monitor);
+		app.init();
+		app.addCanvas("Mode1");
+		app.addCanvas("SingleEvent");
+		app.addCanvas("Occupancy");
+		app.addCanvas("Attenuation");
+		app.addCanvas("Pedestals");
+		app.addCanvas("Timing");
+		app.addCanvas("RawHistos");
+		
+		monitor.init(monitor);
+		monitor.initDetector(1,2);
+
 	}
 	
 	public void init(DetectorMonitor monitor) {
-		initGlob();
-		initHistograms();
+		System.out.println("init");
+		initApps(monitor);
 		configMode7(1,3,1);
 		app.mode7Emulation.tet.setText(Integer.toString(this.tet));
 		app.mode7Emulation.nsa.setText(Integer.toString(this.nsa));
 		app.mode7Emulation.nsb.setText(Integer.toString(this.nsb));
+		initGlob();
+		initHistograms();
 		collection.clear();	
+	}
+	
+	public void initApps(DetectorMonitor monitor) {
+		System.out.println("initApps()");
 		
 		ecAtten = new ECAttenApp(ecPix,collection);	
 		ecAtten.setMonitoringClass(app);
@@ -186,6 +186,7 @@ public class ECMon extends DetectorMonitor {
 	}
 	
 	public void initGlob() {
+		System.out.println("initGlob()");
 		glob.put("inProcess", inProcess);
 		glob.put("detID", detID);
 		glob.put("inMC", inMC);
@@ -194,6 +195,7 @@ public class ECMon extends DetectorMonitor {
 		glob.put("tet", tet);		
 		glob.put("ccdb", ccdb);
 		glob.put("PCMon_zmax", PCMon_zmax);
+		System.out.println(glob.toString());
 	}
 	
 	public TreeMap<String,Object> getGlob(){
@@ -221,6 +223,8 @@ public class ECMon extends DetectorMonitor {
 	} 
 	
 	public void initHistograms() {
+		
+		System.out.println("initHistograms()");
 		
 		int nstr = ecPix[0].pc_nstr[0]            ; double nend = nstr+1;  
 		int npix = ecPix[0].pixels.getNumPixels() ; double pend = npix+1;
@@ -289,7 +293,7 @@ public class ECMon extends DetectorMonitor {
 	
 	public void initDetector(int is1, int is2) {
 		
-		System.out.println("initpcgui():");
+		System.out.println("initDetector()");
 		
 		Lmap_a.add(0,0,0, toTreeMap(ecPix[0].pc_cmap));
 		Lmap_a.add(0,0,1, toTreeMap(ecPix[0].pc_zmap));
@@ -668,16 +672,9 @@ public class ECMon extends DetectorMonitor {
             				int w1 = fitter.t0-this.nsb ; int w2 = fitter.t0+this.nsa;
             				if (fitter.adc>0&&i>=w1&&i<=w2) H2_PCa_Sevd.get(is,il,1).fill(i,ip,pulse[i]-this.pedref);            	      }
             		}
-            	}  
-            	
+            	}              	
               	if (ped>0) H2_PCa_Hist.get(is,il,3).fill(this.pedref-ped, ip);
-			    this.myarrays.fill(is, il, ip, adc, tdc, tdcf);		  
-			    
-			  //System.out.println("crate,slot,chan:"+icr+" "+isl+" "+ich);
-			  //System.out.println("sector,layer,pmt,order"+is+" "+il+" "+ip+" "+iord);
-			  //System.out.println("  nchan,tdc,adc,ped,pedref,nsb,nsa: "+npk+" "+tdc+" "+adc+" "+ped+" "+pedref+" "+nsb+" "+nsa);
-			  //System.out.println("  tdc,timc,timf: "+tdc+" "+timc+" "+timf);
-			              	
+			    this.myarrays.fill(is, il, ip, adc, tdc, tdcf);		  			              	
             }
         
 		} 
@@ -806,7 +803,17 @@ public class ECMon extends DetectorMonitor {
 	@Override
 	public void analyze(int process) {		
 		this.inProcess = process; glob.put("inProcess", process);
-		if (process==1 || process==2)  this.makeMaps();	 
+		switch (inProcess) {
+			case 1: 
+				this.makeMaps(); break;
+			case 2: 
+				this.makeMaps(); 
+		                      for (int ll=0; ll<3 ; ll++) ecAtten.analyze(1,2,ll+1,ll+2,0,ecPix[0].pc_nstr[ll]);
+		        if (detID==1) for (int ll=0; ll<3 ; ll++) ecAtten.analyze(1,2,ll+4,ll+5,0,ecPix[1].pc_nstr[ll]);
+		        inProcess=3;
+		        break;
+		}
+
 	}
 
 	public void makeMaps() {
@@ -849,25 +856,25 @@ public class ECMon extends DetectorMonitor {
 		
 		switch (app.getSelectedTabIndex()) {
 		case 0:
-		  ecMode1.canvas(dd, app.getCanvas("Mode1"));
+		  ecMode1.updateCanvas(dd, app.getCanvas("Mode1"));
 		  break;
 		case 1:
-		  ecSingleEvent.canvas(dd, app.getCanvas("SingleEvent"));
+		  ecSingleEvent.updateCanvas(dd, app.getCanvas("SingleEvent"));
 		  break;
 		case 2:
-		  ecOccupancy.canvas(dd, app.getCanvas("Occupancy"));
+		  ecOccupancy.updateCanvas(dd, app.getCanvas("Occupancy"));
 		  break;
 		case 3:
-		  ecAtten.canvas(dd, app.getCanvas("Attenuation"));
+		  ecAtten.updateCanvas(dd, app.getCanvas("Attenuation"));
 		  break;
 		case 4:
-		  ecPedestal.canvas(dd, app.getCanvas("Pedestals"));	
+		  ecPedestal.updateCanvas(dd, app.getCanvas("Pedestals"));	
 		  break;
 		case 5:
-		  ecTiming.canvas(dd, app.getCanvas("Timing"));	
+		  ecTiming.updateCanvas(dd, app.getCanvas("Timing"));	
 		  break;
 		case 6:
-          ecRawHistos.canvas(dd, app.getCanvas("RawHistos"));	
+          ecRawHistos.updateCanvas(dd, app.getCanvas("RawHistos"));	
 		}
 	}
 	

@@ -5,6 +5,7 @@ import java.util.TreeMap;
 import org.clas.fcmon.tools.CalibrationData;
 import org.clas.fcmon.tools.DetectorMonitor;
 import org.clas.fcmon.tools.ECPixels;
+import org.clas.fcmon.tools.FCApplication;
 import org.clas.fcmon.tools.MonitorApp;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas.detector.DetectorDescriptor;
@@ -16,41 +17,17 @@ import org.root.histogram.GraphErrors;
 import org.root.histogram.H1D;
 import org.root.histogram.H2D;
 
-public class ECMode1App  {
-
-	ECPixels[]                                   ecPix = new ECPixels[2];
-	DetectorCollection<CalibrationData>     collection = new DetectorCollection<CalibrationData>();  
-	DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new  DetectorCollection<TreeMap<Integer,Object>>();
-	TreeMap<String, DetectorCollection<H1D>>     hmap1 = new TreeMap<String, DetectorCollection<H1D>>();
-	TreeMap<String, DetectorCollection<H2D>>     hmap2 = new TreeMap<String, DetectorCollection<H2D>>();
-	
-	MonitorApp      app = null;
-	DetectorMonitor mon = null;
+public class ECMode1App extends FCApplication  {
 	
 	public ECMode1App(ECPixels[] ecPix, DetectorCollection<CalibrationData> collection) {
-		this.ecPix = ecPix;
-		this.collection = collection;		
+		super(ecPix,collection);		
 	}
-	
-	public void addH1DMaps(String name, DetectorCollection map) {
-		this.hmap1.put(name,map);
-	}
-	public void addH2DMaps(String name, DetectorCollection map) {
-		this.hmap2.put(name,map);
-	}
-	public void addLMaps(String name, DetectorCollection map) {
-		this.Lmap_a=map;
-	}
-	public void setMonitoringClass(MonitorApp app) {
-		this.app = app;
-	}
-	public void setApplicationClass(DetectorMonitor mon) {
-		this.mon = mon;
-	}
-		
 
-	public void canvas(DetectorDescriptor dd, EmbeddedCanvas canvas) {
+	public void updateCanvas(DetectorDescriptor dd, EmbeddedCanvas canvas) {
 		
+        int inProcess =     (int) mon.getGlob().get("inProcess");
+        if (inProcess==0) return;
+        
 		Boolean  inMC = (Boolean) mon.getGlob().get("inMC");
         int     detID =     (int) mon.getGlob().get("detID");
         int       tet =     (int) mon.getGlob().get("tet");

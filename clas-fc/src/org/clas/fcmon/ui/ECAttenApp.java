@@ -5,6 +5,7 @@ import java.util.TreeMap;
 import org.clas.fcmon.tools.CalibrationData;
 import org.clas.fcmon.tools.DetectorMonitor;
 import org.clas.fcmon.tools.ECPixels;
+import org.clas.fcmon.tools.FCApplication;
 import org.clas.fcmon.tools.MonitorApp;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas.detector.DetectorDescriptor;
@@ -17,36 +18,10 @@ import org.root.histogram.GraphErrors;
 import org.root.histogram.H1D;
 import org.root.histogram.H2D;
 
-public class ECAttenApp  {
+public class ECAttenApp extends FCApplication {
 
-	ECPixels[]                                   ecPix = new ECPixels[2];
-	DetectorCollection<CalibrationData>     collection = new DetectorCollection<CalibrationData>();  
-	DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new  DetectorCollection<TreeMap<Integer,Object>>();
-	TreeMap<String, DetectorCollection<H1D>>     hmap1 = new TreeMap<String, DetectorCollection<H1D>>();
-	TreeMap<String, DetectorCollection<H2D>>     hmap2 = new TreeMap<String, DetectorCollection<H2D>>();
-	 
-	MonitorApp      app = null;
-	DetectorMonitor mon = null;
-	
 	public ECAttenApp(ECPixels[] ecPix, DetectorCollection<CalibrationData> collection) {
-		this.ecPix = ecPix;
-		this.collection = collection;		
-	}
-	
-	public void addH1DMaps(String name, DetectorCollection map) {
-		this.hmap1.put(name,map);
-	}
-	public void addH2DMaps(String name, DetectorCollection map) {
-		this.hmap2.put(name,map);
-	}
-	public void addLMaps(String name, DetectorCollection map) {
-		this.Lmap_a=map;
-	}
-	public void setMonitoringClass(MonitorApp app) {
-		this.app = app;
-	}
-	public void setApplicationClass(DetectorMonitor mon) {
-		this.mon = mon;
+		super(ecPix,collection);		
 	}
 		
 	public void analyze(int is1, int is2, int il1, int il2, int ip1, int ip2) {
@@ -103,8 +78,7 @@ public class ECAttenApp  {
 		
 	}
 	
-	
-	public void canvas(DetectorDescriptor dd, EmbeddedCanvas canvas) {
+	public void updateCanvas(DetectorDescriptor dd, EmbeddedCanvas canvas) {
 		
 		H1D mipADC = null;
 		int nstr = ecPix[0].pc_nstr[0];
@@ -153,13 +127,6 @@ public class ECAttenApp  {
         int     detID =     (int) mon.getGlob().get("detID");
         Boolean  inMC = (Boolean) mon.getGlob().get("inMC");
         DatabaseConstantProvider ccdb = (DatabaseConstantProvider) mon.getGlob().get("ccdb");
-        
-		//System.out.println("layer,panel,io,nstr,of,l1,l2= "+layer+" "+panel+" "+io+" "+nstr+" "+of+" "+l1+" "+l2);
-        if (inProcess==2) {
-        	for (int ll=0; ll<3 ; ll++) analyze(1,2,ll+1,ll+2,0,ecPix[0].pc_nstr[ll]);
-        	if (detID==1) for (int ll=0; ll<3 ; ll++) analyze(1,2,ll+4,ll+5,0,ecPix[1].pc_nstr[ll]);
-        	mon.getGlob().put("inProcess",3);
-        }
         
         if (layer>10) {
         	double meanmap[] = (double[]) Lmap_a.get(is+1, layer, 0).get(1);

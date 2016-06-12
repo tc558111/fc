@@ -198,7 +198,7 @@ public class CalDrawDB{
 		System.arraycopy( (double[])obj[1], 0, x, 0, numpoints);
 		System.arraycopy( (double[])obj[2], 0, y, 0, numpoints);
 	    
-        DetectorShape2D  pixel = new DetectorShape2D();
+        DetectorShape2D  pixel = new DetectorShape2D(DetectorType.PCAL,sector,2,uPaddle * 10000 + vPaddle * 100 + wPaddle);
     	pixel.getShapePath().clear(); 
 
         for(int i = 0; i < numpoints; ++i) pixel.getShapePath().addPoint(x[i],  y[i],  0.0); 

@@ -1,7 +1,10 @@
 package org.clas.fcmon.tools;
 
+import java.util.TreeMap;
+
 import org.jlab.clas12.basic.IDetectorProcessor;
 import org.jlab.clas12.calib.IDetectorListener;
+import org.jlab.clasrec.utils.DatabaseConstantProvider;
 
 public abstract class DetectorMonitor implements IDetectorProcessor, IDetectorListener{
 	
@@ -15,13 +18,13 @@ public abstract class DetectorMonitor implements IDetectorProcessor, IDetectorLi
         this.moduleAuthor   = author;
     }
     
-    public abstract void init();
+    public abstract void init(DetectorMonitor monitor);
     public abstract void initDetector(int s1, int s2);
     public abstract void analyze(int inProcess);
     public abstract void close();
     public abstract void reset();
     public abstract void saveToFile();
-
+    public abstract TreeMap<String,Object> getGlob();
     public String getName(){ return moduleName;}
 	
 }

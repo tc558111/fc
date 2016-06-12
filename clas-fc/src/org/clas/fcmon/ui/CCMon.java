@@ -11,6 +11,7 @@ import org.clas.fcmon.tools.CCPixels;
 import org.clas.fcmon.tools.DetectorMonitor;
 import org.clas.fcmon.tools.DetectorShapeView2D;
 import org.clas.fcmon.tools.MonitorApp;
+import org.clas.tools.Miscellaneous;
 import org.jlab.clas.detector.BankType;
 import org.jlab.clas.detector.DetectorBankEntry;
 import org.jlab.clas.detector.DetectorCollection;
@@ -42,6 +43,7 @@ public class CCMon extends DetectorMonitor {
 	ColorPalette            palette = new ColorPalette();
 	CCPixels                  ccPix = new CCPixels();
 	MyArrays               myarrays = new MyArrays();
+	Miscellaneous             extra = new Miscellaneous();
 
 	int inProcess          = 0; //0=init 1=processing 2=end-of-run 3=post-run
 	boolean inMC           = false; //true=MC false=DATA
@@ -57,6 +59,8 @@ public class CCMon extends DetectorMonitor {
 	
 	DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new DetectorCollection<TreeMap<Integer,Object>>();	 
 	
+	TreeMap<String,Object> glob = new TreeMap<String,Object>();
+	   
 	public CCMon(String[] args) {
 		super("CCMON", "1.0", "lcsmith");
 		fadc.load("/daq/fadc/ltcc",10,"default");
@@ -75,27 +79,39 @@ public class CCMon extends DetectorMonitor {
 				app.addCanvas("Occupancy");			 
 				app.addCanvas("Pedestals");
 				app.addCanvas("Summary");
-				monitor.init();
+				monitor.init(monitor);
 				monitor.initDetector(0,6);
 				}
 			});
-		}
+	}
 	
 	@Override
-	public void init() {
+	public void init(DetectorMonitor monitor) {
 	  inProcess = 0;
 	  initHistograms();
 	  configMode7(1,18,12);
 	  app.mode7Emulation.tet.setText(Integer.toString(this.tet));
    	  app.mode7Emulation.nsa.setText(Integer.toString(this.nsa));
    	  app.mode7Emulation.nsb.setText(Integer.toString(this.nsb));
-
+	}
+	
+	public TreeMap<String,Object> getGlob(){
+		return this.glob;
+	}		
+	@Override
+	public void reset() {
+		this.clearHistograms();
 	}
 	
 	@Override
 	public void close() {
 		
 	}	
+	
+	@Override
+	public void saveToFile() {
+		
+	}
 	
 	public void initHistograms() {
 	
@@ -109,22 +125,17 @@ public class CCMon extends DetectorMonitor {
 				H2_CCa_Sevd.add(is, il, 0, new H2D("CCa_Sed_FADC_"+il, 100,   0., 100.,   18, 1., 19.));
 				H2_CCa_Sevd.add(is, il, 1, new H2D("CCa_Sed_FADC_"+il, 100,   0., 100.,   18, 1., 19.));
 			}
-		}
-		
+		}		
 	}
-	
-	@Override
-	public void reset() {
-		this.clearHistograms();
-	}
+
 	
 	public void clearHistograms() {
 		
-		for (int is=0 ; is<6 ; is++) {
+		for (int is=1 ; is<7 ; is++) {
 			for (int il=1 ; il<3 ; il++) {
-				 H2_CCa_Hist.get(is+1,il,0).reset();
-				 H2_CCa_Hist.get(is+1,il,3).reset();
-				 H2_CCa_Hist.get(is+1,il,5).reset();
+				 H2_CCa_Hist.get(is,il,0).reset();
+				 H2_CCa_Hist.get(is,il,3).reset();
+				 H2_CCa_Hist.get(is,il,5).reset();
 			}
 		}		
 	}
@@ -171,8 +182,8 @@ public class CCMon extends DetectorMonitor {
 			
 			for (int is=0 ; is<6 ; is++) {
 				for (int il=0 ; il<2 ; il++) {
-					nha[is][il]  = 0;
-					nht[is][il]  = 0;
+					nha[is][il] = 0;
+					nht[is][il] = 0;
 					for (int ip=0 ; ip<18 ; ip++) {
 						strra[is][il][ip] = 0;
 						strrt[is][il][ip] = 0;
@@ -184,18 +195,17 @@ public class CCMon extends DetectorMonitor {
 			
 			if (app.isSingleEvent()) {
 				for (int is=0 ; is<6 ; is++) {
-					for (int il=1 ; il<3 ; il++) {
-						 H1_CCa_Sevd.get(is+1,il,0).reset();
-						 H2_CCa_Sevd.get(is+1,il,0).reset();
-						 H2_CCa_Sevd.get(is+1,il,1).reset();
+					for (int il=0 ; il<2 ; il++) {
+						 H1_CCa_Sevd.get(is+1,il+1,0).reset();
+						 H2_CCa_Sevd.get(is+1,il+1,0).reset();
+						 H2_CCa_Sevd.get(is+1,il+1,1).reset();
 					}
 				}
 			}	
 		}
 		
 		public void fill(int is, int il, int ip, int adc, double tdc, double tdcf) {
-			
-	
+				
 			if(tdc>1200&&tdc<1500){
 	          	 nht[is-1][il-1]++; int inh = nht[is-1][il-1];
 	            tdcr[is-1][il-1][inh-1] = tdc;
@@ -213,10 +223,10 @@ public class CCMon extends DetectorMonitor {
 		public void processSED() {
 			
 			for (int is=0; is<6; is++) {
-	           for (int il=1; il<3; il++ ){;
-	        	   for (int n=1 ; n<nha[is][il-1]+1 ; n++) {
-	        		   int ip=strra[is][il-1][n-1]; int ad=adcr[is][il-1][n-1];
-	        		   H1_CCa_Sevd.get(is+1,il,0).fill(ip,ad);
+	           for (int il=0; il<2; il++ ){;
+	        	   for (int n=0 ; n<nha[is][il] ; n++) {
+	        		   int ip=strra[is][il][n]; int ad=adcr[is][il][n];
+	        		   H1_CCa_Sevd.get(is+1,il+1,0).fill(ip,ad);
 	        	   }
 	           }
 			}			
@@ -394,26 +404,25 @@ public class CCMon extends DetectorMonitor {
 	@Override
 	public void detectorSelected(DetectorDescriptor desc) {
 		
-		this.analyze(inProcess);
-		switch (app.getSelectedTabIndex()) {
-		case 0:
-		  this.canvasMode1(desc, app.getCanvas("Mode1"));
-		  break;
-		case 1:
+        this.analyze(inProcess);
+        switch (app.getSelectedTabIndex()) {
+        case 0:
+          this.canvasMode1(desc, app.getCanvas("Mode1"));
+          break;
+        case 1:
 		  //this.canvasSingleEvent(desc, app.getCanvas("SingleEvent"));
-		  break;
+          break;
 		case 2:
-		  this.canvasOccupancy(desc,   app.getCanvas("Occupancy"));
-		  break;
+          this.canvasOccupancy(desc, app.getCanvas("Occupancy"));
+          break;
 		case 3:
-			  this.canvasPedestal(desc,    app.getCanvas("Pedestals"));	
-			  break;
-		case 4:
-			  this.canvasSummary(desc,    app.getCanvas("Summary"));	
-			  break;
-		}	 
-		
-	}
+          this.canvasPedestal(desc, app.getCanvas("Pedestals"));	
+          break;
+        case 4:
+          this.canvasSummary(desc, app.getCanvas("Summary"));	
+          break;
+        }	 
+    }
 	
 	public void canvasMode1(DetectorDescriptor desc, EmbeddedCanvas canvas) {
 		

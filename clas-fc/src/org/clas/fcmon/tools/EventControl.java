@@ -126,7 +126,7 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
     public void openEvioFile(File eviofile) {
     	isRemote = false;
         isSingleEvent = false;
-        this.monitoringClass.init();
+        this.monitoringClass.init(monitoringClass);
         evReader = new EvioSource();
         eviofilename = eviofile.getAbsolutePath();
         evReader.open(eviofilename);

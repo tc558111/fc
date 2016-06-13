@@ -19,9 +19,31 @@ public class FCApplication {
 	public MonitorApp      app = null;
 	public DetectorMonitor mon = null;
 	
+	public int is,layer,ic;
+	public int panel,io,of,lay,l1,l2;
+	
 	public FCApplication(ECPixels[] ecPix, DetectorCollection<CalibrationData> collection) {
 		this.ecPix = ecPix;
 		this.collection = collection;		
+	}
+	
+	public void getDetIndices(DetectorDescriptor dd) {
+        is    = dd.getSector();
+        layer = dd.getLayer();
+        ic    = dd.getComponent(); 	 
+                
+        panel = app.getDetectorView().panel1.omap;
+        io    = app.getDetectorView().panel1.ilmap;
+        of    = (io-1)*3;
+        lay   = 0;
+        
+        if (layer<4)  lay = layer+of;
+        if (layer==4) lay = layer+2+io;
+        if (panel==9) lay = panel+io-1;
+        if (panel>10) lay = panel+of;
+        
+        l1 = of+1;
+        l2 = of+4;  
 	}
 	
 	public void addH1DMaps(String name, DetectorCollection map) {

@@ -92,8 +92,8 @@ public class ECMon extends DetectorMonitor {
    DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new DetectorCollection<TreeMap<Integer,Object>>();
    DetectorCollection<TreeMap<Integer,Object>> Lmap_t = new DetectorCollection<TreeMap<Integer,Object>>();
 
-   TreeMap<Integer,Object> map7=null,map8=null; 
    double[]                sed7=null,sed8=null;
+   TreeMap<Integer,Object> map7=null,map8=null; 
    TreeMap<String,Object> glob = new TreeMap<String,Object>();
    
 	public ECMon(String det) {
@@ -111,7 +111,7 @@ public class ECMon extends DetectorMonitor {
 	
 	public static void main(String[] args){
 		
-		String det = "PCAL";
+		String det = "EC";
 		ECMon monitor = new ECMon(det);
 		
 		app.setPluginClass(monitor);
@@ -195,7 +195,6 @@ public class ECMon extends DetectorMonitor {
 		glob.put("tet", tet);		
 		glob.put("ccdb", ccdb);
 		glob.put("PCMon_zmax", PCMon_zmax);
-		System.out.println(glob.toString());
 	}
 	
 	public TreeMap<String,Object> getGlob(){
@@ -219,7 +218,7 @@ public class ECMon extends DetectorMonitor {
 	}
 	
 	public void close() {
-		
+	    
 	} 
 	
 	public void initHistograms() {
@@ -229,8 +228,8 @@ public class ECMon extends DetectorMonitor {
 		int nstr = ecPix[0].pc_nstr[0]            ; double nend = nstr+1;  
 		int npix = ecPix[0].pixels.getNumPixels() ; double pend = npix+1;
 		
-		for (int is=1; is<7 ; is++) {
-			for (int il=1 ; il<7 ; il++){
+		for (int is=1; is<7 ; is++) {		    
+			for (int il=1 ; il<7 ; il++){			    
 				// For Histos
 				String id="s"+Integer.toString(is)+"_l"+Integer.toString(il)+"_c";
 				H2_PCa_Hist.add(is, il, 0, new H2D("a_raw_"+id+0, 100,   0., 200.,  nstr, 1., nend));
@@ -273,9 +272,9 @@ public class ECMon extends DetectorMonitor {
 			}
 			for (int il=0 ; il<3 ; il++) {
 				String id="s"+Integer.toString(is)+"_l"+Integer.toString(il)+"_c";
-				H2_PC_Stat.add(is, il, 0, new H2D("a_evts_"+id+0, nstr, 1., nend,  3, 1., 4.));				
-				H2_PC_Stat.add(is, il, 1, new H2D("b_adc_"+id+1,  nstr, 1., nend,  3, 1., 4.));				
-				H2_PC_Stat.add(is, il, 2, new H2D("c_tdc_"+id+2,  nstr, 1., nend,  3, 1., 4.));				
+				H2_PC_Stat.add(is, il, 0, new H2D("a_evt_"+id+0, nstr, 1., nend,  3, 1., 4.));				
+				H2_PC_Stat.add(is, il, 1, new H2D("b_adc_"+id+1, nstr, 1., nend,  3, 1., 4.));				
+				H2_PC_Stat.add(is, il, 2, new H2D("c_tdc_"+id+2, nstr, 1., nend,  3, 1., 4.));				
 			}
 		} 
 		/*
@@ -594,6 +593,7 @@ public class ECMon extends DetectorMonitor {
 		}	
 		}
 	}
+	
 	public void configMode7(int cr, int sl, int ch) {
    		FADCConfig config=fadc.getMap().get(cr,sl,ch);
 		   this.nsa    = (int) config.getNSA();
@@ -610,7 +610,6 @@ public class ECMon extends DetectorMonitor {
 		   glob.put("nsb", this.nsb);
 		   glob.put("tet", this.tet);
 	}
-
 	
 	@Override
 	public void processEvent(DataEvent de) {

@@ -101,25 +101,8 @@ public class ECAttenApp extends FCApplication {
 	    
       String otab[]={"U Inner Strips","V Inner Strips","W Inner Strips","U Outer Strips","V Outer Strips","W Outer Strips"};
 		
-      double pixwidth[]={1.,1.,1.,1.,1.,1.};
-	    
-      int is        = dd.getSector();
-      int layer     = dd.getLayer();
-      int ic        = dd.getComponent();
-		
-      int panel = app.getDetectorView().panel1.omap;
-      int io    = app.getDetectorView().panel1.ilmap;
-      int of    = (io-1)*3;
-      int lay=0;
-		
-      if (layer<4)  lay = layer+of;
-      if (layer==4) lay = layer+2+io;
-      if (panel==9) lay = panel+io-1;
-      if (panel>10) lay = panel+of;
-      layer = lay;
-      int l1 = of+1;
-      int l2 = of+4;
-				
+      this.getDetIndices(dd);
+	  layer = lay ; 	
       canvas.divide(2,2); 
 		
       int inProcess =     (int) mon.getGlob().get("inProcess");

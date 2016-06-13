@@ -201,6 +201,17 @@ public class ECMon extends DetectorMonitor {
 		return this.glob;
 	}
 	
+	public void readHipoFile() {        
+        FCCalibrationData calib = new FCCalibrationData();
+        calib.getFile("/Users/colesmith/junk.hipo");
+        H2_PCa_Hist = calib.getCollection("H2_PCa_Hist");
+        H1_PCa_Maps = calib.getCollection("H1_PCa_Maps");
+        H2_PCt_Hist = calib.getCollection("H2_PCt_Hist");
+        H1_PCt_Maps = calib.getCollection("H1_PCt_Maps");
+        ecOccupancy.analyze();
+        inProcess = 2;    	    
+	}
+	
 	public void saveToFile() {
 		System.out.println("Saving hipofile");
 		String hipoFileName = "/Users/colesmith/junk.hipo";
@@ -277,16 +288,6 @@ public class ECMon extends DetectorMonitor {
 				H2_PC_Stat.add(is, il, 2, new H2D("c_tdc_"+id+2, nstr, 1., nend,  3, 1., 4.));				
 			}
 		} 
-		/*
-		 FCCalibrationData calib = new FCCalibrationData();
-		 calib.getFile("/Users/colesmith/junk.hipo");
-		 H2_PCa_Hist = calib.getCollection("H2_PCa_Hist");
-		 H1_PCa_Maps = calib.getCollection("H1_PCa_Maps");
-		 H2_PCt_Hist = calib.getCollection("H2_PCt_Hist");
-		 H1_PCt_Maps = calib.getCollection("H1_PCt_Maps");
-		 analyzeOccupancy();
-		 inProcess = 2;
-		 */
 		 
 	}
 	

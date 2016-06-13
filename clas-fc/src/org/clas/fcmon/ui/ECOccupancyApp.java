@@ -61,8 +61,7 @@ public class ECOccupancyApp extends FCApplication {
       if (layer==7||layer==8) {
          for(int il=l1;il<l2;il++) {
             canvas.cd(il-1-of); h = dc2a.get(is+1,il,0).projectionY();
-            H1D copy = h.histClone("Copy");
-				
+            H1D copy = h.histClone("Copy");			
             strip = ecPix[0].pixels.getStrip(il-of,ic+1);
             copy.reset() ; copy.setBinContent(ic, h.getBinContent(ic));
             copy.setFillColor(col2); canvas.draw(copy,"same");	    		 

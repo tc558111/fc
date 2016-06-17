@@ -3,6 +3,7 @@ package org.clas.fcmon.ui;
 import org.clas.fcmon.tools.*;
 import org.jlab.geom.prim.Path3D;
 import org.jlab.rec.ecn.ECCommon;
+import org.jlab.rec.ecn.ECDetectorReconstruction;
 import org.jlab.clas.detector.BankType;
 import org.jlab.clas.detector.DetectorBankEntry;
 import org.jlab.clas.detector.DetectorCollection;
@@ -53,6 +54,7 @@ public class ECMon extends DetectorMonitor {
    ECRawHistosApp      ecRawHistos = null;
    ECPedestalApp        ecPedestal = null;
    ECTimingApp            ecTiming = null;
+   ECDetectorReconstruction  ecRec = new ECDetectorReconstruction();
    
    DatabaseConstantProvider ccdb   = null;
    EventDecoder            decoder = new EventDecoder();
@@ -111,7 +113,7 @@ public class ECMon extends DetectorMonitor {
 	
 	public static void main(String[] args){
 		
-		String det = "EC";
+		String det = "PCAL";
 		ECMon monitor = new ECMon(det);
 		
 		app.setPluginClass(monitor);
@@ -139,6 +141,7 @@ public class ECMon extends DetectorMonitor {
 		initGlob();
 		initHistograms();
 		collection.clear();	
+        ecRec.init();
 	}
 	
 	public void initApps(DetectorMonitor monitor) {
@@ -711,6 +714,23 @@ public class ECMon extends DetectorMonitor {
        	           tdc = (((float)tdcc-(float)mc_t*1000)-tdcmax+1340000)/1000;		   	        	
         	      if(ic==1||ic==2) this.myarrays.fill(is, il+(ic-1)*3, ip, adc, tdc, tdcf);		      	   	   		    	
 		    }
+		   /*
+		   ecRec.processEvent(event);
+		   if(event.hasBank("ECDetector::hits")){
+             bank = (EvioDataBank) event.getBank("ECDetector::hits");
+             for(int i=0; i < bank.rows(); i++) {
+  			   int is  = bank.getInt("sector",i);
+  			   int il  = bank.getInt("layer",i);
+  			   int ip  = bank.getInt("strip",i);
+  			   int id  = bank.getInt("peakID",i);
+  			   double en = bank.getDouble("energy",i);
+  			   System.out.println("sector,layer,strip="+is+" "+il+" "+ip);  
+  			   System.out.println("peakid,energy="+id+" "+en+" ");  
+  			   System.out.println(" ");
+             }
+		   }
+		   */
+
 		}
 				
 		if (app.isSingleEvent()) {

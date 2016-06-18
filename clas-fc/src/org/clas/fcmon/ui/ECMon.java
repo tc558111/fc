@@ -77,18 +77,16 @@ public class ECMon extends DetectorMonitor {
    
    String mondet        = "PCAL";
    int    moncalrun     = 0;
-      	
+
    DetectorCollection<H2D> H2_PCa_Hist = new DetectorCollection<H2D>();
    DetectorCollection<H2D> H2_PCt_Hist = new DetectorCollection<H2D>();
-   DetectorCollection<H1D> H1_PCa_Hist = new DetectorCollection<H1D>();
-   DetectorCollection<H1D> H1_PCt_Hist = new DetectorCollection<H1D>();
    DetectorCollection<H1D> H1_PCa_Maps = new DetectorCollection<H1D>();
    DetectorCollection<H1D> H1_PCt_Maps = new DetectorCollection<H1D>();
    DetectorCollection<H1D> H1_PCa_Sevd = new DetectorCollection<H1D>();
    DetectorCollection<H1D> H1_PCt_Sevd = new DetectorCollection<H1D>();
    DetectorCollection<H2D> H2_PCa_Sevd = new DetectorCollection<H2D>();
    DetectorCollection<H2D> H2_PC_Stat  = new DetectorCollection<H2D>();
-
+   
    DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new DetectorCollection<TreeMap<Integer,Object>>();
    DetectorCollection<TreeMap<Integer,Object>> Lmap_t = new DetectorCollection<TreeMap<Integer,Object>>();
 
@@ -115,7 +113,7 @@ public class ECMon extends DetectorMonitor {
 		app.setPluginClass(monitor);
 		app.init();
 		monitor.addCanvas(monitor);
-		monitor.init(monitor);
+		monitor.init();
 		monitor.initDetector(1,2);
 	}
 	
@@ -130,15 +128,23 @@ public class ECMon extends DetectorMonitor {
         app.addCanvas("RawHistos",    ecRawHistos.getCanvas("RawHistos"));  	    
 	}
 	
-	public void init(DetectorMonitor monitor) {
-		System.out.println("init");	
+	public void init() {
+		System.out.println("init()");	
 		configMode7(1,3,1);
 		app.mode7Emulation.tet.setText(Integer.toString(this.tet));
 		app.mode7Emulation.nsa.setText(Integer.toString(this.nsa));
 		app.mode7Emulation.nsb.setText(Integer.toString(this.nsb));
 		initGlob();
-		initHistograms();
-	    ecAtten.init();	
+		ecPix[0].initHistograms();
+        H2_PCa_Hist = ecPix[0].strips.hmap2.get("H2_PCa_Hist");
+        H2_PCt_Hist = ecPix[0].strips.hmap2.get("H2_PCt_Hist");
+        H1_PCa_Maps = ecPix[0].pixels.hmap1.get("H1_PCa_Maps");
+        H1_PCt_Maps = ecPix[0].pixels.hmap1.get("H1_PCt_Maps");
+        H1_PCa_Sevd = ecPix[0].strips.hmap1.get("H1_PCa_Sevd");
+        H1_PCt_Sevd = ecPix[0].strips.hmap1.get("H2_PCt_Sevd");
+        H2_PCa_Sevd = ecPix[0].strips.hmap2.get("H2_PCa_Sevd");
+        H2_PC_Stat  = ecPix[0].strips.hmap2.get("H2_PC_Stat");
+        ecAtten.init(); 
         ecRec.init();
 	}
 	
@@ -148,42 +154,32 @@ public class ECMon extends DetectorMonitor {
 		ecAtten = new ECAttenApp("Attenuation",ecPix);	
 		ecAtten.setMonitoringClass(app);
 		ecAtten.setApplicationClass(monitor);
-		ecAtten.addH1DMaps("H1_PCa_Maps", H1_PCa_Maps);
-		ecAtten.addH2DMaps("H2_PCa_Hist", H2_PCa_Hist);
 		ecAtten.addLMaps("Lmap_a", Lmap_a);
 		
 		ecMode1 = new ECMode1App("Mode1",ecPix);
 		ecMode1.setMonitoringClass(app);
 		ecMode1.setApplicationClass(monitor);
-		ecMode1.addH2DMaps("H2_PCa_Sevd", H2_PCa_Sevd);
 		
 		ecSingleEvent = new ECSingleEventApp("SingleEvent",ecPix);
 		ecSingleEvent.setMonitoringClass(app);
 		ecSingleEvent.setApplicationClass(monitor);
-		ecSingleEvent.addH1DMaps("H1_PCa_Sevd", H1_PCa_Sevd);
 		
 		ecRawHistos = new ECRawHistosApp("RawHistos",ecPix);
 		ecRawHistos.setMonitoringClass(app);
 		ecRawHistos.setApplicationClass(monitor);
-		ecRawHistos.addH2DMaps("H2_PC_Stat", H2_PC_Stat);
-		ecRawHistos.addH2DMaps("H2_PCa_Hist", H2_PCa_Hist);
-		ecRawHistos.addH2DMaps("H2_PCt_Hist", H2_PCt_Hist);
 		
 		ecPedestal = new ECPedestalApp("Pedestal",ecPix);		
 		ecPedestal.setMonitoringClass(app);
 		ecPedestal.setApplicationClass(monitor);
-		ecPedestal.addH2DMaps("H2_PCa_Hist", H2_PCa_Hist);
 		
 		ecTiming = new ECTimingApp("Timing",ecPix);		
 		ecTiming.setMonitoringClass(app);
 		ecTiming.setApplicationClass(monitor);
-		ecTiming.addH2DMaps("H2_PCt_Hist", H2_PCt_Hist);
 		
 		ecOccupancy = new ECOccupancyApp("Occupancy",ecPix);		
 		ecOccupancy.setMonitoringClass(app);
 		ecOccupancy.setApplicationClass(monitor);
-		ecOccupancy.addH2DMaps("H2_PCa_Hist", H2_PCa_Hist);
-		ecOccupancy.addH2DMaps("H2_PCt_Hist", H2_PCt_Hist);
+
 	}
 	
 	public void initGlob() {
@@ -214,7 +210,7 @@ public class ECMon extends DetectorMonitor {
 	}
 	
 	public void saveToFile() {
-		System.out.println("Saving hipofile");
+	    System.out.println("Saving hipofile");
 		String hipoFileName = "/Users/colesmith/junk.hipo";
         HipoFile histofile = new HipoFile(hipoFileName);
         histofile.addToMap("H2_PCa_Hist", this.H2_PCa_Hist);
@@ -232,66 +228,7 @@ public class ECMon extends DetectorMonitor {
 	public void close() {
 	    
 	} 
-	
-	public void initHistograms() {
-		
-		System.out.println("initHistograms()");
-		
-		int nstr = ecPix[0].pc_nstr[0]            ; double nend = nstr+1;  
-		int npix = ecPix[0].pixels.getNumPixels() ; double pend = npix+1;
-		
-		for (int is=1; is<7 ; is++) {		    
-			for (int il=1 ; il<7 ; il++){			    
-				// For Histos
-				String id="s"+Integer.toString(is)+"_l"+Integer.toString(il)+"_c";
-				H2_PCa_Hist.add(is, il, 0, new H2D("a_raw_"+id+0, 100,   0., 200.,  nstr, 1., nend));
-				H2_PCt_Hist.add(is, il, 0, new H2D("a_raw_"+id+0, 100,1330.,1370.,  nstr, 1., nend));
-				H2_PCa_Hist.add(is, il, 1, new H2D("b_pix_"+id+1, 100,   0., 200.,  nstr, 1., nend));
-				H2_PCt_Hist.add(is, il, 1, new H2D("b_pix_"+id+1, 100,1330.,1370.,  nstr, 1., nend));
-				H2_PCa_Hist.add(is, il, 2, new H2D("c_pix_"+id+2,  25,   0., 250.,  npix, 1., pend));
-				H2_PCt_Hist.add(is, il, 2, new H2D("c_pix_"+id+2,  40,1330.,1370.,  npix, 1., pend));
-				H2_PCa_Hist.add(is, il, 3, new H2D("d_ped_"+id+3,  20, -10.,  10.,  nstr, 1., nend)); 
-				H2_PCt_Hist.add(is, il, 3, new H2D("d_tdif_"+id+3, 60, -15.,  15.,  nstr, 1., nend)); 
-				H2_PCt_Hist.add(is, il, 4, new H2D("e_tdif_"+id+4, 60, -15.,  15.,  nstr, 1., nend)); 
-				H2_PCa_Hist.add(is, il, 5, new H2D("e_fadc_"+id+5,100,   0., 100.,  nstr, 1., nend));
-				// For Layer Maps
-				H1_PCa_Maps.add(is, il, 0, new H1D("a_adcpix_"+id+0, npix,  1., pend));
-				H1_PCa_Maps.add(is, il, 1, new H1D("b_pixa_"+id+1,   npix,  1., pend));
-				H1_PCa_Maps.add(is, il, 2, new H1D("c_adcpix2_"+id+2,npix,  1., pend));
-				H1_PCa_Maps.add(is, il, 3, new H1D("d_pixa2_"+id+3,  npix,  1., pend));
-				H1_PCt_Maps.add(is, il, 0, new H1D("a_tdcpix_"+id+0, npix,  1., pend));	
-				H1_PCt_Maps.add(is, il, 1, new H1D("b_pixt_"+id+1,   npix,  1., pend));	
-				// For Single Events
-				H1_PCa_Sevd.add(is, il, 0, new H1D("a_sed_"+id+0, nstr,  1., nend));
-				H1_PCt_Sevd.add(is, il, 0, new H1D("a_sed_"+id+0, nstr,  1., nend));
-				H2_PCa_Sevd.add(is, il, 0, new H2D("b_sed_fadc_"+id+0,100, 0., 100., nstr, 1., nend));
-				H2_PCa_Sevd.add(is, il, 1, new H2D("c_sed_fadc_"+id+1,100, 0., 100., nstr, 1., nend));
-			}
-			for (int il=7 ; il<9 ; il++){
-				String id="s"+Integer.toString(is)+"_l"+Integer.toString(il)+"_c";
-				// For Non-Layer Maps
-				H1_PCa_Maps.add(is, il, 0, new H1D("a_evtpixa_"+id+0,  npix, 1., pend));
-				H1_PCt_Maps.add(is, il, 0, new H1D("a_evtpixt_"+id+0,  npix, 1., pend));	
-				H1_PCa_Maps.add(is, il, 1, new H1D("b_pixasum_"+id+1,  npix, 1., pend));
-				H1_PCt_Maps.add(is, il, 1, new H1D("b_pixtsum_"+id+1,  npix, 1., pend));	
-				H1_PCa_Maps.add(is, il, 2, new H1D("c_pixas_"+id+2,    npix, 1., pend));
-				H1_PCt_Maps.add(is, il, 2, new H1D("c_pixat_"+id+2,    npix, 1., pend));
-				H1_PCa_Maps.add(is, il, 3, new H1D("d_nevtpixa_"+id+3, npix, 1., pend));
-				H1_PCt_Maps.add(is, il, 3, new H1D("d_nevtpixt_"+id+3, npix, 1., pend));	
-				// For Single Events
-				H1_PCa_Sevd.add(is, il, 0, new H1D("a_sed_"+id+0, npix,  1., pend));
-				H1_PCt_Sevd.add(is, il, 0, new H1D("a_sed_"+id+0, npix,  1., pend));
-			}
-			for (int il=0 ; il<3 ; il++) {
-				String id="s"+Integer.toString(is)+"_l"+Integer.toString(il)+"_c";
-				H2_PC_Stat.add(is, il, 0, new H2D("a_evt_"+id+0, nstr, 1., nend,  3, 1., 4.));				
-				H2_PC_Stat.add(is, il, 1, new H2D("b_adc_"+id+1, nstr, 1., nend,  3, 1., 4.));				
-				H2_PC_Stat.add(is, il, 2, new H2D("c_tdc_"+id+2, nstr, 1., nend,  3, 1., 4.));				
-			}
-		} 
-		 
-	}
-	
+
 	public void initDetector(int is1, int is2) {
 		
 		System.out.println("initDetector()");
@@ -424,7 +361,7 @@ public class ECMon extends DetectorMonitor {
 		}
 		
 		public void fill(int is, int il, int ip, int adc, double tdc, double tdcf) {
-			
+		    
 			int ic=0,iil;
 			  
 			if (mondet=="EC")    ic=1;  
@@ -440,6 +377,7 @@ public class ECMon extends DetectorMonitor {
 	          	 nht[is-1][iv-1]++; int inh = nht[is-1][iv-1];
 	            tdcr[is-1][iv-1][inh-1] = tdc;
 	           strrt[is-1][iv-1][inh-1] = ip;
+	              
 	          	  H2_PCt_Hist.get(is,il,0).fill(tdc,ip,1.0);
 	          	  //System.out.println(is+" "+ic+" "+ip+" "+iil+" "+tdc);
 	          	  H2_PC_Stat.get(is,ic,2).fill(ip,iil,tdc);

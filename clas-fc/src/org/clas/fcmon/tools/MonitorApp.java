@@ -43,8 +43,6 @@ public class MonitorApp extends JFrame implements ActionListener {
     JPanel  canvasPane = null;
     JPanel  buttonPane = null;
 	
-    TreeMap<String,EmbeddedCanvas>  paneCanvas = new TreeMap<String,EmbeddedCanvas>();
-	
     JPanel  controlsPanel0 = null;        
     JPanel  controlsPanel1 = null;
     JPanel  controlsPanel2 = null;
@@ -163,13 +161,12 @@ public class MonitorApp extends JFrame implements ActionListener {
 */  
     public void addCanvas(String name){
         EmbeddedCanvas canvas = new EmbeddedCanvas();
-        this.paneCanvas.put(name, canvas);
         this.canvasTabbedPane.addTab(name,canvas);
     }
     
-    public EmbeddedCanvas getCanvas(String name){
-        return this.paneCanvas.get(name);
-    } 
+    public void addCanvas(String name, EmbeddedCanvas canvas){         
+        this.canvasTabbedPane.addTab(name,canvas);
+    }
     
     public DetectorShapeTabView getDetectorView(){
         return this.detectorView;

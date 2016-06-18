@@ -77,9 +77,7 @@ public class ECMon extends DetectorMonitor {
    
    String mondet        = "PCAL";
    int    moncalrun     = 0;
-      
-   DetectorCollection<CalibrationData> collection = new DetectorCollection<CalibrationData>();  
-	
+      	
    DetectorCollection<H2D> H2_PCa_Hist = new DetectorCollection<H2D>();
    DetectorCollection<H2D> H2_PCt_Hist = new DetectorCollection<H2D>();
    DetectorCollection<H1D> H1_PCa_Hist = new DetectorCollection<H1D>();
@@ -112,76 +110,76 @@ public class ECMon extends DetectorMonitor {
 	}
 	
 	public static void main(String[] args){
-		
 		String det = "PCAL";
-		ECMon monitor = new ECMon(det);
-		
+		ECMon monitor = new ECMon(det);		
 		app.setPluginClass(monitor);
 		app.init();
-		app.addCanvas("Mode1");
-		app.addCanvas("SingleEvent");
-		app.addCanvas("Occupancy");
-		app.addCanvas("Attenuation");
-		app.addCanvas("Pedestals");
-		app.addCanvas("Timing");
-		app.addCanvas("RawHistos");
-		
+		monitor.addCanvas(monitor);
 		monitor.init(monitor);
 		monitor.initDetector(1,2);
-
+	}
+	
+	public void addCanvas(DetectorMonitor monitor) {
+        initApps(monitor);
+        app.addCanvas("Mode1",            ecMode1.getCanvas("Mode1"));
+        app.addCanvas("SingleEvent",ecSingleEvent.getCanvas("SingleEvent"));
+        app.addCanvas("Occupancy",    ecOccupancy.getCanvas("Occupancy"));
+        app.addCanvas("Attenuation",      ecAtten.getCanvas("Attenuation"));
+        app.addCanvas("Pedestal",      ecPedestal.getCanvas("Pedestal"));
+        app.addCanvas("Timing",          ecTiming.getCanvas("Timing"));
+        app.addCanvas("RawHistos",    ecRawHistos.getCanvas("RawHistos"));  	    
 	}
 	
 	public void init(DetectorMonitor monitor) {
-		System.out.println("init");
-		initApps(monitor);
+		System.out.println("init");	
 		configMode7(1,3,1);
 		app.mode7Emulation.tet.setText(Integer.toString(this.tet));
 		app.mode7Emulation.nsa.setText(Integer.toString(this.nsa));
 		app.mode7Emulation.nsb.setText(Integer.toString(this.nsb));
 		initGlob();
 		initHistograms();
-		collection.clear();	
+	    ecAtten.init();	
         ecRec.init();
 	}
 	
 	public void initApps(DetectorMonitor monitor) {
 		System.out.println("initApps()");
 		
-		ecAtten = new ECAttenApp(ecPix,collection);	
+		ecAtten = new ECAttenApp("Attenuation",ecPix);	
 		ecAtten.setMonitoringClass(app);
 		ecAtten.setApplicationClass(monitor);
 		ecAtten.addH1DMaps("H1_PCa_Maps", H1_PCa_Maps);
 		ecAtten.addH2DMaps("H2_PCa_Hist", H2_PCa_Hist);
 		ecAtten.addLMaps("Lmap_a", Lmap_a);
 		
-		ecMode1 = new ECMode1App(ecPix,collection);
+		ecMode1 = new ECMode1App("Mode1",ecPix);
 		ecMode1.setMonitoringClass(app);
 		ecMode1.setApplicationClass(monitor);
 		ecMode1.addH2DMaps("H2_PCa_Sevd", H2_PCa_Sevd);
 		
-		ecSingleEvent = new ECSingleEventApp(ecPix,collection);
+		ecSingleEvent = new ECSingleEventApp("SingleEvent",ecPix);
 		ecSingleEvent.setMonitoringClass(app);
 		ecSingleEvent.setApplicationClass(monitor);
 		ecSingleEvent.addH1DMaps("H1_PCa_Sevd", H1_PCa_Sevd);
 		
-		ecRawHistos = new ECRawHistosApp(ecPix,collection);
+		ecRawHistos = new ECRawHistosApp("RawHistos",ecPix);
 		ecRawHistos.setMonitoringClass(app);
 		ecRawHistos.setApplicationClass(monitor);
 		ecRawHistos.addH2DMaps("H2_PC_Stat", H2_PC_Stat);
 		ecRawHistos.addH2DMaps("H2_PCa_Hist", H2_PCa_Hist);
 		ecRawHistos.addH2DMaps("H2_PCt_Hist", H2_PCt_Hist);
 		
-		ecPedestal = new ECPedestalApp(ecPix,collection);		
+		ecPedestal = new ECPedestalApp("Pedestal",ecPix);		
 		ecPedestal.setMonitoringClass(app);
 		ecPedestal.setApplicationClass(monitor);
 		ecPedestal.addH2DMaps("H2_PCa_Hist", H2_PCa_Hist);
 		
-		ecTiming = new ECTimingApp(ecPix,collection);		
+		ecTiming = new ECTimingApp("Timing",ecPix);		
 		ecTiming.setMonitoringClass(app);
 		ecTiming.setApplicationClass(monitor);
 		ecTiming.addH2DMaps("H2_PCt_Hist", H2_PCt_Hist);
 		
-		ecOccupancy = new ECOccupancyApp(ecPix,collection);		
+		ecOccupancy = new ECOccupancyApp("Occupancy",ecPix);		
 		ecOccupancy.setMonitoringClass(app);
 		ecOccupancy.setApplicationClass(monitor);
 		ecOccupancy.addH2DMaps("H2_PCa_Hist", H2_PCa_Hist);
@@ -716,19 +714,6 @@ public class ECMon extends DetectorMonitor {
 		    }
 		   /*
 		   ecRec.processEvent(event);
-		   if(event.hasBank("ECDetector::hits")){
-             bank = (EvioDataBank) event.getBank("ECDetector::hits");
-             for(int i=0; i < bank.rows(); i++) {
-  			   int is  = bank.getInt("sector",i);
-  			   int il  = bank.getInt("layer",i);
-  			   int ip  = bank.getInt("strip",i);
-  			   int id  = bank.getInt("peakID",i);
-  			   double en = bank.getDouble("energy",i);
-  			   System.out.println("sector,layer,strip="+is+" "+il+" "+ip);  
-  			   System.out.println("peakid,energy="+id+" "+en+" ");  
-  			   System.out.println(" ");
-             }
-		   }
 		   */
 
 		}
@@ -876,25 +861,25 @@ public class ECMon extends DetectorMonitor {
 		
 		switch (app.getSelectedTabIndex()) {
 		case 0:
-		  ecMode1.updateCanvas(dd, app.getCanvas("Mode1"));
+		  ecMode1.updateCanvas(dd);
 		  break;
 		case 1:
-		  ecSingleEvent.updateCanvas(dd, app.getCanvas("SingleEvent"));
+		  ecSingleEvent.updateCanvas(dd);
 		  break;
 		case 2:
-		  ecOccupancy.updateCanvas(dd, app.getCanvas("Occupancy"));
+		  ecOccupancy.updateCanvas(dd);
 		  break;
 		case 3:
-		  ecAtten.updateCanvas(dd, app.getCanvas("Attenuation"));
+		  ecAtten.updateCanvas(dd);
 		  break;
 		case 4:
-		  ecPedestal.updateCanvas(dd, app.getCanvas("Pedestals"));	
+		  ecPedestal.updateCanvas(dd);	
 		  break;
 		case 5:
-		  ecTiming.updateCanvas(dd, app.getCanvas("Timing"));	
+		  ecTiming.updateCanvas(dd);	
 		  break;
 		case 6:
-          ecRawHistos.updateCanvas(dd, app.getCanvas("RawHistos"));	
+          ecRawHistos.updateCanvas(dd);	
 		}
 	}
 	

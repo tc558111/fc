@@ -1,17 +1,23 @@
 package org.clas.fcmon.tools;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.TreeMap;
 
+import org.clas.tools.NoGridCanvas;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas.detector.DetectorDescriptor;
+import org.jlab.evio.clas12.EvioDataBank;
 import org.root.basic.EmbeddedCanvas;
 import org.root.histogram.H1D;
 import org.root.histogram.H2D;
 
 public class FCApplication {
 	
+    private String                                 appName    = null;
+    private List<EmbeddedCanvas>                   canvases   = new ArrayList<EmbeddedCanvas>();
+    
 	public ECPixels[]                                   ecPix = new ECPixels[2];
-	public DetectorCollection<CalibrationData>     collection = new DetectorCollection<CalibrationData>();  
 	public DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new  DetectorCollection<TreeMap<Integer,Object>>();
 	public TreeMap<String, DetectorCollection<H1D>>     hmap1 = new TreeMap<String, DetectorCollection<H1D>>();
 	public TreeMap<String, DetectorCollection<H2D>>     hmap2 = new TreeMap<String, DetectorCollection<H2D>>();
@@ -22,11 +28,24 @@ public class FCApplication {
 	public int is,layer,ic;
 	public int panel,io,of,lay,l1,l2;
 	
-	public FCApplication(ECPixels[] ecPix, DetectorCollection<CalibrationData> collection) {
-		this.ecPix = ecPix;
-		this.collection = collection;		
-	}
+    public FCApplication(ECPixels[] ecPix) {
+        this.ecPix = ecPix;     
+    }
+    
+    public FCApplication(String name, ECPixels[] ecPix) {
+        this.appName = name;
+        this.ecPix = ecPix;   
+        this.addCanvas(name);
+    }
 	
+    public String getName() {
+        return this.appName;
+    }
+    
+    public void setName(String name) {
+        this.appName = name;
+    }	
+    
 	public void getDetIndices(DetectorDescriptor dd) {
         is    = dd.getSector();
         layer = dd.getLayer();
@@ -66,6 +85,10 @@ public class FCApplication {
 		this.mon = mon;
 	}
 	
+	public void process(EvioDataBank bank) {
+	    
+	}
+	
 	public void analyze() {
 	}
 	
@@ -74,4 +97,25 @@ public class FCApplication {
 	
 	public void updateCanvas(DetectorDescriptor dd, EmbeddedCanvas canvas) {		
 	}
+	
+    public final void addCanvas(String name) {
+        EmbeddedCanvas c = new EmbeddedCanvas();
+        this.canvases.add(c);
+        this.canvases.get(this.canvases.size()-1).setName(name);
+    }
+    
+    public EmbeddedCanvas getCanvas(int index) {
+        return this.canvases.get(index);
+    }
+    
+    public EmbeddedCanvas getCanvas(String name) {
+        int index=0;
+        for(int i=0; i<this.canvases.size(); i++) {
+            if(this.canvases.get(i).getName() == name) {
+                index=i;
+                break;
+            }
+        }
+        return this.canvases.get(index);
+    }
 }

@@ -1,24 +1,22 @@
 package org.clas.fcmon.ui;
 
-import java.util.TreeMap;
-
-import org.clas.fcmon.tools.CalibrationData;
- 
 import org.clas.fcmon.tools.ECPixels;
 import org.clas.fcmon.tools.FCApplication;
-import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas.detector.DetectorDescriptor;
 import org.root.basic.EmbeddedCanvas;
 import org.root.histogram.H2D;
 
 public class ECRawHistosApp extends FCApplication {
 	
-   public ECRawHistosApp(ECPixels[] ecPix, DetectorCollection<CalibrationData> collection) {
-      super(ecPix,collection);	
+   public ECRawHistosApp(String name, ECPixels[] ecPix) {
+      super(name,ecPix);	
    }
 	
-   public void updateCanvas(DetectorDescriptor dd, EmbeddedCanvas canvas) {
-	  H2D h2;
+   public void updateCanvas(DetectorDescriptor dd) {
+
+      EmbeddedCanvas canvas = this.getCanvas(this.getName()); 
+       
+      H2D h2;
       int detID = (int) mon.getGlob().get("detID");
 		
       String ytab[]={"U Inner Strip","V Inner Strip","W Inner Strip","U Outer Strip","V Outer Strip","W Outer Strip"};

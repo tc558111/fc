@@ -1,30 +1,22 @@
 package org.clas.fcmon.ui;
 
-import java.util.TreeMap;
-
-import org.clas.fcmon.tools.CalibrationData;
-import org.clas.fcmon.tools.DetectorMonitor;
 import org.clas.fcmon.tools.ECPixels;
 import org.clas.fcmon.tools.FCApplication;
-import org.clas.fcmon.tools.MonitorApp;
-import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas.detector.DetectorDescriptor;
-import org.jlab.clas.detector.DetectorType;
-import org.jlab.rec.ecn.ECCommon;
 import org.root.basic.EmbeddedCanvas;
 import org.root.func.F1D;
-import org.root.histogram.GraphErrors;
 import org.root.histogram.H1D;
-import org.root.histogram.H2D;
+ 
 
 public class ECMode1App extends FCApplication  {
 	
-   public ECMode1App(ECPixels[] ecPix, DetectorCollection<CalibrationData> collection) {
-      super(ecPix,collection);		
+   public ECMode1App(String name, ECPixels[] ecPix) {
+      super(name,ecPix);		
    }
 
-   public void updateCanvas(DetectorDescriptor dd, EmbeddedCanvas canvas) {
+   public void updateCanvas(DetectorDescriptor dd) {
 		
+      EmbeddedCanvas canvas = this.getCanvas(this.getName()); 
       int inProcess =     (int) mon.getGlob().get("inProcess"); 
       
       if (inProcess==0) return;

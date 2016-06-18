@@ -1,9 +1,8 @@
 package org.clas.fcmon.ui;
 
-import org.clas.fcmon.tools.CalibrationData;
+
 import org.clas.fcmon.tools.ECPixels;
-import org.clas.fcmon.tools.FCApplication;
-import org.jlab.clas.detector.DetectorCollection;
+import org.clas.fcmon.tools.FCApplication; 
 import org.jlab.clas.detector.DetectorDescriptor;
 import org.root.basic.EmbeddedCanvas;
 import org.root.histogram.H1D;
@@ -11,12 +10,14 @@ import org.root.histogram.H1D;
 
 public class ECSingleEventApp extends FCApplication {
 
-   public ECSingleEventApp(ECPixels[] ecPix, DetectorCollection<CalibrationData> collection) {
-      super(ecPix,collection);		
+   public ECSingleEventApp(String name, ECPixels[] ecPix) {
+      super(name,ecPix);		
    }
 	
-   public void updateCanvas(DetectorDescriptor dd, EmbeddedCanvas canvas) {
+   public void updateCanvas(DetectorDescriptor dd) {
 	    
+      EmbeddedCanvas canvas = this.getCanvas(this.getName()); 
+      
       H1D h;
       int col0=0;
       String otab[]={"U Inner Strips","V Inner Strips","W Inner Strips","U Outer Strips","V Outer Strips","W Outer Strips"};

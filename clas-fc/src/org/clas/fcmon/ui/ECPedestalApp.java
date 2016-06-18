@@ -1,9 +1,8 @@
 package org.clas.fcmon.ui;
 
-import org.clas.fcmon.tools.CalibrationData;
+ 
 import org.clas.fcmon.tools.ECPixels;
 import org.clas.fcmon.tools.FCApplication;
-import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas.detector.DetectorDescriptor;
 import org.root.basic.EmbeddedCanvas;
 import org.root.func.F1D;
@@ -12,11 +11,13 @@ import org.root.histogram.H2D;
 
 public class ECPedestalApp extends FCApplication {
 	
-   public ECPedestalApp(ECPixels[] ecPix, DetectorCollection<CalibrationData> collection) {
-      super(ecPix,collection);		
+   public ECPedestalApp(String name, ECPixels[] ecPix) {
+      super(name, ecPix);		
    }
 
-   public void updateCanvas(DetectorDescriptor dd, EmbeddedCanvas canvas) {
+   public void updateCanvas(DetectorDescriptor dd) {
+
+       EmbeddedCanvas canvas = this.getCanvas(this.getName()); 
 		
       H1D h;
       Boolean inMC = (Boolean) mon.getGlob().get("inMC");

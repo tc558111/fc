@@ -3,10 +3,8 @@ package org.clas.fcmon.ui;
 import java.util.TreeMap;
 
 import org.clas.fcmon.tools.CalibrationData;
-import org.clas.fcmon.tools.DetectorMonitor;
 import org.clas.fcmon.tools.ECPixels;
 import org.clas.fcmon.tools.FCApplication;
-import org.clas.fcmon.tools.MonitorApp;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas.detector.DetectorDescriptor;
 import org.jlab.clas.detector.DetectorType;
@@ -16,12 +14,21 @@ import org.root.basic.EmbeddedCanvas;
 import org.root.func.F1D;
 import org.root.histogram.GraphErrors;
 import org.root.histogram.H1D;
-import org.root.histogram.H2D;
 
 public class ECAttenApp extends FCApplication {
-
-   public ECAttenApp(ECPixels[] ecPix, DetectorCollection<CalibrationData> collection) {
-      super(ecPix,collection);		
+    
+   DetectorCollection<CalibrationData> collection = new DetectorCollection<CalibrationData>();  
+    
+   public ECAttenApp(String name , ECPixels[] ecPix) {
+      super(name, ecPix);		
+   }
+   
+   public DetectorCollection<CalibrationData> getCalibration() {
+      return this.collection;
+   }
+   
+   public void init() {
+       this.collection.clear();
    }
 		
    public void analyze(int is1, int is2, int il1, int il2, int ip1, int ip2) {
@@ -77,8 +84,10 @@ public class ECAttenApp extends FCApplication {
 		
    }
 	
-   public void updateCanvas(DetectorDescriptor dd, EmbeddedCanvas canvas) {
+   public void updateCanvas(DetectorDescriptor dd) {
 		
+      EmbeddedCanvas canvas = this.getCanvas(this.getName()); 
+      
       H1D mipADC = null;
       int nstr = ecPix[0].pc_nstr[0];
 		

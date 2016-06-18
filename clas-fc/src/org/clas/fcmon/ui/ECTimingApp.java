@@ -12,11 +12,13 @@ import org.root.histogram.H2D;
 
 public class ECTimingApp extends FCApplication {
 	
-   public ECTimingApp(ECPixels[] ecPix, DetectorCollection<CalibrationData> collection) {
-      super(ecPix,collection);	
+   public ECTimingApp(String name, ECPixels[] ecPix) {
+      super(name,ecPix);	
    }
 
-   public void updateCanvas(DetectorDescriptor dd, EmbeddedCanvas canvas) {
+   public void updateCanvas(DetectorDescriptor dd) {
+       
+      EmbeddedCanvas canvas = this.getCanvas(this.getName()); 
 		
       H1D h;
       String otab[][]={{"U Strips","V Strips","W Strips"},{"U Strips","V Strips","W Strips"},{"U Strips","V Strips","W Strips"}};

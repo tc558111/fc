@@ -1,6 +1,11 @@
 package org.clas.fcmon.tools;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.TreeMap;
+
 import org.clas.containers.FTHashCollection;
+import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas12.calib.DetectorShape2D;
 import org.root.histogram.H1D;
 import org.root.histogram.H2D;
@@ -10,13 +15,17 @@ public class Pixel {
     FTHashCollection<Integer>        pixelStrips = null;
     FTHashCollection<Boolean>        pixelStatus = null;
     FTHashCollection<int[]>          stripPixels = null;
-    FTHashCollection<H1D>               pixelH1D = null;
-    FTHashCollection<H2D>               pixelH2D = null;
     FTHashCollection<DetectorShape2D> pixelShape = null;
     FTHashCollection<Double>           pixelArea = null;
     FTHashCollection<Double>          pixelUDist = null;
     FTHashCollection<Double>          pixelVDist = null;
     FTHashCollection<Double>          pixelWDist = null;
+    
+    DetectorCollection<List<H1D>>       pixelH1D = null;
+    DetectorCollection<List<H2D>>       pixelH2D = null;
+    
+    public TreeMap<String, DetectorCollection<H1D>>   hmap1 = null; 
+    public TreeMap<String, DetectorCollection<H2D>>   hmap2 = null; 
     
 	double[] theta={0.0,60.0,120.0,180.0,240.0,300.0};
     double maxPixelArea = 0;
@@ -25,13 +34,15 @@ public class Pixel {
     	this.pixelStrips = new FTHashCollection<Integer>(3);
     	this.pixelStatus = new FTHashCollection<Boolean>(1);
     	this.stripPixels = new FTHashCollection<int[]>(1);
-    	this.pixelH1D    = new FTHashCollection<H1D>(1);
-    	this.pixelH2D    = new FTHashCollection<H2D>(1);
     	this.pixelShape  = new FTHashCollection<DetectorShape2D>(2);
     	this.pixelArea   = new FTHashCollection<Double>(2);
     	this.pixelUDist  = new FTHashCollection<Double>(1);
     	this.pixelVDist  = new FTHashCollection<Double>(1);
     	this.pixelWDist  = new FTHashCollection<Double>(1);
+        this.pixelH1D    = new DetectorCollection<List<H1D>>();
+        this.pixelH2D    = new DetectorCollection<List<H2D>>();
+        this.hmap1       = new TreeMap<String, DetectorCollection<H1D>>();
+        this.hmap2       = new TreeMap<String, DetectorCollection<H2D>>();
     }
     
     public void addTriplets(int pixel, int u, int v, int w) {
@@ -62,13 +73,23 @@ public class Pixel {
 		return rotshape;
     }
     
-    public void addH1D(H1D h1, int pixel) {
-    	pixelH1D.add(h1, pixel);   	
+    public void addH1D(int sector, int layer, int component, H1D h1) {
+        if(!pixelH1D.hasEntry(sector,layer,component)) pixelH1D.add(sector,layer,component,new ArrayList<H1D>());
+        pixelH1D.get(sector,layer,component).add(h1);       
     }
     
-    public void addH2D(H2D h2, int pixel) {
-    	pixelH2D.add(h2, pixel);   	
+    public void addH2D(int sector, int layer, int component, H2D h2) {
+        if(!pixelH2D.hasEntry(sector,layer,component)) pixelH2D.add(sector,layer,component,new ArrayList<H2D>());
+        pixelH2D.get(sector,layer,component).add(h2);       
+    }    
+    
+    public void addH1DMap(String name, DetectorCollection<H1D> map) {
+        this.hmap1.put(name,map);
     }
+    
+    public void addH2DMap(String name, DetectorCollection<H2D> map) {
+        this.hmap2.put(name,map);
+    }   
     
     public void setMaxPixelArea(double area) {
     	this.maxPixelArea = area;

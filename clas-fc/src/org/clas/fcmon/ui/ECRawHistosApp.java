@@ -37,17 +37,17 @@ public class ECRawHistosApp extends FCApplication {
          canvas.setStatBoxFontSize(12);
 		
          for (int il=0; il<3 ; il++) {
-            h2 = hmap2.get("H2_PC_Stat").get(is+1,detID+(io-1),il) ; h2.setYTitle(iolab[detID+(io-1)]+"View"); h2.setXTitle("Strip") ; 
+            h2 = ecPix[0].strips.hmap2.get("H2_PC_Stat").get(is+1,detID+(io-1),il) ; h2.setYTitle(iolab[detID+(io-1)]+"View"); h2.setXTitle("Strip") ; 
             canvas.cd(il); canvas.setLogZ(); canvas.draw(h2);
          }
 		
          for (int il=l1; il<l2; il++) {
-            h2 = hmap2.get("H2_PCa_Hist").get(is+1,il,0); h2.setYTitle(ytab[il-1]) ; h2.setXTitle(xtaba[il-1]);
+            h2 = ecPix[0].strips.hmap2.get("H2_PCa_Hist").get(is+1,il,0); h2.setYTitle(ytab[il-1]) ; h2.setXTitle(xtaba[il-1]);
             canvas.cd(il-of-1+3) ; canvas.setLogZ(); canvas.draw(h2); 
          }
 		
          for (int il=l1; il<l2; il++) {
-            h2 = hmap2.get("H2_PCt_Hist").get(is+1,il,0); h2.setYTitle(ytab[il-1]) ; h2.setXTitle(xtabt[il-1]);
+            h2 = ecPix[0].strips.hmap2.get("H2_PCt_Hist").get(is+1,il,0); h2.setYTitle(ytab[il-1]) ; h2.setXTitle(xtabt[il-1]);
             canvas.cd(il-of-1+6) ; canvas.setLogZ(); canvas.draw(h2); 
          }
          

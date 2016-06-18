@@ -35,8 +35,8 @@ public class ECOccupancyApp extends FCApplication {
       if (layer<7)  {col0=0 ; col1=4; col2=2;strip=ic+1;}
       if (layer>=7) {col0=4 ; col1=4; col2=2;pixel=ic+1;}
 		
-      DetectorCollection<H2D> dc2a = hmap2.get("H2_PCa_Hist");
-      DetectorCollection<H2D> dc2t = hmap2.get("H2_PCt_Hist");
+      DetectorCollection<H2D> dc2a = ecPix[0].strips.hmap2.get("H2_PCa_Hist");
+      DetectorCollection<H2D> dc2t = ecPix[0].strips.hmap2.get("H2_PCt_Hist");
     
       for(int il=l1;il<l2;il++){
          String otab = lab1[il-1-of]+lab2[io-1]+"Strips";

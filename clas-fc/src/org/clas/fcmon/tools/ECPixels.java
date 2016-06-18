@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import javax.swing.JFrame;
 import javax.swing.JSplitPane;
 
+import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas.detector.DetectorDescriptor;
 import org.jlab.clas.detector.DetectorType;
 import org.jlab.clas12.calib.DetectorShape2D;
@@ -16,6 +17,8 @@ import org.jlab.geom.detector.ec.ECDetector;
 import org.jlab.geom.detector.ec.ECFactory;
 import org.jlab.geom.detector.ec.ECLayer;
 import org.jlab.geom.prim.Path3D;
+import org.root.histogram.H1D;
+import org.root.histogram.H2D;
 
 import math.geom2d.polygon.Polygons2D;
 import math.geom2d.polygon.SimplePolygon2D;
@@ -140,7 +143,82 @@ public class ECPixels {
     	pixels.setMaxPixelArea(maxPixArea);
     	}
 	}
-	
+    public void initHistograms() {
+        
+        System.out.println("ECPixels:initHistograms()");
+        
+        DetectorCollection<H2D> H2_PCa_Hist = new DetectorCollection<H2D>();
+        DetectorCollection<H2D> H2_PCt_Hist = new DetectorCollection<H2D>();
+        DetectorCollection<H1D> H1_PCa_Maps = new DetectorCollection<H1D>();
+        DetectorCollection<H1D> H1_PCt_Maps = new DetectorCollection<H1D>();
+        DetectorCollection<H1D> H1_PCa_Sevd = new DetectorCollection<H1D>();
+        DetectorCollection<H1D> H1_PCt_Sevd = new DetectorCollection<H1D>();
+        DetectorCollection<H2D> H2_PCa_Sevd = new DetectorCollection<H2D>();
+        DetectorCollection<H2D> H2_PC_Stat  = new DetectorCollection<H2D>();  
+        
+        int nstr = pc_nstr[0]            ; double nend = nstr+1;  
+        int npix = pixels.getNumPixels() ; double pend = npix+1;
+        
+        for (int is=1; is<7 ; is++) {           
+            for (int il=1 ; il<7 ; il++){               
+                // For Histos
+                String id="s"+Integer.toString(is)+"_l"+Integer.toString(il)+"_c";
+                H2_PCa_Hist.add(is, il, 0, new H2D("a_raw_"+id+0, 100,   0., 200.,  nstr, 1., nend));
+                H2_PCt_Hist.add(is, il, 0, new H2D("a_raw_"+id+0, 100,1330.,1370.,  nstr, 1., nend));
+                H2_PCa_Hist.add(is, il, 1, new H2D("b_pix_"+id+1, 100,   0., 200.,  nstr, 1., nend));
+                H2_PCt_Hist.add(is, il, 1, new H2D("b_pix_"+id+1, 100,1330.,1370.,  nstr, 1., nend));
+                H2_PCa_Hist.add(is, il, 2, new H2D("c_pix_"+id+2,  25,   0., 250.,  npix, 1., pend));
+                H2_PCt_Hist.add(is, il, 2, new H2D("c_pix_"+id+2,  40,1330.,1370.,  npix, 1., pend));
+                H2_PCa_Hist.add(is, il, 3, new H2D("d_ped_"+id+3,  20, -10.,  10.,  nstr, 1., nend)); 
+                H2_PCt_Hist.add(is, il, 3, new H2D("d_tdif_"+id+3, 60, -15.,  15.,  nstr, 1., nend)); 
+                H2_PCt_Hist.add(is, il, 4, new H2D("e_tdif_"+id+4, 60, -15.,  15.,  nstr, 1., nend)); 
+                H2_PCa_Hist.add(is, il, 5, new H2D("e_fadc_"+id+5,100,   0., 100.,  nstr, 1., nend));
+                // For Layer Maps
+                H1_PCa_Maps.add(is, il, 0, new H1D("a_adcpix_"+id+0, npix,  1., pend));
+                H1_PCa_Maps.add(is, il, 1, new H1D("b_pixa_"+id+1,   npix,  1., pend));
+                H1_PCa_Maps.add(is, il, 2, new H1D("c_adcpix2_"+id+2,npix,  1., pend));
+                H1_PCa_Maps.add(is, il, 3, new H1D("d_pixa2_"+id+3,  npix,  1., pend));
+                H1_PCt_Maps.add(is, il, 0, new H1D("a_tdcpix_"+id+0, npix,  1., pend)); 
+                H1_PCt_Maps.add(is, il, 1, new H1D("b_pixt_"+id+1,   npix,  1., pend)); 
+                // For Single Events
+                H1_PCa_Sevd.add(is, il, 0, new H1D("a_sed_"+id+0, nstr,  1., nend));
+                H1_PCt_Sevd.add(is, il, 0, new H1D("a_sed_"+id+0, nstr,  1., nend));
+                H2_PCa_Sevd.add(is, il, 0, new H2D("b_sed_fadc_"+id+0,100, 0., 100., nstr, 1., nend));
+                H2_PCa_Sevd.add(is, il, 1, new H2D("c_sed_fadc_"+id+1,100, 0., 100., nstr, 1., nend));
+            }
+            for (int il=7 ; il<9 ; il++){
+                String id="s"+Integer.toString(is)+"_l"+Integer.toString(il)+"_c";
+                // For Non-Layer Maps
+                H1_PCa_Maps.add(is, il, 0, new H1D("a_evtpixa_"+id+0,  npix, 1., pend));
+                H1_PCt_Maps.add(is, il, 0, new H1D("a_evtpixt_"+id+0,  npix, 1., pend));    
+                H1_PCa_Maps.add(is, il, 1, new H1D("b_pixasum_"+id+1,  npix, 1., pend));
+                H1_PCt_Maps.add(is, il, 1, new H1D("b_pixtsum_"+id+1,  npix, 1., pend));    
+                H1_PCa_Maps.add(is, il, 2, new H1D("c_pixas_"+id+2,    npix, 1., pend));
+                H1_PCt_Maps.add(is, il, 2, new H1D("c_pixat_"+id+2,    npix, 1., pend));
+                H1_PCa_Maps.add(is, il, 3, new H1D("d_nevtpixa_"+id+3, npix, 1., pend));
+                H1_PCt_Maps.add(is, il, 3, new H1D("d_nevtpixt_"+id+3, npix, 1., pend));    
+                // For Single Events
+                H1_PCa_Sevd.add(is, il, 0, new H1D("a_sed_"+id+0, npix,  1., pend));
+                H1_PCt_Sevd.add(is, il, 0, new H1D("a_sed_"+id+0, npix,  1., pend));
+            }
+            for (int il=0 ; il<3 ; il++) {
+                String id="s"+Integer.toString(is)+"_l"+Integer.toString(il)+"_c";
+                H2_PC_Stat.add(is, il, 0, new H2D("a_evt_"+id+0, nstr, 1., nend,  3, 1., 4.));              
+                H2_PC_Stat.add(is, il, 1, new H2D("b_adc_"+id+1, nstr, 1., nend,  3, 1., 4.));              
+                H2_PC_Stat.add(is, il, 2, new H2D("c_tdc_"+id+2, nstr, 1., nend,  3, 1., 4.));              
+            }
+        } 
+        
+        strips.addH2DMap("H2_PCa_Hist", H2_PCa_Hist);
+        strips.addH2DMap("H2_PCt_Hist", H2_PCt_Hist);
+        pixels.addH1DMap("H1_PCa_Maps", H1_PCa_Maps);
+        pixels.addH1DMap("H1_PCt_Maps", H1_PCt_Maps);
+        strips.addH1DMap("H1_PCa_Sevd", H1_PCa_Sevd);
+        strips.addH1DMap("H1_PCt_Sevd", H1_PCt_Sevd);
+        strips.addH2DMap("H2_PCa_Sevd", H2_PCa_Sevd);
+        strips.addH2DMap("H2_PC_Stat",  H2_PC_Stat);
+   
+    }	
 	public void testPixels() {
 		
 		DetectorShapeTabView view = new DetectorShapeTabView();

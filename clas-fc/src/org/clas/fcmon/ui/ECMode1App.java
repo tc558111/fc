@@ -58,8 +58,8 @@ public class ECMode1App extends FCApplication  {
       for(int ip=0;ip<ecPix[io-1].pc_nstr[layer-of-1];ip++){
          canvas.cd(ip); canvas.getPad().setAxisRange(0.,100.,-15.,zmax*app.displayControl.pixMax); //Vertical scale set by ZMAX slider
          h.setTitle(otab[layer-1]+" "+(ip+1));
-         h = hmap2.get("H2_PCa_Sevd").get(is+1,layer,0).sliceY(ip); h.setFillColor(4); canvas.draw(h);         //CCDB TET
-         h = hmap2.get("H2_PCa_Sevd").get(is+1,layer,1).sliceY(ip); h.setFillColor(2); canvas.draw(h,"same");  //User TET
+         h = ecPix[0].strips.hmap2.get("H2_PCa_Sevd").get(is+1,layer,0).sliceY(ip); h.setFillColor(4); canvas.draw(h);         //CCDB TET
+         h = ecPix[0].strips.hmap2.get("H2_PCa_Sevd").get(is+1,layer,1).sliceY(ip); h.setFillColor(2); canvas.draw(h,"same");  //User TET
          canvas.draw(f1,"same"); canvas.draw(f2,"same");
       }
       

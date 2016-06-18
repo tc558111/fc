@@ -65,15 +65,15 @@ public class FCApplication {
         l2 = of+4;  
 	}
 	
-	public void addH1DMaps(String name, DetectorCollection map) {
+	public void addH1DMaps(String name, DetectorCollection<H1D> map) {
 		this.hmap1.put(name,map);
 	}
 	
-	public void addH2DMaps(String name, DetectorCollection map) {
+	public void addH2DMaps(String name, DetectorCollection<H2D> map) {
 		this.hmap2.put(name,map);
 	}
 	
-	public void addLMaps(String name, DetectorCollection map) {
+	public void addLMaps(String name, DetectorCollection<TreeMap<Integer,Object>> map) {
 		this.Lmap_a=map;
 	}
 	

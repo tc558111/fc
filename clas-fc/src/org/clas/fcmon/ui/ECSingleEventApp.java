@@ -34,7 +34,7 @@ public class ECSingleEventApp extends FCApplication {
 		
       for(int il=1;il<4;il++){
          canvas.cd(il-1); canvas.getPad().setAxisRange(-1.,ecPix[0].pc_nstr[il-1]+1,0.,zmax*app.displayControl.pixMax);
-         h = hmap1.get("H1_PCa_Sevd").get(is+1,il+of,0); h.setXTitle(otab[il-1+of]); h.setFillColor(col0); canvas.draw(h);
+         h = ecPix[0].strips.hmap1.get("H1_PCa_Sevd").get(is+1,il+of,0); h.setXTitle(otab[il-1+of]); h.setFillColor(col0); canvas.draw(h);
       }
    }
    

@@ -7,6 +7,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.jlab.clas.detector.DetectorCollection;
 import org.root.histogram.H1D;
@@ -15,15 +16,20 @@ import org.root.histogram.H2D;
 public class Strip {
 
 	public  DetectorCollection<List<Integer>>  pixNmbr = null;
-	public  DetectorCollection<List<Integer>>  pixDist = null;
-    private DetectorCollection<H1D>           stripH1D = null;
-    private DetectorCollection<H2D>           stripH2D = null;
+    public  DetectorCollection<List<Integer>>  pixDist = null;
+    private DetectorCollection<List<H1D>>     stripH1D = null;
+    private DetectorCollection<List<H2D>>     stripH2D = null;
+    
+    public TreeMap<String, DetectorCollection<H1D>>   hmap1 = null; 
+    public TreeMap<String, DetectorCollection<H2D>>   hmap2 = null; 
     
     public Strip() {
     	this.pixNmbr   = new DetectorCollection<List<Integer>>();
     	this.pixDist   = new DetectorCollection<List<Integer>>();
-    	this.stripH1D  = new DetectorCollection<H1D>();
-    	this.stripH2D  = new DetectorCollection<H2D>();
+    	this.stripH1D  = new DetectorCollection<List<H1D>>();
+    	this.stripH2D  = new DetectorCollection<List<H2D>>();
+        this.hmap1     = new TreeMap<String, DetectorCollection<H1D>>();
+        this.hmap2     = new TreeMap<String, DetectorCollection<H2D>>();
     }
     
     public void addPixels(int sector, int layer, int component, int pixel) {
@@ -37,13 +43,23 @@ public class Strip {
     }
     
     public void addH1D(int sector, int layer, int component, H1D h1) {
-    	stripH1D.add(sector,layer,component,h1);   	
+        if(!stripH1D.hasEntry(sector,layer,component)) stripH1D.add(sector,layer,component,new ArrayList<H1D>());
+        stripH1D.get(sector,layer,component).add(h1);       
     }
     
     public void addH2D(int sector, int layer, int component, H2D h2) {
-    	stripH2D.add(sector,layer,component,h2);   	
+        if(!stripH2D.hasEntry(sector,layer,component)) stripH2D.add(sector,layer,component,new ArrayList<H2D>());
+        stripH2D.get(sector,layer,component).add(h2);       
     }
     
+    public void addH1DMap(String name, DetectorCollection<H1D> map) {
+        this.hmap1.put(name,map);
+    }
+    
+    public void addH2DMap(String name, DetectorCollection<H2D> map) {
+        this.hmap2.put(name,map);
+    }    
+
     public int getpixel(int sector, int layer, int component, int index) {
     	return pixNmbr.get(sector,layer,component).get(index);
     }

@@ -44,9 +44,9 @@ public class ECAttenApp extends FCApplication {
          for (int il=il1 ; il<il2 ; il++) {
             int ill,iill ; if (il<4) {ill=7 ; iill=il;} else {ill=8 ; iill=il-3;}	
             //Extract raw arrays for error bar calculation
-            double cnts[]  = hmap1.get("H1_PCa_Maps").get(is+1,ill,0).getData();				
-            double adc[]   = hmap1.get("H1_PCa_Maps").get(is+1,il,1).getData();
-            double adcsq[] = hmap1.get("H1_PCa_Maps").get(is+1,il,3).getData();
+            double cnts[]  = ecPix[0].pixels.hmap1.get("H1_PCa_Maps").get(is+1,ill,0).getData();				
+            double adc[]   = ecPix[0].pixels.hmap1.get("H1_PCa_Maps").get(is+1,il,1).getData();
+            double adcsq[] = ecPix[0].pixels.hmap1.get("H1_PCa_Maps").get(is+1,il,3).getData();
             doCalibration = false;
 				
             for (int ipix=0 ; ipix<npix ; ipix++) {
@@ -125,7 +125,7 @@ public class ECAttenApp extends FCApplication {
          ypix[0] = meanmap[ic];
          xerr[0] = 0.;
          yerr[0] = 0.;
-         mipADC = hmap2.get("H2_PCa_Hist").get(is+1,layer-10,2).sliceY(ic) ;
+         mipADC = ecPix[0].strips.hmap2.get("H2_PCa_Hist").get(is+1,layer-10,2).sliceY(ic) ;
          //System.out.println("Pixel="+(ic+1)+" Mean1= "+ypix[0]+" Mean2= "+mipADC.getMean());
       }
         

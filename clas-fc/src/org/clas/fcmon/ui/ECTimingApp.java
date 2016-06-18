@@ -32,7 +32,7 @@ public class ECTimingApp extends FCApplication {
       canvas.divide(3,2);
 
       for(int il=1;il<4;il++){
-         H2D hpix = hmap2.get("H2_PCt_Hist").get(is+1,il+(io-1)*3,4);
+         H2D hpix = ecPix[0].strips.hmap2.get("H2_PCt_Hist").get(is+1,il+(io-1)*3,4);
          hpix.setXTitle("TDIF (Inner-Outer)") ; hpix.setYTitle(otab[ic][il-1]);
          canvas.cd(il-1); canvas.setLogZ(); canvas.draw(hpix);
          if(la==il) {

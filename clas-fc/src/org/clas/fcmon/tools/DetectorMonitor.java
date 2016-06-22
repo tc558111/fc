@@ -24,6 +24,7 @@ public abstract class DetectorMonitor implements IDetectorProcessor, IDetectorLi
     public abstract void reset();
     public abstract void saveToFile();
     public abstract TreeMap<String,Object> getGlob();
+    public abstract void putGlob(String name, Object obj);
     public String getName(){ return moduleName;}
 	
 }

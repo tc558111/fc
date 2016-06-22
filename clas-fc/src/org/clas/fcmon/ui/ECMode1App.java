@@ -23,8 +23,9 @@ public class ECMode1App extends FCApplication  {
         
       Boolean  inMC = (Boolean) mon.getGlob().get("inMC");
       int     detID =     (int) mon.getGlob().get("detID");
-      int       tet =     (int) mon.getGlob().get("tet");
       double   zmax =  (double) mon.getGlob().get("PCMon_zmax");
+      
+      int tet = app.mode7Emulation.tet;
         
       if (inMC) return;
 		

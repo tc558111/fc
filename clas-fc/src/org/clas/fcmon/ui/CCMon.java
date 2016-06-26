@@ -79,20 +79,20 @@ public class CCMon extends DetectorMonitor {
 				app.addCanvas("Occupancy");			 
 				app.addCanvas("Pedestals");
 				app.addCanvas("Summary");
-				monitor.init(monitor);
+				monitor.init();
 				monitor.initDetector(0,6);
 				}
 			});
 	}
 	
 	@Override
-	public void init(DetectorMonitor monitor) {
+	public void init() {
 	  inProcess = 0;
 	  initHistograms();
 	  configMode7(1,18,12);
-	  app.mode7Emulation.tet.setText(Integer.toString(this.tet));
-   	  app.mode7Emulation.nsa.setText(Integer.toString(this.nsa));
-   	  app.mode7Emulation.nsb.setText(Integer.toString(this.nsb));
+	  app.mode7Emulation.ttet.setText(Integer.toString(this.tet));
+   	  app.mode7Emulation.tnsa.setText(Integer.toString(this.nsa));
+   	  app.mode7Emulation.tnsb.setText(Integer.toString(this.nsb));
 	}
 	
 	public TreeMap<String,Object> getGlob(){
@@ -576,4 +576,10 @@ public class CCMon extends DetectorMonitor {
 		canvas.cd((lr-1)*18+ip); h = H2_CCa_Hist.get(is+1,lr,0).sliceY(ip); h.setTitle(""); h.setFillColor(col2); canvas.draw(h,"same"); 	
 
 	}
+
+    @Override
+    public void putGlob(String name, Object obj) {
+        // TODO Auto-generated method stub
+        
+    }
 }

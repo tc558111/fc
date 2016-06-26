@@ -7,7 +7,6 @@ import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas.detector.DetectorDescriptor;
 import org.jlab.clas.detector.DetectorType;
 import org.jlab.clas12.calib.DetectorShape2D;
-import org.jlab.clas12.detector.FADCConfig;
 import org.jlab.clas12.detector.FADCConfigLoader;
 import org.jlab.clasrec.utils.DatabaseConstantProvider;
 import org.jlab.evio.clas12.*;
@@ -19,8 +18,6 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
-import java.util.Arrays;
-
 
 public class ECMon extends DetectorMonitor {
 	
@@ -63,9 +60,6 @@ public class ECMon extends DetectorMonitor {
    DetectorCollection<H1D> H1_PCt_Sevd = new DetectorCollection<H1D>();
    DetectorCollection<H2D> H2_PCa_Sevd = new DetectorCollection<H2D>();
    DetectorCollection<H2D> H2_PC_Stat  = new DetectorCollection<H2D>();
-   
-  // DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new DetectorCollection<TreeMap<Integer,Object>>();
-  // DetectorCollection<TreeMap<Integer,Object>> Lmap_t = new DetectorCollection<TreeMap<Integer,Object>>();
    
    TreeMap<String,Object> glob = new TreeMap<String,Object>();
    

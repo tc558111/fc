@@ -58,7 +58,8 @@ public class ECPixels {
   	  }
 	  this.calDB = new CalDrawDB(det);
 	  this.GetStripsDB();
-	  this.GetPixelsDB();
+	  this.GetPixelsDB(); 
+//	  this.writeFPGALookupTable("/Users/colesmith/pcal_att376_DB.dat",376.,1); 
       this.pixrot();
 //      this.testStrips();
 //      this.testPixels();
@@ -143,6 +144,7 @@ public class ECPixels {
     	pixels.setMaxPixelArea(maxPixArea);
     	}
 	}
+	
     public void initHistograms() {
         
         System.out.println("ECPixels:initHistograms()");
@@ -219,6 +221,7 @@ public class ECPixels {
         strips.addH2DMap("H2_PC_Stat",  H2_PC_Stat);
    
     }	
+    
 	public void testPixels() {
 		
 		DetectorShapeTabView view = new DetectorShapeTabView();
@@ -251,6 +254,7 @@ public class ECPixels {
 	    hi.setVisible(true);
 	    
 	}
+	
 	public void testStrips(int lay) {
 		
 		DetectorShapeTabView view = new DetectorShapeTabView();
@@ -280,7 +284,8 @@ public class ECPixels {
 	    hi.pack();
 	    hi.setVisible(true);
 	    
-	}	
+	}
+	
     public void pixrot() {
     	System.out.println("ECPixels:pixrot():");	
     	double[] theta={0.0,60.0,120.0,180.0,240.0,300.0};
@@ -327,5 +332,59 @@ public class ECPixels {
 			}
 			return uvw;
      }
-	
+
+     public void writeFPGALookupTable(String filename, double atten, int opt) {
+       Pixel newpix = new Pixel();
+       int u,v,w,us,vs,ws;
+       double dist_u,dist_v,dist_w,ua,va,wa;
+       
+       try {
+          PrintWriter fout = new PrintWriter(filename);
+          for(int i=0; i<pixels.getNumPixels() ; i++) {
+             u=pixels.getStrip(1,i+1) ; v=pixels.getStrip(2,i+1); w=pixels.getStrip(3,i+1);
+             dist_u = pixels.getDist(1,i+1); dist_v=pixels.getDist(2,i+1); dist_w=pixels.getDist(3,i+1);
+             ua=Math.exp(-dist_u/atten); va=Math.exp(-dist_v/atten); wa=Math.exp(-dist_w/atten);
+             String line = String.format("%1$d  %2$d  %3$d  %4$.3f %5$.3f %6$.3f",u,v,w,ua,va,wa); 
+             fout.printf(line+"\n");
+             if (opt==1) { // FPGA version allows for +/- 1 non-intersecting strips 
+             us=u+1;
+             if (us<69&&!pixels.pixelStrips.hasItem(us,v,w)&&!newpix.pixelStrips.hasItem(us,v,w)) {
+                 line = String.format("%1$d  %2$d  %3$d  %4$.3f %5$.3f %6$.3f",us,v,w,ua,va,wa);fout.printf(line+"\n");
+                 newpix.addTriplets(i,us,v,w);                
+             }
+             vs=v+1;
+             if (vs<63&&!pixels.pixelStrips.hasItem(u,vs,w)&&!newpix.pixelStrips.hasItem(u,vs,w)) {
+                 line = String.format("%1$d  %2$d  %3$d  %4$.3f %5$.3f %6$.3f",u,vs,w,ua,va,wa);fout.printf(line+"\n");
+                 newpix.addTriplets(i,u,vs,w);                
+             }
+             ws=w+1;
+             if (ws<63&&!pixels.pixelStrips.hasItem(u,v,ws)&&!newpix.pixelStrips.hasItem(u,v,ws)) {
+                 line = String.format("%1$d  %2$d  %3$d  %4$.3f %5$.3f %6$.3f",u,v,ws,ua,va,wa);fout.printf(line+"\n");
+                 newpix.addTriplets(i,u,v,ws);                
+             }
+             us=u-1;
+             if (us>0&&!pixels.pixelStrips.hasItem(us,v,w)&&!newpix.pixelStrips.hasItem(us,v,w)) {
+                 line = String.format("%1$d  %2$d  %3$d  %4$.3f %5$.3f %6$.3f",us,v,w,ua,va,wa);fout.printf(line+"\n");
+                 newpix.addTriplets(i,us,v,w);                
+             }
+             vs=v-1;
+             if (vs>0&&!pixels.pixelStrips.hasItem(u,vs,w)&&!newpix.pixelStrips.hasItem(u,vs,w)) {
+                 line = String.format("%1$d  %2$d  %3$d  %4$.3f %5$.3f %6$.3f",u,vs,w,ua,va,wa);fout.printf(line+"\n");
+                 newpix.addTriplets(i,u,vs,w);                
+             }
+             ws=w-1;
+             if (ws>0&&!pixels.pixelStrips.hasItem(u,v,ws)&&!newpix.pixelStrips.hasItem(u,v,ws)) {
+                 line = String.format("%1$d  %2$d  %3$d  %4$.3f %5$.3f %6$.3f",u,v,ws,ua,va,wa);fout.printf(line+"\n");
+                 newpix.addTriplets(i,u,v,ws);                
+             }
+             }
+          }       
+       fout.close();
+       }
+     
+       catch(FileNotFoundException ex){}       
+    
+     }
+
 }
+

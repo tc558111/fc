@@ -89,7 +89,9 @@ public class ECReconstructionApp extends FCApplication {
        boolean debug=false;
        int adc,ped,npk=0,timf=0,timc=0;
        double mc_t=0.,tdc=0,tdcf=0;
-            
+         
+      // REAL EVENT
+       
       if(event.hasBank(mondet+"::true")!=true) {
          thr[0]=15 ; thr[1]=20;
     
@@ -147,6 +149,8 @@ public class ECReconstructionApp extends FCApplication {
          }
       } 
     
+      // SIMULATED EVENT
+      
       if(event.hasBank(mondet+"::true")==true){
          EvioDataBank bank  = (EvioDataBank) event.getBank(mondet+"::true");
          int nrows = bank.rows();
@@ -181,7 +185,7 @@ public class ECReconstructionApp extends FCApplication {
          }
          
        /*
-       ecRec.processEvent(event);
+       processECRec(event);
        */
 
       }
@@ -194,7 +198,7 @@ public class ECReconstructionApp extends FCApplication {
       }
    }
     
-   public void process(EvioDataEvent event) {
+   public void processECRec(EvioDataEvent event) {
         
       if(event.hasBank("ECDetector::hits")){
          EvioDataBank bank = (EvioDataBank) event.getBank("ECDetector::hits");
@@ -268,7 +272,6 @@ public class ECReconstructionApp extends FCApplication {
                strrt[is-1][iv-1][inh-1] = ip;
                   
                   ecPix[0].strips.hmap2.get("H2_PCt_Hist").get(is,il,0).fill(tdc,ip,1.0);
-                  //System.out.println(is+" "+ic+" "+ip+" "+iil+" "+tdc);
                   ecPix[0].strips.hmap2.get("H2_PC_Stat").get(is,ic,2).fill(ip,iil,tdc);
             }
             if(adc>thr[ic]){

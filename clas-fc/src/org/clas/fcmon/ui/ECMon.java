@@ -75,7 +75,7 @@ public class ECMon extends DetectorMonitor {
 	}
 	
 	public static void main(String[] args){
-		String det = "PCAL";
+		String det = "EC";
 		ECMon monitor = new ECMon(det);		
 		app.setPluginClass(monitor);
 		app.init();
@@ -367,27 +367,14 @@ public class ECMon extends DetectorMonitor {
 		
 		this.analyze(inProcess);
 		
-		switch (app.getSelectedTabIndex()) {
-		case 0:
-		  ecMode1.updateCanvas(dd);
-		  break;
-		case 1:
-		  ecSingleEvent.updateCanvas(dd);
-		  break;
-		case 2:
-		  ecOccupancy.updateCanvas(dd);
-		  break;
-		case 3:
-		  ecAtten.updateCanvas(dd);
-		  break;
-		case 4:
-		  ecPedestal.updateCanvas(dd);	
-		  break;
-		case 5:
-		  ecTiming.updateCanvas(dd);	
-		  break;
-		case 6:
-          ecRawHistos.updateCanvas(dd);	
+		switch (app.getSelectedTabName()) {
+		case "Mode1":             ecMode1.updateCanvas(dd); break;
+		case "SingleEvent": ecSingleEvent.updateCanvas(dd); break;
+		case "Occupancy":     ecOccupancy.updateCanvas(dd); break;
+		case "Attenuation":       ecAtten.updateCanvas(dd); break;
+		case "Pedestal":       ecPedestal.updateCanvas(dd);	break;
+		case "Timing":           ecTiming.updateCanvas(dd);	break;
+		case "RawHistos":     ecRawHistos.updateCanvas(dd);	
 		}
 	}
 	

@@ -49,19 +49,21 @@ public class ECMode1App extends FCApplication  {
       if (app.mode7Emulation.User_tet>0)  tet=app.mode7Emulation.User_tet;
       if (app.mode7Emulation.User_tet==0) tet=app.mode7Emulation.CCDB_tet;
       F1D f1 = new F1D("p0",0.,100.); f1.setParameter(0,tet);
-      f1.setLineColor(2);
       F1D f2 = new F1D("p0",0.,100.); f2.setParameter(0,app.mode7Emulation.CCDB_tet);
-      f2.setLineColor(4);f2.setLineStyle(2);	
+      f1.setLineColor(2);
+      f2.setLineColor(4); f2.setLineStyle(2);	
 		
-      H1D h = new H1D() ; h.setXTitle("Sample (4 ns)"); h.setYTitle("Counts");
       String otab[]={"U Inner Strip","V Inner Strip","W Inner Strip","U Outer Strip","V Outer Strip","W Outer Strip"};
         
       for(int ip=0;ip<ecPix[io-1].pc_nstr[layer-of-1];ip++){
          canvas.cd(ip); canvas.getPad().setAxisRange(0.,100.,-15.,zmax*app.displayControl.pixMax); //Vertical scale set by ZMAX slider
-         h.setTitle(otab[layer-1]+" "+(ip+1));
-         h = ecPix[0].strips.hmap2.get("H2_PCa_Sevd").get(is+1,layer,0).sliceY(ip); h.setFillColor(4); canvas.draw(h);         //CCDB TET
-         h = ecPix[0].strips.hmap2.get("H2_PCa_Sevd").get(is+1,layer,1).sliceY(ip); h.setFillColor(2); canvas.draw(h,"same");  //User TET
-         canvas.draw(f1,"same"); canvas.draw(f2,"same");
+         H1D h1 = ecPix[0].strips.hmap2.get("H2_Mode1_Sevd").get(is+1,layer,0).sliceY(ip); 
+         H1D h2 = ecPix[0].strips.hmap2.get("H2_Mode1_Sevd").get(is+1,layer,1).sliceY(ip); 
+         h1.setXTitle("Sample (4 ns)"); h1.setYTitle("Counts"); h1.setTitle(""); h1.setTitle(otab[layer-1]+" "+(ip+1));
+         h1.setFillColor(4); canvas.draw(h1); 
+         h2.setFillColor(2); canvas.draw(h2,"same"); 
+         canvas.draw(f1,"same"); 
+         canvas.draw(f2,"same");
       }
       
    }

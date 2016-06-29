@@ -1,9 +1,17 @@
-package org.clas.fcmon.tools;
+  package org.clas.fcmon.tools;
 
+import java.awt.FlowLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 
+import javax.swing.ButtonGroup;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+
+import org.clas.tools.FTParameter;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas.detector.DetectorDescriptor;
 import org.jlab.evio.clas12.EvioDataBank;
@@ -11,10 +19,13 @@ import org.root.basic.EmbeddedCanvas;
 import org.root.histogram.H1D;
 import org.root.histogram.H2D;
 
-public class FCApplication {
+public class FCApplication implements ActionListener  {
 	
     private String                                 appName    = null;
     private List<EmbeddedCanvas>                   canvases   = new ArrayList<EmbeddedCanvas>();
+    private JPanel                                 radioPane  = new JPanel();
+    private List<String>                           fields     = new ArrayList<String>();
+    private List<FCParameter>                      parameters = new ArrayList<FCParameter>();
     
 	public ECPixels[]                                   ecPix = new ECPixels[2];
 	public DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new  DetectorCollection<TreeMap<Integer,Object>>();
@@ -26,7 +37,12 @@ public class FCApplication {
 	
 	public int is,layer,ic;
 	public int panel,io,of,lay,l1,l2;
-	
+
+    private String             buttonSelect;
+    private int                buttonIndex;
+    private String             canvasSelect;
+    private int                canvasIndex;
+    
     public FCApplication(ECPixels[] ecPix) {
         this.ecPix = ecPix;     
     }
@@ -117,4 +133,78 @@ public class FCApplication {
         }
         return this.canvases.get(index);
     }
+    
+    public void setRadioButtons() {
+        this.radioPane.setLayout(new FlowLayout());
+        ButtonGroup bG = new ButtonGroup();
+        for (String field : this.fields) {
+//            System.out.println(field);
+            String item = field;
+            // add buttons named as "fields" to the button group and panel
+            JRadioButton b = new JRadioButton(item);
+            if(bG.getButtonCount()==0) b.setSelected(true);
+            b.addActionListener(this);
+            this.radioPane.add(b);
+            bG.add(b);
+        }
+    }  
+    
+    public void actionPerformed(ActionEvent e) {
+//      System.out.println(this.getName() + " application radio button set to: " + e.getActionCommand());
+      buttonSelect=e.getActionCommand();
+      for(int i=0; i<this.fields.size(); i++) {
+          if(buttonSelect == this.fields.get(i)) {
+              buttonIndex=i;
+              break;
+          }
+      }
+    }
+    
+    public void setRadioPane(JPanel radioPane) {
+        this.radioPane = radioPane;
+    }
+
+    public JPanel getRadioPane() {
+        return radioPane;
+    }
+    
+    public String getButtonSelect() {
+        return buttonSelect;
+    }
+    
+    public int getButtonIndex() {
+        return buttonIndex;
+    }
+    
+    public String getCanvasSelect() {
+        if(canvasSelect == null) {
+            canvasIndex  = 0;
+            canvasSelect = this.canvases.get(0).getName();
+        }
+        return canvasSelect;
+    }
+    
+    public void setCanvasSelect(String name) {
+        canvasIndex  = 0;
+        canvasSelect = this.canvases.get(0).getName();
+        for(int i=0; i<canvases.size(); i++) {
+            if(canvases.get(i).getName() == name) {
+                canvasIndex = i;
+                canvasSelect = name;
+                break;
+            }
+        }
+    }
+    
+    public void setCanvasIndex(int index) {
+        if(index>=0 && index < this.canvases.size()) {
+            canvasIndex  = index;
+            canvasSelect = this.canvases.get(index).getName();
+        }
+        else {
+            canvasIndex  = 0;
+            canvasSelect = this.canvases.get(0).getName();
+        }
+    }
+
 }

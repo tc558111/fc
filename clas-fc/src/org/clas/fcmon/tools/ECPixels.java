@@ -29,8 +29,9 @@ public class ECPixels {
 	ECLayer           ecLayer = null;
 	ECDetector       detector = null;
 	DetectorShape2D    shape  = new DetectorShape2D();
-	public Pixel      pixels  = new Pixel();
-	public Strip      strips  = new Strip();
+	public Pixels      pixels  = new Pixels();
+	public Strips      strips  = new Strips();
+	public Pixel        pixel  = null;
 	PrintWriter        writer = null;
 
 	public double pc_xpix[][][]   = new double[10][6916][7];
@@ -95,40 +96,43 @@ public class ECPixels {
 		DetectorShape2D shape = new DetectorShape2D();
 
 		for(int sector=0; sector<1 ; sector++) {
-    	int pixel = 0; double maxPixArea=0;
+    	int pix = 0; double maxPixArea=0;
     	for(int uStrip = 0; uStrip < pc_nstr[0]; uStrip++) {	 
     		for(int vStrip = 0; vStrip < pc_nstr[1]; vStrip++) {    			        		 			 
 	            for(int wStrip = 0; wStrip < pc_nstr[2]; wStrip++) {  
 	            	shape = calDB.getPixelShape(0, uStrip, vStrip, wStrip);
 	              	if(shape!=null) {	
-	            		pixel++;
+	            		pix++;
 	            	    double [] xtemp2 = new double [shape.getShapePath().size()];
 	            		double [] ytemp2 = new double [shape.getShapePath().size()];
 	            		for(int i = 0; i < shape.getShapePath().size(); ++i) {
 	            			xtemp2[i] = shape.getShapePath().point(i).x();
 	            			ytemp2[i] = shape.getShapePath().point(i).y();
-		                	pc_xpix[i][pixel-1][6] = xtemp2[i];
-		                	pc_ypix[i][pixel-1][6] = ytemp2[i];
+		                	pc_xpix[i][pix-1][6] = xtemp2[i];
+		                	pc_ypix[i][pix-1][6] = ytemp2[i];
 	            		}
 		        		SimplePolygon2D pol1 = new SimplePolygon2D(xtemp2,ytemp2);
 	            		double uDist = calDB.getUPixelDistance(uStrip, vStrip, wStrip);
 	            		double vDist = calDB.getVPixelDistance(uStrip, vStrip, wStrip);
 	            		double wDist = calDB.getWPixelDistance(uStrip, vStrip, wStrip);
 	            		shape.setColor(130,(int)(255*vStrip/pc_nstr[1]),(int)(255*wStrip/pc_nstr[2]));	            		
-	            		pc_cmap[pixel-1] = 255*pixel/6916;
-	            		pc_zmap[pixel-1] = 1.0;
-	            		pc_nvrt[pixel-1] = shape.getShapePath().size();
-	            		pixels.addTriplets(pixel, uStrip+1, vStrip+1, wStrip+1);
-	            		pixels.addShape(shape, sector, pixel);
-	            		pixels.setPixelStatus(calDB.isEdgePixel(uStrip,vStrip,wStrip), pixel);
-	            	    strips.addPixels(sector, 1, uStrip+1, pixel);
-	            		strips.addPixels(sector, 2, vStrip+1, pixel);
-	            		strips.addPixels(sector, 3, wStrip+1, pixel);
+	            		pc_cmap[pix-1] = 255*pix/6916;
+	            		pc_zmap[pix-1] = 1.0;
+	            		pc_nvrt[pix-1] = shape.getShapePath().size();
+                        pixel = new Pixel();
+                        pixel.setIndex(pix);
+	            		pixel.setShape(shape);
+                        pixel.setArea(pol1.area());
+                        pixel.setReadout(uStrip+1, vStrip+1, wStrip+1);
+                        pixel.setReadoutDist(uDist,vDist,wDist);    
+                        pixel.setStatus(calDB.isEdgePixel(uStrip,vStrip,wStrip));
+                        pixels.addPixel(pixel,pix,uStrip+1,vStrip+1,wStrip+1);
+	            	    strips.addPixel(sector, 1, uStrip+1, pix);
+	            		strips.addPixel(sector, 2, vStrip+1, pix);
+	            		strips.addPixel(sector, 3, wStrip+1, pix);
 	            	    strips.addPixDist(sector, 1, uStrip+1, (int) (uDist*100));
 	            		strips.addPixDist(sector, 2, vStrip+1, (int) (vDist*100));
 	            		strips.addPixDist(sector, 3, wStrip+1, (int) (wDist*100));
-		        		pixels.addPixDist(uDist,vDist,wDist,pixel);	
-		        		pixels.addArea(pol1.area(),sector,pixel);
 		        		if (pol1.area()>maxPixArea) maxPixArea = pol1.area();
 	            	}
 	            }
@@ -153,17 +157,22 @@ public class ECPixels {
         DetectorCollection<H2D> H2_PCt_Hist = new DetectorCollection<H2D>();
         DetectorCollection<H1D> H1_PCa_Maps = new DetectorCollection<H1D>();
         DetectorCollection<H1D> H1_PCt_Maps = new DetectorCollection<H1D>();
-        DetectorCollection<H1D> H1_PCa_Sevd = new DetectorCollection<H1D>();
-        DetectorCollection<H1D> H1_PCt_Sevd = new DetectorCollection<H1D>();
-        DetectorCollection<H2D> H2_PCa_Sevd = new DetectorCollection<H2D>();
         DetectorCollection<H2D> H2_PC_Stat  = new DetectorCollection<H2D>();  
+        DetectorCollection<H2D> H2_Peds_Hist = new DetectorCollection<H2D>();  
+        DetectorCollection<H2D> H2_Tdif_Hist = new DetectorCollection<H2D>();  
+        DetectorCollection<H2D> H2_Mode1_Hist = new DetectorCollection<H2D>();  
+        DetectorCollection<H2D> H2_Mode1_Sevd = new DetectorCollection<H2D>();  
+        DetectorCollection<H1D> H1_Stra_Sevd = new DetectorCollection<H1D>();
+        DetectorCollection<H1D> H1_Strt_Sevd = new DetectorCollection<H1D>();
+        DetectorCollection<H1D> H1_Pixa_Sevd = new DetectorCollection<H1D>();
+        DetectorCollection<H1D> H1_Pixt_Sevd = new DetectorCollection<H1D>();
         
         int nstr = pc_nstr[0]            ; double nend = nstr+1;  
         int npix = pixels.getNumPixels() ; double pend = npix+1;
         
         for (int is=1; is<7 ; is++) {           
             for (int il=1 ; il<7 ; il++){               
-                // For Histos
+                // For Occupancy Histos
                 String id="s"+Integer.toString(is)+"_l"+Integer.toString(il)+"_c";
                 H2_PCa_Hist.add(is, il, 0, new H2D("a_raw_"+id+0, 100,   0., 200.,  nstr, 1., nend));
                 H2_PCt_Hist.add(is, il, 0, new H2D("a_raw_"+id+0, 100,1330.,1370.,  nstr, 1., nend));
@@ -171,10 +180,13 @@ public class ECPixels {
                 H2_PCt_Hist.add(is, il, 1, new H2D("b_pix_"+id+1, 100,1330.,1370.,  nstr, 1., nend));
                 H2_PCa_Hist.add(is, il, 2, new H2D("c_pix_"+id+2,  25,   0., 250.,  npix, 1., pend));
                 H2_PCt_Hist.add(is, il, 2, new H2D("c_pix_"+id+2,  40,1330.,1370.,  npix, 1., pend));
-                H2_PCa_Hist.add(is, il, 3, new H2D("d_ped_"+id+3,  20, -10.,  10.,  nstr, 1., nend)); 
-                H2_PCt_Hist.add(is, il, 3, new H2D("d_tdif_"+id+3, 60, -15.,  15.,  nstr, 1., nend)); 
-                H2_PCt_Hist.add(is, il, 4, new H2D("e_tdif_"+id+4, 60, -15.,  15.,  nstr, 1., nend)); 
-                H2_PCa_Hist.add(is, il, 5, new H2D("e_fadc_"+id+5,100,   0., 100.,  nstr, 1., nend));
+                //For Pedestal Noise Histos
+                H2_Peds_Hist.add(is, il, 0, new H2D("a_ped_"+id+0,  20, -10.,  10.,  nstr, 1., nend)); 
+                //For Einner-Eouter FADC time difference Histos
+                H2_Tdif_Hist.add(is, il, 0, new H2D("a_tdif_"+id+0, 60, -15.,  15.,  nstr, 1., nend)); 
+                H2_Tdif_Hist.add(is, il, 1, new H2D("b_tdif_"+id+1, 60, -15.,  15.,  nstr, 1., nend)); 
+                // For Mode1 Histos
+                H2_Mode1_Hist.add(is, il, 0, new H2D("a_fadc_"+id+0,100,   0., 100.,  nstr, 1., nend));
                 // For Layer Maps
                 H1_PCa_Maps.add(is, il, 0, new H1D("a_adcpix_"+id+0, npix,  1., pend));
                 H1_PCa_Maps.add(is, il, 1, new H1D("b_pixa_"+id+1,   npix,  1., pend));
@@ -182,11 +194,18 @@ public class ECPixels {
                 H1_PCa_Maps.add(is, il, 3, new H1D("d_pixa2_"+id+3,  npix,  1., pend));
                 H1_PCt_Maps.add(is, il, 0, new H1D("a_tdcpix_"+id+0, npix,  1., pend)); 
                 H1_PCt_Maps.add(is, il, 1, new H1D("b_pixt_"+id+1,   npix,  1., pend)); 
-                // For Single Events
-                H1_PCa_Sevd.add(is, il, 0, new H1D("a_sed_"+id+0, nstr,  1., nend));
-                H1_PCt_Sevd.add(is, il, 0, new H1D("a_sed_"+id+0, nstr,  1., nend));
-                H2_PCa_Sevd.add(is, il, 0, new H2D("b_sed_fadc_"+id+0,100, 0., 100., nstr, 1., nend));
-                H2_PCa_Sevd.add(is, il, 1, new H2D("c_sed_fadc_"+id+1,100, 0., 100., nstr, 1., nend));
+                // For Single Event Strip Occupancy
+                H1_Stra_Sevd.add(is, il, 0, new H1D("a_str_"+id+0, nstr,  1., nend));
+                H1_Strt_Sevd.add(is, il, 0, new H1D("a_str_"+id+0, nstr,  1., nend));
+                // For Single Event fADC bins
+                H2_Mode1_Sevd.add(is, il, 0, new H2D("a_sed_fadc_"+id+0,100, 0., 100., nstr, 1., nend));
+                H2_Mode1_Sevd.add(is, il, 1, new H2D("b_sed_fadc_"+id+1,100, 0., 100., nstr, 1., nend));
+            }
+            for (int il=1 ; il<3 ; il++) {
+                // For Single Event Pixel Occupancy
+                String id="s"+Integer.toString(is)+"_l"+Integer.toString(il)+"_c";
+                H1_Pixa_Sevd.add(is, il, 0, new H1D("a_pix_"+id+0, npix,  1., pend));
+                H1_Pixt_Sevd.add(is, il, 0, new H1D("a_pix_"+id+0, npix,  1., pend));
             }
             for (int il=7 ; il<9 ; il++){
                 String id="s"+Integer.toString(is)+"_l"+Integer.toString(il)+"_c";
@@ -199,9 +218,6 @@ public class ECPixels {
                 H1_PCt_Maps.add(is, il, 2, new H1D("c_pixat_"+id+2,    npix, 1., pend));
                 H1_PCa_Maps.add(is, il, 3, new H1D("d_nevtpixa_"+id+3, npix, 1., pend));
                 H1_PCt_Maps.add(is, il, 3, new H1D("d_nevtpixt_"+id+3, npix, 1., pend));    
-                // For Single Events
-                H1_PCa_Sevd.add(is, il, 0, new H1D("a_sed_"+id+0, npix,  1., pend));
-                H1_PCt_Sevd.add(is, il, 0, new H1D("a_sed_"+id+0, npix,  1., pend));
             }
             for (int il=0 ; il<3 ; il++) {
                 String id="s"+Integer.toString(is)+"_l"+Integer.toString(il)+"_c";
@@ -211,14 +227,19 @@ public class ECPixels {
             }
         } 
         
-        strips.addH2DMap("H2_PCa_Hist", H2_PCa_Hist);
-        strips.addH2DMap("H2_PCt_Hist", H2_PCt_Hist);
-        pixels.addH1DMap("H1_PCa_Maps", H1_PCa_Maps);
-        pixels.addH1DMap("H1_PCt_Maps", H1_PCt_Maps);
-        strips.addH1DMap("H1_PCa_Sevd", H1_PCa_Sevd);
-        strips.addH1DMap("H1_PCt_Sevd", H1_PCt_Sevd);
-        strips.addH2DMap("H2_PCa_Sevd", H2_PCa_Sevd);
-        strips.addH2DMap("H2_PC_Stat",  H2_PC_Stat);
+        strips.addH2DMap("H2_PCa_Hist",  H2_PCa_Hist);
+        strips.addH2DMap("H2_PCt_Hist",  H2_PCt_Hist);
+        pixels.addH1DMap("H1_PCa_Maps",  H1_PCa_Maps);
+        pixels.addH1DMap("H1_PCt_Maps",  H1_PCt_Maps);
+        strips.addH1DMap("H1_Pixa_Sevd", H1_Pixa_Sevd);
+        strips.addH1DMap("H1_Pixt_Sevd", H1_Pixt_Sevd);
+        strips.addH1DMap("H1_Stra_Sevd", H1_Stra_Sevd);
+        strips.addH1DMap("H1_Strt_Sevd", H1_Strt_Sevd);
+        strips.addH2DMap("H2_PC_Stat",   H2_PC_Stat);
+        strips.addH2DMap("H2_Peds_Hist", H2_Peds_Hist);
+        strips.addH2DMap("H2_Tdif_Hist", H2_Tdif_Hist);
+        strips.addH2DMap("H2_Mode1_Hist",H2_Mode1_Hist);
+        strips.addH2DMap("H2_Mode1_Sevd",H2_Mode1_Sevd);
    
     }	
     
@@ -334,7 +355,7 @@ public class ECPixels {
      }
 
      public void writeFPGALookupTable(String filename, double atten, int opt) {
-       Pixel newpix = new Pixel();
+       Pixels newpix = new Pixels();
        int u,v,w,us,vs,ws;
        double dist_u,dist_v,dist_w,ua,va,wa;
        
@@ -350,32 +371,32 @@ public class ECPixels {
              us=u+1;
              if (us<69&&!pixels.pixelStrips.hasItem(us,v,w)&&!newpix.pixelStrips.hasItem(us,v,w)) {
                  line = String.format("%1$d  %2$d  %3$d  %4$.3f %5$.3f %6$.3f",us,v,w,ua,va,wa);fout.printf(line+"\n");
-                 newpix.addTriplets(i,us,v,w);                
+                 newpix.addPixel(i,us,v,w);                
              }
              vs=v+1;
              if (vs<63&&!pixels.pixelStrips.hasItem(u,vs,w)&&!newpix.pixelStrips.hasItem(u,vs,w)) {
                  line = String.format("%1$d  %2$d  %3$d  %4$.3f %5$.3f %6$.3f",u,vs,w,ua,va,wa);fout.printf(line+"\n");
-                 newpix.addTriplets(i,u,vs,w);                
+                 newpix.addPixel(i,u,vs,w);                
              }
              ws=w+1;
              if (ws<63&&!pixels.pixelStrips.hasItem(u,v,ws)&&!newpix.pixelStrips.hasItem(u,v,ws)) {
                  line = String.format("%1$d  %2$d  %3$d  %4$.3f %5$.3f %6$.3f",u,v,ws,ua,va,wa);fout.printf(line+"\n");
-                 newpix.addTriplets(i,u,v,ws);                
+                 newpix.addPixel(i,u,v,ws);                
              }
              us=u-1;
              if (us>0&&!pixels.pixelStrips.hasItem(us,v,w)&&!newpix.pixelStrips.hasItem(us,v,w)) {
                  line = String.format("%1$d  %2$d  %3$d  %4$.3f %5$.3f %6$.3f",us,v,w,ua,va,wa);fout.printf(line+"\n");
-                 newpix.addTriplets(i,us,v,w);                
+                 newpix.addPixel(i,us,v,w);                
              }
              vs=v-1;
              if (vs>0&&!pixels.pixelStrips.hasItem(u,vs,w)&&!newpix.pixelStrips.hasItem(u,vs,w)) {
                  line = String.format("%1$d  %2$d  %3$d  %4$.3f %5$.3f %6$.3f",u,vs,w,ua,va,wa);fout.printf(line+"\n");
-                 newpix.addTriplets(i,u,vs,w);                
+                 newpix.addPixel(i,u,vs,w);                
              }
              ws=w-1;
              if (ws>0&&!pixels.pixelStrips.hasItem(u,v,ws)&&!newpix.pixelStrips.hasItem(u,v,ws)) {
                  line = String.format("%1$d  %2$d  %3$d  %4$.3f %5$.3f %6$.3f",u,v,ws,ua,va,wa);fout.printf(line+"\n");
-                 newpix.addTriplets(i,u,v,ws);                
+                 newpix.addPixel(i,u,v,ws);                
              }
              }
           }       

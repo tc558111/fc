@@ -34,7 +34,8 @@ import org.clas.fcmon.tools.DetectorShapeTabView;
 public class MonitorApp extends JFrame implements ActionListener {
     
     DetectorShapeTabView detectorView;  
-    int   selectedTabIndex    = 0;  
+    int      selectedTabIndex = 0;  
+    String   selectedTabName  = " ";  
 	
     JTabbedPane      canvasTabbedPane;
     JSplitPane             vSplitPane; 
@@ -188,7 +189,11 @@ public class MonitorApp extends JFrame implements ActionListener {
     }
 
     public int getSelectedTabIndex(){
-    	return this.selectedTabIndex;
+        return this.selectedTabIndex;
+    }
+    
+    public String getSelectedTabName(){
+        return this.selectedTabName;
     }
     
     public void addChangeListener() {    
@@ -197,7 +202,7 @@ public class MonitorApp extends JFrame implements ActionListener {
          if (e.getSource() instanceof JTabbedPane) {
            JTabbedPane pane = (JTabbedPane) e.getSource();
            selectedTabIndex = pane.getSelectedIndex();
-           //selectedTabName  = (String) pane.getTitleAt(selectedTabIndex);
+           selectedTabName  = (String) pane.getTitleAt(selectedTabIndex);
          }
          }
       });

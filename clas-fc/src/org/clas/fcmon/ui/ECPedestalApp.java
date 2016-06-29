@@ -35,7 +35,7 @@ public class ECPedestalApp extends FCApplication {
       canvas.divide(3,2);
 		
       for(int il=1;il<4;il++){
-         H2D hpix = ecPix[0].strips.hmap2.get("H2_PCa_Hist").get(is+1,il+(io-1)*3,3);
+         H2D hpix = ecPix[0].strips.hmap2.get("H2_Peds_Hist").get(is+1,il+(io-1)*3,0);
          hpix.setXTitle("PED (Ref-Measured)") ; hpix.setYTitle(otab[ic][il-1]);
     	 
          canvas.cd(il-1); canvas.setLogZ(); canvas.draw(hpix);

@@ -2,6 +2,7 @@ package org.clas.fcmon.ui;
 
 import org.clas.fcmon.tools.*;
 import org.jlab.geom.prim.Path3D;
+import org.jlab.io.evio.EvioDataEvent;
 import org.jlab.rec.ecn.ECDetectorReconstruction;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas.detector.DetectorDescriptor;
@@ -9,7 +10,7 @@ import org.jlab.clas.detector.DetectorType;
 import org.jlab.clas12.calib.DetectorShape2D;
 import org.jlab.clas12.detector.FADCConfigLoader;
 import org.jlab.clasrec.utils.DatabaseConstantProvider;
-import org.jlab.evio.clas12.*;
+//import org.jlab.evio.clas12.*;
 import org.jlab.data.io.DataEvent;
 import org.root.histogram.*;
 import org.root.attr.ColorPalette;
@@ -58,6 +59,8 @@ public class ECMon extends DetectorMonitor {
    DetectorCollection<H1D> H1_PCt_Maps = new DetectorCollection<H1D>();
    DetectorCollection<H1D> H1_PCa_Sevd = new DetectorCollection<H1D>();
    DetectorCollection<H1D> H1_PCt_Sevd = new DetectorCollection<H1D>();
+   
+   
    DetectorCollection<H2D> H2_PCa_Sevd = new DetectorCollection<H2D>();
    DetectorCollection<H2D> H2_PC_Stat  = new DetectorCollection<H2D>();
    
@@ -205,86 +208,95 @@ public class ECMon extends DetectorMonitor {
 	public void close() {
 	    
 	} 
-
-	public void initDetector(int is1, int is2) {
-		
-		System.out.println("initDetector()");
-		
-		ecRecon.Lmap_a.add(0,0,0, ecRecon.toTreeMap(ecPix[0].pc_cmap));
-		ecRecon.Lmap_a.add(0,0,1, ecRecon.toTreeMap(ecPix[0].pc_zmap));
-		
-		List<String> b1 = new ArrayList<String>();  b1.add("Inner") ; b1.add("Outer");
-		List<String> b2 = new ArrayList<String>();  b2.add("EVT")   ; b2.add("ADC")  ; b2.add("TDC");
-		List<String> b3 = new ArrayList<String>();  b3.add("EVT")   ; b3.add("NEVT") ; b3.add("ADC U"); b3.add("ADC V"); b3.add("ADC W"); b3.add("ADC U+V+W");
-		
-		List<List<String>> bg1 = new ArrayList<List<String>>();  
-		List<List<String>> bg2 = new ArrayList<List<String>>();   
-		
-		if (mondet=="PCAL") {bg1.add(b2) ; bg2.add(b3);}
-		if (mondet=="EC")   {bg1.add(b1) ; bg1.add(b2); bg2.add(b1) ; bg2.add(b3);}
 	
-		DetectorShapeView2D  dv1 = new DetectorShapeView2D("U")   ; dv1.addRB(bg1);
-		DetectorShapeView2D  dv2 = new DetectorShapeView2D("V")   ; dv2.addRB(bg1);
-		DetectorShapeView2D  dv3 = new DetectorShapeView2D("W")   ; dv3.addRB(bg1);
-		DetectorShapeView2D  dv4 = new DetectorShapeView2D("PIX") ; dv4.addRB(bg2);
-		
-		long startTime = System.currentTimeMillis();
-		
-		for(int is=is1; is<is2; is++) {
-			for(int ip=0; ip<ecPix[0].pc_nstr[0] ; ip++)             dv1.addShape(getStrip(is,1,ip));
-			for(int ip=0; ip<ecPix[0].pc_nstr[1] ; ip++)             dv2.addShape(getStrip(is,2,ip));
-			for(int ip=0; ip<ecPix[0].pc_nstr[2] ; ip++)             dv3.addShape(getStrip(is,3,ip));		    
-			for(int ip=0; ip<ecPix[0].pixels.getNumPixels() ; ip++)  dv4.addShape(getPixel(is,4,ip));
-		}
-		
-		System.out.println("initgui time= "+(System.currentTimeMillis()-startTime));
-		
-		app.getDetectorView().addDetectorLayer(dv1);
-		app.getDetectorView().addDetectorLayer(dv2);
-		app.getDetectorView().addDetectorLayer(dv3);
-		app.getDetectorView().addDetectorLayer(dv4);
-		
-		app.getDetectorView().addDetectorListener(this);
-		
-	}
-	
-	public DetectorShape2D getPixel(int sector, int layer, int pixel){
+    public void initDetector(int is1, int is2) {
+        
+        System.out.println("initDetector()");
+        
+        ecRecon.Lmap_a.add(0,0,0, ecRecon.toTreeMap(ecPix[0].pc_cmap));
+        ecRecon.Lmap_a.add(0,0,1, ecRecon.toTreeMap(ecPix[0].pc_zmap));
+        
+        List<String> b1 = new ArrayList<String>();  b1.add("Inner") ; b1.add("Outer");
+        List<String> b2 = new ArrayList<String>();  b2.add("EVT")   ; b2.add("ADC")  ; b2.add("TDC");
+        List<String> b3 = new ArrayList<String>();  b3.add("EVT")   ; b3.add("NEVT") ; b3.add("ADC U"); b3.add("ADC V"); b3.add("ADC W"); b3.add("ADC U+V+W");
+        
+        List<List<String>> bg1 = new ArrayList<List<String>>();  
+        List<List<String>> bg2 = new ArrayList<List<String>>();   
+        
+        if (mondet=="PCAL") {bg1.add(b2) ; bg2.add(b3);}
+        if (mondet=="EC")   {bg1.add(b1) ; bg1.add(b2); bg2.add(b1) ; bg2.add(b3);}
+    
+        DetectorShapeView2D  dv1 = new DetectorShapeView2D("U")   ; dv1.addRB(bg1);
+        DetectorShapeView2D  dv2 = new DetectorShapeView2D("V")   ; dv2.addRB(bg1);
+        DetectorShapeView2D  dv3 = new DetectorShapeView2D("W")   ; dv3.addRB(bg1);
+        DetectorShapeView2D  dv4 = new DetectorShapeView2D("PIX") ; dv4.addRB(bg2);
+        
+        long startTime = System.currentTimeMillis();
+        
+        for(int is=is1; is<is2; is++) {
+            for(int ip=0; ip<ecPix[0].pc_nstr[0] ; ip++)             dv1.addShape(getStrip(is,1,ip));
+            for(int ip=0; ip<ecPix[0].pc_nstr[1] ; ip++)             dv2.addShape(getStrip(is,2,ip));
+            for(int ip=0; ip<ecPix[0].pc_nstr[2] ; ip++)             dv3.addShape(getStrip(is,3,ip));           
+            for(int ip=0; ip<ecPix[0].pixels.getNumPixels() ; ip++)  dv4.addShape(getPixel(is,4,ip));
+        }
+        
+        System.out.println("initgui time= "+(System.currentTimeMillis()-startTime));
+        
+        app.getDetectorView().addDetectorLayer(dv1);
+        app.getDetectorView().addDetectorLayer(dv2);
+        app.getDetectorView().addDetectorLayer(dv3);
+        app.getDetectorView().addDetectorLayer(dv4);
+        
+        app.getDetectorView().addDetectorListener(this);
+        
+    }
+    
+    public DetectorShape2D getPixel(int sector, int layer, int pixel){
 
-		DetectorShape2D shape = new DetectorShape2D();
-		
-	    if (mondet=="PCAL") shape = new DetectorShape2D(DetectorType.PCAL,sector,layer,pixel);	    
-	    if (mondet=="EC")   shape = new DetectorShape2D(DetectorType.EC,sector,layer,pixel);	
-	    
-	    Path3D shapePath = shape.getShapePath();
-	    
-	    for(int j = 0; j < ecPix[0].pc_nvrt[pixel]; j++){
-	    	shapePath.addPoint(ecPix[0].pc_xpix[j][pixel][sector],ecPix[0].pc_ypix[j][pixel][sector],0.0);
-	    }
-	    return shape;
-	}
-	
-	public DetectorShape2D getStrip(int sector, int layer, int str) {
+        DetectorShape2D shape = new DetectorShape2D();
+        
+        if (mondet=="PCAL") shape = new DetectorShape2D(DetectorType.PCAL,sector,layer,pixel);      
+        if (mondet=="EC")   shape = new DetectorShape2D(DetectorType.EC,sector,layer,pixel);    
+        
+        Path3D shapePath = shape.getShapePath();
+        
+        for(int j = 0; j < ecPix[0].pc_nvrt[pixel]; j++){
+            shapePath.addPoint(ecPix[0].pc_xpix[j][pixel][sector],ecPix[0].pc_ypix[j][pixel][sector],0.0);
+        }
+        return shape;
+    }
+    
+    public DetectorShape2D getStrip(int sector, int layer, int str) {
 
-		DetectorShape2D shape = new DetectorShape2D();
-		
-	    if (mondet=="PCAL") shape = new DetectorShape2D(DetectorType.PCAL,sector,layer,str);	    
-	    if (mondet=="EC")   shape = new DetectorShape2D(DetectorType.EC,sector,layer,str);	
-		
-	    Path3D shapePath = shape.getShapePath();
-		
-	    for(int j = 0; j <4; j++){
-	    	shapePath.addPoint(ecPix[0].pc_xstr[j][str][layer-1][sector],ecPix[0].pc_ystr[j][str][layer-1][sector],0.0);
-	    }	
-	    
-	    return shape;
-	}
-		
-	@Override
-	public void processEvent(DataEvent de) {		
-		EvioDataEvent event = (EvioDataEvent) de;
+        DetectorShape2D shape = new DetectorShape2D();
+        
+        if (mondet=="PCAL") shape = new DetectorShape2D(DetectorType.PCAL,sector,layer,str);        
+        if (mondet=="EC")   shape = new DetectorShape2D(DetectorType.EC,sector,layer,str);  
+        
+        Path3D shapePath = shape.getShapePath();
+        
+        for(int j = 0; j <4; j++){
+            shapePath.addPoint(ecPix[0].pc_xstr[j][str][layer-1][sector],ecPix[0].pc_ystr[j][str][layer-1][sector],0.0);
+        }   
+        
+        return shape;
+    }
+        
+//		@Override
+//	public void processEvent(DataEvent de) {		
+//		EvioDataEvent event = (EvioDataEvent) de;
+//		ecRec.processEvent(event);
+//        ecRecon.addEvent(event);
+//	}
+    
+    @Override
+    public void dataEventAction(org.jlab.io.base.DataEvent de) {        
+        EvioDataEvent event = (EvioDataEvent) de;
+//        ecRec.processEvent(event);
         ecRecon.addEvent(event);
-	}
-
+    }
+    
+    @Override
 	public void update(DetectorShape2D shape) {
 		
 		int is        = shape.getDescriptor().getSector();
@@ -363,6 +375,7 @@ public class ECMon extends DetectorMonitor {
 
 	}
 	
+    @Override
 	public void detectorSelected(DetectorDescriptor dd) {
 		
 		this.analyze(inProcess);
@@ -377,5 +390,18 @@ public class ECMon extends DetectorMonitor {
 		case "RawHistos":     ecRawHistos.updateCanvas(dd);	
 		}
 	}
+
+    @Override
+    public void resetEventListener() {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void timerUpdate() {
+        // TODO Auto-generated method stub
+        
+    }
+
 	
 }

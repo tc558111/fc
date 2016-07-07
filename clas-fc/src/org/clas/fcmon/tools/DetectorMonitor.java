@@ -4,8 +4,10 @@ import java.util.TreeMap;
 
 import org.jlab.clas12.basic.IDetectorProcessor;
 import org.jlab.clas12.calib.IDetectorListener;
+import org.jlab.data.io.DataEvent;
+import org.jlab.io.task.IDataEventListener;
 
-public abstract class DetectorMonitor implements IDetectorProcessor, IDetectorListener{
+public abstract class DetectorMonitor implements IDataEventListener, IDetectorListener{
 	
     private String moduleName      = "DetectorMonitor";
     private String moduleVersion   = "0.5";
@@ -26,5 +28,9 @@ public abstract class DetectorMonitor implements IDetectorProcessor, IDetectorLi
     public abstract TreeMap<String,Object> getGlob();
     public abstract void putGlob(String name, Object obj);
     public String getName(){ return moduleName;}
+
+    public void dataEventAction(DataEvent de) {
+        // TODO Auto-generated method stub       
+    }
 	
 }

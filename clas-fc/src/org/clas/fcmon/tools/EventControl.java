@@ -18,9 +18,12 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.jlab.evio.clas12.EvioDataEvent;
-import org.jlab.evio.clas12.EvioETSource;
-import org.jlab.evio.clas12.EvioSource;
+//import org.jlab.evio.clas12.EvioDataEvent;
+//import org.jlab.evio.clas12.EvioETSource;
+//import org.jlab.evio.clas12.EvioSource;
+import org.jlab.io.evio.EvioDataEvent;
+import org.jlab.io.evio.EvioETSource;
+import org.jlab.io.evio.EvioSource;
 
 public class EventControl extends JPanel implements ActionListener, ChangeListener {
 	
@@ -167,7 +170,7 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
                     if(event!=null){
            
                             try {
-                                monitoringClass.processEvent(event);
+                                monitoringClass.dataEventAction(event);
                             	monitoringClass.analyze(1);
                                 this.detectorView.panel1.updateGUI();
                             } catch (Exception ex) {
@@ -258,7 +261,7 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
                 this.statusLabel.setText("   EVENTS IN ET : " + nevents + "  CURRENT : " + current);
                                   
                     try {
-                        monitoringClass.processEvent(event);
+                        monitoringClass.dataEventAction(event);
                     } catch (Exception ex) {
                         ex.printStackTrace();
                     }
@@ -281,7 +284,7 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
         
     		try {
                 Thread.sleep(threadDelay);
-                monitoringClass.processEvent(event);
+                monitoringClass.dataEventAction(event);
     		} catch (Exception ex) {
     			ex.printStackTrace();
     		}

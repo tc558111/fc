@@ -2,18 +2,22 @@ package org.clas.fcmon.ui;
 
 import org.clas.fcmon.tools.*;
 import org.jlab.geom.prim.Path3D;
-import org.jlab.io.evio.EvioDataEvent;
-import org.jlab.rec.ecn.ECDetectorReconstruction;
+
+//clas12
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas.detector.DetectorDescriptor;
 import org.jlab.clas.detector.DetectorType;
 import org.jlab.clas12.calib.DetectorShape2D;
 import org.jlab.clas12.detector.FADCConfigLoader;
 import org.jlab.clasrec.utils.DatabaseConstantProvider;
-//import org.jlab.evio.clas12.*;
-import org.jlab.data.io.DataEvent;
 import org.root.histogram.*;
 import org.root.attr.ColorPalette;
+
+//clas12rec
+import org.jlab.io.evio.EvioDataEvent;
+import org.jlab.io.base.DataEvent;
+
+import org.jlab.rec.ecn.ECDetectorReconstruction;
  
 import java.awt.Color;
 import java.util.ArrayList;
@@ -43,7 +47,7 @@ public class ECMon extends DetectorMonitor {
    CalDrawDB[]                ecDB = new CalDrawDB[2];  
    ECPixels[]                ecPix = new ECPixels[2];
    
-   public int inProcess        = 0; //0=init 1=processing 2=end-of-run 3=post-run
+   public int inProcess        = 0;     //0=init 1=processing 2=end-of-run 3=post-run
    public boolean inMC         = false; //true=MC false=DATA
    int    detID                = 0;
    double PCMon_zmax           = 0;
@@ -281,16 +285,9 @@ public class ECMon extends DetectorMonitor {
         
         return shape;
     }
-        
-//		@Override
-//	public void processEvent(DataEvent de) {		
-//		EvioDataEvent event = (EvioDataEvent) de;
-//		ecRec.processEvent(event);
-//        ecRecon.addEvent(event);
-//	}
-    
+
     @Override
-    public void dataEventAction(org.jlab.io.base.DataEvent de) {        
+    public void dataEventAction(DataEvent de) {        
         EvioDataEvent event = (EvioDataEvent) de;
 //        ecRec.processEvent(event);
         ecRecon.addEvent(event);
@@ -402,6 +399,5 @@ public class ECMon extends DetectorMonitor {
         // TODO Auto-generated method stub
         
     }
-
 	
 }

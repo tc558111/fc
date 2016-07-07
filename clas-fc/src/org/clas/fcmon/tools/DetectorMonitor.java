@@ -2,7 +2,6 @@ package org.clas.fcmon.tools;
 
 import java.util.TreeMap;
 
-import org.jlab.clas12.basic.IDetectorProcessor;
 import org.jlab.clas12.calib.IDetectorListener;
 import org.jlab.data.io.DataEvent;
 import org.jlab.io.task.IDataEventListener;

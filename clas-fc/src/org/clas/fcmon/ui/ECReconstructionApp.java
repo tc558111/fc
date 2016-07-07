@@ -5,24 +5,21 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.TreeMap;
 
+//clas12
 import org.clas.fcmon.tools.ECPixels;
 import org.clas.fcmon.tools.FADCFitter;
 import org.clas.fcmon.tools.FCApplication;
-import org.jlab.clas.detector.BankType;
-import org.jlab.clas.detector.DetectorBankEntry;
 import org.jlab.clas.detector.DetectorCollection;
-import org.jlab.clas.tools.utils.DataUtils;
-import org.jlab.clas12.detector.EventDecoder;
-import org.jlab.clas12.detector.FADCConfig;
 import org.jlab.clas12.detector.FADCConfigLoader;
+import org.root.histogram.H1D;
+import org.root.histogram.H2D;
+
+//clas12rec
 import org.jlab.detector.decode.CodaEventDecoder;
 import org.jlab.detector.decode.DetectorDataDgtz;
 import org.jlab.detector.decode.DetectorEventDecoder;
 import org.jlab.io.evio.EvioDataEvent;
-import org.jlab.evio.clas12.EvioDataBank;
-//import org.jlab.evio.clas12.EvioDataEvent;
-import org.root.histogram.H1D;
-import org.root.histogram.H2D;
+import org.jlab.io.evio.EvioDataBank;
 
 public class ECReconstructionApp extends FCApplication {
     
@@ -31,8 +28,8 @@ public class ECReconstructionApp extends FCApplication {
    Boolean           inMC ;
    int              detID ;
    FADCFitter     fitter  = new FADCFitter(1,15);
-   EventDecoder   decoder = new EventDecoder();
    String BankType        ;
+   
    CodaEventDecoder            newdecoder = new CodaEventDecoder();
    DetectorEventDecoder   detectorDecoder = new DetectorEventDecoder();
    List<DetectorDataDgtz>  detectorData   = new ArrayList<DetectorDataDgtz>();
@@ -71,7 +68,7 @@ public class ECReconstructionApp extends FCApplication {
    int  ecpixel[][][] = new    int[6][9][npix];   
    
    int nsa,nsb,tet,pedref;     
-   int thr[] = {15,15,20};
+   int thr[] = {15,20,20};
    short[] pulse = new short[100]; 
     
    public ECReconstructionApp(String name, ECPixels[] ecPix) {
@@ -95,10 +92,18 @@ public class ECReconstructionApp extends FCApplication {
    }
    
    public void addEvent(EvioDataEvent event) {
+       
       if(event.hasBank(mondet+"::true")!=true) {
          this.updateRealData(event);
       } else {
          this.updateSimulatedData(event);
+      }
+      
+      if (app.isSingleEvent()) {
+         findPixels();     // Process all pixels for SED
+         processSED();
+      } else {
+         processPixels();  // Process only single pixels 
       }
    }
    
@@ -129,20 +134,28 @@ public class ECReconstructionApp extends FCApplication {
             int iord= strip.getDescriptor().getOrder(); 
             
             if (il>3) {
-            il = il-3;    
+            il = il-3;
+            
+            if (strip.getTDCSize()>0) {
+                tdc = strip.getTDCData(0).getTime()*24./1000.;
+            }
+            
             if (strip.getADCSize()>0) {     
                 
+               if (strip.getADCSize()>1) System.out.println("Hits="+strip.getADCSize());
+               
                AdcType = strip.getADCData(0).getPulseSize()>0 ? "ADCPULSE":"ADCFPGA";
                
                if(AdcType=="ADCFPGA") { // FADC MODE 7
                   adc = strip.getADCData(0).getIntegral();
                   ped = strip.getADCData(0).getPedestal();
                   npk = strip.getADCData(0).getHeight();
-                 tdcf = strip.getADCData(0).getTime();
+                 tdcf = strip.getADCData(0).getTime();            
                   getMode7(icr,isl,ich);
                   if (app.mode7Emulation.User_pedref==0) adc = (adc-ped*(this.nsa+this.nsb))/10;
                   if (app.mode7Emulation.User_pedref==1) adc = (adc-this.pedref*(this.nsa+this.nsb))/10;
-               }                     
+               }   
+               
                if (AdcType=="ADCPULSE") { // FADC MODE 1
                   for (int i=0 ; i<strip.getADCData(0).getPulseSize();i++) {               
                      pulse[i] = (short) strip.getADCData(0).getPulseValue(i);
@@ -160,13 +173,10 @@ public class ECReconstructionApp extends FCApplication {
                         if (fitter.adc>0&&i>=w1&&i<=w2) ecPix[0].strips.hmap2.get("H2_Mode1_Sevd").get(is,il,1).fill(i,ip,pulse[i]-this.pedref);                     
                      }
                   }
-               }   
-            }
-            
-            if (strip.getTDCSize()>0) tdc = strip.getTDCData(0).getTime();
-                    
-            if (ped>0) ecPix[0].strips.hmap2.get("H2_Peds_Hist").get(is,il,0).fill(this.pedref-ped, ip);
-            fill(is, il, ip, adc, tdc, tdcf);  
+               }               
+               if (ped>0) ecPix[0].strips.hmap2.get("H2_Peds_Hist").get(is,il,0).fill(this.pedref-ped, ip);
+             }           
+             fill(is, il, ip, adc, tdc, tdcf);    
             }
          }
       }
@@ -174,56 +184,43 @@ public class ECReconstructionApp extends FCApplication {
    
    public void updateSimulatedData(EvioDataEvent event) {
        
-       float tdcmax=100000;
-       boolean debug=false;
-       int adc,ped,npk=0,timf=0,timc=0;
-       double mc_t=0.,tdc=0,tdcf=0;
+      float tdcmax=100000;
+      boolean debug=false;
+      int adc;
+      double mc_t=0.,tdc=0,tdcf=0;
          
-      // SIMULATED EVENT
+      EvioDataBank bank  = (EvioDataBank) event.getBank(mondet+"::true");
       
-      if(event.hasBank(mondet+"::true")==true){
-         EvioDataBank bank  = (EvioDataBank) event.getBank(mondet+"::true");
-         int nrows = bank.rows();
-         for(int i=0; i < nrows; i++){
-            mc_t = bank.getDouble("avgT",i);
-         }   
-      }
+      int nrows = bank.rows();
+      for(int i=0; i < nrows; i++){
+         mc_t = bank.getDouble("avgT",i);
+      }   
                 
-      if(event.hasBank(mondet+"::dgtz")==true){
+      inMC = true; mon.putGlob("inMC",true); thr[0]=thr[1]=5;
+      clear();
         
-         inMC = true; mon.putGlob("inMC",true); thr[0]=thr[1]=5;
-         clear();
+      bank = (EvioDataBank) event.getBank(mondet+"::dgtz");
         
-         EvioDataBank bank = (EvioDataBank) event.getBank(mondet+"::dgtz");
-        
-         for(int i = 0; i < bank.rows(); i++){
-            float dum = (float)bank.getInt("TDC",i)-(float)mc_t*1000;
-            if (dum<tdcmax) tdcmax=dum;
-         }      
+      for(int i = 0; i < bank.rows(); i++){
+         float dum = (float)bank.getInt("TDC",i)-(float)mc_t*1000;
+         if (dum<tdcmax) tdcmax=dum;
+      }      
        
-         for(int i = 0; i < bank.rows(); i++){
-            int is  = bank.getInt("sector",i);
-            int ip  = bank.getInt("strip",i);
-            int ic  = bank.getInt("stack",i);     
-            int il  = bank.getInt("view",i);  
-                adc = bank.getInt("ADC",i);
-           int tdcc = bank.getInt("TDC",i);
-               tdcf = tdcc;
-               //System.out.println("sector,strip,stack,view,ADC="+is+" "+ip+" "+ic+" "+il+" "+adc);
-                tdc = (((float)tdcc-(float)mc_t*1000)-tdcmax+1340000)/1000;                      
-           if(ic==1||ic==2) fill(is, il+(ic-1)*3, ip, adc, tdc, tdcf);                                 
-         }       
-       
-       processECRec(event);
-
+      for(int i = 0; i < bank.rows(); i++){
+         int is  = bank.getInt("sector",i);
+         int ip  = bank.getInt("strip",i);
+         int ic  = bank.getInt("stack",i);     
+         int il  = bank.getInt("view",i);  
+             adc = bank.getInt("ADC",i);
+        int tdcc = bank.getInt("TDC",i);
+            tdcf = tdcc;
+            //System.out.println("sector,strip,stack,view,ADC="+is+" "+ip+" "+ic+" "+il+" "+adc);
+             tdc = (((float)tdcc-(float)mc_t*1000)-tdcmax+1340000)/1000;                      
+        if(ic==1||ic==2) fill(is, il+(ic-1)*3, ip, adc, tdc, tdcf);                                 
       }
-            
-      if (app.isSingleEvent()) {
-         findPixels();     // Process all pixels for SED
-         processSED();
-      } else {
-        processPixels();  // Process only single pixels 
-      }
+         
+      processECRec(event);
+      
    }
     
    public void processECRec(EvioDataEvent event) {
@@ -311,7 +308,7 @@ public class ECReconstructionApp extends FCApplication {
        int  iv = il+3;
 
        if(tdc>1200&&tdc<1500){
-           uvwt[is-1][ic]=uvwt[is-1][il]+ecPix[0].uvw_dalitz(ic,il,ip); //Dalitz tdc 
+           uvwt[is-1][ic]=uvwt[is-1][ic]+ecPix[0].uvw_dalitz(ic,il,ip); //Dalitz tdc 
            nht[is-1][iv-1]++; int inh = nht[is-1][iv-1];
            tdcr[is-1][iv-1][inh-1] = tdc;
            strrt[is-1][iv-1][inh-1] = ip;                  

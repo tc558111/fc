@@ -175,11 +175,11 @@ public class ECPixels {
                 // For Occupancy Histos
                 String id="s"+Integer.toString(is)+"_l"+Integer.toString(il)+"_c";
                 H2_PCa_Hist.add(is, il, 0, new H2D("a_raw_"+id+0, 100,   0., 200.,  nstr, 1., nend));
-                H2_PCt_Hist.add(is, il, 0, new H2D("a_raw_"+id+0, 100,1330.,1370.,  nstr, 1., nend));
+                H2_PCt_Hist.add(is, il, 0, new H2D("a_raw_"+id+0, 100,1330.,1450.,  nstr, 1., nend));
                 H2_PCa_Hist.add(is, il, 1, new H2D("b_pix_"+id+1, 100,   0., 200.,  nstr, 1., nend));
-                H2_PCt_Hist.add(is, il, 1, new H2D("b_pix_"+id+1, 100,1330.,1370.,  nstr, 1., nend));
+                H2_PCt_Hist.add(is, il, 1, new H2D("b_pix_"+id+1, 100,1330.,1450.,  nstr, 1., nend));
                 H2_PCa_Hist.add(is, il, 2, new H2D("c_pix_"+id+2,  25,   0., 250.,  npix, 1., pend));
-                H2_PCt_Hist.add(is, il, 2, new H2D("c_pix_"+id+2,  40,1330.,1370.,  npix, 1., pend));
+                H2_PCt_Hist.add(is, il, 2, new H2D("c_pix_"+id+2,  40,1330.,1450.,  npix, 1., pend));
                 //For Pedestal Noise Histos
                 H2_Peds_Hist.add(is, il, 0, new H2D("a_ped_"+id+0,  20, -10.,  10.,  nstr, 1., nend)); 
                 //For Einner-Eouter FADC time difference Histos

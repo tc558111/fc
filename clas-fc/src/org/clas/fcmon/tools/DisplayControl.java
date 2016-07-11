@@ -10,6 +10,8 @@ import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.jlab.detector.view.DetectorPane2D;
+
 public class DisplayControl extends JPanel {
     
     static final int FPS_MIN = 0;
@@ -31,9 +33,10 @@ public class DisplayControl extends JPanel {
     JSlider  pixContrastMin = new JSlider(JSlider.HORIZONTAL,PIX_MIN_LO,PIX_MIN_HI,PIX_MIN_INIT);
     JSlider  pixContrastMax = new JSlider(JSlider.HORIZONTAL,PIX_MAX_LO,PIX_MAX_HI,PIX_MAX_INIT);
     
-    DetectorShapeTabView detectorView;
+//    DetectorShapeTabView detectorView;
+    DetectorPane2D detectorView;
     
-	public void setPluginClass(DetectorShapeTabView detectorView) {    		 
+	public void setPluginClass(DetectorPane2D detectorView) {    		 
 		this.detectorView = detectorView;
 	}
 	
@@ -53,7 +56,7 @@ public class DisplayControl extends JPanel {
                     //int delay = 0;
                     //if (fps!=0 ) delay = 1000 / fps;
                     //updateTimer.setDelay(delay);
-                    detectorView.setFPS(fps);
+                    //detectorView.setFPS(fps);
                 	//monitoringClass.analyze(1);
                     //getDetectorView().panel1.updateGUI();
                 }

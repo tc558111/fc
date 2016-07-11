@@ -13,7 +13,7 @@ import javax.swing.JRadioButton;
 
 import org.clas.tools.FTParameter;
 import org.jlab.clas.detector.DetectorCollection;
-import org.jlab.clas.detector.DetectorDescriptor;
+import org.jlab.detector.base.DetectorDescriptor;
 import org.jlab.evio.clas12.EvioDataBank;
 import org.root.basic.EmbeddedCanvas;
 import org.root.histogram.H1D;
@@ -66,8 +66,8 @@ public class FCApplication implements ActionListener  {
         layer = dd.getLayer();
         ic    = dd.getComponent(); 	 
                 
-        panel = app.getDetectorView().panel1.omap;
-        io    = app.getDetectorView().panel1.ilmap;
+        panel = app.getDetectorView().omap;
+        io    = app.getDetectorView().ilmap;
         of    = (io-1)*3;
         lay   = 0;
         

@@ -15,10 +15,12 @@ import javax.swing.JTextField;
 
 import org.jlab.clas12.detector.FADCConfig;
 import org.jlab.clas12.detector.FADCConfigLoader;
+import org.jlab.detector.view.DetectorPane2D;
 
 public class Mode7Emulation extends JPanel implements ActionListener,ItemListener {
 	
-   DetectorShapeTabView detectorView = null;
+   DetectorPane2D detectorView = null;
+//    DetectorShapeTabView detectorView = null;
    FADCConfigLoader            fadc  = new FADCConfigLoader();
 	
    ButtonGroup       bG3  = new ButtonGroup();
@@ -39,7 +41,7 @@ public class Mode7Emulation extends JPanel implements ActionListener,ItemListene
    public int CCDB_nsb=0;	    
    public int useCCDB = 1;
 	
-   public void setPluginClass(DetectorShapeTabView detectorView) {    		 
+   public void setPluginClass(DetectorPane2D detectorView) {    		 
       this.detectorView = detectorView;
    }
 	

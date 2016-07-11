@@ -77,6 +77,7 @@ public class ECReconstructionApp extends FCApplication {
    }
    
    public void init() {
+       System.out.println("ECReconstruction.init()");
        fadc.load("/daq/fadc/ec",10,"default");
        mondet =           (String) mon.getGlob().get("mondet");
        inMC   =          (Boolean) mon.getGlob().get("inMC");
@@ -97,6 +98,8 @@ public class ECReconstructionApp extends FCApplication {
          this.updateRealData(event);
       } else {
          this.updateSimulatedData(event);
+         this.processECRec(event);
+         
       }
       
       if (app.isSingleEvent()) {
@@ -105,6 +108,10 @@ public class ECReconstructionApp extends FCApplication {
       } else {
          processPixels();  // Process only single pixels 
       }
+   }
+   
+   public String detID(int layer) {
+      return layer>3 ? "EC":"PCAL";
    }
    
    public void updateRealData(EvioDataEvent event){
@@ -133,8 +140,9 @@ public class ECReconstructionApp extends FCApplication {
             int ip  = strip.getDescriptor().getComponent();
             int iord= strip.getDescriptor().getOrder(); 
             
-            if (il>3) {
-            il = il-3;
+            if (detID(il)==mondet) {
+                
+            il = il>3 ? il-3:il; // 1-3: PCAL 1-6: ECAL
             
             if (strip.getTDCSize()>0) {
                 tdc = strip.getTDCData(0).getTime()*24./1000.;
@@ -142,8 +150,6 @@ public class ECReconstructionApp extends FCApplication {
             
             if (strip.getADCSize()>0) {     
                 
-               if (strip.getADCSize()>1) System.out.println("Hits="+strip.getADCSize());
-               
                AdcType = strip.getADCData(0).getPulseSize()>0 ? "ADCPULSE":"ADCFPGA";
                
                if(AdcType=="ADCFPGA") { // FADC MODE 7
@@ -186,27 +192,32 @@ public class ECReconstructionApp extends FCApplication {
        
       float tdcmax=100000;
       boolean debug=false;
-      int adc;
+      int nrows, adc;
       double mc_t=0.,tdc=0,tdcf=0;
          
-      EvioDataBank bank  = (EvioDataBank) event.getBank(mondet+"::true");
+      EvioDataBank bank  = (EvioDataBank) event.getBank(mondet+"::true");      
+      nrows = bank.rows();
       
-      int nrows = bank.rows();
       for(int i=0; i < nrows; i++){
          mc_t = bank.getDouble("avgT",i);
       }   
                 
-      inMC = true; mon.putGlob("inMC",true); thr[0]=thr[1]=5;
+      inMC = true; mon.putGlob("inMC",true); 
+      thr[0]=thr[1]=5;
+      
       clear();
         
       bank = (EvioDataBank) event.getBank(mondet+"::dgtz");
-        
-      for(int i = 0; i < bank.rows(); i++){
+      nrows = bank.rows();
+
+      // Use latest hit time for time reference (tdcmax).
+      
+      for(int i = 0; i < nrows; i++){
          float dum = (float)bank.getInt("TDC",i)-(float)mc_t*1000;
          if (dum<tdcmax) tdcmax=dum;
       }      
        
-      for(int i = 0; i < bank.rows(); i++){
+      for(int i = 0; i < nrows; i++){
          int is  = bank.getInt("sector",i);
          int ip  = bank.getInt("strip",i);
          int ic  = bank.getInt("stack",i);     
@@ -214,13 +225,11 @@ public class ECReconstructionApp extends FCApplication {
              adc = bank.getInt("ADC",i);
         int tdcc = bank.getInt("TDC",i);
             tdcf = tdcc;
-            //System.out.println("sector,strip,stack,view,ADC="+is+" "+ip+" "+ic+" "+il+" "+adc);
+              il = il+(ic-1)*3;
              tdc = (((float)tdcc-(float)mc_t*1000)-tdcmax+1340000)/1000;                      
-        if(ic==1||ic==2) fill(is, il+(ic-1)*3, ip, adc, tdc, tdcf);                                 
+        if(ic==1||ic==2) fill(is, il, ip, adc, tdc, tdcf);                                 
       }
          
-      processECRec(event);
-      
    }
     
    public void processECRec(EvioDataEvent event) {
@@ -265,18 +274,18 @@ public class ECReconstructionApp extends FCApplication {
          }
          
          for (int il=0 ; il<9 ; il++) {
-            nha[is][il]  = 0;
-            nht[is][il]  = 0;
+             nha[is][il] = 0;
+             nht[is][il] = 0;
             uvwa[is][il] = 0;
             uvwt[is][il] = 0;
             for (int ip=0 ; ip<nstr ; ip++) {
                strra[is][il][ip] = 0;
                strrt[is][il][ip] = 0;
-               adcr[is][il][ip] = 0;
+                adcr[is][il][ip] = 0;
                ftdcr[is][il][ip] = 0;
-               tdcr[is][il][ip] = 0;
-               ecadcpix[is][il][ip] = 0;
-               ecpixel[is][il][ip] = 0;
+                tdcr[is][il][ip] = 0;
+            ecadcpix[is][il][ip] = 0;
+             ecpixel[is][il][ip] = 0;
             }
          }               
       }       

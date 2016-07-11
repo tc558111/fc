@@ -4,7 +4,7 @@ import org.clas.fcmon.tools.CalibrationData;
 import org.clas.fcmon.tools.ECPixels;
 import org.clas.fcmon.tools.FCApplication;
 import org.jlab.clas.detector.DetectorCollection;
-import org.jlab.clas.detector.DetectorDescriptor;
+import org.jlab.detector.base.DetectorDescriptor;
 import org.root.basic.EmbeddedCanvas;
 import org.root.func.F1D;
 import org.root.histogram.H1D;

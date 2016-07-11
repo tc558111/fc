@@ -6,7 +6,7 @@ import org.clas.fcmon.tools.CalibrationData;
 import org.clas.fcmon.tools.ECPixels;
 import org.clas.fcmon.tools.FCApplication;
 import org.jlab.clas.detector.DetectorCollection;
-import org.jlab.clas.detector.DetectorDescriptor;
+import org.jlab.detector.base.DetectorDescriptor;
 import org.jlab.clas.detector.DetectorType;
 import org.jlab.clasrec.utils.DatabaseConstantProvider;
 import org.jlab.rec.ecn.ECCommon;

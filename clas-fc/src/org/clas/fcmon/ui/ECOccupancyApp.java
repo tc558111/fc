@@ -3,7 +3,7 @@ package org.clas.fcmon.ui;
 import org.clas.fcmon.tools.ECPixels;
 import org.clas.fcmon.tools.FCApplication;
 import org.jlab.clas.detector.DetectorCollection;
-import org.jlab.clas.detector.DetectorDescriptor;
+import org.jlab.detector.base.DetectorDescriptor;
 import org.root.basic.EmbeddedCanvas;
 import org.root.histogram.H1D;
 import org.root.histogram.H2D;
@@ -37,7 +37,7 @@ public class ECOccupancyApp extends FCApplication {
 		
       DetectorCollection<H2D> dc2a = ecPix[0].strips.hmap2.get("H2_PCa_Hist");
       DetectorCollection<H2D> dc2t = ecPix[0].strips.hmap2.get("H2_PCt_Hist");
-    
+  
       for(int il=l1;il<l2;il++){
          String otab = lab1[il-1-of]+lab2[io-1]+"Strips";
          canvas.cd(il-1-of); h = dc2a.get(is+1,il,0).projectionY(); h.setXTitle(otab); h.setFillColor(col0); canvas.draw(h);

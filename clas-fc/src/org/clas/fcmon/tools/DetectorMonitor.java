@@ -5,8 +5,9 @@ import java.util.TreeMap;
 import org.jlab.clas12.calib.IDetectorListener;
 import org.jlab.data.io.DataEvent;
 import org.jlab.io.task.IDataEventListener;
+import org.jlab.detector.view.DetectorListener;
 
-public abstract class DetectorMonitor implements IDataEventListener, IDetectorListener{
+public abstract class DetectorMonitor implements IDataEventListener, DetectorListener{
 	
     private String moduleName      = "DetectorMonitor";
     private String moduleVersion   = "0.5";

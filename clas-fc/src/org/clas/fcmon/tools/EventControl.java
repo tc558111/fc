@@ -18,6 +18,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
+import org.jlab.detector.view.DetectorPane2D;
 //import org.jlab.evio.clas12.EvioDataEvent;
 //import org.jlab.evio.clas12.EvioETSource;
 //import org.jlab.evio.clas12.EvioSource;
@@ -59,9 +60,11 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
     private java.util.Timer    processTimer  = null;	
 	
     DetectorMonitor monitoringClass;
-    DetectorShapeTabView detectorView;
+//    DetectorShapeTabView detectorView;
+    DetectorPane2D detectorView;
 	
-    public void setPluginClass(DetectorMonitor monitoringClass, DetectorShapeTabView detectorView) {
+//    public void setPluginClass(DetectorMonitor monitoringClass, DetectorShapeTabView detectorView) {
+    public void setPluginClass(DetectorMonitor monitoringClass, DetectorPane2D detectorView) {
       this.monitoringClass = monitoringClass;
       this.detectorView = detectorView;
     }
@@ -172,7 +175,7 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
                             try {
                                 monitoringClass.dataEventAction(event);
                             	monitoringClass.analyze(1);
-                                this.detectorView.panel1.updateGUI();
+//                                this.detectorView.panel1.updateGUI();
                             } catch (Exception ex) {
                                 ex.printStackTrace();
                             }
@@ -187,7 +190,7 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
         	this.processNextEvent();
         	buttonPrev.setEnabled(true);
         	monitoringClass.analyze(1);
-            this.detectorView.panel1.updateGUI();
+//            this.detectorView.panel1.updateGUI();
         }
         
         if(e.getActionCommand().compareTo(">>")==0){
@@ -240,7 +243,7 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
                     try {
                         Thread.sleep(threadDelay);
                     } catch (InterruptedException ex) {
-                        Logger.getLogger(MonitorApp.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(MonitorAppOrig.class.getName()).log(Level.SEVERE, null, ex);
                     }
                     
                     etReader.loadEvents();
@@ -269,7 +272,7 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
                     try {
                     	Thread.sleep(threadDelay);
                     } catch (InterruptedException ex) {
-                    	Logger.getLogger(MonitorApp.class.getName()).log(Level.SEVERE, null, ex);
+                    	Logger.getLogger(MonitorAppOrig.class.getName()).log(Level.SEVERE, null, ex);
                     }
             }
             return;

@@ -243,7 +243,7 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
                     try {
                         Thread.sleep(threadDelay);
                     } catch (InterruptedException ex) {
-                        Logger.getLogger(MonitorAppOrig.class.getName()).log(Level.SEVERE, null, ex);
+                        Logger.getLogger(MonitorApp.class.getName()).log(Level.SEVERE, null, ex);
                     }
                     
                     etReader.loadEvents();
@@ -272,7 +272,7 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
                     try {
                     	Thread.sleep(threadDelay);
                     } catch (InterruptedException ex) {
-                    	Logger.getLogger(MonitorAppOrig.class.getName()).log(Level.SEVERE, null, ex);
+                    	Logger.getLogger(MonitorApp.class.getName()).log(Level.SEVERE, null, ex);
                     }
             }
             return;

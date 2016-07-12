@@ -214,27 +214,25 @@ public class ECMon extends DetectorMonitor {
 	    
 	} 
 	
+	public void addButtons(String group, String store, String arg) {
+	    List<String> name = new ArrayList<String>();
+	    List<Integer> key = new ArrayList<Integer>(); 
+	    String[] items = arg.split("\\.");
+	    for (int i=0; i<items.length; i=i+2) {
+	        name.add(items[i]);
+	         key.add(Integer.parseInt(items[i+1]));
+	    }	
+	    if (store=="View") app.getDetectorView().addViewStore(group, name, key);
+	    if (store=="Map")  app.getDetectorView().addMapStore(group, name, key);
+	}
+
+	
     public void initDetector(int is1, int is2) {
         
         System.out.println("initDetector()");
         
         ecRecon.Lmap_a.add(0,0,0, ecRecon.toTreeMap(ecPix[0].pc_cmap));
         ecRecon.Lmap_a.add(0,0,1, ecRecon.toTreeMap(ecPix[0].pc_zmap));
-        
-        List<String> b1 = new ArrayList<String>();  b1.add("Inner") ; b1.add("Outer");
-        List<String> b2 = new ArrayList<String>();  b2.add("EVT")   ; b2.add("ADC")  ; b2.add("TDC");
-        List<String> b3 = new ArrayList<String>();  b3.add("EVT")   ; b3.add("NEVT") ; b3.add("ADC U"); b3.add("ADC V"); b3.add("ADC W"); b3.add("ADC U+V+W");
-        
-        List<List<String>> bg1 = new ArrayList<List<String>>();  
-        List<List<String>> bg2 = new ArrayList<List<String>>();   
-        
-        if (mondet=="PCAL") {bg1.add(b2) ; bg2.add(b3);}
-        if (mondet=="EC")   {bg1.add(b1) ; bg1.add(b2); bg2.add(b1) ; bg2.add(b3);}
-    
-        //DetectorShpaeView2D  dv1 = new DetectorShapeView2D("U")   ; dv1.addRB(bg1);
-        //DetectorShapeView2D  dv2 = new DetectorShapeView2D("V")   ; dv2.addRB(bg1);
-        //DetectorShapeView2D  dv3 = new DetectorShapeView2D("W")   ; dv3.addRB(bg1);
-        //DetectorShapeView2D  dv4 = new DetectorShapeView2D("PIX") ; dv4.addRB(bg2);
         
          for(int is=is1; is<is2; is++) {
             for(int ip=0; ip<ecPix[0].pc_nstr[0] ; ip++)             app.getDetectorView().getView().addShape("U",getStrip(is,1,ip));
@@ -243,8 +241,14 @@ public class ECMon extends DetectorMonitor {
             for(int ip=0; ip<ecPix[0].pixels.getNumPixels() ; ip++)  app.getDetectorView().getView().addShape("PIX",getPixel(is,4,ip));
         }
         
-         app.getDetectorView().addRB(bg2);
-         app.getDetectorView().updateBox();
+         addButtons("DET","View","PC.1.ECi.1.ECo.2");
+         addButtons("LAY","View","U.1.V.2.W.3.PIX.4");
+         addButtons("PIX","Map","EVT.0.NEVT.1.ADC U.11.ADC V.12.ADC W.13.ADC U+V+W.9");
+         addButtons("UVW","Map","EVT.0.ADC.0.TDC.0");
+     
+         app.getDetectorView().addMapButtons();
+         app.getDetectorView().addViewButtons();
+
          app.getDetectorView().getView().addDetectorListener(this);
          
          for(String layer : app.getDetectorView().getView().getLayerNames()){
@@ -350,6 +354,9 @@ public class ECMon extends DetectorMonitor {
 			if (!app.isSingleEvent()) color=(double)(Math.log10(z)-pixMin*Math.log10(rmin))/(pixMax*Math.log10(rmax)-pixMin*Math.log10(rmin));
 			if ( app.isSingleEvent()) color=(double)(Math.log10(z)-pixMin*Math.log10(rmin))/(pixMax*Math.log10(4000.)-pixMin*Math.log10(rmin));
 		}
+		
+		app.getDetectorView().getView().zmax = pixMax*rmax;
+		app.getDetectorView().getView().zmin = pixMin*rmin;
 		
 		//System.out.println(z+" "+rmin+" "+" "+rmax+" "+color);
 		if (color>1)   color=1;

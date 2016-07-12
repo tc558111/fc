@@ -24,11 +24,13 @@ import org.jlab.geom.prim.Path3D;
 /**
  *
  * @author gavalian
+ * @version Modified by lcsmith for use with ECMon
  */
 public class DetectorShape2D {
     
     DetectorDescriptor  desc = new DetectorDescriptor();
     Path3D              shapePath = new Path3D();
+    
     int                 colorRed    = 213;
     int                 colorGreen  = 246;
     int                 colorBlue   = 230;
@@ -36,14 +38,14 @@ public class DetectorShape2D {
     int                 colorAlpha  = 255;
     int                 counter     = 0;
     int                 lineWidth   = 2;
+    
     String              shapeTitle  = "";
     
     private             DetectorShape2D  activeShape = null;
     
     List<DetectorListener>    detectorListeners = new ArrayList<DetectorListener>();
         
-    public DetectorShape2D(){
-        
+    public DetectorShape2D(){     
     }
     
     public DetectorShape2D(DetectorType type, int sector, int layer, int component){
@@ -138,15 +140,11 @@ public class DetectorShape2D {
         }
     }
     
-    public void reset(){
-        this.counter = 0;
-    }
+    public void reset() {this.counter = 0;}
     
-    public int getCounter(){ return counter; }
-    public DetectorShape2D setCounter(int c){
-        this.counter = c;
-        return this;
-    }
+    public int getCounter() {return counter;}
+    
+    public DetectorShape2D setCounter(int c) {this.counter = c ; return this;}
     
     public void setColorByStatus(int status){
         int rs = status;

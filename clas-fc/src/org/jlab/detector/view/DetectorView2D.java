@@ -32,7 +32,7 @@ import org.jlab.utils.groups.IndexedList;
 /**
  *
  * @author gavalian
- * Modified by lcsmith (July 2016)
+ * @version Modified by lcsmith for use with ECMon
  */
 public class DetectorView2D extends JPanel implements MouseMotionListener {
     
@@ -41,9 +41,12 @@ public class DetectorView2D extends JPanel implements MouseMotionListener {
     List<String>                 viewLayerNames = new ArrayList<String>();
     ViewWorld                             world = new ViewWorld();
     DetectorShape2D                 activeShape = null;
+    String                          activeLayer = null;
     Color                       backgroundColor = Color.GRAY;
     GraphicsAxis                    colorAxis   = new GraphicsAxis();
     List<DetectorListener>    detectorListeners = new ArrayList<DetectorListener>();
+    public double zmin=0;
+    public double zmax=10;
     
     // lcs: Don't paint unless new shape entered
     int selectedShape = 1;
@@ -100,7 +103,7 @@ public class DetectorView2D extends JPanel implements MouseMotionListener {
         this.colorAxis.setVertical(true);
         this.colorAxis.setAxisType(GraphicsAxis.AXISTYPE_COLOR);
         this.colorAxis.setDimension(h-20,h-120);
-        this.colorAxis.setRange(0.0, 10.0);
+        this.colorAxis.setRange(zmin,zmax);
         this.colorAxis.drawAxis(g2d, 10, h-20);
         
     }
@@ -156,6 +159,7 @@ public class DetectorView2D extends JPanel implements MouseMotionListener {
             this.viewLayers.put(name, new DetectorViewLayer2D());
             this.viewLayerNames.add(name);
         }
+        this.activeLayer = name;
     }
     
     public void addShape(String layer, DetectorShape2D shape){
@@ -176,7 +180,9 @@ public class DetectorView2D extends JPanel implements MouseMotionListener {
     }
     
     public void  setLayerActive(String layer, boolean flag){
+        if(activeLayer!=null&&isLayerActive(activeLayer)) viewLayers.get(activeLayer).setActive(false);
         viewLayers.get(layer).setActive(flag);
+        activeLayer = layer;
     }
     
     public void setDetectorListener(String layer, DetectorListener dl) {

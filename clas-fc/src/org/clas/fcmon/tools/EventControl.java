@@ -99,7 +99,8 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
       buttonNext.setEnabled(false);
       buttonPrev.setEnabled(false);
       buttonStop.setEnabled(false);
-      buttonNextFFW.setEnabled(false); 			
+      buttonNextFFW.setEnabled(false); 	
+      
     }
 
     public void openEtFile(String ethost, String etfile) { 

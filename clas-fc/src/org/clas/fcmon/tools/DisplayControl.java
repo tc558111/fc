@@ -33,7 +33,6 @@ public class DisplayControl extends JPanel {
     JSlider  pixContrastMin = new JSlider(JSlider.HORIZONTAL,PIX_MIN_LO,PIX_MIN_HI,PIX_MIN_INIT);
     JSlider  pixContrastMax = new JSlider(JSlider.HORIZONTAL,PIX_MAX_LO,PIX_MAX_HI,PIX_MAX_INIT);
     
-//    DetectorShapeTabView detectorView;
     DetectorPane2D detectorView;
     
 	public void setPluginClass(DetectorPane2D detectorView) {    		 
@@ -72,7 +71,6 @@ public class DisplayControl extends JPanel {
         Font font = new Font("Serif", Font.ITALIC, 12);
         framesPerSecond.setFont(font);
         framesPerSecond.setPreferredSize(new Dimension(100,50));
-        framesPerSecond.setVisible(true);
         
         pixContrastMin.setBackground(Color.LIGHT_GRAY);
 

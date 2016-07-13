@@ -85,12 +85,13 @@ public class ECMon extends DetectorMonitor {
 		String det = "PCAL";
 		ECMon monitor = new ECMon(det);		
 		app.setPluginClass(monitor);
-		app.init();
+		app.makeGUI();
 	    app.mode7Emulation.init(1, 3, 1);
 		monitor.makeApps(monitor);
 		monitor.addCanvas();
 		monitor.init();
 		monitor.initDetector(1,2);
+		app.init();
 	}
     
     public void makeApps(DetectorMonitor monitor) {
@@ -241,19 +242,25 @@ public class ECMon extends DetectorMonitor {
             for(int ip=0; ip<ecPix[0].pixels.getNumPixels() ; ip++)  app.getDetectorView().getView().addShape("PIX",getPixel(is,4,ip));
         }
         
-         addButtons("DET","View","PC.1.ECi.1.ECo.2");
-         addButtons("LAY","View","U.1.V.2.W.3.PIX.4");
-         addButtons("PIX","Map","EVT.0.NEVT.1.ADC U.11.ADC V.12.ADC W.13.ADC U+V+W.9");
-         addButtons("UVW","Map","EVT.0.ADC.0.TDC.0");
-     
-         app.getDetectorView().addMapButtons();
-         app.getDetectorView().addViewButtons();
-
          app.getDetectorView().getView().addDetectorListener(this);
          
          for(String layer : app.getDetectorView().getView().getLayerNames()){
             app.getDetectorView().getView().setDetectorListener(layer,this);
          }
+         
+         addButtons("DET","View","PC.1.ECi.1.ECo.2");
+         addButtons("LAY","View","U.1.V.2.W.3.PIX.4");
+         addButtons("UVW","Map","EVT.0.ADC.0.TDC.0");
+         addButtons("PIX","Map","EVT.0.NEVT.1.ADC U.11.ADC V.12.ADC W.13.ADC U+V+W.9");
+     
+         app.getDetectorView().addMapButtons();
+         app.getDetectorView().addViewButtons();
+         app.getDetectorView().initMapButtons(0, 0);
+         app.getDetectorView().initMapButtons(1, 0);
+         app.getDetectorView().initViewButtons(0, 0);
+         app.getDetectorView().initViewButtons(1, 1);
+     
+         app.getDetectorView().update();
          
     }
     

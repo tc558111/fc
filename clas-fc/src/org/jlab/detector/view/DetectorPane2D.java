@@ -30,15 +30,13 @@ import javax.swing.border.SoftBevelBorder;
  * @author gavalian
  * @version Modified by lcsmith for use with ECMon
  */
-public class DetectorPane2D extends JPanel implements ActionListener {
+public class DetectorPane2D extends JPanel {
     
-    JPanel              viewPane = null;
     JPanel               mapPane = null;
-    JPanel          checkBoxPane = null;
-    List<JCheckBox> checkButtons = new ArrayList<JCheckBox>();
+    JPanel              viewPane = null;
     DetectorView2D        view2D = new DetectorView2D();
     
-    TreeMap<String,JPanel>   rbPanes = new TreeMap<String,JPanel>();
+    TreeMap<String,JPanel>  rbPanes = new TreeMap<String,JPanel>();
     
     List<List<buttonMap>> viewStore = new ArrayList<List<buttonMap>>();
     List<List<buttonMap>>  mapStore = new ArrayList<List<buttonMap>>();
@@ -52,39 +50,53 @@ public class DetectorPane2D extends JPanel implements ActionListener {
         super();
         this.setLayout(new BorderLayout());
         this.setBorder(BorderFactory.createSoftBevelBorder(SoftBevelBorder.RAISED));
-        initUI();
+        makeGUI();
     }
     
-    public final void initUI(){
-        viewPane = new JPanel();  
+    public final void makeGUI(){
          mapPane = new JPanel();
-    checkBoxPane = new JPanel();
+        viewPane = new JPanel();  
         viewPane.setBorder(BorderFactory.createSoftBevelBorder(SoftBevelBorder.LOWERED));
         this.add( mapPane,BorderLayout.PAGE_START);
         this.add(  view2D,BorderLayout.CENTER);
         this.add(viewPane,BorderLayout.PAGE_END);        
     }
+       
+    public void initViewButtons(int groupIndex, int nameIndex) {
+        buttonMap map = viewStore.get(groupIndex).get(nameIndex);
+        map.b.setSelected(true);        
+        this.viewButtonAction(map.group,map.name,map.key);
+     }
     
-   private class buttonMap {
+    public void initMapButtons(int groupIndex, int nameIndex) {
+        buttonMap map = mapStore.get(groupIndex).get(nameIndex);
+        map.b.setSelected(true);        
+        this.mapButtonAction(map.group,map.name,map.key);
+     }
+    
+    private class buttonMap {
        String group;
        String name;
-       int key;          
+       int key;       
+       JRadioButton b;
+       buttonMap() {}
        buttonMap(String group, String name, int key) {
            this.group = group;
-           this.name = name;
-           this.key  = key;
+            this.name = name;
+             this.key = key;
+               this.b = new JRadioButton(this.name);
        }
    }
     
-    public void addViewStore(String group, List<String>name, List<Integer>index) {
+    public void addViewStore(String group, List<String> name, List<Integer> key) {
         List<buttonMap> store = new ArrayList<buttonMap>();
-        for(int i=0; i<name.size() ; i++) store.add(new buttonMap(group, name.get(i),index.get(i)));
+        for(int i=0; i<name.size() ; i++) store.add(new buttonMap(group, name.get(i), key.get(i)));
         viewStore.add(store);
     }
     
-    public void addMapStore(String group, List<String>name, List<Integer>index) {
+    public void addMapStore(String group, List<String> name, List<Integer> key) {
         List<buttonMap> store = new ArrayList<buttonMap>();
-        for(int i=0; i<name.size() ; i++) store.add(new buttonMap(group, name.get(i),index.get(i)));       
+        for(int i=0; i<name.size() ; i++) store.add(new buttonMap(group, name.get(i), key.get(i)));       
         mapStore.add(store);
     }
     
@@ -95,19 +107,15 @@ public class DetectorPane2D extends JPanel implements ActionListener {
             for(buttonMap bn: bg) {
                 bGname = bn.group;
                 if(!rbPanes.containsKey(bGname)) rbPanes.put(bGname, new JPanel());
-                JRadioButton b = new JRadioButton(bn.name);  
-                b.setBackground(Color.LIGHT_GRAY);
-                if(bG.getButtonCount()==0) b.setSelected(true); 
-                b.addActionListener(new ActionListener() {
+                bn.b.setBackground(Color.LIGHT_GRAY);
+                bn.b.addActionListener(new ActionListener() {
                     public void actionPerformed(ActionEvent e) {
                        mapButtonAction(bn.group,bn.name,bn.key);
                     }
                 });
-                this.rbPanes.get(bGname).add(b); bG.add(b);
+                this.rbPanes.get(bGname).add(bn.b); bG.add(bn.b);
             }
             this.mapPane.add(rbPanes.get(bGname));
-            mapButtonAction("UVW","EVT",0);
-            mapButtonAction("PIX","EVT",0);
         } 
     }
     
@@ -115,21 +123,18 @@ public class DetectorPane2D extends JPanel implements ActionListener {
         for(List<buttonMap> bg: viewStore) {
             ButtonGroup bG = new ButtonGroup();
             for(buttonMap bn: bg) {
-                JRadioButton b = new JRadioButton(bn.name);  
-                b.setBackground(Color.LIGHT_GRAY);
-                if(bG.getButtonCount()==0) b.setSelected(true); 
-                b.addActionListener(new ActionListener() {
+                bn.b.setBackground(Color.LIGHT_GRAY);
+                bn.b.addActionListener(new ActionListener() {
                    public void actionPerformed(ActionEvent e) {
                       viewButtonAction(bn.group,bn.name,bn.key);
                    }
                 });               
-                this.viewPane.add(b); bG.add(b);
+                this.viewPane.add(bn.b); bG.add(bn.b);
             }
         } 
     }  
     
     public void mapButtonAction(String group, String name, int key) {
-        lastMapButton = new buttonMap(group,name,key);
         if (!bStore.containsKey(group)) {
             bStore.put(group,key);
         }else{
@@ -148,63 +153,13 @@ public class DetectorPane2D extends JPanel implements ActionListener {
         if(group=="DET") ilmap = key;
         update();        
     }
-    
-    public void updateBox(){
         
-        this.checkButtons.clear();
-        this.checkBoxPane.removeAll();
-        
-        for(String name : this.view2D.getLayerNames()){
-            JCheckBox  cb = new JCheckBox(name);
-            cb.setSelected(true);
-            
-            cb.addItemListener(new ItemListener(){
-                @Override
-                public void itemStateChanged(ItemEvent e) {
-                    JCheckBox box = (JCheckBox) e.getItem();
-                    //System.out.println("changed " + box.getActionCommand());
-                    if(box.isSelected()==false){
-                        view2D.setLayerActive(box.getActionCommand(), false);
-                        view2D.repaint();
-                    } else {
-                        view2D.setLayerActive(box.getActionCommand(), true);
-                        view2D.repaint();
-                    }
-                }
-            });
-            
-            System.out.println(" adding check box " + name);
-            checkBoxPane.add(cb);
-        }
-        this.viewPane.add(checkBoxPane);
-        System.out.println(" check box created");
-        
-        JCheckBox  hitMap = new JCheckBox("Hit Map");
-        hitMap.addItemListener(new ItemListener(){
-                @Override
-                public void itemStateChanged(ItemEvent e) {
-                    JCheckBox box = (JCheckBox) e.getItem();
-                    if(box.isSelected()==false){
-                        view2D.setHitMap(false);
-                    } else { view2D.setHitMap(true); } 
-                }
-        }
-        );
-       // this.mapPane.add(hitMap);
-    }
-    
     public DetectorView2D  getView(){
         return this.view2D;
     }
     
     public void update(){
         this.getView().repaint();
-    }
-
-    @Override
-    public void actionPerformed(ActionEvent e) {
-        // TODO Auto-generated method stub
-        
     }
     
 }

@@ -13,13 +13,11 @@ import java.awt.RenderingHints;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.swing.JPanel;
 
-import org.jlab.clas12.calib.IDetectorListener;
 import org.jlab.detector.base.DetectorDescriptor;
 import org.jlab.detector.base.DetectorType;
 import org.jlab.detector.decode.DetectorDataDgtz;
@@ -159,7 +157,6 @@ public class DetectorView2D extends JPanel implements MouseMotionListener {
             this.viewLayers.put(name, new DetectorViewLayer2D());
             this.viewLayerNames.add(name);
         }
-        this.activeLayer = name;
     }
     
     public void addShape(String layer, DetectorShape2D shape){
@@ -239,7 +236,7 @@ public class DetectorView2D extends JPanel implements MouseMotionListener {
         private Dimension2D                boundaries = new Dimension2D(); 
         private int                      layerOpacity = 255;
         private DetectorDescriptor selectedDescriptor = new DetectorDescriptor();
-        private boolean                 isLayerActive = true;
+        private boolean                 isLayerActive = false;
         private Dimension1D                 axisRange = new Dimension1D();
         private boolean                    showHitMap = false;
         private int                           opacity = 255;

@@ -92,6 +92,7 @@ public class ECMon extends DetectorMonitor {
 		monitor.init();
 		monitor.initDetector(1,2);
 		app.init();
+		monitor.initButtons();
 	}
     
     public void makeApps(DetectorMonitor monitor) {
@@ -255,13 +256,20 @@ public class ECMon extends DetectorMonitor {
      
          app.getDetectorView().addMapButtons();
          app.getDetectorView().addViewButtons();
-         app.getDetectorView().initMapButtons(0, 0);
-         app.getDetectorView().initMapButtons(1, 0);
-         app.getDetectorView().initViewButtons(0, 0);
-         app.getDetectorView().initViewButtons(1, 1);
-     
-         app.getDetectorView().update();
          
+    }
+    
+    public void initButtons() {
+        
+        System.out.println("initButtons()");
+        
+        app.getDetectorView().initMapButtons(0, 0);
+        app.getDetectorView().initMapButtons(1, 0);
+        app.getDetectorView().initViewButtons(0, 0);
+        app.getDetectorView().initViewButtons(1, 1);
+        app.getDetectorView().setFPS(10);
+        app.setSelectedTab(2); 
+        
     }
     
     public DetectorShape2D getPixel(int sector, int layer, int pixel){
@@ -340,6 +348,23 @@ public class ECMon extends DetectorMonitor {
 		
 		Color col = palette.getRange(colorfraction);
 		shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
+		
+		//viewLayers();
+	}
+	
+	public void viewLayers() {
+	   
+	    double opac = app.displayControl.opac ;
+	    
+	    if(app.isSingleEvent()) {	  
+	       System.out.println("opac="+opac);
+	       if(opac>0.99){
+	        for(String name : app.getDetectorView().getView().getLayerNames()){
+	            app.getDetectorView().getView().setLayerActive(name);
+	        }
+	       }
+	       if(opac<1.0) app.getDetectorView().getView().setOpacity("PIX",(int) (opac*255) ); ;
+	    }
 	}
 
 	public double getcolor(TreeMap<Integer,Object> map, int component) {

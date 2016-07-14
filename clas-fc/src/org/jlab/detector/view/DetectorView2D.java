@@ -10,6 +10,8 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 import java.util.ArrayList;
@@ -17,6 +19,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import javax.swing.JPanel;
+import javax.swing.Timer;
 
 import org.jlab.detector.base.DetectorDescriptor;
 import org.jlab.detector.base.DetectorType;
@@ -32,6 +35,7 @@ import org.jlab.utils.groups.IndexedList;
  * @author gavalian
  * @version Modified by lcsmith for use with ECMon
  */
+@SuppressWarnings("serial")
 public class DetectorView2D extends JPanel implements MouseMotionListener {
     
     Map<String,DetectorViewLayer2D>  viewLayers = new LinkedHashMap<String,DetectorViewLayer2D>();
@@ -43,11 +47,16 @@ public class DetectorView2D extends JPanel implements MouseMotionListener {
     Color                       backgroundColor = Color.GRAY;
     GraphicsAxis                    colorAxis   = new GraphicsAxis();
     List<DetectorListener>    detectorListeners = new ArrayList<DetectorListener>();
+    
     public double zmin=0;
     public double zmax=10;
     
+    int delay;    
+    Timer timer;    
+    static final int FPS_INIT = 10; 
+    
     // lcs: Don't paint unless new shape entered
-    int selectedShape = 1;
+    int selectedShape = -1;
     int selectedShapeSave = -1;
     
     private boolean       isMouseMotionListener = true;
@@ -57,6 +66,9 @@ public class DetectorView2D extends JPanel implements MouseMotionListener {
         this.setSize(new Dimension(500,500));
         this.setMinimumSize(new Dimension(200,200));
         addListeners();
+        updateGUIAction action = new updateGUIAction();
+        delay = 1000 / FPS_INIT;
+        this.timer = new Timer(delay,action);  
     }
     
     private void addListeners(){
@@ -75,14 +87,35 @@ public class DetectorView2D extends JPanel implements MouseMotionListener {
         }
     }
     
+    public void start(int fps){
+        delay = 10000;
+        if (fps!=0 ) delay = 1000 / fps;
+        this.timer.setDelay(delay);
+        this.timer.start();
+    }
+    
+    public void stop(){
+        this.timer.stop();
+    } 
+    
+    private class updateGUIAction implements ActionListener {
+        public void actionPerformed(ActionEvent evt) {
+            updateGUI();
+        }
+    }
+    
+    public void updateGUI(){
+        if (activeShape!=null){
+          for(DetectorListener lt : this.detectorListeners) lt.processShape(activeShape);
+        }
+        this.repaint();
+    }  
+    
     @Override
     public void paint(Graphics g){ 
 
-//        Long st = System.currentTimeMillis();
         Graphics2D g2d = (Graphics2D) g;
-//        g2d.setRenderingHint(RenderingHints.KEY_ANTIALIASING,  lcs: Too slow (~130 ms for PCAL)
-//                             RenderingHints.VALUE_ANTIALIAS_ON);
-        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+        g2d.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,  //KEY_ANTIALIASING too slow (~130 ms for PCAL)
                              RenderingHints.VALUE_TEXT_ANTIALIAS_ON);      
         
         int w = this.getSize().width;
@@ -116,7 +149,7 @@ public class DetectorView2D extends JPanel implements MouseMotionListener {
         Dimension2D  commonDimension = new Dimension2D();        
         
         int n = 0; //lcs: set dimension for first view only
-        
+
         for(Map.Entry<String,DetectorViewLayer2D> entry : this.viewLayers.entrySet()){
            // System.out.println("[Drawing] ---> layer : " + entry.getKey() + " " + 
            //                                                entry.getValue().getBounds());
@@ -164,6 +197,11 @@ public class DetectorView2D extends JPanel implements MouseMotionListener {
             addLayer(layer);
         }        
         this.viewLayers.get(layer).addShape(shape);
+        this.activeShape = shape;
+    }
+    
+    public void setOpacity (String layer, int value){
+        this.viewLayers.get(layer).setOpacity(value);
     }
 
     public boolean isLayerActive(String layer){
@@ -176,11 +214,15 @@ public class DetectorView2D extends JPanel implements MouseMotionListener {
         }
     }
     
-    public void  setLayerActive(String layer, boolean flag){
+    public void  setLayerState(String layer, boolean flag){
         if(activeLayer!=null&&isLayerActive(activeLayer)) viewLayers.get(activeLayer).setActive(false);
         viewLayers.get(layer).setActive(flag);
         activeLayer = layer;
     }
+    
+    public void    setLayerActive(String layer) {viewLayers.get(layer).setActive(true);}
+ 
+    public void  setLayerInActive(String layer) {viewLayers.get(layer).setActive(false);}
     
     public void setDetectorListener(String layer, DetectorListener dl) {
         viewLayers.get(layer).addDetectorListener(dl);
@@ -188,12 +230,10 @@ public class DetectorView2D extends JPanel implements MouseMotionListener {
     
     @Override
     public void mouseDragged(MouseEvent e) {
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 
     @Override
     public void mouseMoved(MouseEvent e) {
-        //System.out.println("mouse moved = " + e.getX() + " " + e.getY());
         int index = -1;
         if(this.isMouseMotionListener==true) {
             double x = world.getViewX(e.getX());
@@ -224,7 +264,6 @@ public class DetectorView2D extends JPanel implements MouseMotionListener {
                 repaint();
            }
         }
-        //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
     /**
      * Layer class to keep shapes in. it computes it's boundaries automatically;
@@ -252,11 +291,6 @@ public class DetectorView2D extends JPanel implements MouseMotionListener {
             this.detectorListeners.add(lt);
         }
         
-        /**
-         * adding a shape to the layer.
-         * @param shape
-         * @return 
-         */
         public DetectorViewLayer2D addShape(DetectorShape2D shape){
             
             int  type       = shape.getDescriptor().getType().getDetectorId();
@@ -292,7 +326,7 @@ public class DetectorView2D extends JPanel implements MouseMotionListener {
         public DetectorViewLayer2D  setActive(boolean flag)     {isLayerActive = flag;return this;}
         public DetectorViewLayer2D  setOpacity(int op)          {this.opacity = op;return this;}
         public DetectorViewLayer2D  setShowHitMap(boolean flag) {this.showHitMap = flag;return this;}      
-        public String               getName()                   {return this.layerName;}
+        public String               getName()                   {return this.layerName;}    
         
         public final DetectorViewLayer2D setName(String name){
             this.layerName = name;
@@ -329,11 +363,7 @@ public class DetectorView2D extends JPanel implements MouseMotionListener {
         public Dimension2D  getBounds(){
             return this.boundaries;
         }
-        /**
-         * updating the detector shapes with the data from detector Bank.
-         * @param detectorData
-         * @param options 
-         */
+
         public void fill(List<DetectorDataDgtz> detectorData, String options){            
             boolean doReset = true;
             if(options.contains("same")==true) doReset = false;

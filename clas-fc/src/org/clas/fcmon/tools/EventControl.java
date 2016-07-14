@@ -60,10 +60,8 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
     private java.util.Timer    processTimer  = null;	
 	
     DetectorMonitor monitoringClass;
-//    DetectorShapeTabView detectorView;
     DetectorPane2D detectorView;
 	
-//    public void setPluginClass(DetectorMonitor monitoringClass, DetectorShapeTabView detectorView) {
     public void setPluginClass(DetectorMonitor monitoringClass, DetectorPane2D detectorView) {
       this.monitoringClass = monitoringClass;
       this.detectorView = detectorView;
@@ -175,8 +173,8 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
            
                             try {
                                 monitoringClass.dataEventAction(event);
-                            	monitoringClass.analyze(1);
-//                                this.detectorView.panel1.updateGUI();
+                                this.detectorView.update();
+                                this.detectorView.getView().updateGUI();
                             } catch (Exception ex) {
                                 ex.printStackTrace();
                             }
@@ -190,8 +188,8 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
         	isSingleEvent = true;
         	this.processNextEvent();
         	buttonPrev.setEnabled(true);
-        	monitoringClass.analyze(1);
-//            this.detectorView.panel1.updateGUI();
+            this.detectorView.update();
+            this.detectorView.getView().updateGUI();
         }
         
         if(e.getActionCommand().compareTo(">>")==0){

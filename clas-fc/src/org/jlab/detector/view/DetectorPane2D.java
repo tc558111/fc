@@ -9,20 +9,14 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 
 import javax.swing.BorderFactory;
 import javax.swing.ButtonGroup;
-import javax.swing.JButton;
-import javax.swing.JCheckBox;
-import javax.swing.JColorChooser;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
-import javax.swing.border.BevelBorder;
 import javax.swing.border.SoftBevelBorder;
 
 /**
@@ -42,7 +36,7 @@ public class DetectorPane2D extends JPanel {
     List<List<buttonMap>>  mapStore = new ArrayList<List<buttonMap>>();
     TreeMap<String,Integer>  bStore = new TreeMap<String,Integer>();
     buttonMap         lastMapButton = null;
-    
+           
     public int ilmap=1;
     public int  omap=0;    
     
@@ -146,14 +140,19 @@ public class DetectorPane2D extends JPanel {
     
     public void viewButtonAction(String group, String name, int key) {
         if(group=="LAY") {
-            view2D.setLayerActive(name, true);
+            view2D.setLayerState(name, true);
             if (key<4) {rbPanes.get("UVW").setVisible(true);rbPanes.get("PIX").setVisible(false);omap=bStore.get("UVW");}       
             if (key>3) {rbPanes.get("PIX").setVisible(true);rbPanes.get("UVW").setVisible(false);omap=bStore.get("PIX");}
         }
         if(group=="DET") ilmap = key;
         update();        
     }
-        
+    
+    public void setFPS(int fps){
+        if (fps==0) getView().stop();
+        if (fps>0)  getView().start(fps);
+      }
+    
     public DetectorView2D  getView(){
         return this.view2D;
     }

@@ -23,6 +23,7 @@ import javax.swing.event.ChangeListener;
 import org.root.basic.EmbeddedCanvas;
  
 import org.clas.fcmon.tools.DetectorShapeTabView;
+import org.jlab.detector.view.DetectorPane2D;
 //import org.clas.tools.Miscellaneous;
  
 /*
@@ -33,7 +34,7 @@ import org.clas.fcmon.tools.DetectorShapeTabView;
 @SuppressWarnings("serial")
 public class MonitorApp extends JFrame implements ActionListener {
     
-    DetectorShapeTabView detectorView;  
+    DetectorPane2D detectorView;  
     int      selectedTabIndex = 0;  
     String   selectedTabName  = " ";  
 	
@@ -65,7 +66,6 @@ public class MonitorApp extends JFrame implements ActionListener {
     }
     
     public void init(){
-        this.initComponents();
         this.addChangeListener();
         this.pack();
         this.setVisible(true);
@@ -75,11 +75,11 @@ public class MonitorApp extends JFrame implements ActionListener {
     	this.monitoringClass = mon;
     }
     
-    private void initComponents(){
+    public void makeGUI(){
 
         this.setLayout(new BorderLayout());   
     	
-        this.detectorView       = new DetectorShapeTabView();
+        this.detectorView       = new DetectorPane2D();
         this.canvasPane         = new JPanel();
         this.canvasTabbedPane   = new JTabbedPane();	
         this.buttonPane         = new JPanel();
@@ -132,18 +132,16 @@ public class MonitorApp extends JFrame implements ActionListener {
         		
 // Basic GUI layout
         
-        this.hSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);		
+        this.hSplitPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT,detectorView,controlsPanel0);		
         this.hSplitPane.setDividerLocation(600);  
-        this.hSplitPane.setTopComponent(this.detectorView);				
-        this.hSplitPane.setBottomComponent(this.controlsPanel0);	
+        this.hSplitPane.setResizeWeight(1.0);
 		
         canvasPane.setLayout(new BorderLayout());
         this.canvasPane.add(canvasTabbedPane,BorderLayout.CENTER);
         this.canvasPane.add(buttonPane,BorderLayout.PAGE_END);
         
-        this.vSplitPane = new JSplitPane();			
-        this.vSplitPane.setLeftComponent(this.hSplitPane);
-        this.vSplitPane.setRightComponent(this.canvasPane);
+        this.vSplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT,hSplitPane,canvasPane);			
+        this.vSplitPane.setDividerLocation(600);  
 
         this.add(this.vSplitPane,BorderLayout.CENTER);
     }
@@ -176,7 +174,7 @@ public class MonitorApp extends JFrame implements ActionListener {
         return this.paneCanvas.get(name);
     }  
     
-    public DetectorShapeTabView getDetectorView(){
+    public DetectorPane2D getDetectorView(){
         return this.detectorView;
     }  
     
@@ -194,6 +192,11 @@ public class MonitorApp extends JFrame implements ActionListener {
     
     public String getSelectedTabName(){
         return this.selectedTabName;
+    }
+    
+    public void setSelectedTab(int index) {
+        this.canvasTabbedPane.setSelectedComponent(this.canvasTabbedPane.getComponent(index));
+        System.out.println("Selected Tab is "+this.canvasTabbedPane.getTitleAt(index));
     }
     
     public void addChangeListener() {    

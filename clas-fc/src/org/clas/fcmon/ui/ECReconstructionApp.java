@@ -1,5 +1,8 @@
 package org.clas.fcmon.ui;
 
+import static java.lang.System.out;
+import static net.blackruffy.root.Pointer.allocate;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -21,6 +24,8 @@ import org.jlab.detector.decode.DetectorEventDecoder;
 import org.jlab.io.evio.EvioDataEvent;
 import org.jlab.io.evio.EvioDataBank;
 
+import org.clas.fcmon.jroot.*;
+
 public class ECReconstructionApp extends FCApplication {
     
    FADCConfigLoader fadc  = new FADCConfigLoader();
@@ -29,7 +34,7 @@ public class ECReconstructionApp extends FCApplication {
    int              detID ;
    FADCFitter     fitter  = new FADCFitter(1,15);
    String BankType        ;
-   
+
    CodaEventDecoder            newdecoder = new CodaEventDecoder();
    DetectorEventDecoder   detectorDecoder = new DetectorEventDecoder();
    List<DetectorDataDgtz>  detectorData   = new ArrayList<DetectorDataDgtz>();
@@ -93,13 +98,12 @@ public class ECReconstructionApp extends FCApplication {
    }
    
    public void addEvent(EvioDataEvent event) {
-       
-      if(event.hasBank(mondet+"::true")!=true) {
-         this.updateRealData(event);
+      
+      if(event.hasBank(mondet+"::dgtz")==true) {
+          this.updateSimulatedData(event);
+          this.processECRec(event);
       } else {
-         this.updateSimulatedData(event);
-         this.processECRec(event);
-         
+          this.updateRealData(event);         
       }
       
       if (app.isSingleEvent()) {
@@ -191,23 +195,25 @@ public class ECReconstructionApp extends FCApplication {
    public void updateSimulatedData(EvioDataEvent event) {
        
       float tdcmax=100000;
-      boolean debug=false;
-      int nrows, adc;
+      int nrows, adc, fac;
       double mc_t=0.,tdc=0,tdcf=0;
+      Boolean bypass=false;
          
-      EvioDataBank bank  = (EvioDataBank) event.getBank(mondet+"::true");      
-      nrows = bank.rows();
-      
-      for(int i=0; i < nrows; i++){
-         mc_t = bank.getDouble("avgT",i);
-      }   
+      if(event.hasBank(mondet+"::true")==true) {
+         EvioDataBank bank  = (EvioDataBank) event.getBank(mondet+"::true");      
+         for(int i=0; i < bank.rows(); i++) mc_t = bank.getDouble("avgT",i);
+         fac = 1;
+      } else {
+         mc_t = 0;
+         fac = 6;
+      }
                 
       inMC = true; mon.putGlob("inMC",true); 
       thr[0]=thr[1]=5;
       
       clear();
         
-      bank = (EvioDataBank) event.getBank(mondet+"::dgtz");
+      EvioDataBank bank = (EvioDataBank) event.getBank(mondet+"::dgtz");
       nrows = bank.rows();
 
       // Use latest hit time for time reference (tdcmax).
@@ -222,15 +228,49 @@ public class ECReconstructionApp extends FCApplication {
          int ip  = bank.getInt("strip",i);
          int ic  = bank.getInt("stack",i);     
          int il  = bank.getInt("view",i);  
-             adc = bank.getInt("ADC",i);
+             adc = bank.getInt("ADC",i)/fac;
         int tdcc = bank.getInt("TDC",i);
             tdcf = tdcc;
               il = il+(ic-1)*3;
-             tdc = (((float)tdcc-(float)mc_t*1000)-tdcmax+1340000)/1000;                      
-        if(ic==1||ic==2) fill(is, il, ip, adc, tdc, tdcf);                                 
+             tdc = (((float)tdcc-(float)mc_t*1000)-tdcmax+1340000)/1000; 
+             bypass = false;
+             if(il==2&&ip==53) bypass=true;
+        if((ic==1||ic==2)&&bypass==false) fill(is, il, ip, adc, tdc, tdcf); 
       }
          
    }
+/*   
+   public void updatePcalCrtData() {
+       
+       ReadPcal pcal = new ReadPcal(4284,4294);
+       
+       float ped[][] = pcal.getPeds();
+       TTree    tree = pcal.getTree();
+
+       long nev = tree.getEntries();
+       
+       Pointer     pnpc = allocate(4); tree.setBranchAddress("npc", pnpc);
+       Pointer playerpc = allocate(4); tree.setBranchAddress("layerpc",playerpc);
+       Pointer pstrippc = allocate(4); tree.setBranchAddress("strippc",pstrippc);
+       Pointer   padcpc = allocate(4); tree.setBranchAddress("Adcpc",padcpc);
+       Pointer   ptdcpc = allocate(4); tree.setBranchAddress("Tdcpc",ptdcpc);
+       
+       for( long ev=0; ev<10000; ev++ ) {
+         tree.getEntry(ev);
+         int        npc =     pnpc.getIntValue();
+         byte[]  layerpc = playerpc.getByteArray(npc);
+         byte[]  strippc = pstrippc.getByteArray(npc);
+          int[]    adcpc =   padcpc.getUInt16Array(npc);
+          out.printf("%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,\n",
+                  ev,npc,layerpc[0],layerpc[1],layerpc[2],
+                  strippc[0],strippc[1],strippc[2],
+                    adcpc[0],adcpc[1],adcpc[2]);
+       }
+       //tree.delete();
+       //pcal.tfile.close();
+
+   }
+   */
     
    public void processECRec(EvioDataEvent event) {
         

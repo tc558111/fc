@@ -117,6 +117,8 @@ public class ECAttenApp extends FCApplication {
       int inProcess =     (int) mon.getGlob().get("inProcess");
       int     detID =     (int) mon.getGlob().get("detID");
       Boolean  inMC = (Boolean) mon.getGlob().get("inMC");
+      int is1 = (int) mon.getGlob().get("is1");
+      
       DatabaseConstantProvider ccdb = (DatabaseConstantProvider) mon.getGlob().get("ccdb");
         
       if (layer>10) {
@@ -137,11 +139,11 @@ public class ECAttenApp extends FCApplication {
                if (collection.hasEntry(is, layer, ic)) {
 									
                for (int ip=0; ip<nstr ; ip++) {
-                  double gain  =  collection.get(1,layer,ip).getFunc(0).parameter(0).value();
-                  double gaine =  collection.get(1,layer,ip).getFunc(0).parameter(0).error();	
-                  double att   =  collection.get(1,layer,ip).getFunc(0).parameter(1).value();
-                  double atte  =  collection.get(1,layer,ip).getFunc(0).parameter(1).error();
-                  double chi2  =  collection.get(1,layer,ip).getChi2(0);
+                  double gain  =  collection.get(is1,layer,ip).getFunc(0).parameter(0).value();
+                  double gaine =  collection.get(is1,layer,ip).getFunc(0).parameter(0).error();	
+                  double att   =  collection.get(is1,layer,ip).getFunc(0).parameter(1).value();
+                  double atte  =  collection.get(is1,layer,ip).getFunc(0).parameter(1).error();
+                  double chi2  =  collection.get(is1,layer,ip).getChi2(0);
                   int index = ECCommon.getCalibrationIndex(is+1,layer+detID*3,ip+1);
                   double attdb = ccdb.getDouble("/calibration/ec/attenuation/B",index);
                   if (att!=0) att=-1./att; else att=0 ; 

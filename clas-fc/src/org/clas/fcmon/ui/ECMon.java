@@ -47,15 +47,17 @@ public class ECMon extends DetectorMonitor {
    CalDrawDB[]                ecDB = new CalDrawDB[2];  
    ECPixels[]                ecPix = new ECPixels[2];
    
-   public int inProcess        = 0;     //0=init 1=processing 2=end-of-run 3=post-run
-   public boolean inMC         = false; //true=MC false=DATA
-   int    detID                = 0;
-   double PCMon_zmax           = 0;
+   public int inProcess            = 0;     //0=init 1=processing 2=end-of-run 3=post-run
+   public boolean inMC             = false; //true=MC false=DATA
+   int    detID                    = 0;
+   double PCMon_zmax               = 0;
+   int is1                         = 2 ;
+   int is2                         = 3 ;
    
-   int nsa,nsb,tet,p1,p2,pedref  = 0;
+   int nsa,nsb,tet,p1,p2,pedref    = 0;
    
-   String mondet        = "PCAL";
-   int    moncalrun     = 0;
+   String mondet                   = "PCAL";
+   int    moncalrun                = 0;
 
    DetectorCollection<H2D> H2_PCa_Hist = new DetectorCollection<H2D>();
    DetectorCollection<H2D> H2_PCt_Hist = new DetectorCollection<H2D>();
@@ -73,7 +75,7 @@ public class ECMon extends DetectorMonitor {
 	public ECMon(String det) {
 		super("ECMON","1.0","lcsmith");
 		mondet = det;
-		if (mondet=="PCAL") {detID = 0 ; moncalrun=2  ; ecDB[0] = new CalDrawDB("PCAL")  ; ecPix[0] = new ECPixels("PCAL");}
+		if (mondet=="PCAL") {detID = 0 ; moncalrun=12 ; ecDB[0] = new CalDrawDB("PCAL")  ; ecPix[0] = new ECPixels("PCAL");}
 		if (mondet=="EC")   {detID = 1 ; moncalrun=12 ; ecDB[0] = new CalDrawDB("ECin")  ; ecPix[0] = new ECPixels("ECin");  
 		                                                ecDB[1] = new CalDrawDB("ECout") ; ecPix[1] = new ECPixels("ECout");}
 		ccdb = new DatabaseConstantProvider(moncalrun,"default");
@@ -90,9 +92,10 @@ public class ECMon extends DetectorMonitor {
 		monitor.makeApps(monitor);
 		monitor.addCanvas();
 		monitor.init();
-		monitor.initDetector(1,2);
+		monitor.initDetector();
 		app.init();
 		monitor.initButtons();
+		//monitor.ecRecon.updatePcalCrtData();
 	}
     
     public void makeApps(DetectorMonitor monitor) {
@@ -144,7 +147,7 @@ public class ECMon extends DetectorMonitor {
         app.addCanvas("ECREC",            ecRecon.getCanvas("ECREC"));          
 	}
 	
-	public void init() {	    
+	public void init( ) {	    
 		System.out.println("init()");	
 		initGlob();
         initApps();
@@ -175,6 +178,8 @@ public class ECMon extends DetectorMonitor {
 		putGlob("PCMon_zmax", PCMon_zmax);
 		putGlob("fadc",fadc);
 		putGlob("mondet",mondet);
+		putGlob("is1",is1);
+		putGlob("is2",is2);
 	}
 	
 	public TreeMap<String,Object> getGlob(){
@@ -229,7 +234,7 @@ public class ECMon extends DetectorMonitor {
 	}
 
 	
-    public void initDetector(int is1, int is2) {
+    public void initDetector() {
         
         System.out.println("initDetector()");
         
@@ -405,8 +410,8 @@ public class ECMon extends DetectorMonitor {
 				ecRecon.makeMaps(); break;
 			case 2: 
 				ecRecon.makeMaps(); 
-		                      for (int ll=0; ll<3 ; ll++) ecAtten.analyze(1,2,ll+1,ll+2,0,ecPix[0].pc_nstr[ll]);
-		        if (detID==1) for (int ll=0; ll<3 ; ll++) ecAtten.analyze(1,2,ll+4,ll+5,0,ecPix[1].pc_nstr[ll]);
+		                      for (int ll=0; ll<3 ; ll++) ecAtten.analyze(is1,is2,ll+1,ll+2,0,ecPix[0].pc_nstr[ll]);
+		        if (detID==1) for (int ll=0; ll<3 ; ll++) ecAtten.analyze(is1,is2,ll+4,ll+5,0,ecPix[1].pc_nstr[ll]);
 		        inProcess=3;
 		        break;
 		}

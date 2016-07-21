@@ -22,10 +22,11 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 
-import org.jlab.evio.clas12.EvioDataBank;
-import org.jlab.evio.clas12.EvioDataEvent;
-import org.jlab.evio.clas12.EvioDataSync;
-import org.jlab.evio.clas12.EvioFactory;
+//clas12rec
+import org.jlab.io.evio.EvioDataBank;
+import org.jlab.io.evio.EvioDataEvent;
+import org.jlab.io.evio.EvioDataSync;
+import org.jlab.io.evio.EvioFactory;
 
 import static java.lang.System.*;
 import static java.lang.String.format;
@@ -171,7 +172,8 @@ public class ReadPcal {
             try {
                 while (true) {
                     int npc = in.readInt();
-                    EvioDataBank bankS = (EvioDataBank) EvioFactory.createBank("PCAL::dgtz", npc);
+                   
+                    EvioDataBank bankS = (EvioDataBank) EvioFactory.createEvioBank("PCAL::dgtz", npc);
                     for (int i=0; i<npc ; i++) {
                         int ev = in.readInt();  
                       byte lay = in.readByte(); bankS.setInt("view",i,(int)lay);
@@ -182,7 +184,7 @@ public class ReadPcal {
                        is=0 ; bankS.setInt("TDC",i,is);
                        is=1 ; bankS.setInt("hitn",i,is);
                     }
-                    EvioDataEvent event = writer.createEvent(EvioFactory.getDictionary());
+                    EvioDataEvent event = (EvioDataEvent) EvioFactory.createEvioEvent();
                     event.appendBank(bankS);                                
                     writer.writeEvent(event);
                 }
@@ -221,7 +223,7 @@ public class ReadPcal {
             int[]     adcpc =    padcpc.getUInt16Array(npc);
             int[]     tdcpc =    ptdcpc.getUInt16Array(npc);
             
-            EvioDataBank bankS = (EvioDataBank) EvioFactory.createBank("PCAL::dgtz", npc);
+            EvioDataBank bankS = (EvioDataBank) EvioFactory.createEvioBank("PCAL::dgtz", npc);
             
             int is=0;
             
@@ -235,7 +237,7 @@ public class ReadPcal {
                 is=1;           bankS.setInt("hitn",i,is);                             
             }
             
-            EvioDataEvent event = writer.createEvent(EvioFactory.getDictionary());
+            EvioDataEvent event = (EvioDataEvent) EvioFactory.createEvioEvent();
             event.appendBank(bankS);
                         
             writer.writeEvent(event);

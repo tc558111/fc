@@ -1,7 +1,6 @@
 package org.clas.fcmon.ui;
 
 import static java.lang.System.out;
-import static net.blackruffy.root.Pointer.allocate;
 
 import java.util.ArrayList;
 import java.util.Arrays;

@@ -1,5 +1,6 @@
 package org.clas.fcmon.ui;
 
+import org.clas.fcmon.detector.view.DetectorShape2D;
 import org.clas.fcmon.tools.*;
 import org.jlab.geom.prim.Path3D;
 
@@ -13,7 +14,6 @@ import org.root.attr.ColorPalette;
 //clas12rec
 import org.jlab.detector.base.DetectorDescriptor;
 import org.jlab.detector.base.DetectorType;
-import org.jlab.detector.view.DetectorShape2D;
 import org.jlab.io.evio.EvioDataEvent;
 import org.jlab.io.base.DataEvent;
 

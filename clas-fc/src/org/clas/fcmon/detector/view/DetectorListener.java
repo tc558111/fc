@@ -3,7 +3,9 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.jlab.detector.view;
+package org.clas.fcmon.detector.view;
+
+//import org.jlab.detector.view.DetectorShape2D;
 
 /**
  *
@@ -11,6 +13,6 @@ package org.jlab.detector.view;
  * @version Modified by lcsmith for use with ECMon
  */
 public interface DetectorListener {
-    void update(DetectorShape2D shape);
+    void       update(DetectorShape2D shape);
     void processShape(DetectorShape2D shape);
 }

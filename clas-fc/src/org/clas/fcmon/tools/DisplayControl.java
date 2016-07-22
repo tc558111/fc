@@ -10,7 +10,7 @@ import javax.swing.JSlider;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.jlab.detector.view.DetectorPane2D;
+import org.clas.fcmon.detector.view.DetectorPane2D;
 
 public class DisplayControl extends JPanel {
     

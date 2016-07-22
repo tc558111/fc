@@ -18,7 +18,7 @@ import javax.swing.SpinnerNumberModel;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.jlab.detector.view.DetectorPane2D;
+import org.clas.fcmon.detector.view.DetectorPane2D;
 //import org.jlab.evio.clas12.EvioDataEvent;
 //import org.jlab.evio.clas12.EvioETSource;
 //import org.jlab.evio.clas12.EvioSource;

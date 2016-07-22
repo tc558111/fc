@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.jlab.detector.view;
+package org.clas.fcmon.detector.view;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -24,6 +24,10 @@ import javax.swing.Timer;
 import org.jlab.detector.base.DetectorDescriptor;
 import org.jlab.detector.base.DetectorType;
 import org.jlab.detector.decode.DetectorDataDgtz;
+//import org.jlab.detector.view.DetectorListener;
+//import org.jlab.detector.view.DetectorShape2D;
+//import org.jlab.detector.view.DetectorViewLayer2D;
+import org.jlab.detector.view.ViewWorld;
 import org.jlab.groot.base.ColorPalette;
 import org.jlab.groot.graphics.GraphicsAxis;
 import org.jlab.groot.math.Dimension1D;
@@ -128,9 +132,9 @@ public class DetectorView2D extends JPanel implements MouseMotionListener {
         this.viewBounds.getDimension(1).setMinMax(0, h);
         //g2d.setColor(Color.red);
         //g2d.drawRect(10,10,w-20,h-20);
-       // long startTime = System.currentTimeMillis();
+       //long startTime = System.currentTimeMillis();
         this.drawLayers(g2d);
-        //System.out.println("initDetector() time= "+(System.currentTimeMillis()-startTime));
+       //System.out.println("initDetector() time= "+(System.currentTimeMillis()-startTime));
         this.colorAxis.setVertical(true);
         this.colorAxis.setAxisType(GraphicsAxis.AXISTYPE_COLOR);
         this.colorAxis.setDimension(h-20,h-120);

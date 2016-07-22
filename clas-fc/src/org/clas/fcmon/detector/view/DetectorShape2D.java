@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package org.jlab.detector.view;
+package org.clas.fcmon.detector.view;
 
 import java.awt.BasicStroke;
 import java.awt.Color;
@@ -18,7 +18,9 @@ import java.util.List;
 
 import org.jlab.detector.base.DetectorDescriptor;
 import org.jlab.detector.base.DetectorType;
-
+//import org.jlab.detector.view.DetectorListener;
+//import org.jlab.detector.view.DetectorShape2D;
+import org.jlab.detector.view.ViewWorld;
 import org.jlab.geom.prim.Path3D;
 
 /**

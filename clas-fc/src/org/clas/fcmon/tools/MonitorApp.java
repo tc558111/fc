@@ -21,10 +21,8 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.root.basic.EmbeddedCanvas;
- 
+import org.clas.fcmon.detector.view.DetectorPane2D;
 import org.clas.fcmon.tools.DetectorShapeTabView;
-import org.jlab.detector.view.DetectorPane2D;
-//import org.clas.tools.Miscellaneous;
  
 /*
  * @author gavalian

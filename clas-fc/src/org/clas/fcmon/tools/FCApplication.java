@@ -11,7 +11,7 @@ import javax.swing.ButtonGroup;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 
-import org.clas.tools.FTParameter;
+//import org.clas.tools.FTParameter;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.detector.base.DetectorDescriptor;
 import org.jlab.evio.clas12.EvioDataBank;

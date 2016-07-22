@@ -13,9 +13,9 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.JTextField;
 
+import org.clas.fcmon.detector.view.DetectorPane2D;
 import org.jlab.clas12.detector.FADCConfig;
 import org.jlab.clas12.detector.FADCConfigLoader;
-import org.jlab.detector.view.DetectorPane2D;
 
 public class Mode7Emulation extends JPanel implements ActionListener,ItemListener {
 	

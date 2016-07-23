@@ -1,4 +1,4 @@
-package org.clas.fcmon.ui;
+package org.clas.fcmon.ec;
 
 import org.clas.fcmon.detector.view.DetectorShape2D;
 import org.clas.fcmon.tools.*;

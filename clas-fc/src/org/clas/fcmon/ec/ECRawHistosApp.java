@@ -1,4 +1,4 @@
-package org.clas.fcmon.ui;
+package org.clas.fcmon.ec;
 
 import org.clas.fcmon.tools.ECPixels;
 import org.clas.fcmon.tools.FCApplication;

@@ -1,4 +1,4 @@
-package org.clas.fcmon.ui;
+package org.clas.fcmon.cc;
 
 import java.awt.Color;
 import java.util.Arrays;

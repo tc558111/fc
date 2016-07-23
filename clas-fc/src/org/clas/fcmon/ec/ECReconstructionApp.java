@@ -1,4 +1,4 @@
-package org.clas.fcmon.ui;
+package org.clas.fcmon.ec;
 
 import static java.lang.System.out;
 

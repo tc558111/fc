@@ -1,17 +1,26 @@
 package org.clas.fcmon.ec;
 
+import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.TreeMap;
 
 import org.clas.fcmon.detector.view.DetectorShape2D;
 import org.clas.fcmon.tools.ECPixels;
 import org.clas.fcmon.tools.FCApplication;
+import org.jlab.detector.base.DetectorDescriptor;
 import org.jlab.detector.base.DetectorType;
 import org.jlab.geom.prim.Path3D;
+import org.root.attr.ColorPalette;
 
 public class ECDetector extends FCApplication{
     
-    String mondet;
+    ColorPalette palette = new ColorPalette();
+    
+    String        mondet = null;
+    int        inProcess = 0;
+    double    PCMon_zmin = 0;
+    double    PCMon_zmax = 0;
     
     public ECDetector(String name , ECPixels[] ecPix) {
         super(name, ecPix);       
@@ -33,7 +42,20 @@ public class ECDetector extends FCApplication{
         if (store=="View") app.getDetectorView().addViewStore(group, name, key);
         if (store=="Map")  app.getDetectorView().addMapStore(group, name, key);
     }
-
+    
+    public void initButtons() {
+        
+        System.out.println("initButtons()");
+        
+        app.getDetectorView().initMapButtons(0, 0);
+        app.getDetectorView().initMapButtons(1, 0);
+        app.getDetectorView().initViewButtons(0, 0);
+        app.getDetectorView().initViewButtons(1, 3);
+        app.getDetectorView().setFPS(10);
+        app.setSelectedTab(2); 
+        
+    }
+    
     public void initDetector(int is1, int is2) {
         
         System.out.println("initDetector()");
@@ -59,20 +81,6 @@ public class ECDetector extends FCApplication{
          app.getDetectorView().addMapButtons();
          app.getDetectorView().addViewButtons();
          
-    }
-    
-    
-    public void initButtons() {
-        
-        System.out.println("initButtons()");
-        
-        app.getDetectorView().initMapButtons(0, 0);
-        app.getDetectorView().initMapButtons(1, 0);
-        app.getDetectorView().initViewButtons(0, 0);
-        app.getDetectorView().initViewButtons(1, 1);
-        app.getDetectorView().setFPS(10);
-        app.setSelectedTab(2); 
-        
     }
     
     public DetectorShape2D getPixel(int sector, int layer, int pixel){
@@ -108,6 +116,59 @@ public class ECDetector extends FCApplication{
         shape.addDetectorListener(mon);
         return shape;
     }
+    
+    public void update(DetectorShape2D shape) {
+        
+        DetectorDescriptor dd = shape.getDescriptor();
+        this.getDetIndices(dd);
 
+        layer = lay;
+        
+        double colorfraction=1;
+        
+        inProcess = (int) mon.getGlob().get("inProcess");
 
+        if (inProcess==0){ // Assign default colors upon starting GUI (before event processing)
+            if(layer<7) colorfraction = (double)ic/36;
+            if(layer>=7) colorfraction = getcolor((TreeMap<Integer, Object>) Lmap_a.get(0,0,0), ic);
+        }
+        if (inProcess>0){             // Use Lmap_a to get colors of components while processing data
+                         colorfraction = getcolor((TreeMap<Integer, Object>) Lmap_a.get(is+1,layer,opt), ic);
+        }
+        if (colorfraction<0.05) colorfraction = 0.05;
+        
+        Color col = palette.getRange(colorfraction);
+        shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
+
+    }
+    
+    public double getcolor(TreeMap<Integer,Object> map, int component) {
+        
+        double color=0;
+        
+        double val[] =(double[]) map.get(1); 
+        double rmin  =(double)   map.get(2);
+        double rmax  =(double)   map.get(3);
+        double z=val[component];
+        
+        if (z==0) return 0;
+        
+        PCMon_zmax = rmax*1.2; mon.getGlob().put("PCMon_zmax", PCMon_zmax);
+        
+        if (inProcess==0)  color=(double)(z-rmin)/(rmax-rmin);
+        double pixMin = app.displayControl.pixMin ; double pixMax = app.displayControl.pixMax;
+        if (inProcess!=0) {
+            if (!app.isSingleEvent()) color=(double)(Math.log10(z)-pixMin*Math.log10(rmin))/(pixMax*Math.log10(rmax)-pixMin*Math.log10(rmin));
+            if ( app.isSingleEvent()) color=(double)(Math.log10(z)-pixMin*Math.log10(rmin))/(pixMax*Math.log10(4000.)-pixMin*Math.log10(rmin));
+        }
+        
+        app.getDetectorView().getView().zmax = pixMax*rmax;
+        app.getDetectorView().getView().zmin = pixMin*rmin;
+        
+        if (color>1)   color=1;
+        if (color<=0)  color=0.;
+
+        return color;
+    }
+    
 }

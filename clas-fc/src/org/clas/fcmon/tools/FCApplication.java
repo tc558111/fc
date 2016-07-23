@@ -36,7 +36,7 @@ public class FCApplication implements ActionListener  {
 	public DetectorMonitor mon = null;
 	
 	public int is,layer,ic;
-	public int panel,io,of,lay,l1,l2;
+	public int panel,opt,io,of,lay,l1,l2;
 
     private String             buttonSelect;
     private int                buttonIndex;
@@ -70,7 +70,9 @@ public class FCApplication implements ActionListener  {
         io    = app.getDetectorView().ilmap;
         of    = (io-1)*3;
         lay   = 0;
+        opt   = 0;
         
+        if (panel==1) opt = 1;
         if (layer<4)  lay = layer+of;
         if (layer==4) lay = layer+2+io;
         if (panel==9) lay = panel+io-1;

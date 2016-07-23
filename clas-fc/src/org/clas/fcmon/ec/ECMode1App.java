@@ -11,9 +11,9 @@ import org.root.histogram.H1D;
 public class ECMode1App extends FCApplication  {
 	
    public ECMode1App(String name, ECPixels[] ecPix) {
-      super(name,ecPix);		
+      super(name,ecPix);	
    }
-
+   
    public void updateCanvas(DetectorDescriptor dd) {
 		
       EmbeddedCanvas canvas = this.getCanvas(this.getName()); 

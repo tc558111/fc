@@ -77,7 +77,6 @@ public class ECReconstructionApp extends FCApplication {
     
    public ECReconstructionApp(String name, ECPixels[] ecPix) {
        super(name,ecPix);
-       // TODO Auto-generated constructor stub
    }
    
    public void init() {

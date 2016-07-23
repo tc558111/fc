@@ -92,11 +92,11 @@ public class FCApplication implements ActionListener  {
 		this.Lmap_a=map;
 	}
 	
-	public void setMonitoringClass(MonitorApp app) {
+	public void setApplicationClass(MonitorApp app) {
 		this.app = app;
 	}
 	
-	public void setApplicationClass(DetectorMonitor mon) {
+	public void setMonitoringClass(DetectorMonitor mon) {
 		this.mon = mon;
 	}
 	
@@ -117,6 +117,10 @@ public class FCApplication implements ActionListener  {
         EmbeddedCanvas c = new EmbeddedCanvas();
         this.canvases.add(c);
         this.canvases.get(this.canvases.size()-1).setName(name);
+    }
+    
+    public EmbeddedCanvas getCanvas(){
+        return this.canvases.get(0);
     }
     
     public EmbeddedCanvas getCanvas(int index) {

@@ -2,7 +2,6 @@ package org.clas.fcmon.ec;
 
 import org.clas.fcmon.detector.view.DetectorShape2D;
 import org.clas.fcmon.tools.*;
-import org.jlab.geom.prim.Path3D;
 
 //clas12
 import org.jlab.clas.detector.DetectorCollection;
@@ -13,23 +12,21 @@ import org.root.attr.ColorPalette;
 
 //clas12rec
 import org.jlab.detector.base.DetectorDescriptor;
-import org.jlab.detector.base.DetectorType;
 import org.jlab.io.evio.EvioDataEvent;
 import org.jlab.io.base.DataEvent;
 
 import org.jlab.rec.ecn.ECDetectorReconstruction;
  
 import java.awt.Color;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.TreeMap;
 
 public class ECMon extends DetectorMonitor {
 	
    static MonitorApp          app = new MonitorApp("ECMon",1800,950);	
  
-   ECAttenApp             ecAtten  = null;
-   ECMode1App             ecMode1  = null;
+   ECDetector                ecDet = null;
+   ECAttenApp              ecAtten = null;
+   ECMode1App              ecMode1 = null;
    ECOccupancyApp      ecOccupancy = null;
    ECSingleEventApp  ecSingleEvent = null;
    ECRawHistosApp      ecRawHistos = null;
@@ -56,7 +53,7 @@ public class ECMon extends DetectorMonitor {
    
    int nsa,nsb,tet,p1,p2,pedref    = 0;
    
-   String mondet                   = "PCAL";
+   public String mondet            = "PCAL";
    int    moncalrun                = 0;
 
    DetectorCollection<H2D> H2_PCa_Hist = new DetectorCollection<H2D>();
@@ -65,7 +62,6 @@ public class ECMon extends DetectorMonitor {
    DetectorCollection<H1D> H1_PCt_Maps = new DetectorCollection<H1D>();
    DetectorCollection<H1D> H1_PCa_Sevd = new DetectorCollection<H1D>();
    DetectorCollection<H1D> H1_PCt_Sevd = new DetectorCollection<H1D>();
-   
    
    DetectorCollection<H2D> H2_PCa_Sevd = new DetectorCollection<H2D>();
    DetectorCollection<H2D> H2_PC_Stat  = new DetectorCollection<H2D>();
@@ -92,59 +88,66 @@ public class ECMon extends DetectorMonitor {
 		monitor.makeApps(monitor);
 		monitor.addCanvas();
 		monitor.init();
-		monitor.initDetector();
+        monitor.initDetector(monitor);
 		app.init();
-		monitor.initButtons();
 		//monitor.ecRecon.updatePcalCrtData();
+	}
+	
+	public void initDetector(DetectorMonitor monitor) {
+	    ecDet = new ECDetector("ECDet",ecPix);
+        ecDet.setMonitoringClass(monitor);
+        ecDet.setApplicationClass(app);
+        ecDet.init(this.is1,this.is2);
+        ecDet.initButtons();
 	}
     
     public void makeApps(DetectorMonitor monitor) {
         System.out.println("makeApps()");
         
         ecRecon = new ECReconstructionApp("ECREC",ecPix);        
-        ecRecon.setMonitoringClass(app);
-        ecRecon.setApplicationClass(monitor);
+        ecRecon.setMonitoringClass(monitor);
+        ecRecon.setApplicationClass(app);
         
         ecAtten = new ECAttenApp("Attenuation",ecPix);  
-        ecAtten.setMonitoringClass(app);
-        ecAtten.setApplicationClass(monitor);
+        ecAtten.setMonitoringClass(monitor);
+        ecAtten.setApplicationClass(app);
         
         ecMode1 = new ECMode1App("Mode1",ecPix);
-        ecMode1.setMonitoringClass(app);
-        ecMode1.setApplicationClass(monitor);
+        ecMode1.setMonitoringClass(monitor);
+        ecMode1.setApplicationClass(app);
         
         ecSingleEvent = new ECSingleEventApp("SingleEvent",ecPix);
-        ecSingleEvent.setMonitoringClass(app);
-        ecSingleEvent.setApplicationClass(monitor);
+        ecSingleEvent.setMonitoringClass(monitor);
+        ecSingleEvent.setApplicationClass(app);
         
         ecRawHistos = new ECRawHistosApp("RawHistos",ecPix);
-        ecRawHistos.setMonitoringClass(app);
-        ecRawHistos.setApplicationClass(monitor);
+        ecRawHistos.setMonitoringClass(monitor);
+        ecRawHistos.setApplicationClass(app);
         
         ecPedestal = new ECPedestalApp("Pedestal",ecPix);       
-        ecPedestal.setMonitoringClass(app);
-        ecPedestal.setApplicationClass(monitor);
+        ecPedestal.setMonitoringClass(monitor);
+        ecPedestal.setApplicationClass(app);
         
         ecTiming = new ECTimingApp("Timing",ecPix);     
-        ecTiming.setMonitoringClass(app);
-        ecTiming.setApplicationClass(monitor);
+        ecTiming.setMonitoringClass(monitor);
+        ecTiming.setApplicationClass(app);
         
         ecOccupancy = new ECOccupancyApp("Occupancy",ecPix);        
-        ecOccupancy.setMonitoringClass(app);
-        ecOccupancy.setApplicationClass(monitor);
+        ecOccupancy.setMonitoringClass(monitor);
+        ecOccupancy.setApplicationClass(app);
         
     }
     
 	public void addCanvas() {
         System.out.println("addCanvas()");   
-        app.addCanvas("Mode1",            ecMode1.getCanvas("Mode1"));
-        app.addCanvas("SingleEvent",ecSingleEvent.getCanvas("SingleEvent"));
-        app.addCanvas("Occupancy",    ecOccupancy.getCanvas("Occupancy"));
-        app.addCanvas("Attenuation",      ecAtten.getCanvas("Attenuation"));
-        app.addCanvas("Pedestal",      ecPedestal.getCanvas("Pedestal"));
-        app.addCanvas("Timing",          ecTiming.getCanvas("Timing"));
-        app.addCanvas("RawHistos",    ecRawHistos.getCanvas("RawHistos"));          
-        app.addCanvas("ECREC",            ecRecon.getCanvas("ECREC"));          
+        app.addCanvas(ecMode1.getName(),      ecMode1.getCanvas());
+        app.addCanvas(ecSingleEvent.getName(),ecSingleEvent.getCanvas());
+        app.addCanvas(ecOccupancy.getName(),  ecOccupancy.getCanvas());
+        app.addCanvas(ecAtten.getName(),      ecAtten.getCanvas());
+        app.addCanvas(ecPedestal.getName(),   ecPedestal.getCanvas());
+        app.addCanvas(ecTiming.getName(),     ecTiming.getCanvas());
+        app.addCanvas(ecRawHistos.getName(),  ecRawHistos.getCanvas());          
+        app.addCanvas(ecRecon.getName(),      ecRecon.getCanvas());          
 	}
 	
 	public void init( ) {	    
@@ -163,6 +166,8 @@ public class ECMon extends DetectorMonitor {
         ecRecon.init();
         ecAtten.init(); 
         ecAtten.addLMaps("Lmap_a", ecRecon.Lmap_a); 
+        ecRecon.Lmap_a.add(0,0,0, ecRecon.toTreeMap(ecPix[0].pc_cmap));
+        ecRecon.Lmap_a.add(0,0,1, ecRecon.toTreeMap(ecPix[0].pc_zmap));        
 //        ecRec.init();
 	}
 	
@@ -220,96 +225,6 @@ public class ECMon extends DetectorMonitor {
 	public void close() {
 	    
 	} 
-	
-	public void addButtons(String group, String store, String arg) {
-	    List<String> name = new ArrayList<String>();
-	    List<Integer> key = new ArrayList<Integer>(); 
-	    String[] items = arg.split("\\.");
-	    for (int i=0; i<items.length; i=i+2) {
-	        name.add(items[i]);
-	         key.add(Integer.parseInt(items[i+1]));
-	    }	
-	    if (store=="View") app.getDetectorView().addViewStore(group, name, key);
-	    if (store=="Map")  app.getDetectorView().addMapStore(group, name, key);
-	}
-
-	
-    public void initDetector() {
-        
-        System.out.println("initDetector()");
-        
-        ecRecon.Lmap_a.add(0,0,0, ecRecon.toTreeMap(ecPix[0].pc_cmap));
-        ecRecon.Lmap_a.add(0,0,1, ecRecon.toTreeMap(ecPix[0].pc_zmap));
-        
-         for(int is=is1; is<is2; is++) {
-            for(int ip=0; ip<ecPix[0].pc_nstr[0] ; ip++)             app.getDetectorView().getView().addShape("U",getStrip(is,1,ip));
-            for(int ip=0; ip<ecPix[0].pc_nstr[1] ; ip++)             app.getDetectorView().getView().addShape("V",getStrip(is,2,ip));
-            for(int ip=0; ip<ecPix[0].pc_nstr[2] ; ip++)             app.getDetectorView().getView().addShape("W",getStrip(is,3,ip));           
-            for(int ip=0; ip<ecPix[0].pixels.getNumPixels() ; ip++)  app.getDetectorView().getView().addShape("PIX",getPixel(is,4,ip));
-        }
-        
-         app.getDetectorView().getView().addDetectorListener(this);
-         
-         for(String layer : app.getDetectorView().getView().getLayerNames()){
-            app.getDetectorView().getView().setDetectorListener(layer,this);
-         }
-         
-         addButtons("DET","View","PC.1.ECi.1.ECo.2");
-         addButtons("LAY","View","U.1.V.2.W.3.PIX.4");
-         addButtons("UVW","Map","EVT.0.ADC.0.TDC.0");
-         addButtons("PIX","Map","EVT.0.NEVT.1.ADC U.11.ADC V.12.ADC W.13.ADC U+V+W.9");
-     
-         app.getDetectorView().addMapButtons();
-         app.getDetectorView().addViewButtons();
-         
-    }
-    
-    public void initButtons() {
-        
-        System.out.println("initButtons()");
-        
-        app.getDetectorView().initMapButtons(0, 0);
-        app.getDetectorView().initMapButtons(1, 0);
-        app.getDetectorView().initViewButtons(0, 0);
-        app.getDetectorView().initViewButtons(1, 1);
-        app.getDetectorView().setFPS(10);
-        app.setSelectedTab(2); 
-        
-    }
-    
-    public DetectorShape2D getPixel(int sector, int layer, int pixel){
-
-        DetectorShape2D shape = new DetectorShape2D();
-        
-        if (mondet=="PCAL") shape = new DetectorShape2D(DetectorType.PCAL,sector,layer,pixel);      
-        if (mondet=="EC")   shape = new DetectorShape2D(DetectorType.EC,sector,layer,pixel);    
-        
-        Path3D shapePath = shape.getShapePath();
-        
-        for(int j = 0; j < ecPix[0].pc_nvrt[pixel]; j++){
-            shapePath.addPoint(ecPix[0].pc_xpix[j][pixel][sector],ecPix[0].pc_ypix[j][pixel][sector],0.0);
-        }
-        
-        shape.addDetectorListener(this);
-        return shape;
-    }
-    
-    public DetectorShape2D getStrip(int sector, int layer, int str) {
-
-        DetectorShape2D shape = new DetectorShape2D();
-        
-        if (mondet=="PCAL") shape = new DetectorShape2D(DetectorType.PCAL,sector,layer,str);        
-        if (mondet=="EC")   shape = new DetectorShape2D(DetectorType.EC,sector,layer,str);  
-        
-        Path3D shapePath = shape.getShapePath();
-        
-        for(int j = 0; j <4; j++){
-            shapePath.addPoint(ecPix[0].pc_xstr[j][str][layer-1][sector],ecPix[0].pc_ystr[j][str][layer-1][sector],0.0);
-        }   
-        
-        shape.addDetectorListener(this);
-        return shape;
-    }
 
     @Override
     public void dataEventAction(DataEvent de) {        

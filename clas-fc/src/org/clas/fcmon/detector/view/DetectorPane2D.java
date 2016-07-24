@@ -20,6 +20,7 @@ import javax.swing.JRadioButton;
 import javax.swing.border.SoftBevelBorder;
 
 import org.clas.fcmon.tools.FCApplication;
+import org.clas.fcmon.tools.FCDetector;
 
 /**
  *
@@ -37,7 +38,8 @@ public class DetectorPane2D extends JPanel {
     
     List<List<buttonMap>>    viewStore = new ArrayList<List<buttonMap>>();
     List<List<buttonMap>>     mapStore = new ArrayList<List<buttonMap>>();
-    List<FCApplication>    FCListeners = new ArrayList<FCApplication>();
+    List<FCApplication>   FCAListeners = new ArrayList<FCApplication>();
+    List<FCDetector>      FCDListeners = new ArrayList<FCDetector>();
     
     buttonMap         lastMapButton = null;
            
@@ -49,7 +51,11 @@ public class DetectorPane2D extends JPanel {
     }
     
     public void addFCApplicationListeners(FCApplication lt){
-        this.FCListeners.add(lt);
+        this.FCAListeners.add(lt);
+    }  
+    
+    public void addFCDetectorListeners(FCDetector lt){
+        this.FCDListeners.add(lt);
     }  
     
     public final void makeGUI(){
@@ -105,7 +111,8 @@ public class DetectorPane2D extends JPanel {
                 if(!rbPanes.containsKey(bGname)) rbPanes.put(bGname, new JPanel());
                 bn.b.addActionListener(new ActionListener() {
                     public void actionPerformed(ActionEvent e) {
-                       for(FCApplication lt : FCListeners) lt.mapButtonAction(bn.group,bn.name,bn.key);
+                        for(FCApplication lt : FCAListeners) lt.mapButtonAction(bn.group,bn.name,bn.key);
+                        for(FCDetector    lt : FCDListeners) lt.mapButtonAction(bn.group,bn.name,bn.key);
                     }
                 });
                 this.rbPanes.get(bGname).add(bn.b); bG.add(bn.b);
@@ -120,7 +127,8 @@ public class DetectorPane2D extends JPanel {
             for(buttonMap bn: bg) {
                 bn.b.addActionListener(new ActionListener() {
                    public void actionPerformed(ActionEvent e) {
-                      for(FCApplication lt : FCListeners) lt.viewButtonAction(bn.group,bn.name,bn.key);                     
+                       for(FCApplication lt : FCAListeners) lt.viewButtonAction(bn.group,bn.name,bn.key);                     
+                       for(FCDetector    lt : FCDListeners) lt.viewButtonAction(bn.group,bn.name,bn.key);                     
                    }
                 });               
                 this.viewPane.add(bn.b); bG.add(bn.b);

@@ -1,5 +1,6 @@
   package org.clas.fcmon.tools;
 
+import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -11,23 +12,29 @@ import javax.swing.ButtonGroup;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 
-//import org.clas.tools.FTParameter;
+import org.clas.fcmon.cc.CCPixels;
+import org.clas.fcmon.detector.view.DetectorShape2D;
+import org.clas.fcmon.tools.ECPixels;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.detector.base.DetectorDescriptor;
 import org.jlab.evio.clas12.EvioDataBank;
+import org.root.attr.ColorPalette;
 import org.root.basic.EmbeddedCanvas;
 import org.root.histogram.H1D;
 import org.root.histogram.H2D;
 
 public class FCApplication implements ActionListener  {
 	
+    ColorPalette palette = new ColorPalette();
+    
     private String                                 appName    = null;
     private List<EmbeddedCanvas>                   canvases   = new ArrayList<EmbeddedCanvas>();
     private JPanel                                 radioPane  = new JPanel();
     private List<String>                           fields     = new ArrayList<String>();
     private List<FCParameter>                      parameters = new ArrayList<FCParameter>();
     
-	public ECPixels[]                                   ecPix = new ECPixels[2];
+    public ECPixels[]                                   ecPix = new ECPixels[2];
+    public CCPixels                                     ccPix = null;
 	public DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new  DetectorCollection<TreeMap<Integer,Object>>();
 	public TreeMap<String, DetectorCollection<H1D>>     hmap1 = new TreeMap<String, DetectorCollection<H1D>>();
 	public TreeMap<String, DetectorCollection<H2D>>     hmap2 = new TreeMap<String, DetectorCollection<H2D>>();
@@ -45,16 +52,29 @@ public class FCApplication implements ActionListener  {
     private String             canvasSelect;
     private int                canvasIndex;
     
-    int omap=0;
-    int ilmap=1;
+    int        inProcess = 0;
+    double    PCMon_zmin = 0;
+    double    PCMon_zmax = 0;    
+    int             omap = 0;
+    int            ilmap = 1;
     
     public FCApplication(ECPixels[] ecPix) {
         this.ecPix = ecPix;     
     }
     
+    public FCApplication(CCPixels ccPix) {
+        this.ccPix = ccPix;     
+    }
+    
     public FCApplication(String name, ECPixels[] ecPix) {
         this.appName = name;
         this.ecPix = ecPix;   
+        this.addCanvas(name);
+    }
+    
+    public FCApplication(String name, CCPixels ccPix) {
+        this.appName = name;
+        this.ccPix = ccPix;   
         this.addCanvas(name);
     }
     
@@ -144,7 +164,7 @@ public class FCApplication implements ActionListener  {
             }
         }
         return this.canvases.get(index);
-    }
+    }  
     
     public void mapButtonAction(String group, String name, int key) {
         this.bStore = app.getDetectorView().bStore;
@@ -162,8 +182,8 @@ public class FCApplication implements ActionListener  {
         this.rbPanes = app.getDetectorView().rbPanes;
         if(group=="LAY") {
             app.getDetectorView().getView().setLayerState(name, true);
-            if (key<4) {rbPanes.get("UVW").setVisible(true);rbPanes.get("PIX").setVisible(false);omap=bStore.get("UVW");}       
-            if (key>3) {rbPanes.get("PIX").setVisible(true);rbPanes.get("UVW").setVisible(false);omap=bStore.get("PIX");}
+            if (key<4) {rbPanes.get("PMT").setVisible(true);rbPanes.get("PIX").setVisible(false);omap=bStore.get("PMT");}       
+            if (key>3) {rbPanes.get("PIX").setVisible(true);rbPanes.get("PMT").setVisible(false);omap=bStore.get("PIX");}
         }
         if(group=="DET") ilmap = key;
         app.getDetectorView().update();        
@@ -238,5 +258,58 @@ public class FCApplication implements ActionListener  {
             canvasSelect = this.canvases.get(0).getName();
         }
     }
+    
+    public void update(DetectorShape2D shape) {
+        
+        DetectorDescriptor dd = shape.getDescriptor();
+        this.getDetIndices(dd);
 
+        layer = lay;
+        
+        double colorfraction=1;
+        
+        inProcess = (int) mon.getGlob().get("inProcess");
+
+        if (inProcess==0){ // Assign default colors upon starting GUI (before event processing)
+            if(layer<7) colorfraction = (double)ic/36;
+            if(layer>=7) colorfraction = getcolor((TreeMap<Integer, Object>) Lmap_a.get(0,0,0), ic);
+        }
+        if (inProcess>0){             // Use Lmap_a to get colors of components while processing data
+                         colorfraction = getcolor((TreeMap<Integer, Object>) Lmap_a.get(is+1,layer,opt), ic);
+        }
+        if (colorfraction<0.05) colorfraction = 0.05;
+        
+        Color col = palette.getRange(colorfraction);
+        shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
+
+    }
+    
+    public double getcolor(TreeMap<Integer,Object> map, int component) {
+        
+        double color=0;
+        
+        double val[] =(double[]) map.get(1); 
+        double rmin  =(double)   map.get(2);
+        double rmax  =(double)   map.get(3);
+        double z=val[component];
+        
+        if (z==0) return 0;
+        
+        PCMon_zmax = rmax*1.2; mon.getGlob().put("PCMon_zmax", PCMon_zmax);
+        
+        if (inProcess==0)  color=(double)(z-rmin)/(rmax-rmin);
+        double pixMin = app.displayControl.pixMin ; double pixMax = app.displayControl.pixMax;
+        if (inProcess!=0) {
+            if (!app.isSingleEvent()) color=(double)(Math.log10(z)-pixMin*Math.log10(rmin))/(pixMax*Math.log10(rmax)-pixMin*Math.log10(rmin));
+            if ( app.isSingleEvent()) color=(double)(Math.log10(z)-pixMin*Math.log10(rmin))/(pixMax*Math.log10(4000.)-pixMin*Math.log10(rmin));
+        }
+        
+        app.getDetectorView().getView().zmax = pixMax*rmax;
+        app.getDetectorView().getView().zmin = pixMin*rmin;
+        
+        if (color>1)   color=1;
+        if (color<=0)  color=0.;
+
+        return color;
+    }
 }

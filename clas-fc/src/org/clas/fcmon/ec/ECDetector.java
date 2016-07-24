@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.TreeMap;
 
 import org.clas.fcmon.detector.view.DetectorShape2D;
+import org.clas.fcmon.detector.view.DetectorPane2D;
 import org.clas.fcmon.tools.ECPixels;
 import org.clas.fcmon.tools.FCApplication;
 import org.jlab.detector.base.DetectorDescriptor;
@@ -43,14 +44,26 @@ public class ECDetector extends FCApplication{
         if (store=="Map")  app.getDetectorView().addMapStore(group, name, key);
     }
     
+    public void initViewButtons(int groupIndex, int nameIndex) {
+        DetectorPane2D.buttonMap map = app.getDetectorView().getViewButtonMap(groupIndex,nameIndex);
+        map.b.setSelected(true);        
+        viewButtonAction(map.group,map.name,map.key);
+     }
+    
+    public void initMapButtons(int groupIndex, int nameIndex) {
+        DetectorPane2D.buttonMap map = app.getDetectorView().getMapButtonMap(groupIndex,nameIndex);
+        map.b.setSelected(true);        
+        mapButtonAction(map.group,map.name,map.key);
+     }    
+    
     public void initButtons() {
         
         System.out.println("initButtons()");
         
-        app.getDetectorView().initMapButtons(0, 0);
-        app.getDetectorView().initMapButtons(1, 0);
-        app.getDetectorView().initViewButtons(0, 0);
-        app.getDetectorView().initViewButtons(1, 3);
+        initMapButtons(0, 0);
+        initMapButtons(1, 0);
+        initViewButtons(0, 0);
+        initViewButtons(1, 3);
         app.getDetectorView().setFPS(10);
         app.setSelectedTab(2); 
         

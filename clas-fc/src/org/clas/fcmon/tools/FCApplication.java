@@ -34,6 +34,8 @@ public class FCApplication implements ActionListener  {
 	 
 	public MonitorApp      app = null;
 	public DetectorMonitor mon = null;
+    public TreeMap<String,JPanel>  rbPanes = new TreeMap<String,JPanel>();
+    public TreeMap<String,Integer>  bStore = new TreeMap<String,Integer>();
 	
 	public int is,layer,ic;
 	public int panel,opt,io,of,lay,l1,l2;
@@ -42,6 +44,9 @@ public class FCApplication implements ActionListener  {
     private int                buttonIndex;
     private String             canvasSelect;
     private int                canvasIndex;
+    
+    int omap=0;
+    int ilmap=1;
     
     public FCApplication(ECPixels[] ecPix) {
         this.ecPix = ecPix;     
@@ -52,7 +57,16 @@ public class FCApplication implements ActionListener  {
         this.ecPix = ecPix;   
         this.addCanvas(name);
     }
-	
+    
+    public void setApplicationClass(MonitorApp app) {
+        this.app = app;
+        app.getDetectorView().addFCApplicationListeners(this);
+    }
+    
+    public void setMonitoringClass(DetectorMonitor mon) {
+        this.mon = mon;
+    }
+    
     public String getName() {
         return this.appName;
     }
@@ -66,8 +80,8 @@ public class FCApplication implements ActionListener  {
         layer = dd.getLayer();
         ic    = dd.getComponent(); 	 
                 
-        panel = app.getDetectorView().omap;
-        io    = app.getDetectorView().ilmap;
+        panel = omap;
+        io    = ilmap;
         of    = (io-1)*3;
         lay   = 0;
         opt   = 0;
@@ -92,14 +106,6 @@ public class FCApplication implements ActionListener  {
 	
 	public void addLMaps(String name, DetectorCollection<TreeMap<Integer,Object>> map) {
 		this.Lmap_a=map;
-	}
-	
-	public void setApplicationClass(MonitorApp app) {
-		this.app = app;
-	}
-	
-	public void setMonitoringClass(DetectorMonitor mon) {
-		this.mon = mon;
 	}
 	
 	public void process(EvioDataBank bank) {
@@ -140,13 +146,34 @@ public class FCApplication implements ActionListener  {
         return this.canvases.get(index);
     }
     
+    public void mapButtonAction(String group, String name, int key) {
+        this.bStore = app.getDetectorView().bStore;
+        if (!bStore.containsKey(group)) {
+            bStore.put(group,key);
+        }else{
+            bStore.replace(group,key);
+        }
+        omap = key;
+        app.getDetectorView().update();     
+    }
+    
+    public void viewButtonAction(String group, String name, int key) {
+        this.bStore = app.getDetectorView().bStore;
+        this.rbPanes = app.getDetectorView().rbPanes;
+        if(group=="LAY") {
+            app.getDetectorView().getView().setLayerState(name, true);
+            if (key<4) {rbPanes.get("UVW").setVisible(true);rbPanes.get("PIX").setVisible(false);omap=bStore.get("UVW");}       
+            if (key>3) {rbPanes.get("PIX").setVisible(true);rbPanes.get("UVW").setVisible(false);omap=bStore.get("PIX");}
+        }
+        if(group=="DET") ilmap = key;
+        app.getDetectorView().update();        
+    }  
+    
     public void setRadioButtons() {
         this.radioPane.setLayout(new FlowLayout());
         ButtonGroup bG = new ButtonGroup();
         for (String field : this.fields) {
-//            System.out.println(field);
             String item = field;
-            // add buttons named as "fields" to the button group and panel
             JRadioButton b = new JRadioButton(item);
             if(bG.getButtonCount()==0) b.setSelected(true);
             b.addActionListener(this);
@@ -156,7 +183,6 @@ public class FCApplication implements ActionListener  {
     }  
     
     public void actionPerformed(ActionEvent e) {
-//      System.out.println(this.getName() + " application radio button set to: " + e.getActionCommand());
       buttonSelect=e.getActionCommand();
       for(int i=0; i<this.fields.size(); i++) {
           if(buttonSelect == this.fields.get(i)) {

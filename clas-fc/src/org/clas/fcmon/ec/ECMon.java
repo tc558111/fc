@@ -82,7 +82,7 @@ public class ECMon extends DetectorMonitor {
         app.setPluginClass(monitor);
         app.makeGUI();
         app.mode7Emulation.init(1, 3, 1);
-        monitor.makeApps(monitor);
+        monitor.makeApps();
         monitor.addCanvas();
         monitor.init();
         monitor.initDetector();
@@ -98,39 +98,39 @@ public class ECMon extends DetectorMonitor {
         ecDet.addLMaps("Lmap_a", ecRecon.Lmap_a); 
     }
     
-    public void makeApps(DetectorMonitor monitor) {
+    public void makeApps() {
         System.out.println("makeApps()");
         
         ecRecon = new ECReconstructionApp("ECREC",ecPix);        
-        ecRecon.setMonitoringClass(monitor);
+        ecRecon.setMonitoringClass(this);
         ecRecon.setApplicationClass(app);
         
         ecAtten = new ECAttenApp("Attenuation",ecPix);  
-        ecAtten.setMonitoringClass(monitor);
+        ecAtten.setMonitoringClass(this);
         ecAtten.setApplicationClass(app);
         
         ecMode1 = new ECMode1App("Mode1",ecPix);
-        ecMode1.setMonitoringClass(monitor);
+        ecMode1.setMonitoringClass(this);
         ecMode1.setApplicationClass(app);
         
         ecSingleEvent = new ECSingleEventApp("SingleEvent",ecPix);
-        ecSingleEvent.setMonitoringClass(monitor);
+        ecSingleEvent.setMonitoringClass(this);
         ecSingleEvent.setApplicationClass(app);
         
         ecRawHistos = new ECRawHistosApp("RawHistos",ecPix);
-        ecRawHistos.setMonitoringClass(monitor);
+        ecRawHistos.setMonitoringClass(this);
         ecRawHistos.setApplicationClass(app);
         
         ecPedestal = new ECPedestalApp("Pedestal",ecPix);       
-        ecPedestal.setMonitoringClass(monitor);
+        ecPedestal.setMonitoringClass(this);
         ecPedestal.setApplicationClass(app);
         
         ecTiming = new ECTimingApp("Timing",ecPix);     
-        ecTiming.setMonitoringClass(monitor);
+        ecTiming.setMonitoringClass(this);
         ecTiming.setApplicationClass(app);
         
         ecOccupancy = new ECOccupancyApp("Occupancy",ecPix);        
-        ecOccupancy.setMonitoringClass(monitor);
+        ecOccupancy.setMonitoringClass(this);
         ecOccupancy.setApplicationClass(app);        
     }
     

@@ -19,7 +19,7 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 import javax.swing.border.SoftBevelBorder;
 
-//import org.jlab.detector.view.DetectorView2D;
+import org.clas.fcmon.tools.FCApplication;
 
 /**
  *
@@ -32,22 +32,25 @@ public class DetectorPane2D extends JPanel {
     JPanel              viewPane = null;
     DetectorView2D        view2D = new DetectorView2D();
     
-    TreeMap<String,JPanel>  rbPanes = new TreeMap<String,JPanel>();
+    public TreeMap<String,JPanel>  rbPanes = new TreeMap<String,JPanel>();
+    public TreeMap<String,Integer>  bStore = new TreeMap<String,Integer>();
     
-    List<List<buttonMap>> viewStore = new ArrayList<List<buttonMap>>();
-    List<List<buttonMap>>  mapStore = new ArrayList<List<buttonMap>>();
-    TreeMap<String,Integer>  bStore = new TreeMap<String,Integer>();
+    List<List<buttonMap>>    viewStore = new ArrayList<List<buttonMap>>();
+    List<List<buttonMap>>     mapStore = new ArrayList<List<buttonMap>>();
+    List<FCApplication>    FCListeners = new ArrayList<FCApplication>();
+    
     buttonMap         lastMapButton = null;
            
-    public int ilmap=1;
-    public int  omap=0;    
-    
     public DetectorPane2D(){
         super();
         this.setLayout(new BorderLayout());
         this.setBorder(BorderFactory.createSoftBevelBorder(SoftBevelBorder.RAISED));
         makeGUI();
     }
+    
+    public void addFCApplicationListeners(FCApplication lt){
+        this.FCListeners.add(lt);
+    }  
     
     public final void makeGUI(){
          mapPane = new JPanel();
@@ -57,30 +60,27 @@ public class DetectorPane2D extends JPanel {
         this.add(  view2D,BorderLayout.CENTER);
         this.add(viewPane,BorderLayout.PAGE_END);        
     }
-       
-    public void initViewButtons(int groupIndex, int nameIndex) {
-        buttonMap map = viewStore.get(groupIndex).get(nameIndex);
-        map.b.setSelected(true);        
-        this.viewButtonAction(map.group,map.name,map.key);
-     }
+
+    public buttonMap getViewButtonMap(int groupIndex, int nameIndex) {
+        return viewStore.get(groupIndex).get(nameIndex);        
+    }
     
-    public void initMapButtons(int groupIndex, int nameIndex) {
-        buttonMap map = mapStore.get(groupIndex).get(nameIndex);
-        map.b.setSelected(true);        
-        this.mapButtonAction(map.group,map.name,map.key);
-     }
+    public buttonMap getMapButtonMap(int groupIndex, int nameIndex) {
+        return mapStore.get(groupIndex).get(nameIndex);        
+    }
     
-    private class buttonMap {
-       String group;
-       String name;
-       int key;       
-       JRadioButton b;
+    public class buttonMap {
+       public String group;
+       public String name;
+       public int key;       
+       public JRadioButton b;
        buttonMap() {}
        buttonMap(String group, String name, int key) {
            this.group = group;
             this.name = name;
              this.key = key;
                this.b = new JRadioButton(this.name);
+               this.b.setBackground(Color.LIGHT_GRAY);
        }
    }
     
@@ -103,10 +103,9 @@ public class DetectorPane2D extends JPanel {
             for(buttonMap bn: bg) {
                 bGname = bn.group;
                 if(!rbPanes.containsKey(bGname)) rbPanes.put(bGname, new JPanel());
-                bn.b.setBackground(Color.LIGHT_GRAY);
                 bn.b.addActionListener(new ActionListener() {
                     public void actionPerformed(ActionEvent e) {
-                       mapButtonAction(bn.group,bn.name,bn.key);
+                       for(FCApplication lt : FCListeners) lt.mapButtonAction(bn.group,bn.name,bn.key);
                     }
                 });
                 this.rbPanes.get(bGname).add(bn.b); bG.add(bn.b);
@@ -119,36 +118,15 @@ public class DetectorPane2D extends JPanel {
         for(List<buttonMap> bg: viewStore) {
             ButtonGroup bG = new ButtonGroup();
             for(buttonMap bn: bg) {
-                bn.b.setBackground(Color.LIGHT_GRAY);
                 bn.b.addActionListener(new ActionListener() {
                    public void actionPerformed(ActionEvent e) {
-                      viewButtonAction(bn.group,bn.name,bn.key);
+                      for(FCApplication lt : FCListeners) lt.viewButtonAction(bn.group,bn.name,bn.key);                     
                    }
                 });               
                 this.viewPane.add(bn.b); bG.add(bn.b);
             }
         } 
     }  
-    
-    public void mapButtonAction(String group, String name, int key) {
-        if (!bStore.containsKey(group)) {
-            bStore.put(group,key);
-        }else{
-            bStore.replace(group,key);
-        }
-        omap = key;
-        update();     
-    }
-    
-    public void viewButtonAction(String group, String name, int key) {
-        if(group=="LAY") {
-            view2D.setLayerState(name, true);
-            if (key<4) {rbPanes.get("UVW").setVisible(true);rbPanes.get("PIX").setVisible(false);omap=bStore.get("UVW");}       
-            if (key>3) {rbPanes.get("PIX").setVisible(true);rbPanes.get("UVW").setVisible(false);omap=bStore.get("PIX");}
-        }
-        if(group=="DET") ilmap = key;
-        update();        
-    }
     
     public void setFPS(int fps){
         if (fps==0) getView().stop();

@@ -45,8 +45,8 @@ public class ECMon extends DetectorMonitor {
     int    detID                    = 0;
     double PCMon_zmin               = 0;
     double PCMon_zmax               = 0;
-    int is1                         = 2 ;
-    int is2                         = 3 ;
+    int is1                         = 1 ;
+    int is2                         = 2 ;
    
     int nsa,nsb,tet,p1,p2,pedref    = 0;
    
@@ -81,7 +81,7 @@ public class ECMon extends DetectorMonitor {
         ECMon monitor = new ECMon(det);		
         app.setPluginClass(monitor);
         app.makeGUI();
-        app.mode7Emulation.init(1, 3, 1);
+        app.mode7Emulation.init("/daq/fadc/ec",1, 3, 1);
         monitor.makeApps();
         monitor.addCanvas();
         monitor.init();

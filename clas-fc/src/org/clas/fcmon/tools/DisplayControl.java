@@ -18,13 +18,13 @@ public class DisplayControl extends JPanel {
     static final int FPS_MAX = 20;
     static final int FPS_INIT = 10;
     
-    static final int PIX_MIN_LO   =  10;
-    static final int PIX_MIN_HI   = 200;
-    static final int PIX_MIN_INIT =  90;
+    static final int PIX_MIN_LO   =   1;
+    static final int PIX_MIN_HI   = 100;
+    static final int PIX_MIN_INIT = 100;
     
     static final int PIX_MAX_LO    =    1;
-    static final int PIX_MAX_HI    =  150;
-    static final int PIX_MAX_INIT  =   80;
+    static final int PIX_MAX_HI    =  100;
+    static final int PIX_MAX_INIT  =  100;
     
     static final int OPC_LO   =   1;
     static final int OPC_HI   = 100;
@@ -59,12 +59,7 @@ public class DisplayControl extends JPanel {
                 JSlider source = (JSlider)f.getSource();
                 if (!source.getValueIsAdjusting()) {
                     int fps = (int)source.getValue(); 
-                    //int delay = 0;
-                    //if (fps!=0 ) delay = 1000 / fps;
-                    //updateTimer.setDelay(delay);
-                    detectorView.setFPS(fps);
-                	//monitoringClass.analyze(1);
-                    //getDetectorView().updateGUI();
+                    detectorView.setFPS(fps); 
                 }
             }            	
         }
@@ -95,8 +90,8 @@ public class DisplayControl extends JPanel {
         pixContrastMax.addChangeListener(new ChangeListener() {
             public void stateChanged(ChangeEvent f) {
                 JSlider source = (JSlider)f.getSource();                
-                        pixMax = 0.01*source.getValue();  
-                        detectorView.repaint();
+                        pixMax = Math.exp(-Math.pow(source.getValue()-PIX_MAX_HI,2)/2000.);  
+                        detectorView.getView().updateGUI();
             }            	
         }
         );  
@@ -108,7 +103,7 @@ public class DisplayControl extends JPanel {
             public void stateChanged(ChangeEvent f) {
                 JSlider source = (JSlider)f.getSource();                
                         opac = 0.01*source.getValue();  
-                        detectorView.repaint();
+                        detectorView.getView().updateGUI();
             }               
         }
         );  

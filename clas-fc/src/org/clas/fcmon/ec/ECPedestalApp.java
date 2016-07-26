@@ -17,7 +17,7 @@ public class ECPedestalApp extends FCApplication {
 
    public void updateCanvas(DetectorDescriptor dd) {
 
-       EmbeddedCanvas canvas = this.getCanvas(this.getName()); 
+      EmbeddedCanvas canvas = this.getCanvas(this.getName()); 
 		
       H1D h;
       Boolean inMC = (Boolean) mon.getGlob().get("inMC");

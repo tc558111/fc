@@ -174,7 +174,7 @@ public class FCApplication implements ActionListener  {
             bStore.replace(group,key);
         }
         omap = key;
-        app.getDetectorView().update();     
+        app.getDetectorView().getView().updateGUI();     
     }
     
     public void viewButtonAction(String group, String name, int key) {
@@ -186,7 +186,7 @@ public class FCApplication implements ActionListener  {
             if (key>3) {rbPanes.get("PIX").setVisible(true);rbPanes.get("PMT").setVisible(false);omap=bStore.get("PIX");}
         }
         if(group=="DET") ilmap = key;
-        app.getDetectorView().update();        
+        app.getDetectorView().getView().updateGUI();        
     }  
     
     public void setRadioButtons() {

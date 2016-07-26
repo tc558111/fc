@@ -25,8 +25,6 @@ public class ECMode1App extends FCApplication  {
       int     detID =     (int) mon.getGlob().get("detID");
       double   zmax =  (double) mon.getGlob().get("PCMon_zmax");
       
-      int tet = app.mode7Emulation.tet;
-        
       if (inMC) return;
 		
       this.getDetIndices(dd);
@@ -44,17 +42,18 @@ public class ECMode1App extends FCApplication  {
       canvas.setAxisFontSize(14);
       canvas.setTitleFontSize(14);
 		
-      // CCDB and User TET threshold - functions to draw lines
-		
+      int tet = app.mode7Emulation.tet;
+      
       if (app.mode7Emulation.User_tet>0)  tet=app.mode7Emulation.User_tet;
       if (app.mode7Emulation.User_tet==0) tet=app.mode7Emulation.CCDB_tet;
+      
       F1D f1 = new F1D("p0",0.,100.); f1.setParameter(0,tet);
-      F1D f2 = new F1D("p0",0.,100.); f2.setParameter(0,app.mode7Emulation.CCDB_tet);
       f1.setLineColor(2);
+      F1D f2 = new F1D("p0",0.,100.); f2.setParameter(0,app.mode7Emulation.CCDB_tet);
       f2.setLineColor(4); f2.setLineStyle(2);	
 		
       String otab[]={"U Inner Strip","V Inner Strip","W Inner Strip","U Outer Strip","V Outer Strip","W Outer Strip"};
-        
+      
       for(int ip=0;ip<ecPix[io-1].pc_nstr[layer-of-1];ip++){
          canvas.cd(ip); canvas.getPad().setAxisRange(0.,100.,-15.,zmax*app.displayControl.pixMax); //Vertical scale set by ZMAX slider
          H1D h1 = ecPix[0].strips.hmap2.get("H2_Mode1_Sevd").get(is+1,layer,0).sliceY(ip); 

@@ -29,8 +29,8 @@ public class FCDetector {
 
     private String                 appName = null;
     
-    public ECPixels[]                ecPix = new ECPixels[2];
-    public CCPixels                  ccPix = new CCPixels();
+    public ECPixels[]                ecPix = null;  
+    public CCPixels                  ccPix = null; 
     public MonitorApp                  app = null;
     public DetectorMonitor             mon = null;
     public TreeMap<String,JPanel>  rbPanes = new TreeMap<String,JPanel>();
@@ -62,9 +62,9 @@ public class FCDetector {
         this.nStrips[0] = ecPix[0].pc_nstr[0];
         this.nStrips[1] = ecPix[0].pc_nstr[1];
         this.nStrips[2] = ecPix[0].pc_nstr[2];
-        this.nStrips[3] = ecPix[1].pc_nstr[0];
-        this.nStrips[4] = ecPix[1].pc_nstr[1];
-        this.nStrips[5] = ecPix[1].pc_nstr[2];
+        this.nStrips[3] = ecPix[0].pc_nstr[0];
+        this.nStrips[4] = ecPix[0].pc_nstr[1];
+        this.nStrips[5] = ecPix[0].pc_nstr[2];
     }
     
     public FCDetector(String name, CCPixels ccPix) {

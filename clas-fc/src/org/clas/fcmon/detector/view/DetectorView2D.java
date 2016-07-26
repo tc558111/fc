@@ -24,9 +24,6 @@ import javax.swing.Timer;
 import org.jlab.detector.base.DetectorDescriptor;
 import org.jlab.detector.base.DetectorType;
 import org.jlab.detector.decode.DetectorDataDgtz;
-//import org.jlab.detector.view.DetectorListener;
-//import org.jlab.detector.view.DetectorShape2D;
-//import org.jlab.detector.view.DetectorViewLayer2D;
 import org.jlab.detector.view.ViewWorld;
 import org.jlab.groot.base.ColorPalette;
 import org.jlab.groot.graphics.GraphicsAxis;
@@ -222,6 +219,11 @@ public class DetectorView2D extends JPanel implements MouseMotionListener {
         if(activeLayer!=null&&isLayerActive(activeLayer)) viewLayers.get(activeLayer).setActive(false);
         viewLayers.get(layer).setActive(flag);
         activeLayer = layer;
+        for(Map.Entry<Long,DetectorShape2D>  shape : viewLayers.get(layer).shapes.getMap().entrySet()){        
+          activeShape = shape.getValue();
+          break;
+        }
+
     }
     
     public void    setLayerActive(String layer) {viewLayers.get(layer).setActive(true);}
@@ -359,7 +361,6 @@ public class DetectorView2D extends JPanel implements MouseMotionListener {
             for(Map.Entry<Long,DetectorShape2D>  shape : shapes.getMap().entrySet()){
                 if(counter==0) axisRange.setMinMax(shape.getValue().getCounter(), shape.getValue().getCounter());
                 axisRange.grow(shape.getValue().getCounter());
-                //if(shape.getValue().isContained(x, y)==true) return shape.getValue();
             }
             return this.axisRange;
         }

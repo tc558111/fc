@@ -32,13 +32,13 @@ public class ECMon extends DetectorMonitor {
     ECTimingApp            ecTiming = null;
     ECReconstructionApp     ecRecon = null;
    
-    ECDetectorReconstruction  ecRec = new ECDetectorReconstruction();
+    ECDetectorReconstruction  ecRec = null;
    
     DatabaseConstantProvider ccdb   = null;
     FADCConfigLoader          fadc  = new FADCConfigLoader();
 
-    CalDrawDB[]                ecDB = new CalDrawDB[2];  
-    ECPixels[]                ecPix = new ECPixels[2];
+    CalDrawDB                ecDB[] = new CalDrawDB[2]; 
+    ECPixels                ecPix[] = new ECPixels[2];
    
     public int inProcess            = 0;     //0=init 1=processing 2=end-of-run 3=post-run
     public boolean inMC             = false; //true=MC false=DATA
@@ -77,7 +77,7 @@ public class ECMon extends DetectorMonitor {
     }
 	
     public static void main(String[] args){
-        String det = "PCAL";
+        String det = "EC";
         ECMon monitor = new ECMon(det);		
         app.setPluginClass(monitor);
         app.makeGUI();

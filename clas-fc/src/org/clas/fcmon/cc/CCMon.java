@@ -9,8 +9,6 @@ import org.clas.fcmon.tools.*;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas12.detector.FADCConfigLoader;
 import org.jlab.clasrec.utils.DatabaseConstantProvider;
-import org.root.basic.EmbeddedCanvas;
-import org.root.func.F1D;
 import org.root.histogram.H1D;
 import org.root.histogram.H2D;
 
@@ -24,17 +22,18 @@ public class CCMon extends DetectorMonitor {
     static MonitorApp           app = new MonitorApp("LTCCMon",1800,950);	
     
     CCDetector                ccDet = null;
+    
     CCReconstructionApp     ccRecon = null;
     CCOccupancyApp      ccOccupancy = null;
     CCMode1App              ccMode1 = null;
     CCPedestalApp        ccPedestal = null;
     CCSummaryApp          ccSummary = null;
     
-	DatabaseConstantProvider   ccdb = new DatabaseConstantProvider(12,"default");
-    FADCConfigLoader          fadc  = new FADCConfigLoader();
-	
 	CCPixels                  ccPix = new CCPixels();
 	
+    DatabaseConstantProvider   ccdb = new DatabaseConstantProvider(12,"default");
+    FADCConfigLoader          fadc  = new FADCConfigLoader();
+    	
 	int inProcess                   = 0;     //0=init 1=processing 2=end-of-run 3=post-run
 	boolean inMC                    = false; //true=MC false=DATA
 	int ipsave                      = 0;
@@ -44,7 +43,6 @@ public class CCMon extends DetectorMonitor {
     int is1                         = 0;
     int is2                         = 1;	
     
-    int thrcc                       = 20;
     int nsa,nsb,tet,p1,p2,pedref    = 0;
     
     String mondet                   = "LTCC";
@@ -161,13 +159,11 @@ public class CCMon extends DetectorMonitor {
 	}
 	
 	@Override
-	public void close() {
-		
+	public void close() {	
 	}	
 	
 	@Override
-	public void saveToFile() {
-		
+	public void saveToFile() {		
 	}
 	
 	@Override
@@ -190,26 +186,21 @@ public class CCMon extends DetectorMonitor {
     @Override
     public void processShape(DetectorShape2D shape) {       
         DetectorDescriptor dd = shape.getDescriptor();
-        this.analyze(inProcess);
-        
+        this.analyze(inProcess);        
         switch (app.getSelectedTabName()) {
         case "Mode1":             ccMode1.updateCanvas(dd); break;
         case "Occupancy":     ccOccupancy.updateCanvas(dd); break;
         case "Pedestal":       ccPedestal.updateCanvas(dd); break;
         case "Summary":         ccSummary.updateCanvas(dd); 
-        }      
-                 
+        }                       
     }
 
     @Override
     public void resetEventListener() {
-        // TODO Auto-generated method stub
-        
     }
 
     @Override
     public void timerUpdate() {
-        // TODO Auto-generated method stub
-        
     }
+    
 }

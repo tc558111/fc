@@ -17,7 +17,7 @@ public class CCDetector extends FCDetector {
     
     public void initButtons() {
         
-        System.out.println("initButtons()");
+        System.out.println("CCDetector.initButtons()");
         
         initMapButtons(0, 0);
         initMapButtons(1, 0);

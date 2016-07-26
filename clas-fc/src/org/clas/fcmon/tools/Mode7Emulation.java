@@ -20,7 +20,6 @@ import org.jlab.clas12.detector.FADCConfigLoader;
 public class Mode7Emulation extends JPanel implements ActionListener,ItemListener {
 	
    DetectorPane2D detectorView = null;
-//    DetectorShapeTabView detectorView = null;
    FADCConfigLoader            fadc  = new FADCConfigLoader();
 	
    ButtonGroup       bG3  = new ButtonGroup();
@@ -76,8 +75,8 @@ public class Mode7Emulation extends JPanel implements ActionListener,ItemListene
       if (User_nsb>0) this.nsb=User_nsb;
    }
 	   
-   public void init(int cr, int sl, int ch) {   
-      fadc.load("/daq/fadc/ec",10,"default");
+   public void init(String path, int cr, int sl, int ch) {   
+      fadc.load(path,10,"default");
       configMode7(cr,sl,ch);
       ttet.setText(Integer.toString(this.tet)); 
       tnsa.setText(Integer.toString(this.nsa));

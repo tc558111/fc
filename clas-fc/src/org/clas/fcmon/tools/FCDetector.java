@@ -44,6 +44,7 @@ public class FCDetector {
     int          omap = 0;
     int         ilmap = 1;    
     int     inProcess = 0;
+    int     nStrips[] = new int[6];
     double PCMon_zmin = 0;
     double PCMon_zmax = 0;
     
@@ -57,12 +58,20 @@ public class FCDetector {
     
     public FCDetector(String name, ECPixels[] ecPix) {
         this.appName = name;
-        this.ecPix = ecPix;   
+        this.ecPix = ecPix;  
+        this.nStrips[0] = ecPix[0].pc_nstr[0];
+        this.nStrips[1] = ecPix[0].pc_nstr[1];
+        this.nStrips[2] = ecPix[0].pc_nstr[2];
+        this.nStrips[3] = ecPix[1].pc_nstr[0];
+        this.nStrips[4] = ecPix[1].pc_nstr[1];
+        this.nStrips[5] = ecPix[1].pc_nstr[2];
     }
     
     public FCDetector(String name, CCPixels ccPix) {
         this.appName = name;
         this.ccPix = ccPix;   
+        this.nStrips[0] = ccPix.cc_nstr[0];
+        this.nStrips[1] = ccPix.cc_nstr[1];
     }
     
     public void setApplicationClass(MonitorApp app) {
@@ -144,28 +153,31 @@ public class FCDetector {
         }
         if(group=="DET") ilmap = key;
         app.getDetectorView().update();        
-    }      
+    }     
     
     public void update(DetectorShape2D shape) {
         
         DetectorDescriptor dd = shape.getDescriptor();
         this.getDetIndices(dd);
-
         layer = lay;
         
         double colorfraction=1;
         
-        inProcess = (int) mon.getGlob().get("inProcess");
-
+        inProcess = (int) mon.getGlob().get("inProcess"); // Get process status
+        
+        // Update shape color map depending on process status and layer
+        // layers 1-6 reserved for strip views, layers >7 for pixel views
+        // Lmap_a stores live colormap of detector shape elements
+        
         if (inProcess==0){ // Assign default colors upon starting GUI (before event processing)
-            if(layer<7) colorfraction = (double)ic/36;
-            if(layer>=7) colorfraction = getcolor((TreeMap<Integer, Object>) Lmap_a.get(0,0,0), ic);
+             if(layer<7) colorfraction = (double)ic/nStrips[layer-1]; 
+            if(layer>=7) colorfraction = getcolor((TreeMap<Integer, Object>) Lmap_a.get(0,0,0), ic);  
         }
-        if (inProcess>0){             // Use Lmap_a to get colors of components while processing data
+        if (inProcess>0){             
                          colorfraction = getcolor((TreeMap<Integer, Object>) Lmap_a.get(is+1,layer,opt), ic);
         }
-        if (colorfraction<0.05) colorfraction = 0.05;
         
+        if (colorfraction<0.05) colorfraction = 0.05;
         Color col = palette.getRange(colorfraction);
         shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
 
@@ -174,6 +186,7 @@ public class FCDetector {
     public double getcolor(TreeMap<Integer,Object> map, int component) {
         
         double color=0;
+        double smax=4000.;
         
         double val[] =(double[]) map.get(1); 
         double rmin  =(double)   map.get(2);
@@ -188,9 +201,10 @@ public class FCDetector {
         double pixMin = app.displayControl.pixMin ; double pixMax = app.displayControl.pixMax;
         if (inProcess!=0) {
             if (!app.isSingleEvent()) color=(double)(Math.log10(z)-pixMin*Math.log10(rmin))/(pixMax*Math.log10(rmax)-pixMin*Math.log10(rmin));
-            if ( app.isSingleEvent()) color=(double)(Math.log10(z)-pixMin*Math.log10(rmin))/(pixMax*Math.log10(4000.)-pixMin*Math.log10(rmin));
+            if ( app.isSingleEvent()) color=(double)(Math.log10(z)-pixMin*Math.log10(rmin))/(pixMax*Math.log10(smax)-pixMin*Math.log10(rmin));
         }
         
+        // Set color bar min,max
         app.getDetectorView().getView().zmax = pixMax*rmax;
         app.getDetectorView().getView().zmin = pixMin*rmin;
         
@@ -198,5 +212,5 @@ public class FCDetector {
         if (color<=0)  color=0.;
 
         return color;
-    }
+    }    
 }

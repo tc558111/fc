@@ -24,10 +24,10 @@ public class CCMon extends DetectorMonitor {
     CCDetector                ccDet = null;
     
     CCReconstructionApp     ccRecon = null;
-    CCOccupancyApp      ccOccupancy = null;
     CCMode1App              ccMode1 = null;
+    CCOccupancyApp      ccOccupancy = null;
     CCPedestalApp        ccPedestal = null;
-    CCSummaryApp          ccSummary = null;
+    CCSummaryApp          ccSummary = null;    
     CCCalibrationApp        ccCalib = null;
     
     CCPixels                  ccPix = new CCPixels();
@@ -69,8 +69,8 @@ public class CCMon extends DetectorMonitor {
         app.makeGUI();
         app.mode7Emulation.init("/daq/fadc/ltcc",1, 18, 12);
         monitor.makeApps();
-        monitor.addCanvas();
         monitor.init();
+        monitor.addCanvas();
         monitor.initDetector();
         app.init();
         monitor.ccDet.initButtons();
@@ -106,7 +106,7 @@ public class CCMon extends DetectorMonitor {
         ccSummary.setMonitoringClass(this);
         ccSummary.setApplicationClass(app);  
         
-        ccCalib   = new CCCalibrationApp("Calibration", ccPix);
+        ccCalib = new CCCalibrationApp("Calibration", ccPix);
         ccCalib.setMonitoringClass(this);
         ccCalib.setApplicationClass(app);  
     }

@@ -17,6 +17,8 @@ import org.clas.fcmon.detector.view.DetectorShape2D;
 import org.clas.fcmon.tools.ECPixels;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.detector.base.DetectorDescriptor;
+import org.jlab.detector.calib.tasks.CalibrationEngine;
+import org.jlab.detector.calib.tasks.CalibrationEngineView;
 import org.jlab.evio.clas12.EvioDataBank;
 import org.root.attr.ColorPalette;
 import org.root.basic.EmbeddedCanvas;
@@ -30,6 +32,7 @@ public class FCApplication implements ActionListener  {
     private String                                 appName    = null;
     private List<EmbeddedCanvas>                   canvases   = new ArrayList<EmbeddedCanvas>();
     private JPanel                                 radioPane  = new JPanel();
+    private CalibrationEngineView                  calibPane  = null;
     private List<String>                           fields     = new ArrayList<String>();
     private List<FCParameter>                      parameters = new ArrayList<FCParameter>();
     
@@ -165,6 +168,14 @@ public class FCApplication implements ActionListener  {
         }
         return this.canvases.get(index);
     }  
+    
+    public void setCalibPane(CalibrationEngine engine) {
+        calibPane = new CalibrationEngineView(engine);
+    }
+    
+    public CalibrationEngineView getCalibPane(){
+        return calibPane;
+    }
     
     public void mapButtonAction(String group, String name, int key) {
         this.bStore = app.getDetectorView().bStore;

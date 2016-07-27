@@ -168,6 +168,11 @@ public class MonitorApp extends JFrame implements ActionListener {
         this.canvasTabbedPane.addTab(name,canvas);
     }
     
+    public void addFrame(String name, JPanel frame) {
+        frame = new JPanel();
+        this.canvasTabbedPane.addTab(name, frame);
+    }
+    
     public EmbeddedCanvas getCanvas(String name){
         return this.paneCanvas.get(name);
     }  

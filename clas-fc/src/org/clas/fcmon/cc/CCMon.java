@@ -28,18 +28,19 @@ public class CCMon extends DetectorMonitor {
     CCMode1App              ccMode1 = null;
     CCPedestalApp        ccPedestal = null;
     CCSummaryApp          ccSummary = null;
+    CCCalibrationApp        ccCalib = null;
     
-	CCPixels                  ccPix = new CCPixels();
+    CCPixels                  ccPix = new CCPixels();
 	
     DatabaseConstantProvider   ccdb = new DatabaseConstantProvider(12,"default");
     FADCConfigLoader          fadc  = new FADCConfigLoader();
     	
-	int inProcess                   = 0;     //0=init 1=processing 2=end-of-run 3=post-run
-	boolean inMC                    = false; //true=MC false=DATA
-	int ipsave                      = 0;
+    int inProcess                   = 0;     //0=init 1=processing 2=end-of-run 3=post-run
+    boolean inMC                    = false; //true=MC false=DATA
+    int ipsave                      = 0;
     int    detID                    = 0;
-    double PCMon_zmin               = 0;
-    double PCMon_zmax               = 0;
+    double zmin                     = 0;
+    double zmax                     = 0;
     int is1                         = 0;
     int is2                         = 1;	
     
@@ -47,43 +48,43 @@ public class CCMon extends DetectorMonitor {
     
     String mondet                   = "LTCC";
     
-	DetectorCollection<H1D> H1_CCa_Sevd = new DetectorCollection<H1D>();
-	DetectorCollection<H1D> H1_CCt_Sevd = new DetectorCollection<H1D>();
-	DetectorCollection<H2D> H2_CCa_Hist = new DetectorCollection<H2D>();
-	DetectorCollection<H2D> H2_CCt_Hist = new DetectorCollection<H2D>();
-	DetectorCollection<H2D> H2_CCa_Sevd = new DetectorCollection<H2D>();
+    DetectorCollection<H1D> H1_CCa_Sevd = new DetectorCollection<H1D>();
+    DetectorCollection<H1D> H1_CCt_Sevd = new DetectorCollection<H1D>();
+    DetectorCollection<H2D> H2_CCa_Hist = new DetectorCollection<H2D>();
+    DetectorCollection<H2D> H2_CCt_Hist = new DetectorCollection<H2D>();
+    DetectorCollection<H2D> H2_CCa_Sevd = new DetectorCollection<H2D>();
 	
-	DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new DetectorCollection<TreeMap<Integer,Object>>();	 
+    DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new DetectorCollection<TreeMap<Integer,Object>>();	 
 	
-	TreeMap<String,Object> glob = new TreeMap<String,Object>();
+    TreeMap<String,Object> glob = new TreeMap<String,Object>();
 	   
-	public CCMon(String det) {
-		super("CCMON", "1.0", "lcsmith");
-	}
+    public CCMon(String det) {
+        super("CCMON", "1.0", "lcsmith");
+    }
 
-	public static void main(String[] args){		
+    public static void main(String[] args){		
         String det = "LTCC";
-		CCMon monitor = new CCMon(det);		
-		app.setPluginClass(monitor);
-		app.makeGUI();
+        CCMon monitor = new CCMon(det);		
+        app.setPluginClass(monitor);
+        app.makeGUI();
         app.mode7Emulation.init("/daq/fadc/ltcc",1, 18, 12);
         monitor.makeApps();
         monitor.addCanvas();
         monitor.init();
-		monitor.initDetector();
+        monitor.initDetector();
         app.init();
         monitor.ccDet.initButtons();
-	}
+    }
 	
-	public void initDetector() {
+    public void initDetector() {
         ccDet = new CCDetector("CCDet",ccPix);
         ccDet.setMonitoringClass(this);
         ccDet.setApplicationClass(app);
         ccDet.init(is1,is2);
         ccDet.addLMaps("Lmap_a", ccRecon.Lmap_a); 	    
-	}
+    }
 	
-	public void makeApps() {
+    public void makeApps() {
         System.out.println("makeApps()"); 
         ccRecon = new CCReconstructionApp("CCREC",ccPix);        
         ccRecon.setMonitoringClass(this);
@@ -103,15 +104,20 @@ public class CCMon extends DetectorMonitor {
         
         ccSummary = new CCSummaryApp("Summary",ccPix);        
         ccSummary.setMonitoringClass(this);
-        ccSummary.setApplicationClass(app);               
-	}
+        ccSummary.setApplicationClass(app);  
+        
+        ccCalib   = new CCCalibrationApp("Calibration", ccPix);
+        ccCalib.setMonitoringClass(this);
+        ccCalib.setApplicationClass(app);  
+    }
 	
     public void addCanvas() {
         System.out.println("addCanvas()"); 
         app.addCanvas(ccMode1.getName(),     ccMode1.getCanvas());
         app.addCanvas(ccOccupancy.getName(), ccOccupancy.getCanvas());          
         app.addCanvas(ccPedestal.getName(),  ccPedestal.getCanvas());
-        app.addCanvas(ccSummary.getName(),   ccSummary.getCanvas());        
+        app.addCanvas(ccSummary.getName(),   ccSummary.getCanvas()); 
+        app.addFrame(ccCalib.getName(),      ccCalib.getCalibPane());
     }
     
     public void init( ) {       
@@ -124,6 +130,7 @@ public class CCMon extends DetectorMonitor {
     public void initApps() {
         System.out.println("initApps()");
         ccRecon.init();
+        ccCalib.init();
     }
     
     public void initGlob() {
@@ -135,8 +142,8 @@ public class CCMon extends DetectorMonitor {
         putGlob("nsb", nsb);
         putGlob("tet", tet);        
         putGlob("ccdb", ccdb);
-        putGlob("PCMon_zmin", PCMon_zmin);
-        putGlob("PCMon_zmax", PCMon_zmax);
+        putGlob("zmin", zmin);
+        putGlob("zmax", zmax);
         putGlob("fadc",fadc);
         putGlob("mondet",mondet);
         putGlob("is1",is1);
@@ -144,44 +151,44 @@ public class CCMon extends DetectorMonitor {
     }
     
     @Override
-	public TreeMap<String,Object> getGlob(){
-		return this.glob;
-	}	
+    public TreeMap<String,Object> getGlob(){
+        return this.glob;
+    }	
     
     @Override
     public void putGlob(String name, Object obj){
         glob.put(name,obj);
     }  
     
-	@Override
-	public void reset() {
-		ccRecon.clearHistograms();
-	}
+    @Override
+    public void reset() {
+        ccRecon.clearHistograms();
+    }
 	
-	@Override
-	public void close() {	
-	}	
+    @Override
+    public void close() {	
+    }	
 	
-	@Override
-	public void saveToFile() {		
-	}
+    @Override
+    public void saveToFile() {		
+    }
 	
-	@Override
-	public void dataEventAction(DataEvent de) {
-	    ccRecon.addEvent((EvioDataEvent) de);	
-	}
+    @Override
+    public void dataEventAction(DataEvent de) {
+        ccRecon.addEvent((EvioDataEvent) de);	
+    }
 
-	@Override
-	public void update(DetectorShape2D shape) {
+    @Override
+    public void update(DetectorShape2D shape) {
         putGlob("inProcess", inProcess);
         ccDet.update(shape);
-	}
+    }
 		
-	@Override
-	public void analyze(int process) {
+    @Override
+    public void analyze(int process) {
         this.inProcess = process; glob.put("inProcess", process);
-		if (process==1||process==2) ccRecon.makeMaps();	
-	}
+        if (process==1||process==2) ccRecon.makeMaps();	
+    }
 
     @Override
     public void processShape(DetectorShape2D shape) {       

@@ -88,7 +88,10 @@ public class CalDrawDB{
 		slightshift = length/Math.tan(Math.toRadians(angle));
 	}
 	
-	
+	public CalDrawDB() {
+	    
+	}
+
 	//collects all possible pixels into a DetectorShapeView2D
 	public DetectorShapeView2D drawAllPixels(int sector)
 	{

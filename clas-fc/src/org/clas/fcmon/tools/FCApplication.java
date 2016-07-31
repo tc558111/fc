@@ -1,6 +1,5 @@
   package org.clas.fcmon.tools;
 
-import java.awt.Color;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -13,12 +12,9 @@ import javax.swing.JPanel;
 import javax.swing.JRadioButton;
 
 import org.clas.fcmon.cc.CCPixels;
-import org.clas.fcmon.detector.view.DetectorShape2D;
 import org.clas.fcmon.tools.ECPixels;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.detector.base.DetectorDescriptor;
-import org.jlab.detector.calib.tasks.CalibrationEngine;
-import org.jlab.detector.calib.tasks.CalibrationEngineView;
 import org.jlab.evio.clas12.EvioDataBank;
 import org.root.attr.ColorPalette;
 import org.root.basic.EmbeddedCanvas;
@@ -32,9 +28,7 @@ public class FCApplication implements ActionListener  {
     private String                                 appName    = null;
     private List<EmbeddedCanvas>                   canvases   = new ArrayList<EmbeddedCanvas>();
     private JPanel                                 radioPane  = new JPanel();
-    private CalibrationEngineView                  calibPane  = null;
     private List<String>                           fields     = new ArrayList<String>();
-    private List<FCParameter>                      parameters = new ArrayList<FCParameter>();
     
     public ECPixels[]                                   ecPix = new ECPixels[2];
     public CCPixels                                     ccPix = null;
@@ -58,7 +52,7 @@ public class FCApplication implements ActionListener  {
     int        inProcess = 0;
     double    PCMon_zmin = 0;
     double    PCMon_zmax = 0;    
-    int             omap = 0;
+    public int      omap = 0;
     int            ilmap = 1;
     
     public FCApplication(ECPixels[] ecPix) {
@@ -168,14 +162,6 @@ public class FCApplication implements ActionListener  {
         }
         return this.canvases.get(index);
     }  
-    
-    public void setCalibPane(CalibrationEngine engine) {
-        calibPane = new CalibrationEngineView(engine);
-    }
-    
-    public CalibrationEngineView getCalibPane(){
-        return calibPane;
-    }
     
     public void mapButtonAction(String group, String name, int key) {
         this.bStore = app.getDetectorView().bStore;

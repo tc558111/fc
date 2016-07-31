@@ -9,11 +9,13 @@ import org.clas.fcmon.tools.*;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas12.detector.FADCConfigLoader;
 import org.jlab.clasrec.utils.DatabaseConstantProvider;
-import org.root.histogram.H1D;
-import org.root.histogram.H2D;
+//import org.root.histogram.H1D;
+//import org.root.histogram.H2D;
 
 //clas12rec
 import org.jlab.detector.base.DetectorDescriptor;
+import org.jlab.groot.data.H1F;
+import org.jlab.groot.data.H2F;
 import org.jlab.io.evio.EvioDataEvent;
 import org.jlab.io.base.DataEvent;
 
@@ -27,7 +29,7 @@ public class CCMon extends DetectorMonitor {
     CCMode1App              ccMode1 = null;
     CCOccupancyApp      ccOccupancy = null;
     CCPedestalApp        ccPedestal = null;
-    CCSummaryApp          ccSummary = null;    
+    CCSpeApp                  ccSpe = null;    
     CCCalibrationApp        ccCalib = null;
     
     CCPixels                  ccPix = new CCPixels();
@@ -42,17 +44,17 @@ public class CCMon extends DetectorMonitor {
     double zmin                     = 0;
     double zmax                     = 0;
     int is1                         = 0;
-    int is2                         = 1;	
+    int is2                         = 6;	
     
     int nsa,nsb,tet,p1,p2,pedref    = 0;
     
     String mondet                   = "LTCC";
     
-    DetectorCollection<H1D> H1_CCa_Sevd = new DetectorCollection<H1D>();
-    DetectorCollection<H1D> H1_CCt_Sevd = new DetectorCollection<H1D>();
-    DetectorCollection<H2D> H2_CCa_Hist = new DetectorCollection<H2D>();
-    DetectorCollection<H2D> H2_CCt_Hist = new DetectorCollection<H2D>();
-    DetectorCollection<H2D> H2_CCa_Sevd = new DetectorCollection<H2D>();
+    DetectorCollection<H1F> H1_CCa_Sevd = new DetectorCollection<H1F>();
+    DetectorCollection<H1F> H1_CCt_Sevd = new DetectorCollection<H1F>();
+    DetectorCollection<H2F> H2_CCa_Hist = new DetectorCollection<H2F>();
+    DetectorCollection<H2F> H2_CCt_Hist = new DetectorCollection<H2F>();
+    DetectorCollection<H2F> H2_CCa_Sevd = new DetectorCollection<H2F>();
 	
     DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new DetectorCollection<TreeMap<Integer,Object>>();	 
 	
@@ -68,6 +70,7 @@ public class CCMon extends DetectorMonitor {
         app.setPluginClass(monitor);
         app.makeGUI();
         app.mode7Emulation.init("/daq/fadc/ltcc",1, 18, 12);
+        monitor.initGlob();
         monitor.makeApps();
         monitor.init();
         monitor.addCanvas();
@@ -102,13 +105,14 @@ public class CCMon extends DetectorMonitor {
         ccPedestal.setMonitoringClass(this);
         ccPedestal.setApplicationClass(app);       
         
-        ccSummary = new CCSummaryApp("Summary",ccPix);        
-        ccSummary.setMonitoringClass(this);
-        ccSummary.setApplicationClass(app);  
+        ccSpe = new CCSpeApp("SPE",ccPix);        
+        ccSpe.setMonitoringClass(this);
+        ccSpe.setApplicationClass(app);  
         
         ccCalib = new CCCalibrationApp("Calibration", ccPix);
         ccCalib.setMonitoringClass(this);
         ccCalib.setApplicationClass(app);  
+        ccCalib.init(is1,is2);
     }
 	
     public void addCanvas() {
@@ -116,13 +120,12 @@ public class CCMon extends DetectorMonitor {
         app.addCanvas(ccMode1.getName(),     ccMode1.getCanvas());
         app.addCanvas(ccOccupancy.getName(), ccOccupancy.getCanvas());          
         app.addCanvas(ccPedestal.getName(),  ccPedestal.getCanvas());
-        app.addCanvas(ccSummary.getName(),   ccSummary.getCanvas()); 
+        app.addCanvas(ccSpe.getName(),       ccSpe.getCanvas()); 
         app.addFrame(ccCalib.getName(),      ccCalib.getCalibPane());
     }
     
     public void init( ) {       
         System.out.println("init()");   
-        initGlob();
         initApps();
         ccPix.initHistograms();
     }
@@ -130,7 +133,6 @@ public class CCMon extends DetectorMonitor {
     public void initApps() {
         System.out.println("initApps()");
         ccRecon.init();
-        ccCalib.init();
     }
     
     public void initGlob() {
@@ -182,12 +184,16 @@ public class CCMon extends DetectorMonitor {
     public void update(DetectorShape2D shape) {
         putGlob("inProcess", inProcess);
         ccDet.update(shape);
+        ccCalib.updateDetectorView(shape);
     }
 		
     @Override
     public void analyze(int process) {
         this.inProcess = process; glob.put("inProcess", process);
-        if (process==1||process==2) ccRecon.makeMaps();	
+        if (process==1||process==2) {
+            ccRecon.makeMaps();	
+            ccCalib.engines[0].analyze();
+        }
     }
 
     @Override
@@ -198,7 +204,7 @@ public class CCMon extends DetectorMonitor {
         case "Mode1":             ccMode1.updateCanvas(dd); break;
         case "Occupancy":     ccOccupancy.updateCanvas(dd); break;
         case "Pedestal":       ccPedestal.updateCanvas(dd); break;
-        case "Summary":         ccSummary.updateCanvas(dd); 
+        case "SPE":                 ccSpe.updateCanvas(dd); 
         }                       
     }
 

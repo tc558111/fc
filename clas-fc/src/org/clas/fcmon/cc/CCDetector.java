@@ -43,8 +43,8 @@ public class CCDetector extends FCDetector {
          }
         
         addButtons("LAY","View","LR.0.L.1.R.2");
-        addButtons("PMT","Map","EVT.0.ADC.1.TDC.2");
-        addButtons("PIX","Map","EVT.0.ADC.1.TDC.2");
+        addButtons("PMT","Map","EVT.0.ADC.1.TDC.2.STATUS.3");
+        addButtons("PIX","Map","EVT.0.ADC.1.TDC.2.STATUS.3");
         
         app.getDetectorView().addMapButtons();
         app.getDetectorView().addViewButtons(); 

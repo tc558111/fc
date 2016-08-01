@@ -86,7 +86,7 @@ public class DetectorPane2D extends JPanel {
             this.name = name;
              this.key = key;
                this.b = new JRadioButton(this.name);
-               this.b.setBackground(Color.LIGHT_GRAY);
+//               this.b.setBackground(Color.LIGHT_GRAY);
        }
    }
     

@@ -32,6 +32,7 @@ public class CCMon extends DetectorMonitor {
     CCPedestalApp        ccPedestal = null;
     CCSpeApp                  ccSpe = null;    
     CCCalibrationApp        ccCalib = null;
+    CCScalersApp          ccScalers = null;
     CCHvApp                    ccHv = null;
     
     CCPixels                  ccPix = new CCPixels();
@@ -119,15 +120,21 @@ public class CCMon extends DetectorMonitor {
         ccHv = new CCHvApp("HV");
         ccHv.setMonitoringClass(this);
         ccHv.setApplicationClass(app);  
+        
+        ccScalers = new CCScalersApp("Scalers");
+        ccScalers.setMonitoringClass(this);
+        ccScalers.setApplicationClass(app);  
     }
 	
     public void addCanvas() {
         System.out.println("addCanvas()"); 
-        app.addCanvas(ccMode1.getName(),     ccMode1.getCanvas());
+        app.addCanvas(ccMode1.getName(),         ccMode1.getCanvas());
         app.addCanvas(ccOccupancy.getName(), ccOccupancy.getCanvas());          
-        app.addCanvas(ccPedestal.getName(),  ccPedestal.getCanvas());
-        app.addCanvas(ccSpe.getName(),       ccSpe.getCanvas()); 
-        app.addFrame(ccCalib.getName(),      ccCalib.getCalibPane());
+        app.addCanvas(ccPedestal.getName(),   ccPedestal.getCanvas());
+        app.addCanvas(ccSpe.getName(),             ccSpe.getCanvas()); 
+        app.addFrame(ccCalib.getName(),          ccCalib.getCalibPane());
+        app.addFrame(ccHv.getName(),                ccHv.getCanvas());
+        app.addFrame(ccScalers.getName(),      ccScalers.getCanvas());
     }
     
     public void init( ) {       
@@ -220,7 +227,8 @@ public class CCMon extends DetectorMonitor {
         case "Mode1":             ccMode1.updateCanvas(dd); break;
         case "Occupancy":     ccOccupancy.updateCanvas(dd); break;
         case "Pedestal":       ccPedestal.updateCanvas(dd); break;
-        case "SPE":                 ccSpe.updateCanvas(dd); 
+        case "SPE":                 ccSpe.updateCanvas(dd); break; 
+        case "HV":                   ccHV.updateCanvas(dd);
         }                       
     }
 

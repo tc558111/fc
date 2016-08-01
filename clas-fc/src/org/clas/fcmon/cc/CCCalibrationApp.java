@@ -57,13 +57,13 @@ public class CCCalibrationApp extends FCApplication implements CalibrationConsta
     
     public JPanel getCalibPane() {        
         engineView.setLayout(new BorderLayout());
-        JSplitPane enginePane = new JSplitPane(JSplitPane.VERTICAL_SPLIT); 
+        JSplitPane enginePane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT); 
         ccview.getTabbedPane().addChangeListener(this);
         for (int i=0; i < engines.length; i++) {
             ccview.addConstants(engines[i].getCalibrationConstants().get(0),this);
         }        
-        enginePane.setTopComponent(canvas);
-        enginePane.setBottomComponent(ccview);       
+        enginePane.setRightComponent(canvas);
+        enginePane.setLeftComponent(ccview);       
         enginePane.setDividerLocation(0.5);
         engineView.add(enginePane);
         return engineView;       

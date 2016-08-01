@@ -34,7 +34,7 @@ public class FCApplication implements ActionListener  {
     private JPanel                                 radioPane  = new JPanel();
     private CalibrationEngineView                  calibPane  = null;
     private List<String>                           fields     = new ArrayList<String>();
-    private List<FCParameter>                      parameters = new ArrayList<FCParameter>();
+//    private List<FCParameter>                      parameters = new ArrayList<FCParameter>();
     
     public ECPixels[]                                   ecPix = new ECPixels[2];
     public CCPixels                                     ccPix = null;

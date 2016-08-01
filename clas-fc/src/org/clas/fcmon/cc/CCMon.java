@@ -1,6 +1,7 @@
 package org.clas.fcmon.cc;
 
 import java.util.TreeMap;
+import java.util.concurrent.ExecutionException;
 
 import org.clas.fcmon.detector.view.DetectorShape2D;
 import org.clas.fcmon.tools.*;
@@ -31,6 +32,7 @@ public class CCMon extends DetectorMonitor {
     CCPedestalApp        ccPedestal = null;
     CCSpeApp                  ccSpe = null;    
     CCCalibrationApp        ccCalib = null;
+    CCHvApp                    ccHv = null;
     
     CCPixels                  ccPix = new CCPixels();
 	
@@ -113,6 +115,10 @@ public class CCMon extends DetectorMonitor {
         ccCalib.setMonitoringClass(this);
         ccCalib.setApplicationClass(app);  
         ccCalib.init(is1,is2);
+        
+        ccHv = new CCHvApp("HV");
+        ccHv.setMonitoringClass(this);
+        ccHv.setApplicationClass(app);  
     }
 	
     public void addCanvas() {
@@ -133,6 +139,16 @@ public class CCMon extends DetectorMonitor {
     public void initApps() {
         System.out.println("initApps()");
         ccRecon.init();
+        ccHv.init();
+        try {
+            ccHv.getPvNames();
+        }
+        catch (InterruptedException e) {            
+        }
+        
+        catch (ExecutionException e) {           
+        }   
+       
     }
     
     public void initGlob() {

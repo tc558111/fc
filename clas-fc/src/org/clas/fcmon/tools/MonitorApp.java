@@ -67,6 +67,7 @@ public class MonitorApp extends JFrame implements ActionListener {
         this.addChangeListener();
         this.pack();
         this.setVisible(true);
+        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
     }
     
     public void setPluginClass(DetectorMonitor mon) {

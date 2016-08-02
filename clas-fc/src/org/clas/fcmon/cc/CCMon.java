@@ -228,7 +228,7 @@ public class CCMon extends DetectorMonitor {
         case "Occupancy":     ccOccupancy.updateCanvas(dd); break;
         case "Pedestal":       ccPedestal.updateCanvas(dd); break;
         case "SPE":                 ccSpe.updateCanvas(dd); break; 
-        case "HV":                   ccHV.updateCanvas(dd);
+        case "HV":                   ccHv.updateCanvas(dd);
         }                       
     }
 

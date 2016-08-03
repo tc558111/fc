@@ -133,8 +133,8 @@ public class CCMon extends DetectorMonitor {
         app.addCanvas(ccPedestal.getName(),   ccPedestal.getCanvas());
         app.addCanvas(ccSpe.getName(),             ccSpe.getCanvas()); 
         app.addFrame(ccCalib.getName(),          ccCalib.getCalibPane());
-        app.addFrame(ccHv.getName(),                ccHv.getCanvas());
-        app.addFrame(ccScalers.getName(),      ccScalers.getCanvas());
+        app.addFrame(ccHv.getName(),                ccHv.getScalerPane());
+        app.addFrame(ccScalers.getName(),      ccScalers.getScalerPane());
     }
     
     public void init( ) {       
@@ -146,16 +146,7 @@ public class CCMon extends DetectorMonitor {
     public void initApps() {
         System.out.println("initApps()");
         ccRecon.init();
-        ccHv.init();
-        try {
-            ccHv.getPvNames();
-        }
-        catch (InterruptedException e) {            
-        }
-        
-        catch (ExecutionException e) {           
-        }   
-       
+        ccHv.init();        
     }
     
     public void initGlob() {

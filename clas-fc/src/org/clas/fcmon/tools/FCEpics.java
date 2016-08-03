@@ -1,5 +1,6 @@
 package org.clas.fcmon.tools;
 
+import java.awt.BorderLayout;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -7,6 +8,9 @@ import java.util.List;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+
+import javax.swing.JPanel;
+import javax.swing.JSplitPane;
 
 import org.epics.ca.Channel;
 import org.epics.ca.Context;
@@ -22,7 +26,7 @@ import org.jlab.detector.base.DetectorDescriptor;
 import org.jlab.utils.groups.IndexedList;
 import org.root.basic.EmbeddedCanvas;
 
-public class FCEpics {
+public class FCEpics  {
     
     private String  appName    = null;
 
@@ -30,8 +34,10 @@ public class FCEpics {
     public DetectorMonitor mon = null;
     public Context     context = null;
     
-    private List<EmbeddedCanvas>            canvases   = new ArrayList<EmbeddedCanvas>();
-        
+    JPanel HVScalers = new JPanel();
+    public EmbeddedCanvas scaler1DView = new EmbeddedCanvas();
+    public EmbeddedCanvas scaler2DView = new EmbeddedCanvas();
+    
     IndexedList<String>                             map = new IndexedList<String>(4);
     TreeMap<String,IndexedList<String>>           pvMap = new TreeMap<String,IndexedList<String>>();
     TreeMap<String,IndexedList<Channel<Double>>>  caMap = new TreeMap<String,IndexedList<Channel<Double>>>();
@@ -43,7 +49,6 @@ public class FCEpics {
 	public FCEpics(String name){
 	    this.appName = name;
 	    this.context = new Context();   
-	    this.addCanvas(name);
 	}
 	
     public void setApplicationClass(MonitorApp app) {
@@ -58,10 +63,41 @@ public class FCEpics {
         return this.appName;
     }
     
-    public double getCaValue(int grp, String action, int sector, int layer, int channel) throws InterruptedException, ExecutionException {
-        caMap.get(action).getItem(grp,sector,layer,channel).connectAsync().get();
+    public JPanel getScalerPane() {        
+        HVScalers.setLayout(new BorderLayout());
+        JSplitPane HVScalerPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);       
+        HVScalerPane.setTopComponent(scaler1DView);
+        HVScalerPane.setBottomComponent(scaler2DView);       
+        HVScalerPane.setDividerLocation(0.5);
+        HVScalers.add(HVScalerPane);
+        return HVScalers;       
+    } 
+    
+    public int connectCa(int grp, String action, int sector, int layer, int channel) {
+        try {
+        caMap.get(action).getItem(grp,sector,layer,channel).connectAsync().get();   
+        }
+        catch (InterruptedException e) {  
+            return -1;
+        }        
+        catch (ExecutionException e) {  
+            return -1;
+        }
+        return 1;
+        
+    }
+    
+    public double getCaValue(int grp, String action, int sector, int layer, int channel) {
+        try {
         CompletableFuture<Double> ffd = caMap.get(action).getItem(grp,sector,layer,channel).getAsync();
         return ffd.get(); 
+        }
+        catch (InterruptedException e) {  
+            return -1.0;
+        }        
+        catch (ExecutionException e) {  
+            return -1.0;
+        }   
     }
     
     public void setCaNames(int grp) {
@@ -148,30 +184,5 @@ public class FCEpics {
 	public String getPvString(String det, int grp, int sector, int layer, int channel,String action) {
 	    return "B_DET_"+det+"_"+grps[grp]+"_SEC"+sector+"_"+layerToString(det,layer)+"_E"+channelToString(channel)+":"+action;  
 	}
-	
-    public final void addCanvas(String name) {
-        EmbeddedCanvas c = new EmbeddedCanvas();
-        this.canvases.add(c);
-        this.canvases.get(this.canvases.size()-1).setName(name);
-    }
-    
-    public EmbeddedCanvas getCanvas(){
-        return this.canvases.get(0);
-    }
-    
-    public EmbeddedCanvas getCanvas(int index) {
-        return this.canvases.get(index);
-    }
-    
-    public EmbeddedCanvas getCanvas(String name) {
-        int index=0;
-        for(int i=0; i<this.canvases.size(); i++) {
-            if(this.canvases.get(i).getName() == name) {
-                index=i;
-                break;
-            }
-        }
-        return this.canvases.get(index);
-    }  
-     
+	     
 }

@@ -59,21 +59,22 @@ public class CCHvApp extends FCEpics {
     
     public void initHistos() {       
         for (int is=is1; is<is2 ; is++) {
-            for (int il=1 ; il<3 ; il++){
-                H1_HV.add(is, il, 0, new H1D("HV_vset"+is+"_"+il, 18,1,19));                
-                H1_HV.add(is, il, 1, new H1D("HV_vmon"+is+"_"+il, 18,1,19.));                
-                H1_HV.add(is, il, 2, new H1D("HV_imon"+is+"_"+il, 18,1,19));                
-                H2_HV.add(is, il, 0, new H2D("HV_vset"+is+"_"+il, 18,1,19,nmax,0,nmax));                
-                H2_HV.add(is, il, 1, new H2D("HV_vmon"+is+"_"+il, 18,1,19,nmax,0,nmax));                
-                H2_HV.add(is, il, 2, new H2D("HV_imon"+is+"_"+il, 18,1,19,nmax,0,nmax));                
+            for (int il=1 ; il<layMap.get(detName).length+1 ; il++){
+                int nb=nlayMap.get(detName)[il-1]; int mx=nb+1;
+                H1_HV.add(is, il, 0, new H1D("HV_vset"+is+"_"+il, nb,1,mx));                
+                H1_HV.add(is, il, 1, new H1D("HV_vmon"+is+"_"+il, nb,1,mx));                
+                H1_HV.add(is, il, 2, new H1D("HV_imon"+is+"_"+il, nb,1,mx));                
+                H2_HV.add(is, il, 0, new H2D("HV_vset"+is+"_"+il, nb,1,mx,nmax,0,nmax));                
+                H2_HV.add(is, il, 1, new H2D("HV_vmon"+is+"_"+il, nb,1,mx,nmax,0,nmax));                
+                H2_HV.add(is, il, 2, new H2D("HV_imon"+is+"_"+il, nb,1,mx,nmax,0,nmax));                
             }
         }
     }
         
     public void initFifos() {
         for (int is=is1; is<is2 ; is++) {
-            for (int il=1; il<3 ; il++) {
-                for (int ic=1; ic<19; ic++) {
+            for (int il=1; il<layMap.get(detName).length+1 ; il++) {
+                for (int ic=1; ic<nlayMap.get(detName)[il-1]+1; ic++) {
                     fifo1.add(is, il, ic,new LinkedList<Double>());
                     fifo2.add(is, il, ic,new LinkedList<Double>());
                     fifo3.add(is, il, ic,new LinkedList<Double>());
@@ -90,8 +91,8 @@ public class CCHvApp extends FCEpics {
         //long startTime = System.currentTimeMillis();
         nfifo++;
         for (int is=is1; is<is2 ; is++) {
-            for (int il=1; il<3 ; il++) {
-                for (int ic=1; ic<19; ic++) {
+            for (int il=1; il<layMap.get(detName).length+1 ; il++) {
+                for (int ic=1; ic<nlayMap.get(detName)[il-1]+1; ic++) {
                     if(nfifo>nmax) {
                         fifo1.get(is, il, ic).removeFirst();
                         fifo2.get(is, il, ic).removeFirst();
@@ -110,11 +111,11 @@ public class CCHvApp extends FCEpics {
     public void fillHistos() {
         
         for (int is=is1; is<is2 ; is++) {
-            for (int il=1; il<3 ; il++) {
+            for (int il=1; il<layMap.get(detName).length+1 ; il++) {
                 H1_HV.get(is, il, 0).reset(); H2_HV.get(is, il, 0).reset();
                 H1_HV.get(is, il, 1).reset(); H2_HV.get(is, il, 1).reset();
                 H1_HV.get(is, il, 2).reset(); H2_HV.get(is, il, 2).reset();
-                for (int ic=1; ic<19; ic++) {                    //long startTime = System.currentTimeMillis();
+                for (int ic=1; ic<nlayMap.get(detName)[il-1]+1; ic++) {                    
                     H1_HV.get(is, il, 0).fill(ic,fifo1.get(is, il, ic).getLast());
                     H1_HV.get(is, il, 1).fill(ic,fifo2.get(is, il, ic).getLast());
                     H1_HV.get(is, il, 2).fill(ic,fifo3.get(is, il, ic).getLast());

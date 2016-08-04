@@ -35,7 +35,7 @@ public class CCSpeApp extends FCApplication {
         
         for(int iip=0;iip<nstr;iip++) {
             alab = otab[lr-1]+(iip+1)+lab4[0];
-            canvas.cd(iip); h = ccPix.strips.hmap2.get("H2_CCa_Hist").get(is+1,lr,0).sliceY(iip); 
+            canvas.cd(iip); h = ccPix.strips.hmap2.get("H2_CCa_Hist").get(is,lr,0).sliceY(iip); 
             h.setXTitle(alab); h.setTitle(""); h.setFillColor(col1); canvas.draw(h,"S");
         }
 /*
@@ -50,7 +50,7 @@ public class CCSpeApp extends FCApplication {
         h.setTitle(""); h.setFillColor(col2); canvas.draw(h,"same");  
         */
         
-        canvas.cd(ic); h = ccPix.strips.hmap2.get("H2_CCa_Hist").get(is+1,lr,0).sliceY(ic); 
+        canvas.cd(ic); h = ccPix.strips.hmap2.get("H2_CCa_Hist").get(is,lr,0).sliceY(ic); 
         h.setTitle(""); h.setFillColor(col2); canvas.draw(h,"same");    
 
     }

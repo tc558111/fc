@@ -59,7 +59,7 @@ public class CCDetector extends FCDetector {
         int off = (layer-1)*ccPix.cc_nstr[0];
         
         for(int j = 0; j < 4; j++){
-            shapePath.addPoint(ccPix.cc_xpix[j][mirror+off][sector],ccPix.cc_ypix[j][mirror+off][sector],0.0);
+            shapePath.addPoint(ccPix.cc_xpix[j][mirror+off][sector-1],ccPix.cc_ypix[j][mirror+off][sector-1],0.0);
         }
         return shape;       
     }

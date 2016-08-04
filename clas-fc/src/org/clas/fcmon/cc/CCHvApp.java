@@ -1,12 +1,9 @@
 package org.clas.fcmon.cc;
 
-import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.LinkedList;
 
-import javax.swing.JPanel;
-import javax.swing.JSplitPane;
 import javax.swing.Timer;
 
 import org.clas.fcmon.tools.FCEpics;
@@ -26,20 +23,27 @@ public class CCHvApp extends FCEpics {
     
     Timer timer = null;
     int delay;
+    int nfifo=0, nmax=120;
+    int isCurrentSector;
     
-    CCHvApp(String name) {
-        super(name);
+    CCHvApp(String name, String det) {
+        super(name, det);
     }
     
-    public void init() {
-        setPvNames("LTCC",0);
-        setCaNames(0);
+    public void init(int is1, int is2) {
+        this.is1=is1;
+        this.is2=is2;
+        setPvNames(this.detName,0);
+        setCaNames(this.detName,0);
+        sectorSelected=is1;
+        layerSelected=1;
+        channelSelected=1;
         initHistos();
         initFifos();
         fillFifos();
         fillHistos();
         updateGUIAction action = new updateGUIAction();
-        delay = 6000;
+        delay = 1000;
         this.timer = new Timer(delay,action);  
         this.timer.setDelay(delay);
         this.timer.start();
@@ -49,24 +53,25 @@ public class CCHvApp extends FCEpics {
         public void actionPerformed(ActionEvent evt) {
             fillFifos();
             fillHistos();
-        }
+            update1DScalers(scaler1DView,1);   
+            update2DScalers(scaler2DView,1);        }
     } 
     
-    public void initHistos() {
-        for (int is=1; is<7 ; is++) {
+    public void initHistos() {       
+        for (int is=is1; is<is2 ; is++) {
             for (int il=1 ; il<3 ; il++){
-                H1_HV.add(is, il, 0, new H1D("LTCC_HV_vset"+is+"_"+il, 18,1.,19.));                
-                H1_HV.add(is, il, 1, new H1D("LTCC_HV_vmon"+is+"_"+il, 18,1.,19.));                
-                H1_HV.add(is, il, 2, new H1D("LTCC_HV_imon"+is+"_"+il, 18,1.,19.));                
-                H2_HV.add(is, il, 0, new H2D("LTCC_HV_vset"+is+"_"+il, 18,1.,19.,30,0.,30.));                
-                H2_HV.add(is, il, 1, new H2D("LTCC_HV_vmon"+is+"_"+il, 18,1.,19.,30,0.,30.));                
-                H2_HV.add(is, il, 2, new H2D("LTCC_HV_imon"+is+"_"+il, 18,1.,19.,30,0.,30.));                
+                H1_HV.add(is, il, 0, new H1D("HV_vset"+is+"_"+il, 18,1,19));                
+                H1_HV.add(is, il, 1, new H1D("HV_vmon"+is+"_"+il, 18,1,19.));                
+                H1_HV.add(is, il, 2, new H1D("HV_imon"+is+"_"+il, 18,1,19));                
+                H2_HV.add(is, il, 0, new H2D("HV_vset"+is+"_"+il, 18,1,19,nmax,0,nmax));                
+                H2_HV.add(is, il, 1, new H2D("HV_vmon"+is+"_"+il, 18,1,19,nmax,0,nmax));                
+                H2_HV.add(is, il, 2, new H2D("HV_imon"+is+"_"+il, 18,1,19,nmax,0,nmax));                
             }
         }
     }
         
     public void initFifos() {
-        for (int is=1; is<7 ; is++) {
+        for (int is=is1; is<is2 ; is++) {
             for (int il=1; il<3 ; il++) {
                 for (int ic=1; ic<19; ic++) {
                     fifo1.add(is, il, ic,new LinkedList<Double>());
@@ -82,31 +87,34 @@ public class CCHvApp extends FCEpics {
     
     public void fillFifos() {
         
-        long startTime = System.currentTimeMillis();
-        for (int is=1; is<7 ; is++) {
+        //long startTime = System.currentTimeMillis();
+        nfifo++;
+        for (int is=is1; is<is2 ; is++) {
             for (int il=1; il<3 ; il++) {
                 for (int ic=1; ic<19; ic++) {
-                    //long startTime = System.currentTimeMillis();
+                    if(nfifo>nmax) {
+                        fifo1.get(is, il, ic).removeFirst();
+                        fifo2.get(is, il, ic).removeFirst();
+                        fifo3.get(is, il, ic).removeFirst();
+                    }
                     fifo1.get(is, il, ic).add(getCaValue(0,"vset",is, il, ic));
                     fifo2.get(is, il, ic).add(getCaValue(0,"vmon",is, il, ic));
                     fifo3.get(is, il, ic).add(getCaValue(0,"imon",is, il, ic));
-                    //System.out.println("is,il,ic,time= "+is+" "+il+" "+ic+" "+(System.currentTimeMillis()-startTime));
                 }
             }
          }
-        System.out.println("time= "+(System.currentTimeMillis()-startTime));
+       // System.out.println("time= "+(System.currentTimeMillis()-startTime));
         
     }
 
     public void fillHistos() {
         
-        for (int is=1; is<7 ; is++) {
+        for (int is=is1; is<is2 ; is++) {
             for (int il=1; il<3 ; il++) {
-                H1_HV.get(is, il, 0).reset();
-                H1_HV.get(is, il, 1).reset();
-                H1_HV.get(is, il, 2).reset();
-                for (int ic=1; ic<19; ic++) {
-                    //long startTime = System.currentTimeMillis();
+                H1_HV.get(is, il, 0).reset(); H2_HV.get(is, il, 0).reset();
+                H1_HV.get(is, il, 1).reset(); H2_HV.get(is, il, 1).reset();
+                H1_HV.get(is, il, 2).reset(); H2_HV.get(is, il, 2).reset();
+                for (int ic=1; ic<19; ic++) {                    //long startTime = System.currentTimeMillis();
                     H1_HV.get(is, il, 0).fill(ic,fifo1.get(is, il, ic).getLast());
                     H1_HV.get(is, il, 1).fill(ic,fifo2.get(is, il, ic).getLast());
                     H1_HV.get(is, il, 2).fill(ic,fifo3.get(is, il, ic).getLast());
@@ -121,44 +129,32 @@ public class CCHvApp extends FCEpics {
                         H2_HV.get(is, il, 1).fill(ic,it,ts2[it]);
                         H2_HV.get(is, il, 2).fill(ic,it,ts3[it]);
                     }
-                    //System.out.println("is,il,ic,time= "+is+" "+il+" "+ic+" "+(System.currentTimeMillis()-startTime));
                 }
             }
         }
         
     }
     
-    public void dothis() {
-        
-        LinkedList<Integer> fifo = new LinkedList<Integer>();
-        int intoWalk = 21;
-
-        for (int i=1; i<=20; i++)
-            fifo.add(i);
-
-        fifo.removeFirst();
-        fifo.add(intoWalk);
-
-        for (Integer fifoItem : fifo)
-            System.out.println(fifoItem);        
-        
-    }
-    
     public void updateCanvas(DetectorDescriptor dd) {
         
-        update1DScalers(dd,scaler1DView);   
-        update2DScalers(dd,scaler2DView);
+        sectorSelected  = dd.getSector();
+        layerSelected   = dd.getLayer();
+        channelSelected = dd.getComponent(); 
         
+        update1DScalers(scaler1DView,0);   
+        update2DScalers(scaler2DView,0);
+        
+        isCurrentSector = sectorSelected;
     }
     
-    public void update1DScalers(DetectorDescriptor dd, EmbeddedCanvas canvas) {
+    public void update1DScalers(EmbeddedCanvas canvas, int flag) {
         
         H1D h = new H1D();
         H1D c = new H1D();
         
-        int is = dd.getSector()+1;
-        int lr = dd.getLayer();
-        int ip = dd.getComponent();   
+        int is = sectorSelected;
+        int lr = layerSelected;
+        int ip = channelSelected; 
         
         canvas.divide(4, 1);
         
@@ -182,13 +178,14 @@ public class CCHvApp extends FCEpics {
                
     }
     
-    public void update2DScalers(DetectorDescriptor dd, EmbeddedCanvas canvas) {
+    public void update2DScalers(EmbeddedCanvas canvas, int flag) {
         
         H2D h = new H2D();
         
-        int is = dd.getSector()+1;
-        int lr = dd.getLayer();
-        int ip = dd.getComponent();   
+        int is = sectorSelected;
+                
+        //Don't redraw unless timer fires or new sector selected
+        if (flag==0&&(is==isCurrentSector)) return;  
         
         canvas.divide(4, 1);
         
@@ -202,6 +199,9 @@ public class CCHvApp extends FCEpics {
         h = H2_HV.get(is, 2, 2); h.setXTitle("Sector "+is+" Right PMT"); h.setYTitle("TIME");
         canvas.cd(3); canvas.draw(h);
         
+        isCurrentSector = is;
+        
     }
+    
     
 }

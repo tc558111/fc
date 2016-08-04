@@ -94,8 +94,7 @@ public class CCCalibrationApp extends FCApplication implements CalibrationConsta
         
         CCHVEventListener(){};
         
-        public void init(int s1, int s2) {
-            is1=s1+1 ; is2=s2+1;
+        public void init(int is1, int is2) {
             calib = new CalibrationConstants(3,"gain/F");
             calib.setName("/calibration/ltcc/gain");
             calib.setPrecision(3);
@@ -162,10 +161,10 @@ public class CCCalibrationApp extends FCApplication implements CalibrationConsta
             }
             
             for(int is=is1; is<is2; is++) {                
-                for(int il=0; il<2; il++) {
-                    for(int ip = 0; ip < 18; ip++) {
-                        calib.addEntry(is+1,il+1,ip+1);
-                        calib.setIntValue(0,"status",is+1,il+1,ip+1);
+                for(int il=1; il<3; il++) {
+                    for(int ip = 1; ip < 19; ip++) {
+                        calib.addEntry(is,il,ip);
+                        calib.setIntValue(0,"status",is,il,ip);
                     }
                 }
             }
@@ -192,10 +191,10 @@ public class CCCalibrationApp extends FCApplication implements CalibrationConsta
             }
             
             for(int is=is1; is<is2; is++) {                
-                for(int il=0; il<2; il++) {
-                    for(int ip = 0; ip < 18; ip++) {
-                        calib.addEntry(is+1,il+1,ip+1);
-                        calib.setDoubleValue(0.0,"offset",is+1,il+1,ip+1);
+                for(int il=1; il<3; il++) {
+                    for(int ip = 1; ip < 19; ip++) {
+                        calib.addEntry(is,il,ip);
+                        calib.setDoubleValue(0.0,"offset",is,il,ip);
                     }
                 }
             }

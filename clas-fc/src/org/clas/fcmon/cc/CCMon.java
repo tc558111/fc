@@ -46,8 +46,8 @@ public class CCMon extends DetectorMonitor {
     int    detID                    = 0;
     double zmin                     = 0;
     double zmax                     = 0;
-    int is1                         = 0;
-    int is2                         = 6;	
+    int is1                         = 1;
+    int is2                         = 7;	
     
     int nsa,nsb,tet,p1,p2,pedref    = 0;
     
@@ -117,11 +117,11 @@ public class CCMon extends DetectorMonitor {
         ccCalib.setApplicationClass(app);  
         ccCalib.init(is1,is2);
         
-        ccHv = new CCHvApp("HV");
+        ccHv = new CCHvApp("HV","LTCC");
         ccHv.setMonitoringClass(this);
         ccHv.setApplicationClass(app);  
         
-        ccScalers = new CCScalersApp("Scalers");
+        ccScalers = new CCScalersApp("Scalers","LTCC");
         ccScalers.setMonitoringClass(this);
         ccScalers.setApplicationClass(app);  
     }
@@ -146,7 +146,7 @@ public class CCMon extends DetectorMonitor {
     public void initApps() {
         System.out.println("initApps()");
         ccRecon.init();
-        ccHv.init();        
+        ccHv.init(is1,is2);        
     }
     
     public void initGlob() {

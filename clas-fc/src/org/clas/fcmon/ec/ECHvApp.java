@@ -21,8 +21,10 @@ public class ECHvApp extends FCEpics {
     DetectorCollection<LinkedList<Double>> fifo2 = new DetectorCollection<LinkedList<Double>>();
     DetectorCollection<LinkedList<Double>> fifo3 = new DetectorCollection<LinkedList<Double>>();
     
+    updateGUIAction action = new updateGUIAction();
+    
     Timer timer = null;
-    int delay;
+    int delay=2000;
     int nfifo=0, nmax=120;
     int isCurrentSector;
     int isCurrentLayer;
@@ -43,8 +45,6 @@ public class ECHvApp extends FCEpics {
         initFifos();
         fillFifos();
         fillHistos();
-        updateGUIAction action = new updateGUIAction();
-        delay = 1000;
         this.timer = new Timer(delay,action);  
         this.timer.setDelay(delay);
         this.timer.start();

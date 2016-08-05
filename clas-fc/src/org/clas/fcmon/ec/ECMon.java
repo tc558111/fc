@@ -1,5 +1,7 @@
 package org.clas.fcmon.ec;
 
+import org.clas.fcmon.cc.CCHvApp;
+import org.clas.fcmon.cc.CCScalersApp;
 import org.clas.fcmon.detector.view.DetectorShape2D;
 import org.clas.fcmon.tools.*;
 
@@ -31,7 +33,9 @@ public class ECMon extends DetectorMonitor {
     ECPedestalApp        ecPedestal = null;
     ECTimingApp            ecTiming = null;
     ECReconstructionApp     ecRecon = null;
-   
+    ECScalersApp          ecScalers = null;
+    ECHvApp                    ecHv = null; 
+    
     ECDetectorReconstruction  ecRec = null;
    
     DatabaseConstantProvider ccdb   = null;
@@ -45,8 +49,8 @@ public class ECMon extends DetectorMonitor {
     int    detID                    = 0;
     double PCMon_zmin               = 0;
     double PCMon_zmax               = 0;
-    int is1                         = 1 ;
-    int is2                         = 2 ;
+    int is1                         = 3 ;
+    int is2                         = 4 ;
    
     int nsa,nsb,tet,p1,p2,pedref    = 0;
    
@@ -77,7 +81,7 @@ public class ECMon extends DetectorMonitor {
     }
 	
     public static void main(String[] args){
-        String det = "EC";
+        String det = "PCAL";
         ECMon monitor = new ECMon(det);		
         app.setPluginClass(monitor);
         app.makeGUI();
@@ -131,7 +135,16 @@ public class ECMon extends DetectorMonitor {
         
         ecOccupancy = new ECOccupancyApp("Occupancy",ecPix);        
         ecOccupancy.setMonitoringClass(this);
-        ecOccupancy.setApplicationClass(app);        
+        ecOccupancy.setApplicationClass(app);    
+        
+        ecHv = new ECHvApp("HV",mondet);
+        ecHv.setMonitoringClass(this);
+        ecHv.setApplicationClass(app);  
+        
+        ecScalers = new ECScalersApp("Scalers",mondet);
+        ecScalers.setMonitoringClass(this);
+        ecScalers.setApplicationClass(app);     
+        
     }
     
     public void addCanvas() {
@@ -144,6 +157,8 @@ public class ECMon extends DetectorMonitor {
         app.addCanvas(ecTiming.getName(),     ecTiming.getCanvas());
         app.addCanvas(ecRawHistos.getName(),  ecRawHistos.getCanvas());          
         app.addCanvas(ecRecon.getName(),      ecRecon.getCanvas());          
+        app.addFrame(ecHv.getName(),          ecHv.getScalerPane());
+        app.addFrame(ecScalers.getName(),     ecScalers.getScalerPane());        
     }
 	
     public void init( ) {	    
@@ -164,6 +179,8 @@ public class ECMon extends DetectorMonitor {
         ecRecon.Lmap_a.add(0,0,1, ecRecon.toTreeMap(ecPix[0].pc_zmap)); 
         ecAtten.init(); 
         ecAtten.addLMaps("Lmap_a", ecRecon.Lmap_a); 
+        ecHv.init(is1,is2);        
+        ecScalers.init(is1,is2);        
     }
 	
     public void initGlob() {
@@ -265,7 +282,9 @@ public class ECMon extends DetectorMonitor {
         case "Attenuation":       ecAtten.updateCanvas(dd); break;
         case "Pedestal":       ecPedestal.updateCanvas(dd);	break;
         case "Timing":           ecTiming.updateCanvas(dd);	break;
-        case "RawHistos":     ecRawHistos.updateCanvas(dd);	
+        case "RawHistos":     ecRawHistos.updateCanvas(dd);	break;
+        case "HV":                   ecHv.updateCanvas(dd); break;
+        case "Scalers":         ecScalers.updateCanvas(dd);
         }				
     }
 

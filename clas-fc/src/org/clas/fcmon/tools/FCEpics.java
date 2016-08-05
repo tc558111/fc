@@ -42,8 +42,8 @@ public class FCEpics  {
     IndexedList<String>                             map = new IndexedList<String>(4);
     TreeMap<String,IndexedList<String>>           pvMap = new TreeMap<String,IndexedList<String>>();
     TreeMap<String,IndexedList<Channel<Double>>>  caMap = new TreeMap<String,IndexedList<Channel<Double>>>();
-    TreeMap<String,String[]>                     layMap = new TreeMap<String,String[]>();
-    TreeMap<String,int[]>                       nlayMap = new TreeMap<String,int[]>();
+    public TreeMap<String,String[]>              layMap = new TreeMap<String,String[]>();
+    public TreeMap<String,int[]>                nlayMap = new TreeMap<String,int[]>();
    
     String   grps[] = {"HV","DISC","FADC"};
     String   ltcc[] = {"L","R"};
@@ -60,6 +60,7 @@ public class FCEpics  {
     
 	
 	public FCEpics(String name, String det){
+	    System.out.println("Initializing detector "+det);
 	    this.appName = name;
 	    this.detName = det;
 	    this.context = new Context(); 
@@ -126,9 +127,10 @@ public class FCEpics  {
         setCaActionNames(det,grp,"vset");     
         break;
         case 1:
-        setCaActionNames(det,grp,"null"); break;  
+        setCaActionNames(det,grp,"c3"); 
+        break;  
         case 2: 
-        setCaActionNames(det,grp,"null"); 
+        setCaActionNames(det,grp,"c1"); 
         }
     }
     
@@ -155,11 +157,12 @@ public class FCEpics  {
             setPvActionNames(det,grp,"vset");
             setPvActionNames(det,grp,"pwonoff"); 
             break;
-            case 1: ; break;
-            case 2: ; break;
+            case 1:  
+            setPvActionNames(det,grp,"c3"); break;
+            case 2: 
+            setPvActionNames(det,grp,"c1"); break;
         }
     }
-
     
     public String getPvName(int grp, String action, int sector, int layer, int channel) {
         switch (grp) {
@@ -172,9 +175,9 @@ public class FCEpics  {
         }
         break;
         case 1:  
-        return (String) pvMap.get(action).getItem(grp,sector,layer,channel);
+                        return (String) pvMap.get(action).getItem(grp,sector,layer,channel);
         case 2: 
-        return (String) pvMap.get(action).getItem(grp,sector,layer,channel);
+                        return (String) pvMap.get(action).getItem(grp,sector,layer,channel);
         }
         return "Invalid action";
     }
@@ -203,8 +206,7 @@ public class FCEpics  {
 	
 	public String getPvString(String det, int grp, int sector, int layer, int channel, String action) {
 	    String pv = "B_DET_"+det+"_"+grps[grp]+"_SEC"+sector+"_"+layToStr(det,layer)+"_E"+chanToStr(channel);
-	    if (action!="null") pv=pv+":"+action;
-	    //System.out.println(pv);
+	    if (action!="DISC"&&action!="FADC") pv=pv+":"+action;
 	    return pv;  
 	}
 	     

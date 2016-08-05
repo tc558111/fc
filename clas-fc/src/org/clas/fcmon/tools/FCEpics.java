@@ -22,6 +22,7 @@ import org.epics.ca.data.Control;
 import org.epics.ca.data.Graphic;
 import org.epics.ca.data.GraphicEnum;
 import org.epics.ca.data.Timestamped;
+
 import org.jlab.detector.base.DetectorDescriptor;
 import org.jlab.utils.groups.IndexedList;
 import org.root.basic.EmbeddedCanvas;
@@ -63,7 +64,7 @@ public class FCEpics  {
 	    System.out.println("Initializing detector "+det);
 	    this.appName = name;
 	    this.detName = det;
-	    this.context = new Context(); 
+	    this.context = new Context(); //org.epics.ca
         this.layMap.put("LTCC",ltcc); this.nlayMap.put("LTCC", nltcc);
         this.layMap.put("FTOF",ftof); this.nlayMap.put("FTOF", nftof);
         this.layMap.put("PCAL",pcal); this.nlayMap.put("PCAL", npcal);
@@ -94,7 +95,7 @@ public class FCEpics  {
     
     public int connectCa(int grp, String action, int sector, int layer, int channel) {
         try {
-        caMap.get(action).getItem(grp,sector,layer,channel).connectAsync().get();   
+        caMap.get(action).getItem(grp,sector,layer,channel).connectAsync().get();  //org.epics.ca
         }
         catch (InterruptedException e) {  
             return -1;
@@ -108,7 +109,7 @@ public class FCEpics  {
     
     public double getCaValue(int grp, String action, int sector, int layer, int channel) {
         try {
-        CompletableFuture<Double> ffd = caMap.get(action).getItem(grp,sector,layer,channel).getAsync();
+        CompletableFuture<Double> ffd = caMap.get(action).getItem(grp,sector,layer,channel).getAsync(); //org.epics.ca
         return ffd.get(); 
         }
         catch (InterruptedException e) {  

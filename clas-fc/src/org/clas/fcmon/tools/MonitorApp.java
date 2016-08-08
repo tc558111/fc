@@ -94,6 +94,10 @@ public class MonitorApp extends JFrame implements ActionListener {
         saveBtn.addActionListener(this);
         buttonPane.add(saveBtn);	
         
+        JButton loadBtn = new JButton("Load Histos");
+        loadBtn.addActionListener(this);
+        buttonPane.add(loadBtn);    
+        
 // Control Panels
 		
         this.controlsPanel0 = new JPanel(new GridBagLayout());
@@ -217,6 +221,7 @@ public class MonitorApp extends JFrame implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         if(e.getActionCommand().compareTo("Clear Histos")==0) monitoringClass.reset();
-        if(e.getActionCommand().compareTo("Save Histos")==0) monitoringClass.saveToFile();
+        if(e.getActionCommand().compareTo("Save Histos")==0)  monitoringClass.saveToFile();
+        if(e.getActionCommand().compareTo("Load Histos")==0)  monitoringClass.readHipoFile();
     }      
 }

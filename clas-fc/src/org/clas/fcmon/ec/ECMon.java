@@ -75,6 +75,7 @@ public class ECMon extends DetectorMonitor {
         if (mondet=="PCAL") {detID = 0 ; moncalrun=12 ; ecDB[0] = new CalDrawDB("PCAL")  ; ecPix[0] = new ECPixels("PCAL");}
         if (mondet=="EC")   {detID = 1 ; moncalrun=12 ; ecDB[0] = new CalDrawDB("ECin")  ; ecPix[0] = new ECPixels("ECin");  
 		                                                ecDB[1] = new CalDrawDB("ECout") ; ecPix[1] = new ECPixels("ECout");}
+        app.mode7Emulation.init("/daq/fadc/ec",3-detID*2, 3, 1);
         ccdb = new DatabaseConstantProvider(moncalrun,"default");
         ccdb.loadTable("/calibration/ec/attenuation");
         ccdb.disconnect();
@@ -85,7 +86,6 @@ public class ECMon extends DetectorMonitor {
         ECMon monitor = new ECMon(det);		
         app.setPluginClass(monitor);
         app.makeGUI();
-        app.mode7Emulation.init("/daq/fadc/ec",1, 3, 1);
         monitor.makeApps();
         monitor.addCanvas();
         monitor.init();

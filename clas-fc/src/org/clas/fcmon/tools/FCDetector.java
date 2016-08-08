@@ -168,7 +168,7 @@ public class FCDetector {
         // Update shape color map depending on process status and layer
         // layers 1-6 reserved for strip views, layers >7 for pixel views
         // Lmap_a stores live colormap of detector shape elements
-        
+       
         if (inProcess==0){ // Assign default colors upon starting GUI (before event processing)
              if(layer<7) colorfraction = (double)ic/nStrips[layer-1]; 
             if(layer>=7) colorfraction = getcolor((TreeMap<Integer, Object>) Lmap_a.get(0,0,0), ic);  

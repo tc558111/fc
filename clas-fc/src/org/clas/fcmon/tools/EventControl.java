@@ -44,6 +44,7 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
     public Boolean     isRemote = false;
     Boolean             running = false;
     
+    int               nEtEvents = 0;
     public Boolean isSingleEvent     = false;
     
     File          eviofile = null;
@@ -109,6 +110,7 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
     			etReader = new EvioETSource(ethost);
     			etReader.open(etfile);
     			this.fileLabel.setText("FILE: "+ethost+"::"+etfile);
+    			nEtEvents=0;
     		} catch(Exception e){
     			System.out.println("Error opening ET file : " + etfile);
     			this.fileLabel.setText(" ");
@@ -238,7 +240,7 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
                 etReader.clearEvents();
                 while(trycount<maxTries&&etReader.getSize()<=0){
                     
-                    System.out.println("[Et-Ring::Thread] ---> reloading the data....");
+//                    System.out.println("[Et-Ring::Thread] ---> reloading the data....");
                     try {
                         Thread.sleep(threadDelay);
                     } catch (InterruptedException ex) {
@@ -246,8 +248,8 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
                     }
                     
                     etReader.loadEvents();
-                    System.out.println("[Et-Ring::Thread] ---> reloaded events try = " + trycount
-                    + "  event buffer size = " + etReader.getSize());
+//                    System.out.println("[Et-Ring::Thread] ---> reloaded events try = " + trycount
+//                    + "  event buffer size = " + etReader.getSize());
                     trycount++;
                 }
                 if(trycount==maxTries){
@@ -259,8 +261,9 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
                 EvioDataEvent event = (EvioDataEvent) etReader.getNextEvent();
                 int current = etReader.getCurrentIndex();
                 int nevents = etReader.getSize();
-                if( current>100&&current%500==0) monitoringClass.analyze(1);                
-                this.statusLabel.setText("   EVENTS IN ET : " + nevents + "  CURRENT : " + current);
+                nEtEvents++;
+                if(nEtEvents>100&&nEtEvents%500==0) monitoringClass.analyze(1);                
+                this.statusLabel.setText("   EVENTS IN ET : " + nevents + "  CURRENT : " + nEtEvents);
                                   
                     try {
                         monitoringClass.dataEventAction(event);

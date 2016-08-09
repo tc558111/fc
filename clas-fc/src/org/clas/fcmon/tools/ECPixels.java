@@ -149,7 +149,7 @@ public class ECPixels {
     	}
 	}
 	
-    public void initHistograms() {
+    public void initHistograms(String hipoFile) {
         
         System.out.println("ECPixels:initHistograms()");
         
@@ -225,7 +225,16 @@ public class ECPixels {
                 H2_PC_Stat.add(is, il, 1, new H2D("b_adc_"+id+1, nstr, 1., nend,  3, 1., 4.));              
                 H2_PC_Stat.add(is, il, 2, new H2D("c_tdc_"+id+2, nstr, 1., nend,  3, 1., 4.));              
             }
-        } 
+        }
+        
+        if(hipoFile!=" "){
+            FCCalibrationData calib = new FCCalibrationData();
+            calib.getFile(hipoFile);
+            H2_PCa_Hist = calib.getCollection("H2_PCa_Hist");
+            H1_PCa_Maps = calib.getCollection("H1_PCa_Maps");
+            H2_PCt_Hist = calib.getCollection("H2_PCt_Hist");
+            H1_PCt_Maps = calib.getCollection("H1_PCt_Maps");
+        }   
         
         strips.addH2DMap("H2_PCa_Hist",  H2_PCa_Hist);
         strips.addH2DMap("H2_PCt_Hist",  H2_PCt_Hist);

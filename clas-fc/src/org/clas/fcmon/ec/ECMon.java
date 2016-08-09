@@ -22,7 +22,10 @@ import java.util.TreeMap;
 
 public class ECMon extends DetectorMonitor {
 	
-    static MonitorApp          app = new MonitorApp("ECMon",1800,950);	
+    static MonitorApp           app = new MonitorApp("ECMon",1800,950);	
+    FADCConfigLoader          fadc  = new FADCConfigLoader();
+    CalDrawDB                ecDB[] = new CalDrawDB[2]; 
+    ECPixels                ecPix[] = new ECPixels[2];
  
     ECDetector                ecDet = null;
     ECAttenApp              ecAtten = null;
@@ -34,39 +37,31 @@ public class ECMon extends DetectorMonitor {
     ECTimingApp            ecTiming = null;
     ECReconstructionApp     ecRecon = null;
     ECScalersApp          ecScalers = null;
-    ECHvApp                    ecHv = null; 
-    
+    ECHvApp                    ecHv = null;   
     ECDetectorReconstruction  ecRec = null;
+    DatabaseConstantProvider   ccdb = null;
    
-    DatabaseConstantProvider ccdb   = null;
-    FADCConfigLoader          fadc  = new FADCConfigLoader();
-
-    CalDrawDB                ecDB[] = new CalDrawDB[2]; 
-    ECPixels                ecPix[] = new ECPixels[2];
-   
-    public int inProcess            = 0;     //0=init 1=processing 2=end-of-run 3=post-run
-    public boolean inMC             = false; //true=MC false=DATA
-    int    detID                    = 0;
-    double PCMon_zmin               = 0;
-    double PCMon_zmax               = 0;
-    int is1                         = 3 ;
-    int is2                         = 4 ;
-   
+    String                    myEnv = "home";
+    boolean                 doEpics = true;
+    String                 hipoPath = null;
+    public boolean             inMC = false; //true=MC false=DATA
+    public int            inProcess = 0;     //0=init 1=processing 2=end-of-run 3=post-run
+    int                       detID = 0;
+    int                         is1 = 3 ;
+    int                         is2 = 4 ;  
     int nsa,nsb,tet,p1,p2,pedref    = 0;
+    double               PCMon_zmin = 0;
+    double               PCMon_zmax = 0;
    
     String mondet                   = "PCAL";
     int    moncalrun                = 0;
 
+    
     DetectorCollection<H2D> H2_PCa_Hist = new DetectorCollection<H2D>();
     DetectorCollection<H2D> H2_PCt_Hist = new DetectorCollection<H2D>();
     DetectorCollection<H1D> H1_PCa_Maps = new DetectorCollection<H1D>();
     DetectorCollection<H1D> H1_PCt_Maps = new DetectorCollection<H1D>();
-    DetectorCollection<H1D> H1_PCa_Sevd = new DetectorCollection<H1D>();
-    DetectorCollection<H1D> H1_PCt_Sevd = new DetectorCollection<H1D>();
-   
-    DetectorCollection<H2D> H2_PCa_Sevd = new DetectorCollection<H2D>();
-    DetectorCollection<H2D> H2_PC_Stat  = new DetectorCollection<H2D>();
-   
+  
     TreeMap<String,Object> glob = new TreeMap<String,Object>();
    
     public ECMon(String det) {
@@ -78,6 +73,7 @@ public class ECMon extends DetectorMonitor {
         ccdb = new DatabaseConstantProvider(moncalrun,"default");
         ccdb.loadTable("/calibration/ec/attenuation");
         ccdb.disconnect();
+        setEnv();
     }
 	
     public static void main(String[] args){
@@ -92,6 +88,16 @@ public class ECMon extends DetectorMonitor {
         monitor.initDetector();
         app.init();
         monitor.ecDet.initButtons();
+    }
+    
+    public void setEnv() {
+        if (myEnv=="hallb") {
+            doEpics = true;
+           hipoPath = "/home/lcsmith";
+        } else {
+            doEpics = false;
+          hipoPath  = "/Users/colesmith";
+        }
     }
 	
     public void initDetector() {
@@ -165,7 +171,7 @@ public class ECMon extends DetectorMonitor {
         System.out.println("init()");	
         initGlob();
         initApps();
-        ecPix[0].initHistograms();
+        ecPix[0].initHistograms(" ");
         H2_PCa_Hist = ecPix[0].strips.hmap2.get("H2_PCa_Hist");
         H2_PCt_Hist = ecPix[0].strips.hmap2.get("H2_PCt_Hist");
         H1_PCa_Maps = ecPix[0].pixels.hmap1.get("H1_PCa_Maps");
@@ -179,8 +185,11 @@ public class ECMon extends DetectorMonitor {
         ecRecon.Lmap_a.add(0,0,1, ecRecon.toTreeMap(ecPix[0].pc_zmap)); 
         ecAtten.init(); 
         ecAtten.addLMaps("Lmap_a", ecRecon.Lmap_a); 
-        ecHv.init(is1,is2);        
-        ecScalers.init(is1,is2);        
+        if (doEpics) {
+          ecHv.init(is1,is2);        
+          ecScalers.init(is1,is2); 
+        }
+          
     }
 	
     public void initGlob() {
@@ -200,13 +209,11 @@ public class ECMon extends DetectorMonitor {
         putGlob("is2",is2);
     }
     
+    @Override
     public void readHipoFile() {        
-        FCCalibrationData calib = new FCCalibrationData();
-        calib.getFile("/home/lcsmith/junk.hipo");
-        H2_PCa_Hist = calib.getCollection("H2_PCa_Hist");
-        H1_PCa_Maps = calib.getCollection("H1_PCa_Maps");
-        H2_PCt_Hist = calib.getCollection("H2_PCt_Hist");
-        H1_PCt_Maps = calib.getCollection("H1_PCt_Maps");
+        String hipoFileName = hipoPath+"/junk.hipo";
+        System.out.println("Loading Histograms from "+hipoFileName);
+        ecPix[0].initHistograms(hipoFileName);
         ecOccupancy.analyze();
         inProcess = 2;          
     }
@@ -223,8 +230,8 @@ public class ECMon extends DetectorMonitor {
 	
     @Override
     public void saveToFile() {
-	    System.out.println("Saving hipofile");
-		String hipoFileName = "/home/lcsmith/junk.hipo";
+		String hipoFileName = hipoPath+"/junk.hipo";
+        System.out.println("Saving Histograms to "+hipoFileName);
         HipoFile histofile = new HipoFile(hipoFileName);
         histofile.addToMap("H2_PCa_Hist", this.H2_PCa_Hist);
         histofile.addToMap("H1_PCa_Maps", this.H1_PCa_Maps);

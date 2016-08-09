@@ -220,7 +220,7 @@ public class ECReconstructionApp extends FCApplication {
          float dum = (float)bank.getInt("TDC",i)-(float)mc_t*1000;
          if (dum<tdcmax) tdcmax=dum;
       }      
-       
+      
       for(int i = 0; i < nrows; i++){
          int is  = bank.getInt("sector",i);
          int ip  = bank.getInt("strip",i);
@@ -237,38 +237,6 @@ public class ECReconstructionApp extends FCApplication {
       }
          
    }
-/*   
-   public void updatePcalCrtData() {
-       
-       ReadPcal pcal = new ReadPcal(4284,4294);
-       
-       float ped[][] = pcal.getPeds();
-       TTree    tree = pcal.getTree();
-
-       long nev = tree.getEntries();
-       
-       Pointer     pnpc = allocate(4); tree.setBranchAddress("npc", pnpc);
-       Pointer playerpc = allocate(4); tree.setBranchAddress("layerpc",playerpc);
-       Pointer pstrippc = allocate(4); tree.setBranchAddress("strippc",pstrippc);
-       Pointer   padcpc = allocate(4); tree.setBranchAddress("Adcpc",padcpc);
-       Pointer   ptdcpc = allocate(4); tree.setBranchAddress("Tdcpc",ptdcpc);
-       
-       for( long ev=0; ev<10000; ev++ ) {
-         tree.getEntry(ev);
-         int        npc =     pnpc.getIntValue();
-         byte[]  layerpc = playerpc.getByteArray(npc);
-         byte[]  strippc = pstrippc.getByteArray(npc);
-          int[]    adcpc =   padcpc.getUInt16Array(npc);
-          out.printf("%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,%d,\n",
-                  ev,npc,layerpc[0],layerpc[1],layerpc[2],
-                  strippc[0],strippc[1],strippc[2],
-                    adcpc[0],adcpc[1],adcpc[2]);
-       }
-       //tree.delete();
-       //pcal.tfile.close();
-
-   }
-   */
     
    public void processECRec(EvioDataEvent event) {
         

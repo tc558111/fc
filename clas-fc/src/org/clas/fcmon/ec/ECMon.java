@@ -1,7 +1,5 @@
 package org.clas.fcmon.ec;
 
-import org.clas.fcmon.cc.CCHvApp;
-import org.clas.fcmon.cc.CCScalersApp;
 import org.clas.fcmon.detector.view.DetectorShape2D;
 import org.clas.fcmon.tools.*;
 
@@ -210,7 +208,7 @@ public class ECMon extends DetectorMonitor {
     
     @Override
     public void readHipoFile() {        
-        String hipoFileName = hipoPath+"/junk.hipo";
+        String hipoFileName = hipoPath+"/"+mondet+".hipo";
         System.out.println("Loading Histograms from "+hipoFileName);
         ecPix[0].initHistograms(hipoFileName);
         ecOccupancy.analyze();
@@ -229,7 +227,7 @@ public class ECMon extends DetectorMonitor {
 	
     @Override
     public void saveToFile() {
-		String hipoFileName = hipoPath+"/junk.hipo";
+		String hipoFileName = hipoPath+"/"+mondet+".hipo";
         System.out.println("Saving Histograms to "+hipoFileName);
         HipoFile histofile = new HipoFile(hipoFileName);
         histofile.addToMap("H2_PCa_Hist", this.H2_PCa_Hist);

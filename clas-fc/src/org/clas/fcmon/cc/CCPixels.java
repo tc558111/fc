@@ -1,5 +1,6 @@
 package org.clas.fcmon.cc;
 
+import org.clas.fcmon.tools.FCCalibrationData;
 import org.clas.fcmon.tools.Strips;
 import org.jlab.clas.detector.DetectorCollection;
 import org.root.histogram.H1D;
@@ -91,7 +92,7 @@ public class CCPixels {
         }	    	
     }
     
-    public void initHistograms() {
+    public void initHistograms(String hipoFile) {
         
         System.out.println("CCPixels.initHistograms()");  
         
@@ -114,6 +115,14 @@ public class CCPixels {
                 H2_CCa_Sevd.add(is, il, 1, new H2D("CCa_Sed_FADC_"+il, 100,   0., 100., nstr, 1., nend));
             }
         }       
+
+        if(hipoFile!=" "){
+            FCCalibrationData calib = new FCCalibrationData();
+            calib.getFile(hipoFile);
+            H2_CCa_Hist = calib.getCollection("H2_CCa_Hist");
+            H2_CCt_Hist = calib.getCollection("H2_CCt_Hist");
+        }         
+        
         strips.addH1DMap("H1_CCa_Sevd",  H1_CCa_Sevd);
         strips.addH1DMap("H1_CCt_Sevd",  H1_CCt_Sevd);
         strips.addH2DMap("H2_CCa_Hist",  H2_CCa_Hist);

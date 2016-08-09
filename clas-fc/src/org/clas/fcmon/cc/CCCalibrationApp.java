@@ -95,6 +95,10 @@ public class CCCalibrationApp extends FCApplication implements CalibrationConsta
         CCHVEventListener(){};
         
         public void init(int is1, int is2) {
+            
+            this.is1=is1;
+            this.is2=is2;
+            
             calib = new CalibrationConstants(3,"gain/F");
             calib.setName("/calibration/ltcc/gain");
             calib.setPrecision(3);
@@ -119,6 +123,7 @@ public class CCCalibrationApp extends FCApplication implements CalibrationConsta
             return list;
         }  
         
+        @Override
         public void analyze() {
             for (int sector = is1; sector < is2; sector++) {
                 for (int layer = 1; layer < 3; layer++) {
@@ -130,6 +135,7 @@ public class CCCalibrationApp extends FCApplication implements CalibrationConsta
             calib.fireTableDataChanged();
         }
         
+        @Override
         public void fit(int sector, int layer, int paddle, double minRange, double maxRange){ 
            double mean = ccPix.strips.hmap2.get("H2_CCa_Hist").get(sector,layer,0).sliceY(paddle-1).getMean();
            calib.addEntry(sector, layer, paddle);
@@ -138,7 +144,7 @@ public class CCCalibrationApp extends FCApplication implements CalibrationConsta
         
         @Override
         public boolean isGoodPaddle(int sector, int layer, int paddle) {
-            int rowCount = sector*36+layer*18+paddle;
+            int rowCount = (sector-1)*36+layer*18+paddle;
             return calib.isValid(rowCount, 3);
         }
     }

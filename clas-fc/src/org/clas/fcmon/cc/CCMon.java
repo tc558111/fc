@@ -1,7 +1,6 @@
 package org.clas.fcmon.cc;
 
 import java.util.TreeMap;
-import java.util.concurrent.ExecutionException;
 
 import org.clas.fcmon.detector.view.DetectorShape2D;
 import org.clas.fcmon.tools.*;
@@ -10,13 +9,13 @@ import org.clas.fcmon.tools.*;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas12.detector.FADCConfigLoader;
 import org.jlab.clasrec.utils.DatabaseConstantProvider;
-//import org.root.histogram.H1D;
-//import org.root.histogram.H2D;
+import org.root.histogram.H1D;
+import org.root.histogram.H2D;
 
 //clas12rec
 import org.jlab.detector.base.DetectorDescriptor;
-import org.jlab.groot.data.H1F;
-import org.jlab.groot.data.H2F;
+//import org.jlab.groot.data.H1F;
+//import org.jlab.groot.data.H2F;
 import org.jlab.io.evio.EvioDataEvent;
 import org.jlab.io.base.DataEvent;
 
@@ -49,11 +48,11 @@ public class CCMon extends DetectorMonitor {
     
     String mondet                   = "LTCC";
     
-    DetectorCollection<H1F> H1_CCa_Sevd = new DetectorCollection<H1F>();
-    DetectorCollection<H1F> H1_CCt_Sevd = new DetectorCollection<H1F>();
-    DetectorCollection<H2F> H2_CCa_Hist = new DetectorCollection<H2F>();
-    DetectorCollection<H2F> H2_CCt_Hist = new DetectorCollection<H2F>();
-    DetectorCollection<H2F> H2_CCa_Sevd = new DetectorCollection<H2F>();
+    DetectorCollection<H1D> H1_CCa_Sevd = new DetectorCollection<H1D>();
+    DetectorCollection<H1D> H1_CCt_Sevd = new DetectorCollection<H1D>();
+    DetectorCollection<H2D> H2_CCa_Hist = new DetectorCollection<H2D>();
+    DetectorCollection<H2D> H2_CCt_Hist = new DetectorCollection<H2D>();
+    DetectorCollection<H2D> H2_CCa_Sevd = new DetectorCollection<H2D>();
 	
     DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new DetectorCollection<TreeMap<Integer,Object>>();	 
 	
@@ -61,23 +60,35 @@ public class CCMon extends DetectorMonitor {
 	   
     public CCMon(String det) {
         super("CCMON", "1.0", "lcsmith");
+        mondet = det;
+        setEnv();
     }
 
     public static void main(String[] args){		
         String det = "LTCC";
-        CCMon monitor = new CCMon(det);		
+        CCMon monitor = new CCMon(det);	
         app.setPluginClass(monitor);
         app.makeGUI();
         app.mode7Emulation.init("/daq/fadc/ltcc",1, 18, 12);
         monitor.initGlob();
         monitor.makeApps();
-        monitor.init();
         monitor.addCanvas();
+        monitor.init();
         monitor.initDetector();
         app.init();
         monitor.ccDet.initButtons();
     }
-	
+    
+    public void setEnv() {
+        if (myEnv=="hallb") {
+            doEpics = true;
+           hipoPath = "/home/lcsmith";
+        } else {
+            doEpics = false;
+          hipoPath  = "/Users/colesmith";
+        }
+    }
+    
     public void initDetector() {
         ccDet = new CCDetector("CCDet",ccPix);
         ccDet.setMonitoringClass(this);
@@ -136,13 +147,18 @@ public class CCMon extends DetectorMonitor {
     public void init( ) {       
         System.out.println("init()");   
         initApps();
-        ccPix.initHistograms();
+        ccPix.initHistograms(" ");
+        H2_CCa_Hist = ccPix.strips.hmap2.get("H2_CCa_Hist");
+        H2_CCt_Hist = ccPix.strips.hmap2.get("H2_CCt_Hist");
     }
 
     public void initApps() {
         System.out.println("initApps()");
         ccRecon.init();
-        ccHv.init(is1,is2);        
+        if (doEpics) {
+            ccHv.init(is1,is2);        
+            ccScalers.init(is1,is2); 
+        }
     }
     
     public void initGlob() {
@@ -182,10 +198,6 @@ public class CCMon extends DetectorMonitor {
     }	
 	
     @Override
-    public void saveToFile() {		
-    }
-	
-    @Override
     public void dataEventAction(DataEvent de) {
         ccRecon.addEvent((EvioDataEvent) de);	
     }
@@ -215,7 +227,8 @@ public class CCMon extends DetectorMonitor {
         case "Occupancy":     ccOccupancy.updateCanvas(dd); break;
         case "Pedestal":       ccPedestal.updateCanvas(dd); break;
         case "SPE":                 ccSpe.updateCanvas(dd); break; 
-        case "HV":                   ccHv.updateCanvas(dd);
+        case "HV":                   ccHv.updateCanvas(dd); break;
+        case "Scalers":         ccScalers.updateCanvas(dd);
         }                       
     }
 
@@ -226,11 +239,25 @@ public class CCMon extends DetectorMonitor {
     @Override
     public void timerUpdate() {
     }
-
+    
     @Override
-    public void readHipoFile() {
-        // TODO Auto-generated method stub
-        
+    public void readHipoFile() {        
+        String hipoFileName = hipoPath+"/"+mondet+".hipo";
+        System.out.println("Loading Histograms from "+hipoFileName);
+        ccPix.initHistograms(hipoFileName);
+        ccOccupancy.analyze();
+        inProcess = 2;          
+    }
+    
+    @Override
+    public void saveToFile() {
+        String hipoFileName = hipoPath+"/"+mondet+".hipo";
+        System.out.println("Saving Histograms to "+hipoFileName);
+        HipoFile histofile = new HipoFile(hipoFileName);
+        histofile.addToMap("H2_CCa_Hist", this.H2_CCa_Hist);
+        histofile.addToMap("H2_CCt_Hist", this.H2_CCt_Hist);
+        histofile.writeHipoFile(hipoFileName);
+        histofile.browseFile(hipoFileName);     
     }
     
 }

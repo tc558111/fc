@@ -325,6 +325,7 @@ public class ECReconstructionApp extends FCApplication {
        if(tdc>1200&&tdc<1500){
            uvwt[is-1][ic]=uvwt[is-1][ic]+ecPix[0].uvw_dalitz(ic,il,ip); //Dalitz tdc 
            nht[is-1][iv-1]++; int inh = nht[is-1][iv-1];
+           if (inh>nstr) inh=nstr;
            tdcr[is-1][iv-1][inh-1] = tdc;
            strrt[is-1][iv-1][inh-1] = ip;                  
            ecPix[0].strips.hmap2.get("H2_PCt_Hist").get(is,il,0).fill(tdc,ip,1.0);
@@ -334,6 +335,7 @@ public class ECReconstructionApp extends FCApplication {
        if(adc>thr[ic]){
            uvwa[is-1][ic]=uvwa[is-1][ic]+ecPix[0].uvw_dalitz(ic,il,ip); //Dalitz adc
            nha[is-1][iv-1]++; int inh = nha[is-1][iv-1];
+           if (inh>nstr) inh=nstr;
            adcr[is-1][iv-1][inh-1] = adc;
            ftdcr[is-1][iv-1][inh-1] = tdcf;
            strra[is-1][iv-1][inh-1] = ip;

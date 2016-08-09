@@ -41,7 +41,7 @@ public class ECMon extends DetectorMonitor {
     ECDetectorReconstruction  ecRec = null;
     DatabaseConstantProvider   ccdb = null;
    
-    String                    myEnv = "home";
+    String                    myEnv = "hallb";
     boolean                 doEpics = true;
     String                 hipoPath = null;
     public boolean             inMC = false; //true=MC false=DATA

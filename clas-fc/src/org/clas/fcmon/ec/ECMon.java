@@ -28,20 +28,20 @@ public class ECMon extends DetectorMonitor {
     ECPixels                ecPix[] = new ECPixels[2];
  
     ECDetector                ecDet = null;
-    ECAttenApp              ecAtten = null;
+    ECReconstructionApp     ecRecon = null;
+    ECDetectorReconstruction  ecRec = null;
     ECMode1App              ecMode1 = null;
-    ECOccupancyApp      ecOccupancy = null;
     ECSingleEventApp  ecSingleEvent = null;
-    ECRawHistosApp      ecRawHistos = null;
+    ECOccupancyApp      ecOccupancy = null;
+    ECAttenApp              ecAtten = null;
     ECPedestalApp        ecPedestal = null;
     ECTimingApp            ecTiming = null;
-    ECReconstructionApp     ecRecon = null;
+    ECRawHistosApp      ecRawHistos = null;
     ECScalersApp          ecScalers = null;
     ECHvApp                    ecHv = null;   
-    ECDetectorReconstruction  ecRec = null;
     DatabaseConstantProvider   ccdb = null;
    
-    String                    myEnv = "hallb";
+    String                    myEnv = "home";
     boolean                 doEpics = true;
     String                 hipoPath = null;
     public boolean             inMC = false; //true=MC false=DATA
@@ -56,7 +56,6 @@ public class ECMon extends DetectorMonitor {
     String mondet                   = "PCAL";
     int    moncalrun                = 0;
 
-    
     DetectorCollection<H2D> H2_PCa_Hist = new DetectorCollection<H2D>();
     DetectorCollection<H2D> H2_PCt_Hist = new DetectorCollection<H2D>();
     DetectorCollection<H1D> H1_PCa_Maps = new DetectorCollection<H1D>();

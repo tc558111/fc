@@ -191,7 +191,7 @@ public class ECHvApp extends FCEpics {
         
         if (lr==0||lr>layMap.get(detName).length) return;
         
-        //Don't redraw unless timer fires or new sector selected
+        //Don't redraw unless timer fires or new layer selected
         if (flag==0&&lr==isCurrentLayer) return;  
         
         canvas.divide(2, 1);

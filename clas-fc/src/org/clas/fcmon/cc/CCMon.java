@@ -23,9 +23,11 @@ import org.jlab.io.base.DataEvent;
 public class CCMon extends DetectorMonitor {
 	
     static MonitorApp           app = new MonitorApp("LTCCMon",1800,950);	
-    
-    CCDetector                ccDet = null;
-    
+    FADCConfigLoader          fadc  = new FADCConfigLoader();
+    DatabaseConstantProvider   ccdb = new DatabaseConstantProvider(12,"default");
+    CCPixels                  ccPix = new CCPixels();
+  
+    CCDetector                ccDet = null;    
     CCReconstructionApp     ccRecon = null;
     CCMode1App              ccMode1 = null;
     CCOccupancyApp      ccOccupancy = null;
@@ -34,21 +36,15 @@ public class CCMon extends DetectorMonitor {
     CCCalibrationApp        ccCalib = null;
     CCScalersApp          ccScalers = null;
     CCHvApp                    ccHv = null;
-    
-    CCPixels                  ccPix = new CCPixels();
-	
-    DatabaseConstantProvider   ccdb = new DatabaseConstantProvider(12,"default");
-    FADCConfigLoader          fadc  = new FADCConfigLoader();
-    	
-    int inProcess                   = 0;     //0=init 1=processing 2=end-of-run 3=post-run
-    boolean inMC                    = false; //true=MC false=DATA
-    int ipsave                      = 0;
-    int    detID                    = 0;
-    double zmin                     = 0;
-    double zmax                     = 0;
-    int is1                         = 1;
-    int is2                         = 7;	
-    
+        
+    String                    myEnv = "home";
+    boolean                 doEpics = true;
+    String                 hipoPath = null;
+    public boolean             inMC = false; //true=MC false=DATA
+    public int            inProcess = 0;     //0=init 1=processing 2=end-of-run 3=post-run
+    int                       detID = 0;
+    int                         is1 = 1 ;
+    int                         is2 = 7 ;  
     int nsa,nsb,tet,p1,p2,pedref    = 0;
     
     String mondet                   = "LTCC";
@@ -158,8 +154,8 @@ public class CCMon extends DetectorMonitor {
         putGlob("nsb", nsb);
         putGlob("tet", tet);        
         putGlob("ccdb", ccdb);
-        putGlob("zmin", zmin);
-        putGlob("zmax", zmax);
+//        putGlob("zmin", zmin);
+//        putGlob("zmax", zmax);
         putGlob("fadc",fadc);
         putGlob("mondet",mondet);
         putGlob("is1",is1);
@@ -229,6 +225,12 @@ public class CCMon extends DetectorMonitor {
 
     @Override
     public void timerUpdate() {
+    }
+
+    @Override
+    public void readHipoFile() {
+        // TODO Auto-generated method stub
+        
     }
     
 }

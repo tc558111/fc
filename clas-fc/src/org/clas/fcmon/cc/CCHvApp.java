@@ -21,10 +21,13 @@ public class CCHvApp extends FCEpics {
     DetectorCollection<LinkedList<Double>> fifo2 = new DetectorCollection<LinkedList<Double>>();
     DetectorCollection<LinkedList<Double>> fifo3 = new DetectorCollection<LinkedList<Double>>();
     
+    updateGUIAction action = new updateGUIAction();
+    
     Timer timer = null;
-    int delay;
+    int delay=2000;
     int nfifo=0, nmax=120;
     int isCurrentSector;
+    int isCurrentLayer;
     
     CCHvApp(String name, String det) {
         super(name, det);
@@ -42,8 +45,6 @@ public class CCHvApp extends FCEpics {
         initFifos();
         fillFifos();
         fillHistos();
-        updateGUIAction action = new updateGUIAction();
-        delay = 1000;
         this.timer = new Timer(delay,action);  
         this.timer.setDelay(delay);
         this.timer.start();
@@ -146,6 +147,7 @@ public class CCHvApp extends FCEpics {
         update2DScalers(scaler2DView,0);
         
         isCurrentSector = sectorSelected;
+        isCurrentLayer  = layerSelected;
     }
     
     public void update1DScalers(EmbeddedCanvas canvas, int flag) {
@@ -156,6 +158,8 @@ public class CCHvApp extends FCEpics {
         int is = sectorSelected;
         int lr = layerSelected;
         int ip = channelSelected; 
+        
+        if (lr==0||lr>layMap.get(detName).length) return;
         
         canvas.divide(4, 1);
         
@@ -184,7 +188,10 @@ public class CCHvApp extends FCEpics {
         H2D h = new H2D();
         
         int is = sectorSelected;
+        int lr = layerSelected;
                 
+        if (lr==0||lr>layMap.get(detName).length) return;
+        
         //Don't redraw unless timer fires or new sector selected
         if (flag==0&&(is==isCurrentSector)) return;  
         

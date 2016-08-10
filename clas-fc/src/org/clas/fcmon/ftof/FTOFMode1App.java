@@ -36,11 +36,11 @@ public class FTOFMode1App extends FCApplication {
         F1D f2 = new F1D("p0",0.,100.); f2.setParameter(0,app.mode7Emulation.CCDB_tet);
         f2.setLineColor(4);f2.setLineStyle(2);
        
-        for(int ip=0;ip<ccPix.cc_nstr[lr-1];ip++){
+        for(int ip=0;ip<ftofPix[0].nstr;ip++){
             canvas.cd(ip); canvas.getPad().setAxisRange(0.,100.,-15.,4000*app.displayControl.pixMax);
-            h = ccPix.strips.hmap2.get("H2_CCa_Sevd").get(is,lr,0).sliceY(ip); h.setXTitle("Samples (4 ns)"); h.setYTitle("Counts");
+            h = ftofPix[0].strips.hmap2.get("H2_a_Sevd").get(is,lr,0).sliceY(ip); h.setXTitle("Samples (4 ns)"); h.setYTitle("Counts");
             h.setTitle("Sector "+is+otab[lr-1]+(ip+1)); h.setFillColor(4); canvas.draw(h);
-            h = ccPix.strips.hmap2.get("H2_CCa_Sevd").get(is,lr,1).sliceY(ip); h.setFillColor(2); canvas.draw(h,"same");
+            h = ftofPix[0].strips.hmap2.get("H2_a_Sevd").get(is,lr,1).sliceY(ip); h.setFillColor(2); canvas.draw(h,"same");
             canvas.draw(f1,"same");canvas.draw(f2,"same");
             }       
     }   

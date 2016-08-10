@@ -45,7 +45,6 @@ public class FTOFPixels {
         ccdb.loadTable(table+"/paddles");        
         for (int i=0; i<nstr; i++) {
             geom[i] = ccdb.getDouble(table+"/paddles/Length",i);
-            System.out.println("geom="+geom[i]+" "+nstr);
         }
         
         ccdb.loadTable(table+"/panel");
@@ -65,7 +64,6 @@ public class FTOFPixels {
             ftof_ypix[1][nstr+i][6]=k;
             ftof_ypix[2][nstr+i][6]=k-y_inc;
             ftof_ypix[3][nstr+i][6]=k-y_inc;
-            System.out.println(ftof_xpix[0][nstr+i][6]+" "+ftof_ypix[0][nstr+i][6]);
         }
         for(int i=0 ; i<nstr ; i++){
             x_inc = 0.5*geom[i];
@@ -91,7 +89,6 @@ public class FTOFPixels {
             double thet=theta[is]*3.14159/180.;
             for (int ipix=0; ipix<2*nstr; ipix++) {
                 for (int k=0;k<4;k++){
-                    System.out.println(is+" "+ipix+" "+k);
                     ftof_xpix[k][ipix][is]= -(ftof_xpix[k][ipix][6]*Math.cos(thet)+ftof_ypix[k][ipix][6]*Math.sin(thet));
                     ftof_ypix[k][ipix][is]=  -ftof_xpix[k][ipix][6]*Math.sin(thet)+ftof_ypix[k][ipix][6]*Math.cos(thet);
                 }

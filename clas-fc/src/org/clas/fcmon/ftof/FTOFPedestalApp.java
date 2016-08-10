@@ -20,7 +20,7 @@ public class FTOFPedestalApp extends FCApplication {
         int lr = layer;
         
         int col2=2,col4=4,col0=0;
-        double nstr = ccPix.cc_nstr[0];
+        double nstr = ftofPix[0].nstr;
         
         H1D h;
         String otab[]={" Left PMT "," Right PMT "};
@@ -31,7 +31,7 @@ public class FTOFPedestalApp extends FCApplication {
         canvas.setAxisTitleFontSize(14);
         
         for(int il=1;il<3;il++){
-            H2D hpix = ccPix.strips.hmap2.get("H2_CCa_Hist").get(is,il,3);
+            H2D hpix = ftofPix[0].strips.hmap2.get("H2_a_Hist").get(is,il,3);
             hpix.setXTitle("PED (Ref-Measured)") ; hpix.setYTitle(otab[il-1]);
          
             canvas.cd(il-1); canvas.getPad().setAxisRange(-30.,30.,1.,nstr+1) ; canvas.setLogZ(); canvas.draw(hpix);

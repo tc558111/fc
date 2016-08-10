@@ -22,6 +22,7 @@ public class FTOFDetector extends FCDetector {
         initMapButtons(0, 0);
         initMapButtons(1, 0);
         initViewButtons(0, 0);
+        initViewButtons(1, 0);
         app.getDetectorView().setFPS(10);
         app.setSelectedTab(1); 
         
@@ -44,7 +45,7 @@ public class FTOFDetector extends FCDetector {
             app.getDetectorView().getView().setDetectorListener(layer,mon);
          }
         
-        addButtons("DET","View","PANEL1A.0.PANEL1B.1.PANEL2.2");
+        addButtons("DET","View","PANEL1A.1.PANEL1B.2.PANEL2.3");
         addButtons("LAY","View","LR.0.L.1.R.2");
         addButtons("PMT","Map","EVT.0.ADC.1.TDC.2.STATUS.3");
         addButtons("PIX","Map","EVT.0.ADC.1.TDC.2.STATUS.3");

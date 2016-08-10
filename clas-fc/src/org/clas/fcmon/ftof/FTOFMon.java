@@ -46,7 +46,7 @@ public class FTOFMon extends DetectorMonitor {
     int                           is2 = 7 ;  
     int nsa,nsb,tet,p1,p2,pedref      = 0;
     
-    String mondet                     = "FTOF";
+    String mondet                     = "FTOF1A";
     
     DetectorCollection<H1D> H1_a_Sevd = new DetectorCollection<H1D>();
     DetectorCollection<H1D> H1_t_Sevd = new DetectorCollection<H1D>();
@@ -61,12 +61,12 @@ public class FTOFMon extends DetectorMonitor {
     public FTOFMon(String det) {
         super("FTOFMON", "1.0", "lcsmith");
         mondet = det;
-        if (mondet=="FTOF") ftofPix[0] = new FTOFPixels("PANEL1A");
+        if (mondet=="FTOF1A") ftofPix[0] = new FTOFPixels("PANEL1A");
         setEnv();
     }
 
     public static void main(String[] args){		
-        String det = "FTOF";
+        String det = "FTOF1A";
         FTOFMon monitor = new FTOFMon(det);	
         app.setPluginClass(monitor);
         app.makeGUI();
@@ -215,7 +215,7 @@ public class FTOFMon extends DetectorMonitor {
         this.inProcess = process; glob.put("inProcess", process);
         if (process==1||process==2) {
             ftofRecon.makeMaps();	
-            ftofCalib.engines[0].analyze();
+//            ftofCalib.engines[0].analyze();
         }
     }
 

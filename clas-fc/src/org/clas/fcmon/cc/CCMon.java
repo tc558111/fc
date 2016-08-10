@@ -22,7 +22,7 @@ import org.jlab.io.base.DataEvent;
 public class CCMon extends DetectorMonitor {
 	
     static MonitorApp           app = new MonitorApp("LTCCMon",1800,950);	
-    FADCConfigLoader          fadc  = new FADCConfigLoader();
+    FADCConfigLoader           fadc = new FADCConfigLoader();
     DatabaseConstantProvider   ccdb = new DatabaseConstantProvider(12,"default");
     CCPixels                  ccPix = new CCPixels();
   

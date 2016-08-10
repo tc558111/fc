@@ -190,7 +190,7 @@ public class FTOFReconstructionApp extends FCApplication {
    public void updateSimulatedData(EvioDataEvent event) {
        
       float tdcmax=100000;
-      int nrows, adc, fac;
+      int nrows, adc, tdcc, fac;
       double mc_t=0.,tdc=0,tdcf=0;
       Boolean bypass=false;
          
@@ -219,16 +219,18 @@ public class FTOFReconstructionApp extends FCApplication {
        
       for(int i = 0; i < nrows; i++){
          int is  = bank.getInt("sector",i);
-         int ip  = bank.getInt("strip",i);
-         int ic  = bank.getInt("stack",i);     
-         int il  = bank.getInt("view",i);  
-             adc = bank.getInt("ADC",i)/fac;
-        int tdcc = bank.getInt("TDC",i);
+         int ip  = bank.getInt("paddle",i);
+             adc = bank.getInt("ADCL",i);
+            tdcc = bank.getInt("TDCL",i);
             tdcf = tdcc;
-              il = il+(ic-1)*3;
              tdc = (((float)tdcc-(float)mc_t*1000)-tdcmax+1340000)/1000; 
-             bypass = false;
-        if((ic==1||ic==2)&&bypass==false) fill(is, il, ip, adc, tdc, tdcf); 
+            fill(is, 1, ip, adc, tdc, tdcf); 
+             adc = bank.getInt("ADCR",i);
+            tdcc = bank.getInt("TDCR",i);
+            tdcf = tdcc;
+             tdc = (((float)tdcc-(float)mc_t*1000)-tdcmax+1340000)/1000; 
+           bypass = false;
+            fill(is, 2, ip, adc, tdc, tdcf); 
       }
          
    }

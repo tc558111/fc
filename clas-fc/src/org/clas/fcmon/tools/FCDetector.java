@@ -15,6 +15,7 @@ import javax.swing.JPanel;
 import org.clas.fcmon.cc.CCPixels;
 import org.clas.fcmon.detector.view.DetectorPane2D;
 import org.clas.fcmon.detector.view.DetectorShape2D;
+import org.clas.fcmon.ftof.FTOFPixels;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.detector.base.DetectorDescriptor;
 import org.root.attr.ColorPalette;
@@ -31,6 +32,7 @@ public class FCDetector {
     
     public ECPixels[]                ecPix = null;  
     public CCPixels                  ccPix = null; 
+    public FTOFPixels[]            ftofPix = null; 
     public MonitorApp                  app = null;
     public DetectorMonitor             mon = null;
     public TreeMap<String,JPanel>  rbPanes = new TreeMap<String,JPanel>();
@@ -56,6 +58,10 @@ public class FCDetector {
         this.ccPix = ccPix;     
     }
     
+    public FCDetector(FTOFPixels[] ftofPix) {
+        this.ftofPix = ftofPix;     
+    }
+    
     public FCDetector(String name, ECPixels[] ecPix) {
         this.appName = name;
         this.ecPix = ecPix;  
@@ -72,6 +78,13 @@ public class FCDetector {
         this.ccPix = ccPix;   
         this.nStrips[0] = ccPix.cc_nstr[0];
         this.nStrips[1] = ccPix.cc_nstr[1];
+    }
+    
+    public FCDetector(String name, FTOFPixels[] ftofPix) {
+        this.appName = name;
+        this.ftofPix = ftofPix;   
+        this.nStrips[0] = ftofPix[0].ftof_nstr[0];
+        this.nStrips[1] = ftofPix[0].ftof_nstr[0];
     }
     
     public void setApplicationClass(MonitorApp app) {
@@ -168,13 +181,13 @@ public class FCDetector {
         // Update shape color map depending on process status and layer
         // layers 1-6 reserved for strip views, layers >7 for pixel views
         // Lmap_a stores live colormap of detector shape elements
-       
+        
         if (inProcess==0){ // Assign default colors upon starting GUI (before event processing)
              if(layer<7) colorfraction = (double)ic/nStrips[layer-1]; 
             if(layer>=7) colorfraction = getcolor((TreeMap<Integer, Object>) Lmap_a.get(0,0,0), ic);  
         }
         if (inProcess>0){             
-                         colorfraction = getcolor((TreeMap<Integer, Object>) Lmap_a.get(is+1,layer,opt), ic);
+                         colorfraction = getcolor((TreeMap<Integer, Object>) Lmap_a.get(is,layer,opt), ic);
         }
         
         if (colorfraction<0.05) colorfraction = 0.05;

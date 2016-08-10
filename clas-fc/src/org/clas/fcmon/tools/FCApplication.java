@@ -14,6 +14,7 @@ import javax.swing.JRadioButton;
 
 import org.clas.fcmon.cc.CCPixels;
 import org.clas.fcmon.detector.view.DetectorShape2D;
+import org.clas.fcmon.ftof.FTOFPixels;
 import org.clas.fcmon.tools.ECPixels;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.detector.base.DetectorDescriptor;
@@ -38,6 +39,8 @@ public class FCApplication implements ActionListener  {
     
     public ECPixels[]                                   ecPix = new ECPixels[2];
     public CCPixels                                     ccPix = null;
+    public FTOFPixels[]                               ftofPix = new FTOFPixels[3];
+    
 	public DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new  DetectorCollection<TreeMap<Integer,Object>>();
 	public TreeMap<String, DetectorCollection<H1D>>     hmap1 = new TreeMap<String, DetectorCollection<H1D>>();
 	public TreeMap<String, DetectorCollection<H2D>>     hmap2 = new TreeMap<String, DetectorCollection<H2D>>();
@@ -69,6 +72,10 @@ public class FCApplication implements ActionListener  {
         this.ccPix = ccPix;     
     }
     
+    public FCApplication(FTOFPixels[] ftofPix) {
+        this.ftofPix = ftofPix;     
+    }
+     
     public FCApplication(String name, ECPixels[] ecPix) {
         this.appName = name;
         this.ecPix = ecPix;   
@@ -78,6 +85,12 @@ public class FCApplication implements ActionListener  {
     public FCApplication(String name, CCPixels ccPix) {
         this.appName = name;
         this.ccPix = ccPix;   
+        this.addCanvas(name);
+    }
+    
+    public FCApplication(String name, FTOFPixels[] ftofPix) {
+        this.appName = name;
+        this.ftofPix = ftofPix;   
         this.addCanvas(name);
     }
     

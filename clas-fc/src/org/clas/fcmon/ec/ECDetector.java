@@ -35,12 +35,14 @@ public class ECDetector extends FCDetector {
     public void initDetector(int is1, int is2) {
         
         System.out.println("initDetector()");
-                
+         
+        app.currentView = "PIX";
+        
          for(int is=is1; is<is2; is++) {
-            for(int ip=0; ip<ecPix[0].pc_nstr[0] ; ip++)             app.getDetectorView().getView().addShape("U",getStrip(is,1,ip));
-            for(int ip=0; ip<ecPix[0].pc_nstr[1] ; ip++)             app.getDetectorView().getView().addShape("V",getStrip(is,2,ip));
-            for(int ip=0; ip<ecPix[0].pc_nstr[2] ; ip++)             app.getDetectorView().getView().addShape("W",getStrip(is,3,ip));           
-            for(int ip=0; ip<ecPix[0].pixels.getNumPixels() ; ip++)  app.getDetectorView().getView().addShape("PIX",getPixel(is,4,ip));
+            for(int ip=0; ip<ecPix[0].pc_nstr[0] ; ip++)             app.getDetectorView().getView().addShape("U0",getStrip(is,1,ip));
+            for(int ip=0; ip<ecPix[0].pc_nstr[1] ; ip++)             app.getDetectorView().getView().addShape("V0",getStrip(is,2,ip));
+            for(int ip=0; ip<ecPix[0].pc_nstr[2] ; ip++)             app.getDetectorView().getView().addShape("W0",getStrip(is,3,ip));           
+            for(int ip=0; ip<ecPix[0].pixels.getNumPixels() ; ip++)  app.getDetectorView().getView().addShape("PIX0",getPixel(is,4,ip));
         }
         
          app.getDetectorView().getView().addDetectorListener(mon);
@@ -49,7 +51,7 @@ public class ECDetector extends FCDetector {
             app.getDetectorView().getView().setDetectorListener(layer,mon);
          }
          
-         addButtons("DET","View","PC.1.ECi.1.ECo.2");
+         addButtons("DET","View","PC.0.ECi.1.ECo.2");
          addButtons("LAY","View","U.1.V.2.W.3.PIX.4");
          addButtons("PMT","Map","EVT.0.ADC.0.TDC.0");
          addButtons("PIX","Map","EVT.0.NEVT.1.ADC U.11.ADC V.12.ADC W.13.ADC U+V+W.9");

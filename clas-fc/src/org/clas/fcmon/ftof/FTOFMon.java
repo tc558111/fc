@@ -22,16 +22,18 @@ import org.jlab.io.base.DataEvent;
 public class FTOFMon extends DetectorMonitor {
 	
     static MonitorApp             app = new MonitorApp("FTOFMon",1800,950);	
-    FADCConfigLoader            fadc  = new FADCConfigLoader();
-    DatabaseConstantProvider     ccdb = new DatabaseConstantProvider(12,"default");
+    
     FTOFPixels              ftofPix[] = new FTOFPixels[3];
+    FADCConfigLoader             fadc = new FADCConfigLoader();
+    DatabaseConstantProvider     ccdb = new DatabaseConstantProvider(12,"default");
   
-    FTOFDetector              ftofDet = null;    
+    FTOFDetector              ftofDet = null;  
+    
     FTOFReconstructionApp   ftofRecon = null;
     FTOFMode1App            ftofMode1 = null;
     FTOFOccupancyApp    ftofOccupancy = null;
     FTOFPedestalApp      ftofPedestal = null;
-    FTOFSpeApp                ftofSpe = null;    
+    FTOFMipApp                ftofMip = null;    
     FTOFCalibrationApp      ftofCalib = null;
     FTOFScalersApp        ftofScalers = null;
     FTOFHvApp                  ftofHv = null;
@@ -45,6 +47,8 @@ public class FTOFMon extends DetectorMonitor {
     int                           is1 = 1 ;
     int                           is2 = 7 ;  
     int nsa,nsb,tet,p1,p2,pedref      = 0;
+    double                 PCMon_zmin = 0;
+    double                 PCMon_zmax = 0;
     
     String mondet                     = "FTOF1A";
     
@@ -61,7 +65,9 @@ public class FTOFMon extends DetectorMonitor {
     public FTOFMon(String det) {
         super("FTOFMON", "1.0", "lcsmith");
         mondet = det;
-        if (mondet=="FTOF1A") ftofPix[0] = new FTOFPixels("PANEL1A");
+        ftofPix[0] = new FTOFPixels("PANEL1A");
+        ftofPix[1] = new FTOFPixels("PANEL1B");
+        ftofPix[2] = new FTOFPixels("PANEL2");
         setEnv();
     }
 
@@ -116,9 +122,9 @@ public class FTOFMon extends DetectorMonitor {
         ftofPedestal.setMonitoringClass(this);
         ftofPedestal.setApplicationClass(app);       
         
-        ftofSpe = new FTOFSpeApp("SPE",ftofPix);        
-        ftofSpe.setMonitoringClass(this);
-        ftofSpe.setApplicationClass(app);  
+        ftofMip = new FTOFMipApp("MIP",ftofPix);        
+        ftofMip.setMonitoringClass(this);
+        ftofMip.setApplicationClass(app);  
         
         ftofCalib = new FTOFCalibrationApp("Calibration", ftofPix);
         ftofCalib.setMonitoringClass(this);
@@ -139,7 +145,7 @@ public class FTOFMon extends DetectorMonitor {
         app.addCanvas(ftofMode1.getName(),         ftofMode1.getCanvas());
         app.addCanvas(ftofOccupancy.getName(), ftofOccupancy.getCanvas());          
         app.addCanvas(ftofPedestal.getName(),   ftofPedestal.getCanvas());
-        app.addCanvas(ftofSpe.getName(),             ftofSpe.getCanvas()); 
+        app.addCanvas(ftofMip.getName(),             ftofMip.getCanvas()); 
         app.addFrame(ftofCalib.getName(),          ftofCalib.getCalibPane());
         app.addFrame(ftofHv.getName(),                ftofHv.getScalerPane());
         app.addFrame(ftofScalers.getName(),      ftofScalers.getScalerPane());
@@ -149,6 +155,8 @@ public class FTOFMon extends DetectorMonitor {
         System.out.println("init()");   
         initApps();
         ftofPix[0].initHistograms(" ");
+        ftofPix[1].initHistograms(" ");
+        ftofPix[2].initHistograms(" ");
         H2_a_Hist = ftofPix[0].strips.hmap2.get("H2_a_Hist");
         H2_t_Hist = ftofPix[0].strips.hmap2.get("H2_t_Hist");
     }
@@ -171,8 +179,8 @@ public class FTOFMon extends DetectorMonitor {
         putGlob("nsb", nsb);
         putGlob("tet", tet);        
         putGlob("ccdb", ccdb);
-//        putGlob("zmin", zmin);
-//        putGlob("zmax", zmax);
+        putGlob("zmin", PCMon_zmin);
+        putGlob("zmax", PCMon_zmax);
         putGlob("fadc",fadc);
         putGlob("mondet",mondet);
         putGlob("is1",is1);
@@ -227,7 +235,7 @@ public class FTOFMon extends DetectorMonitor {
         case "Mode1":             ftofMode1.updateCanvas(dd); break;
         case "Occupancy":     ftofOccupancy.updateCanvas(dd); break;
         case "Pedestal":       ftofPedestal.updateCanvas(dd); break;
-        case "SPE":                 ftofSpe.updateCanvas(dd); break; 
+        case "MIP":                 ftofMip.updateCanvas(dd); break; 
         case "HV":                   ftofHv.updateCanvas(dd); break;
         case "Scalers":         ftofScalers.updateCanvas(dd);
         }                       

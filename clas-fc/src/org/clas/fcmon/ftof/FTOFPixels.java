@@ -1,5 +1,7 @@
 package org.clas.fcmon.ftof;
 
+import java.util.TreeMap;
+
 import org.clas.fcmon.tools.FCCalibrationData;
 import org.clas.fcmon.tools.Strips;
 import org.jlab.clas.detector.DetectorCollection;
@@ -16,7 +18,15 @@ public class FTOFPixels {
     double ftof_ypix[][][] = new double[4][124][7];
     
     public    int     ftof_nstr[] = {23,62,5};
-	int id;
+    
+    int        nha[][] = new    int[6][2];
+    int        nht[][] = new    int[6][2];
+    int    strra[][][] = new    int[6][2][62]; 
+    int    strrt[][][] = new    int[6][2][62]; 
+    int     adcr[][][] = new    int[6][2][62];      
+    double  tdcr[][][] = new double[6][2][62]; 
+    
+    int id;
 	public int nstr;
 	
     public FTOFPixels(String det) {
@@ -33,7 +43,7 @@ public class FTOFPixels {
         System.out.println("FTOFPixels.pixdef:"); 
         
         double geom[] = new double[nstr];
-       
+        double zoff[] = {50.,50.,420.};
         String table=null;
             
         switch (id) { 
@@ -59,7 +69,7 @@ public class FTOFPixels {
             ftof_xpix[1][nstr+i][6]=0.;
             ftof_xpix[2][nstr+i][6]=0.;
             ftof_xpix[3][nstr+i][6]=-x_inc;
-            k = -i*y_inc-50.;	    	   
+            k = -i*y_inc-zoff[id];	    	   
             ftof_ypix[0][nstr+i][6]=k;
             ftof_ypix[1][nstr+i][6]=k;
             ftof_ypix[2][nstr+i][6]=k-y_inc;
@@ -71,7 +81,7 @@ public class FTOFPixels {
             ftof_xpix[1][i][6]=x_inc;
             ftof_xpix[2][i][6]=x_inc;
             ftof_xpix[3][i][6]=0.;
-            k = -i*y_inc-50.;	    	   
+            k = -i*y_inc-zoff[id];	    	   
             ftof_ypix[0][i][6]=k;
             ftof_ypix[1][i][6]=k;
             ftof_ypix[2][i][6]=k-y_inc;
@@ -110,7 +120,7 @@ public class FTOFPixels {
         
         for (int is=1; is<7 ; is++) {
             for (int il=1 ; il<3 ; il++){
-                H2_a_Hist.add(is, il, 0, new H2D("a_Hist_Raw_"+il, 100,   0., 2000.,nstr, 1., nend));
+                H2_a_Hist.add(is, il, 0, new H2D("a_Hist_Raw_"+il, 100,   0., 4000.,nstr, 1., nend));
                 H2_t_Hist.add(is, il, 0, new H2D("t_Hist_Raw_"+il, 100,1330., 1370.,nstr, 1., nend));
                 H2_a_Hist.add(is, il, 3, new H2D("a_Hist_PED_"+il,  40, -20.,  20., nstr, 1., nend)); 
                 H2_a_Hist.add(is, il, 5, new H2D("a_Hist_FADC_"+il,100,   0., 100., nstr, 1., nend));

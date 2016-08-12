@@ -39,7 +39,7 @@ public class FCApplication implements ActionListener  {
     
     public ECPixels[]                                   ecPix = new ECPixels[2];
     public CCPixels                                     ccPix = null;
-    public FTOFPixels[]                               ftofPix = new FTOFPixels[3];
+    public FTOFPixels[]                               ftofPix = null;
     
 	public DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new  DetectorCollection<TreeMap<Integer,Object>>();
 	public TreeMap<String, DetectorCollection<H1D>>     hmap1 = new TreeMap<String, DetectorCollection<H1D>>();
@@ -58,11 +58,13 @@ public class FCApplication implements ActionListener  {
     private String             canvasSelect;
     private int                canvasIndex;
     
+    String   currentView = "LR";
+    
     int        inProcess = 0;
     double    PCMon_zmin = 0;
     double    PCMon_zmax = 0;    
     public int      omap = 0;
-    int            ilmap = 1;
+    public int     ilmap = 0;
     
     public FCApplication(ECPixels[] ecPix) {
         this.ecPix = ecPix;     
@@ -117,7 +119,7 @@ public class FCApplication implements ActionListener  {
         ic    = dd.getComponent(); 	 
                 
         panel = omap;
-        io    = ilmap;
+        io    = ilmap+1;
         of    = (io-1)*3;
         lay   = 0;
         opt   = 0;
@@ -206,11 +208,17 @@ public class FCApplication implements ActionListener  {
         this.bStore = app.getDetectorView().bStore;
         this.rbPanes = app.getDetectorView().rbPanes;
         if(group=="LAY") {
+            currentView = name;
+            name = name+Integer.toString(ilmap);
             app.getDetectorView().getView().setLayerState(name, true);
             if (key<4) {rbPanes.get("PMT").setVisible(true);rbPanes.get("PIX").setVisible(false);omap=bStore.get("PMT");}       
             if (key>3) {rbPanes.get("PIX").setVisible(true);rbPanes.get("PMT").setVisible(false);omap=bStore.get("PIX");}
         }
-        if(group=="DET") ilmap = key;
+        if(group=="DET") {
+            ilmap = key;            
+            name = currentView+Integer.toString(ilmap);  
+            app.getDetectorView().getView().setLayerState(name, true);
+        }
         app.getDetectorView().getView().updateGUI();        
     }  
     

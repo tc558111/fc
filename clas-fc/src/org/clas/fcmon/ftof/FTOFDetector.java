@@ -21,8 +21,8 @@ public class FTOFDetector extends FCDetector {
         
         initMapButtons(0, 0);
         initMapButtons(1, 0);
-        initViewButtons(0, 0);
         initViewButtons(1, 0);
+        initViewButtons(0, 0);
         app.getDetectorView().setFPS(10);
         app.setSelectedTab(1); 
         
@@ -30,12 +30,14 @@ public class FTOFDetector extends FCDetector {
     
     public void initDetector(int is1, int is2) {
         
-        for(int id=0; id<1; id++){
+        
+        for(int id=0; id<ftofPix.length; id++){
+        System.out.println("FTOFDetector.initDetector() NSTRIPS="+ftofPix[id].nstr);
         for(int is=is1; is<is2; is++) {
-            for(int ip=0; ip<ftofPix[id].nstr ; ip++) app.getDetectorView().getView().addShape("LR",getPaddle(id,is,1,ip));
-            for(int ip=0; ip<ftofPix[id].nstr ; ip++) app.getDetectorView().getView().addShape("LR",getPaddle(id,is,2,ip));
-            for(int ip=0; ip<ftofPix[id].nstr ; ip++) app.getDetectorView().getView().addShape("L",getPaddle(id,is,1,ip));
-            for(int ip=0; ip<ftofPix[id].nstr ; ip++) app.getDetectorView().getView().addShape("R",getPaddle(id,is,2,ip));
+            for(int ip=0; ip<ftofPix[id].nstr ; ip++) app.getDetectorView().getView().addShape("LR"+id,getPaddle(id,is,1,ip));
+            for(int ip=0; ip<ftofPix[id].nstr ; ip++) app.getDetectorView().getView().addShape("LR"+id,getPaddle(id,is,2,ip));
+            for(int ip=0; ip<ftofPix[id].nstr ; ip++) app.getDetectorView().getView().addShape("L"+id,getPaddle(id,is,1,ip));
+            for(int ip=0; ip<ftofPix[id].nstr ; ip++) app.getDetectorView().getView().addShape("R"+id,getPaddle(id,is,2,ip));
         }   
         }
         
@@ -45,7 +47,7 @@ public class FTOFDetector extends FCDetector {
             app.getDetectorView().getView().setDetectorListener(layer,mon);
          }
         
-        addButtons("DET","View","PANEL1A.1.PANEL1B.2.PANEL2.3");
+        addButtons("DET","View","PANEL1A.0.PANEL1B.1.PANEL2.2");
         addButtons("LAY","View","LR.0.L.1.R.2");
         addButtons("PMT","Map","EVT.0.ADC.1.TDC.2.STATUS.3");
         addButtons("PIX","Map","EVT.0.ADC.1.TDC.2.STATUS.3");

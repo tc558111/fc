@@ -54,6 +54,8 @@ public class MonitorApp extends JFrame implements ActionListener {
     public DisplayControl   displayControl = null;	
     public Mode7Emulation   mode7Emulation = null;
     
+    public String currentView = null;
+    
 //    Miscellaneous    extra = new Miscellaneous();
        
     DetectorMonitor   monitoringClass = null;

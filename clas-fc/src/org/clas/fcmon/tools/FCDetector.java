@@ -50,7 +50,6 @@ public class FCDetector {
     int     nStrips[] = new int[6];
     double PCMon_zmin = 0;
     double PCMon_zmax = 0;
-    String currentView = null;
     
     public FCDetector(ECPixels[] ecPix) {
         this.ecPix = ecPix;     
@@ -164,7 +163,7 @@ public class FCDetector {
         this.bStore  = app.getDetectorView().bStore;
         this.rbPanes = app.getDetectorView().rbPanes;
         if(group=="LAY") {
-            currentView = name;
+            app.currentView = name;
             name = name+Integer.toString(ilmap);
             app.getDetectorView().getView().setLayerState(name, true);
             if (key<4) {rbPanes.get("PMT").setVisible(true);rbPanes.get("PIX").setVisible(false);omap=bStore.get("PMT");}       
@@ -172,7 +171,7 @@ public class FCDetector {
         }
         if(group=="DET") {
             ilmap = key;            
-            name = currentView+Integer.toString(ilmap);  
+            name = app.currentView+Integer.toString(ilmap);  
             app.getDetectorView().getView().setLayerState(name, true);
         }       
         app.getDetectorView().update();        

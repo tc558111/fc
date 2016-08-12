@@ -29,11 +29,13 @@ public class CCDetector extends FCDetector {
     
     public void initDetector(int is1, int is2) {
         
+        app.currentView = "LR";
+        
         for(int is=is1; is<is2; is++) {
-            for(int ip=0; ip<ccPix.cc_nstr[0] ; ip++) app.getDetectorView().getView().addShape("LR",getMirror(is,1,ip));
-            for(int ip=0; ip<ccPix.cc_nstr[1] ; ip++) app.getDetectorView().getView().addShape("LR",getMirror(is,2,ip));
-            for(int ip=0; ip<ccPix.cc_nstr[0] ; ip++) app.getDetectorView().getView().addShape("L",getMirror(is,1,ip));
-            for(int ip=0; ip<ccPix.cc_nstr[1] ; ip++) app.getDetectorView().getView().addShape("R",getMirror(is,2,ip));
+            for(int ip=0; ip<ccPix.cc_nstr[0] ; ip++) app.getDetectorView().getView().addShape("LR0",getMirror(is,1,ip));
+            for(int ip=0; ip<ccPix.cc_nstr[1] ; ip++) app.getDetectorView().getView().addShape("LR0",getMirror(is,2,ip));
+            for(int ip=0; ip<ccPix.cc_nstr[0] ; ip++) app.getDetectorView().getView().addShape("L0",getMirror(is,1,ip));
+            for(int ip=0; ip<ccPix.cc_nstr[1] ; ip++) app.getDetectorView().getView().addShape("R0",getMirror(is,2,ip));
         }   
         
         app.getDetectorView().getView().addDetectorListener(mon);

@@ -38,14 +38,14 @@ public class FTOFMon extends DetectorMonitor {
     FTOFScalersApp        ftofScalers = null;
     FTOFHvApp                  ftofHv = null;
         
-    String                      myEnv = "home";
+    String                      myEnv = "hallb";
     boolean                   doEpics = true;
     String                   hipoPath = null;
     public boolean               inMC = false; //true=MC false=DATA
     public int              inProcess = 0;     //0=init 1=processing 2=end-of-run 3=post-run
     int                         detID = 0;
-    int                           is1 = 1 ;
-    int                           is2 = 7 ;  
+    int                           is1 = 4 ;
+    int                           is2 = 5 ;  
     int nsa,nsb,tet,p1,p2,pedref      = 0;
     double                 PCMon_zmin = 0;
     double                 PCMon_zmax = 0;
@@ -131,11 +131,11 @@ public class FTOFMon extends DetectorMonitor {
         ftofCalib.setApplicationClass(app);  
         ftofCalib.init(is1,is2);
         
-        ftofHv = new FTOFHvApp("HV","LTCC");
+        ftofHv = new FTOFHvApp("HV","FTOF");
         ftofHv.setMonitoringClass(this);
         ftofHv.setApplicationClass(app);  
         
-        ftofScalers = new FTOFScalersApp("Scalers","LTCC");
+        ftofScalers = new FTOFScalersApp("Scalers","FTOF");
         ftofScalers.setMonitoringClass(this);
         ftofScalers.setApplicationClass(app);  
     }

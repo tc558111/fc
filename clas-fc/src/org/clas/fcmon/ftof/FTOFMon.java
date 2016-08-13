@@ -38,9 +38,6 @@ public class FTOFMon extends DetectorMonitor {
     FTOFScalersApp        ftofScalers = null;
     FTOFHvApp                  ftofHv = null;
         
-    String                      myEnv = "hallb";
-    boolean                   doEpics = true;
-    String                   hipoPath = null;
     public boolean               inMC = false; //true=MC false=DATA
     public int              inProcess = 0;     //0=init 1=processing 2=end-of-run 3=post-run
     int                         detID = 0;
@@ -68,13 +65,13 @@ public class FTOFMon extends DetectorMonitor {
         ftofPix[0] = new FTOFPixels("PANEL1A");
         ftofPix[1] = new FTOFPixels("PANEL1B");
         ftofPix[2] = new FTOFPixels("PANEL2");
-        setEnv();
     }
 
     public static void main(String[] args){		
         String det = "FTOF1A";
         FTOFMon monitor = new FTOFMon(det);	
         app.setPluginClass(monitor);
+        app.getEnv();
         app.makeGUI();
         app.mode7Emulation.init("/daq/fadc/ftof",5, 3, 1);
         monitor.initGlob();
@@ -86,17 +83,8 @@ public class FTOFMon extends DetectorMonitor {
         monitor.ftofDet.initButtons();
     }
     
-    public void setEnv() {
-        if (myEnv=="hallb") {
-            doEpics = true;
-           hipoPath = "/home/lcsmith";
-        } else {
-            doEpics = false;
-          hipoPath  = "/Users/colesmith";
-        }
-    }
-    
     public void initDetector() {
+        System.out.println("monitor.initDetector()"); 
         ftofDet = new FTOFDetector("FTOFDet",ftofPix);
         ftofDet.setMonitoringClass(this);
         ftofDet.setApplicationClass(app);
@@ -105,7 +93,7 @@ public class FTOFMon extends DetectorMonitor {
     }
 	
     public void makeApps() {
-        System.out.println("makeApps()"); 
+        System.out.println("monitor.makeApps()"); 
         ftofRecon = new FTOFReconstructionApp("FTOFREC",ftofPix);        
         ftofRecon.setMonitoringClass(this);
         ftofRecon.setApplicationClass(app);	
@@ -141,7 +129,7 @@ public class FTOFMon extends DetectorMonitor {
     }
 	
     public void addCanvas() {
-        System.out.println("addCanvas()"); 
+        System.out.println("monitor.addCanvas()"); 
         app.addCanvas(ftofMode1.getName(),         ftofMode1.getCanvas());
         app.addCanvas(ftofOccupancy.getName(), ftofOccupancy.getCanvas());          
         app.addCanvas(ftofPedestal.getName(),   ftofPedestal.getCanvas());
@@ -152,7 +140,7 @@ public class FTOFMon extends DetectorMonitor {
     }
     
     public void init( ) {       
-        System.out.println("init()");   
+        System.out.println("monitor.init()");   
         initApps();
         ftofPix[0].initHistograms(" ");
         ftofPix[1].initHistograms(" ");
@@ -162,16 +150,16 @@ public class FTOFMon extends DetectorMonitor {
     }
 
     public void initApps() {
-        System.out.println("initApps()");
+        System.out.println("monitor.initApps()");
         ftofRecon.init();
-        if (doEpics) {
+        if (app.doEpics) {
           ftofHv.init(is1,is2);        
           ftofScalers.init(is1,is2); 
         }
     }
     
     public void initGlob() {
-        System.out.println("initGlob()");
+        System.out.println("monitor.initGlob()");
         putGlob("inProcess", inProcess);
         putGlob("detID", detID);
         putGlob("inMC", inMC);
@@ -230,7 +218,7 @@ public class FTOFMon extends DetectorMonitor {
     @Override
     public void processShape(DetectorShape2D shape) {       
         DetectorDescriptor dd = shape.getDescriptor();
-        this.analyze(inProcess);        
+        this.analyze(inProcess);       
         switch (app.getSelectedTabName()) {
         case "Mode1":             ftofMode1.updateCanvas(dd); break;
         case "Occupancy":     ftofOccupancy.updateCanvas(dd); break;
@@ -251,7 +239,8 @@ public class FTOFMon extends DetectorMonitor {
     
     @Override
     public void readHipoFile() {        
-        String hipoFileName = hipoPath+"/"+mondet+".hipo";
+        System.out.println("monitor.readHipoFile()");
+        String hipoFileName = app.hipoPath+"/"+mondet+".hipo";
         System.out.println("Loading Histograms from "+hipoFileName);
         ftofPix[0].initHistograms(hipoFileName);
         ftofOccupancy.analyze();
@@ -260,7 +249,8 @@ public class FTOFMon extends DetectorMonitor {
     
     @Override
     public void saveToFile() {
-        String hipoFileName = hipoPath+"/"+mondet+".hipo";
+        System.out.println("monitor.saveToFile()");
+        String hipoFileName = app.hipoPath+"/"+mondet+".hipo";
         System.out.println("Saving Histograms to "+hipoFileName);
         HipoFile histofile = new HipoFile(hipoFileName);
         histofile.addToMap("H2_a_Hist", this.H2_a_Hist);

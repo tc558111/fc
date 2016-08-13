@@ -28,19 +28,21 @@ public class FTOFPixels {
     
     int id;
 	public int nstr;
+	public String detName = null;
 	
     public FTOFPixels(String det) {
         if (det=="PANEL1A") id=0;
         if (det=="PANEL1B") id=1;
         if (det=="PANEL2")  id=2;
         nstr = ftof_nstr[id];
+        detName = det;
         pixdef();
         pixrot();
     }
 	
     public void pixdef() {
         
-        System.out.println("FTOFPixels.pixdef:"); 
+        System.out.println("FTOFPixels.pixdef(): "+this.detName); 
         
         double geom[] = new double[nstr];
         double zoff[] = {50.,50.,420.};
@@ -91,7 +93,7 @@ public class FTOFPixels {
 		       
     public void pixrot() {
         
-        System.out.println("FTOFPixels.pixrot():");
+        System.out.println("FTOFPixels.pixrot(): "+this.detName);
 		
         double[] theta={270.0,330.0,30.0,90.0,150.0,210.0};
 
@@ -108,7 +110,7 @@ public class FTOFPixels {
     
     public void initHistograms(String hipoFile) {
         
-        System.out.println("FTOFPixels.initHistograms()");  
+        System.out.println("FTOFPixels.initHistograms(): "+this.detName);  
         
         DetectorCollection<H1D> H1_a_Sevd = new DetectorCollection<H1D>();
         DetectorCollection<H1D> H1_t_Sevd = new DetectorCollection<H1D>();

@@ -30,7 +30,8 @@ public class FTOFDetector extends FCDetector {
     
     public void initDetector(int is1, int is2) {
         
-        
+        app.currentView = "LR";
+               
         for(int id=0; id<ftofPix.length; id++){
         System.out.println("FTOFDetector.initDetector() NSTRIPS="+ftofPix[id].nstr);
         for(int is=is1; is<is2; is++) {

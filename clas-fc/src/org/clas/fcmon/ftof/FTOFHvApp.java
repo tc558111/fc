@@ -161,23 +161,25 @@ public class FTOFHvApp extends FCEpics {
         
         if (lr==0||lr>layMap.get(detName).length) return;
         
+        int off = 2*app.detectorIndex;
+             
         canvas.divide(4, 1);
         
-        h = H1_HV.get(is, 1, 0); h.setXTitle("Sector "+is+" Left PMT"); h.setYTitle("VOLTS");
+        h = H1_HV.get(is, 1+off, 0); h.setXTitle("Sector "+is+" Left PMT"); h.setYTitle("VOLTS");
         h.setFillColor(32); canvas.cd(0); canvas.draw(h);
-        h = H1_HV.get(is, 2, 0); h.setXTitle("Sector "+is+" Right PMT"); h.setYTitle("VOLTS");
+        h = H1_HV.get(is, 2+off, 0); h.setXTitle("Sector "+is+" Right PMT"); h.setYTitle("VOLTS");
         h.setFillColor(32); canvas.cd(1);    canvas.draw(h);
 
-        h = H1_HV.get(is, 1, 2); h.setXTitle("Sector "+is+" Left PMT"); h.setYTitle("MICROAMPS");
+        h = H1_HV.get(is, 1+off, 2); h.setXTitle("Sector "+is+" Left PMT"); h.setYTitle("MICROAMPS");
         h.setFillColor(32); canvas.cd(2); canvas.draw(h);
-        h = H1_HV.get(is, 2, 2); h.setXTitle("Sector "+is+" Right PMT"); h.setYTitle("MICROAMPS");
+        h = H1_HV.get(is, 2+off, 2); h.setXTitle("Sector "+is+" Right PMT"); h.setYTitle("MICROAMPS");
         h.setFillColor(32); canvas.cd(3); canvas.draw(h);
         
-        c = H1_HV.get(is, lr, 0).histClone("Copy"); c.reset() ; 
+        c = H1_HV.get(is, lr+off, 0).histClone("Copy"); c.reset() ; 
         c.setBinContent(ip, H1_HV.get(is, lr, 0).getBinContent(ip));
         c.setFillColor(2);  canvas.cd(lr-1); canvas.draw(c,"same");
         
-        c = H1_HV.get(is, lr, 2).histClone("Copy"); c.reset() ; 
+        c = H1_HV.get(is, lr+off, 2).histClone("Copy"); c.reset() ; 
         c.setBinContent(ip, H1_HV.get(is, lr, 2).getBinContent(ip));
         c.setFillColor(2);  canvas.cd(lr-1+2); canvas.draw(c,"same");
                
@@ -195,16 +197,18 @@ public class FTOFHvApp extends FCEpics {
         //Don't redraw unless timer fires or new sector selected
         if (flag==0&&(is==isCurrentSector)) return;  
         
+        int off = 2*app.detectorIndex;
+        
         canvas.divide(4, 1);
         
-        h = H2_HV.get(is, 1, 0); h.setXTitle("Sector "+is+" Left PMT"); h.setYTitle("TIME");
+        h = H2_HV.get(is, 1+off, 0); h.setXTitle("Sector "+is+" Left PMT"); h.setYTitle("TIME");
         canvas.cd(0); canvas.draw(h);
-        h = H2_HV.get(is, 2, 0); h.setXTitle("Sector "+is+" Right PMT"); h.setYTitle("TIME");
+        h = H2_HV.get(is, 2+off, 0); h.setXTitle("Sector "+is+" Right PMT"); h.setYTitle("TIME");
         canvas.cd(1);    canvas.draw(h);
 
-        h = H2_HV.get(is, 1, 2); h.setXTitle("Sector "+is+" Left PMT"); h.setYTitle("TIME");
+        h = H2_HV.get(is, 1+off, 2); h.setXTitle("Sector "+is+" Left PMT"); h.setYTitle("TIME");
         canvas.cd(2); canvas.draw(h);
-        h = H2_HV.get(is, 2, 2); h.setXTitle("Sector "+is+" Right PMT"); h.setYTitle("TIME");
+        h = H2_HV.get(is, 2+off, 2); h.setXTitle("Sector "+is+" Right PMT"); h.setYTitle("TIME");
         canvas.cd(3); canvas.draw(h);
         
         isCurrentSector = is;

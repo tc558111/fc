@@ -55,6 +55,9 @@ public class MonitorApp extends JFrame implements ActionListener {
     public Mode7Emulation   mode7Emulation = null;
     
     public String currentView = null;
+    public int  detectorIndex = 0;
+    public boolean doEpics = false;
+    public String hipoPath = null;
     
 //    Miscellaneous    extra = new Miscellaneous();
        
@@ -75,6 +78,22 @@ public class MonitorApp extends JFrame implements ActionListener {
     public void setPluginClass(DetectorMonitor mon) {
     	this.monitoringClass = mon;
     }
+    
+    public void getEnv() {        
+        String   ostype = System.getenv("OSTYPE");             
+        if (ostype=="Linux") {
+            String hostname = System.getenv("HOSTNAME");
+            if(hostname.substring(0,3)=="clon") {
+              System.out.println("Running on "+hostname);
+              doEpics = true;
+              hipoPath = "/home/lcsmith";
+            }
+        } else {
+            System.out.println("Running on "+ostype);
+            doEpics = false;
+            hipoPath  = "/Users/colesmith";
+        }
+    }    
     
     public void makeGUI(){
 

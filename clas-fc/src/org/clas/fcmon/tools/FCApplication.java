@@ -213,7 +213,8 @@ public class FCApplication implements ActionListener  {
             if (key>3) {rbPanes.get("PIX").setVisible(true);rbPanes.get("PMT").setVisible(false);omap=bStore.get("PIX");}
         }
         if(group=="DET") {
-            ilmap = key;            
+            ilmap = key;  
+            app.detectorIndex = key;
             name = app.currentView+Integer.toString(ilmap);  
             app.getDetectorView().getView().setLayerState(name, true);
         }

@@ -52,7 +52,7 @@ public class FCEpics  {
     String   pcal[] = {"U","V","W"};
     String   ecal[] = {"UI","VI","WI","UO","VO","WO"};
     int     nltcc[] = {18,18};
-    int     nftof[] = {62,23,5};
+    int     nftof[] = {62,62,23,23,5,5};
     int     npcal[] = {68,62,62};
     int     necal[] = {36,36,36,36,36,36};
     

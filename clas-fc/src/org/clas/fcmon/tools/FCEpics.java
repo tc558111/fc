@@ -52,7 +52,7 @@ public class FCEpics  {
     String   pcal[] = {"U","V","W"};
     String   ecal[] = {"UI","VI","WI","UO","VO","WO"};
     int     nltcc[] = {18,18};
-    int     nftof[] = {62,62,23,23,5,5};
+    int     nftof[] = {23,23,62,62,5,5};
     int     npcal[] = {68,62,62};
     int     necal[] = {36,36,36,36,36,36};
     
@@ -95,6 +95,7 @@ public class FCEpics  {
     
     public int connectCa(int grp, String action, int sector, int layer, int channel) {
         try {
+        //System.out.println("Connecting to grp "+grp+" sector "+sector+" layer "+layer+" channel "+channel);
         caMap.get(action).getItem(grp,sector,layer,channel).connectAsync().get();  //org.epics.ca
         }
         catch (InterruptedException e) {  
@@ -128,7 +129,7 @@ public class FCEpics  {
         setCaActionNames(det,grp,"vset");     
         break;
         case 1:
-        setCaActionNames(det,grp,"c3"); 
+        setCaActionNames(det,grp,"c4"); 
         break;  
         case 2: 
         setCaActionNames(det,grp,"c1"); 
@@ -159,7 +160,7 @@ public class FCEpics  {
             setPvActionNames(det,grp,"pwonoff"); 
             break;
             case 1:  
-            setPvActionNames(det,grp,"c3"); break;
+            setPvActionNames(det,grp,"c4"); break;
             case 2: 
             setPvActionNames(det,grp,"c1"); break;
         }

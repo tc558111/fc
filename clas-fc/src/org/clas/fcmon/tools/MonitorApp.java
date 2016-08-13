@@ -81,9 +81,9 @@ public class MonitorApp extends JFrame implements ActionListener {
     
     public void getEnv() {        
         String   ostype = System.getenv("OSTYPE");             
-        if (ostype=="Linux") {
+        if (ostype.equals("Linux")) {
             String hostname = System.getenv("HOSTNAME");
-            if(hostname.substring(0,3)=="clon") {
+            if(hostname.substring(0,4).equals("clon")) {
               System.out.println("Running on "+hostname);
               doEpics = true;
               hipoPath = "/home/lcsmith";

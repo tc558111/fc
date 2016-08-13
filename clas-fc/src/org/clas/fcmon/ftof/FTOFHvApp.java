@@ -45,6 +45,7 @@ public class FTOFHvApp extends FCEpics {
         initFifos();
         fillFifos();
         fillHistos();
+        System.out.println("FTOFHvApp.init():Starting Timer");
         this.timer = new Timer(delay,action);  
         this.timer.setDelay(delay);
         this.timer.start();
@@ -59,6 +60,7 @@ public class FTOFHvApp extends FCEpics {
     } 
     
     public void initHistos() {       
+        System.out.println("FTOFHvApp.initHistos():");
         for (int is=is1; is<is2 ; is++) {
             for (int il=1 ; il<layMap.get(detName).length+1 ; il++){
                 int nb=nlayMap.get(detName)[il-1]; int mx=nb+1;
@@ -73,6 +75,7 @@ public class FTOFHvApp extends FCEpics {
     }
         
     public void initFifos() {
+        System.out.println("FTOFHvApp.initFifos():");
         for (int is=is1; is<is2 ; is++) {
             for (int il=1; il<layMap.get(detName).length+1 ; il++) {
                 for (int ic=1; ic<nlayMap.get(detName)[il-1]+1; ic++) {
@@ -176,11 +179,11 @@ public class FTOFHvApp extends FCEpics {
         h.setFillColor(32); canvas.cd(3); canvas.draw(h);
         
         c = H1_HV.get(is, lr+off, 0).histClone("Copy"); c.reset() ; 
-        c.setBinContent(ip, H1_HV.get(is, lr, 0).getBinContent(ip));
+        c.setBinContent(ip, H1_HV.get(is, lr+off, 0).getBinContent(ip));
         c.setFillColor(2);  canvas.cd(lr-1); canvas.draw(c,"same");
         
         c = H1_HV.get(is, lr+off, 2).histClone("Copy"); c.reset() ; 
-        c.setBinContent(ip, H1_HV.get(is, lr, 2).getBinContent(ip));
+        c.setBinContent(ip, H1_HV.get(is, lr+off, 2).getBinContent(ip));
         c.setFillColor(2);  canvas.cd(lr-1+2); canvas.draw(c,"same");
                
     }

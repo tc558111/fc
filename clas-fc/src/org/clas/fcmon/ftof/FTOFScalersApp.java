@@ -40,7 +40,7 @@ public class FTOFScalersApp extends FCEpics {
             setPvNames(this.detName,2);
             setCaNames(this.detName,1);
             setCaNames(this.detName,2);
-            sectorSelected=is1+1;
+            sectorSelected=is1;
             layerSelected=1;
             channelSelected=1;
             initHistos();
@@ -78,7 +78,7 @@ public class FTOFScalersApp extends FCEpics {
                     for (int ic=1; ic<nlayMap.get(detName)[il-1]+1; ic++) {
                         fifo1.add(is, il, ic,new LinkedList<Double>());
                         fifo2.add(is, il, ic,new LinkedList<Double>());
-                        connectCa(1,"c3",is,il,ic);
+                        connectCa(1,"c4",is,il,ic);
                         connectCa(2,"c1",is,il,ic);
                     }
                 }
@@ -96,7 +96,7 @@ public class FTOFScalersApp extends FCEpics {
                             fifo1.get(is, il, ic).removeFirst();
                             fifo2.get(is, il, ic).removeFirst();
                         }
-                        fifo1.get(is, il, ic).add(getCaValue(1,"c3",is, il, ic));
+                        fifo1.get(is, il, ic).add(getCaValue(1,"c4",is, il, ic));
                         fifo2.get(is, il, ic).add(getCaValue(2,"c1",is, il, ic));
                     }
                 }
@@ -146,12 +146,15 @@ public class FTOFScalersApp extends FCEpics {
             H1D h = new H1D();
             H1D c = new H1D();
             
+            int off = 2*app.detectorIndex;
+
+           
             int is = sectorSelected;
-            int lr = layerSelected;
+            int lr = layerSelected+off;
             int ip = channelSelected; 
             
             if (lr==0||lr>layMap.get(detName).length) return;
-            
+                        
             canvas.divide(2, 1);
             
             String tit = "Sector "+is+" "+layMap.get(detName)[lr-1]+" PMT";
@@ -177,8 +180,10 @@ public class FTOFScalersApp extends FCEpics {
             
             H2D h = new H2D();
             
+            int off = 2*app.detectorIndex;
+            
             int is = sectorSelected;
-            int lr = layerSelected;
+            int lr = layerSelected+off;
             
             if (lr==0||lr>layMap.get(detName).length) return;
             
@@ -194,7 +199,6 @@ public class FTOFScalersApp extends FCEpics {
             
             h = H2_HV.get(is, lr, 1); h.setXTitle(tit); h.setYTitle("TIME");
             canvas.cd(1); canvas.draw(h);
-
             
             isCurrentSector = is;
             isCurrentLayer  = lr;

@@ -9,6 +9,8 @@ import org.root.histogram.H2D;
 
 public class FTOFOccupancyApp extends FCApplication {
     
+    int ics=1;
+    
     public FTOFOccupancyApp(String name, FTOFPixels[] ftofPix) {
         super(name,ftofPix);    
      }
@@ -55,12 +57,13 @@ public class FTOFOccupancyApp extends FCApplication {
         canvas.cd(lr+1); h1 = ftofPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,lr,0).projectionY(); h1.setFillColor(col1); canvas.draw(h1,"same");
         H1D copy = h1.histClone("Copy"); copy.reset() ; 
         copy.setBinContent(ic, h1.getBinContent(ic)); copy.setFillColor(col2); canvas.draw(copy,"same");
-        
+    
         for(int il=1;il<3;il++) {
-            String alab = otab[il-1]+"PMT "+11+lab4[0]; String tlab = otab[il-1]+(ic+1)+lab4[1];
-            if(lr!=il) {canvas.cd(il+3); h1 = ftofPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,il,0).sliceY(11); h1.setXTitle(alab); h1.setTitle(""); h1.setFillColor(col0); canvas.draw(h1,"S");}
+            String alab = otab[il-1]+"PMT "+(ics+1)+lab4[0]; String tlab = otab[il-1]+(ic+1)+lab4[1];
+            if(lr!=il) {canvas.cd(il+3); h1 = ftofPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,il,0).sliceY(ics); h1.setXTitle(alab); h1.setTitle(""); h1.setFillColor(col0); canvas.draw(h1,"S");}
             //if(lr!=il) {canvas.cd(il+3); h = H2_CCt_Hist.get(is+1,il,0).sliceY(22); h.setXTitle(tlab); h.setTitle(""); h.setFillColor(col0); canvas.draw(h);}
         }
+        ics=ic;
         String alab = otab[lr-1]+"PMT "+(ic+1)+lab4[0]; String tlab = otab[lr-1]+(ic+1)+lab4[1];
         canvas.cd(lr+3); h1 = ftofPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,lr,0).sliceY(ic);h1.setXTitle(alab); h1.setTitle(""); h1.setFillColor(col2); canvas.draw(h1,"S");
         //canvas.cd(lr+3); h = H2_CCt_Hist.get(is+1,lr,0).sliceY(ip+1);h.setXTitle(tlab); h.setTitle(""); h.setFillColor(col2); canvas.draw(h);     

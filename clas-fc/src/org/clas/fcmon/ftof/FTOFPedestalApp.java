@@ -9,6 +9,8 @@ import org.root.histogram.H2D;
 
 public class FTOFPedestalApp extends FCApplication {
 
+    int ics=1;
+    
     public FTOFPedestalApp(String name, FTOFPixels[] ftofPix) {
         super(name,ftofPix);    
      }
@@ -45,9 +47,10 @@ public class FTOFPedestalApp extends FCApplication {
             }
             
             canvas.cd(il-1+2);
-                        h=hpix.sliceY(2);  h.setFillColor(4); h.setTitle(""); h.setXTitle("Sector "+is+otab[il-1]+2)     ; canvas.draw(h,"S");
-            if(lr==il) {h=hpix.sliceY(ic); h.setFillColor(2); h.setTitle(""); h.setXTitle("Sector "+is+otab[il-1]+(ic+1)); canvas.draw(h,"S");}
-        }           
+                        h=hpix.sliceY(ics); h.setFillColor(4); h.setTitle(""); h.setXTitle("Sector "+is+otab[il-1]+(ics+1)) ; canvas.draw(h,"S");
+            if(lr==il) {h=hpix.sliceY(ic) ; h.setFillColor(2); h.setTitle(""); h.setXTitle("Sector "+is+otab[il-1]+(ic+1)); canvas.draw(h,"S");}
+        }  
+        ics = ic;
     }
     
 }

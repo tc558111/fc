@@ -47,6 +47,7 @@ public class FTOFScalersApp extends FCEpics {
             initFifos();
             fillFifos();
             fillHistos();
+            System.out.println("FTOFScalersApp.init():Starting Timer");
             this.timer = new Timer(delay,action);  
             this.timer.setDelay(delay);
             this.timer.start();
@@ -61,6 +62,7 @@ public class FTOFScalersApp extends FCEpics {
         } 
         
         public void initHistos() {       
+            System.out.println("FTOFScalersApp.initHistos():");
             for (int is=is1; is<is2 ; is++) {
                 for (int il=1 ; il<layMap.get(detName).length+1 ; il++){
                     int nb=nlayMap.get(detName)[il-1]; int mx=nb+1;
@@ -73,6 +75,7 @@ public class FTOFScalersApp extends FCEpics {
         }
             
         public void initFifos() {
+            System.out.println("FTOFScalersApp.initFifos():");
             for (int is=is1; is<is2 ; is++) {
                 for (int il=1; il<layMap.get(detName).length+1 ; il++) {
                     for (int ic=1; ic<nlayMap.get(detName)[il-1]+1; ic++) {

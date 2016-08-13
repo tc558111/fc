@@ -24,7 +24,7 @@ public class FTOFMipApp extends FCApplication {
         H1D h;
         String alab;
         String otab[]={" Left PMT "," Right PMT "};
-        String lab4[]={" ADC"," TDC"};      
+        String lab4[]={" ADC"," TDC","GMEAN PMT "};      
         
         off = 0;
         
@@ -44,7 +44,9 @@ public class FTOFMipApp extends FCApplication {
         for(int iip=min;iip<max;iip++) {
             alab = otab[lr-1]+(iip+1)+lab4[0];
             canvas.cd(iip-min); h = ftofPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,lr,0).sliceY(iip); 
-            h.setXTitle(alab); h.setTitle(""); h.setFillColor(col1); canvas.draw(h,"S");
+            h.setXTitle(alab); h.setTitle(""); h.setFillColor(32); canvas.draw(h,"S");
+            h = ftofPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,0,0).sliceY(iip);
+            h.setFillColor(col1); canvas.draw(h,"same");
         }
 /*
         il = 2;
@@ -58,8 +60,9 @@ public class FTOFMipApp extends FCApplication {
         h.setTitle(""); h.setFillColor(col2); canvas.draw(h,"same");  
         */
         
-        canvas.cd(ic-min); h = ftofPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,lr,0).sliceY(ic); 
-        h.setTitle(""); h.setFillColor(col2); canvas.draw(h,"same");    
+//        canvas.cd(ic-min); h = ftofPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,lr,0).sliceY(ic); 
+        canvas.cd(ic-min); h = ftofPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,0,0).sliceY(ic); 
+        alab = "PMT "+(ic+1)+" GMEAN"; h.setXTitle(alab); h.setTitle(""); h.setFillColor(col2); canvas.draw(h,"S");    
 
     }
 }

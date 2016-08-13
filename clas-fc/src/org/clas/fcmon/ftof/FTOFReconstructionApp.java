@@ -92,12 +92,13 @@ public class FTOFReconstructionApp extends FCApplication {
       } else {
           this.updateRealData(event);         
       }
-      
+          
       if (app.isSingleEvent()) {
          findPixels();     // Process all pixels for SED
          processSED();
       } else {
          processPixels();  // Process only single pixels 
+         processCalib();   // Quantities for display and calibration engine
       }
    }
    
@@ -268,6 +269,32 @@ public class FTOFReconstructionApp extends FCApplication {
              ftofPix[idet].strra[is-1][il-1][inh-1] = ip;
              ftofPix[idet].strips.hmap2.get("H2_a_Hist").get(is,il,0).fill(adc,ip,1.0);
              } 
+   }
+   
+   public void processCalib() {
+       
+       int iL,iR,ipL,ipR;
+       
+       for (int is=1 ; is<7 ; is++) {
+           for (int idet=0; idet<3; idet++) {
+                iL = ftofPix[idet].nha[is-1][0];
+                iR = ftofPix[idet].nha[is-1][1];
+               ipL = ftofPix[idet].strra[is-1][0][0];
+               ipR = ftofPix[idet].strra[is-1][1][0];
+               if ((iL==1&&iR==1)&&(ipL==ipR)) {
+                   double gm = Math.sqrt(ftofPix[idet].adcr[is-1][0][0]*ftofPix[idet].adcr[is-1][1][0]);
+                   ftofPix[idet].strips.hmap2.get("H2_a_Hist").get(is, 0, 0).fill(gm, ipL,1.0);
+               }
+               iL = ftofPix[idet].nht[is-1][0];
+               iR = ftofPix[idet].nht[is-1][1];
+              ipL = ftofPix[idet].strrt[is-1][0][0];
+              ipR = ftofPix[idet].strrt[is-1][1][0];
+              if ((iL==1&&iR==1)&&(ipL==ipR)) {
+                  double td = ftofPix[idet].tdcr[is-1][0][0]-ftofPix[idet].tdcr[is-1][1][0];
+                  ftofPix[idet].strips.hmap2.get("H2_t_Hist").get(is, 0, 0).fill(td, ipL,1.0);
+              }
+           }
+       }       
    }
    
    public void processSED() {

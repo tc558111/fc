@@ -88,7 +88,7 @@ public class FCEpics  {
         JSplitPane HVScalerPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT);       
         HVScalerPane.setTopComponent(scaler1DView);
         HVScalerPane.setBottomComponent(scaler2DView);       
-        HVScalerPane.setDividerLocation(0.5);
+        HVScalerPane.setResizeWeight(0.2);
         HVScalers.add(HVScalerPane);
         return HVScalers;       
     } 
@@ -208,8 +208,7 @@ public class FCEpics  {
 	
 	public String getPvString(String det, int grp, int sector, int layer, int channel, String action) {
 	    String pv = "B_DET_"+det+"_"+grps[grp]+"_SEC"+sector+"_"+layToStr(det,layer)+"_E"+chanToStr(channel);
-	    //if (action!="DISC"&&action!="FADC") pv=pv+":"+action;
-	    return pv;  
+	    return pv+":"+action;
 	}
 	     
 }

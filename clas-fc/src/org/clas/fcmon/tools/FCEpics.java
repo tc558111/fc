@@ -129,7 +129,7 @@ public class FCEpics  {
         setCaActionNames(det,grp,"vset");     
         break;
         case 1:
-        setCaActionNames(det,grp,"c4"); 
+        setCaActionNames(det,grp,"c3"); 
         break;  
         case 2: 
         setCaActionNames(det,grp,"c1"); 
@@ -160,7 +160,7 @@ public class FCEpics  {
             setPvActionNames(det,grp,"pwonoff"); 
             break;
             case 1:  
-            setPvActionNames(det,grp,"c4"); break;
+            setPvActionNames(det,grp,"c3"); break;
             case 2: 
             setPvActionNames(det,grp,"c1"); break;
         }
@@ -208,7 +208,7 @@ public class FCEpics  {
 	
 	public String getPvString(String det, int grp, int sector, int layer, int channel, String action) {
 	    String pv = "B_DET_"+det+"_"+grps[grp]+"_SEC"+sector+"_"+layToStr(det,layer)+"_E"+chanToStr(channel);
-	    if (action!="DISC"&&action!="FADC") pv=pv+":"+action;
+	    //if (action!="DISC"&&action!="FADC") pv=pv+":"+action;
 	    return pv;  
 	}
 	     

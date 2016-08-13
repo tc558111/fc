@@ -78,7 +78,7 @@ public class FTOFScalersApp extends FCEpics {
                     for (int ic=1; ic<nlayMap.get(detName)[il-1]+1; ic++) {
                         fifo1.add(is, il, ic,new LinkedList<Double>());
                         fifo2.add(is, il, ic,new LinkedList<Double>());
-                        connectCa(1,"c4",is,il,ic);
+                        connectCa(1,"c3",is,il,ic);
                         connectCa(2,"c1",is,il,ic);
                     }
                 }
@@ -96,7 +96,7 @@ public class FTOFScalersApp extends FCEpics {
                             fifo1.get(is, il, ic).removeFirst();
                             fifo2.get(is, il, ic).removeFirst();
                         }
-                        fifo1.get(is, il, ic).add(getCaValue(1,"c4",is, il, ic));
+                        fifo1.get(is, il, ic).add(getCaValue(1,"c3",is, il, ic));
                         fifo2.get(is, il, ic).add(getCaValue(2,"c1",is, il, ic));
                     }
                 }
@@ -146,11 +146,8 @@ public class FTOFScalersApp extends FCEpics {
             H1D h = new H1D();
             H1D c = new H1D();
             
-            int off = 2*app.detectorIndex;
-
-           
             int is = sectorSelected;
-            int lr = layerSelected+off;
+            int lr = layerSelected+2*app.detectorIndex;
             int ip = channelSelected; 
             
             if (lr==0||lr>layMap.get(detName).length) return;
@@ -180,10 +177,8 @@ public class FTOFScalersApp extends FCEpics {
             
             H2D h = new H2D();
             
-            int off = 2*app.detectorIndex;
-            
             int is = sectorSelected;
-            int lr = layerSelected+off;
+            int lr = layerSelected+2*app.detectorIndex; 
             
             if (lr==0||lr>layMap.get(detName).length) return;
             

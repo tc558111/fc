@@ -13,10 +13,12 @@ import java.util.TreeMap;
  
 import javax.swing.BorderFactory;
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JButton;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
@@ -42,6 +44,7 @@ public class MonitorApp extends JFrame implements ActionListener {
 	
     JPanel  canvasPane = null;
     JPanel  buttonPane = null;
+    JTextField   runno = new JTextField(4);
     
     TreeMap<String,EmbeddedCanvas>  paneCanvas = new TreeMap<String,EmbeddedCanvas>();
 	
@@ -56,8 +59,9 @@ public class MonitorApp extends JFrame implements ActionListener {
     
     public String currentView = null;
     public int  detectorIndex = 0;
-    public boolean doEpics = false;
-    public String hipoPath = null;
+    public boolean    doEpics = false;
+    public String    hipoPath = null;
+    public String    calibRun = "100";
     
 //    Miscellaneous    extra = new Miscellaneous();
        
@@ -117,7 +121,11 @@ public class MonitorApp extends JFrame implements ActionListener {
         
         JButton loadBtn = new JButton("Load Histos");
         loadBtn.addActionListener(this);
-        buttonPane.add(loadBtn);    
+        buttonPane.add(loadBtn);  
+        
+        buttonPane.add(new JLabel("Run:"));
+        runno.setActionCommand("RUN"); runno.addActionListener(this); runno.setText(calibRun);  
+        buttonPane.add(runno); 
         
 // Control Panels
 		
@@ -244,5 +252,6 @@ public class MonitorApp extends JFrame implements ActionListener {
         if(e.getActionCommand().compareTo("Clear Histos")==0) monitoringClass.reset();
         if(e.getActionCommand().compareTo("Save Histos")==0)  monitoringClass.saveToFile();
         if(e.getActionCommand().compareTo("Load Histos")==0)  monitoringClass.readHipoFile();
+        if(e.getActionCommand().compareTo("RUN")==0)          calibRun=runno.getText();
     }      
 }

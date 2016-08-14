@@ -87,7 +87,7 @@ public class FTOFReconstructionApp extends FCApplication {
    
    public void addEvent(EvioDataEvent event) {
       
-      if(event.hasBank(mondet+"::dgtz")==true) {
+      if((event.hasBank("FTOF1A::dgtz"))||(event.hasBank("FTOF1B::dgtz"))==true) {
           this.updateSimulatedData(event);
       } else {
           this.updateRealData(event);         
@@ -174,7 +174,7 @@ public class FTOFReconstructionApp extends FCApplication {
                }               
                if (ped>0) ftofPix[iil-1].strips.hmap2.get("H2_a_Hist").get(is,il,3).fill(this.pedref-ped, ip);
              } 
- //             System.out.println(icr+" "+isl+" "+ich+" "+is+" "+il+" "+ip+" "+iord+" "+tdc+" "+adc);
+ //              System.out.println(icr+" "+isl+" "+ich+" "+is+" "+il+" "+ip+" "+iord+" "+tdc+" "+adc);
             
              fill(is, il, ip, adc, tdc, tdcf, iil-1);    
             }

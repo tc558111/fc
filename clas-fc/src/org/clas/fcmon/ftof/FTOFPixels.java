@@ -112,6 +112,7 @@ public class FTOFPixels {
         
         System.out.println("FTOFPixels.initHistograms(): "+this.detName);  
         
+        String iid;
         double amax[]= {4000.,6000.,4000.};
         
         DetectorCollection<H1D> H1_a_Sevd = new DetectorCollection<H1D>();
@@ -123,16 +124,18 @@ public class FTOFPixels {
         double nend = nstr+1;  
         
         for (int is=1; is<7 ; is++) {
-            H2_a_Hist.add(is, 0, 0, new H2D("a_Hist_GM_",  100,   0., amax[id],nstr, 1., nend));
-            H2_t_Hist.add(is, 0, 0, new H2D("t_Hist_TD_",  100, -35.,      35.,nstr, 1., nend));
+            int ill=0; iid="s"+Integer.toString(is)+"_l"+Integer.toString(ill)+"_c";
+            H2_a_Hist.add(is, 0, 0, new H2D("a_gmean_"+iid+0, 100,   0., amax[id],nstr, 1., nend));
+            H2_t_Hist.add(is, 0, 0, new H2D("a_tdif_"+iid+0,  100, -35.,      35.,nstr, 1., nend));
             for (int il=1 ; il<3 ; il++){
-                H2_a_Hist.add(is, il, 0, new H2D("a_Hist_Raw_"+il, 100,   0., 4000.,nstr, 1., nend));
-                H2_t_Hist.add(is, il, 0, new H2D("t_Hist_Raw_"+il, 100,1330., 1370.,nstr, 1., nend));
-                H2_a_Hist.add(is, il, 3, new H2D("a_Hist_PED_"+il,  40, -20.,  20., nstr, 1., nend)); 
-                H2_a_Hist.add(is, il, 5, new H2D("a_Hist_FADC_"+il,100,   0., 100., nstr, 1., nend));
-                H1_a_Sevd.add(is, il, 0, new H1D("a_Sed_"+il,                       nstr, 1., nend));
-                H2_a_Sevd.add(is, il, 0, new H2D("a_Sed_FADC_"+il, 100,   0., 100., nstr, 1., nend));
-                H2_a_Sevd.add(is, il, 1, new H2D("a_Sed_FADC_"+il, 100,   0., 100., nstr, 1., nend));
+                iid="s"+Integer.toString(is)+"_l"+Integer.toString(il)+"_c";
+                H2_a_Hist.add(is, il, 0, new H2D("a_raw_"+iid+0,      100,   0., 4000.,nstr, 1., nend));
+                H2_t_Hist.add(is, il, 0, new H2D("a_raw_"+iid+0,      100,1300., 1410.,nstr, 1., nend));
+                H2_a_Hist.add(is, il, 3, new H2D("a_ped_"+iid+3,       40, -20.,  20., nstr, 1., nend)); 
+                H2_a_Hist.add(is, il, 5, new H2D("a_fadc_"+iid+5,     100,   0., 100., nstr, 1., nend));
+                H1_a_Sevd.add(is, il, 0, new H1D("a_sed_"+iid+0,                       nstr, 1., nend));
+                H2_a_Sevd.add(is, il, 0, new H2D("a_sed_fadc_"+iid+0, 100,   0., 100., nstr, 1., nend));
+                H2_a_Sevd.add(is, il, 1, new H2D("a_sed_fadc_"+iid+1, 100,   0., 100., nstr, 1., nend));
             }
         }       
 

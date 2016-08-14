@@ -190,6 +190,8 @@ public class FTOFReconstructionApp extends FCApplication {
 
       String det[] = {"FTOF1A","FTOF1B","FTOF2B"}; // FTOF.xml banknames
       
+      clear(0); clear(1); clear(2);
+      
       for (int idet=0; idet<det.length ; idet++) {
           
           if(event.hasBank(det[idet]+"::true")==true) {
@@ -197,8 +199,6 @@ public class FTOFReconstructionApp extends FCApplication {
               for(int i=0; i < bank.rows(); i++) mc_t = bank.getDouble("avgT",i);          
           }
          
-          clear(0); clear(1); clear(2);
-        
           inMC = true; mon.putGlob("inMC",true); 
       
           if(event.hasBank(det[idet]+"::dgtz")==true) {            

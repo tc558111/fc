@@ -112,7 +112,7 @@ public class FTOFPixels {
         
         System.out.println("FTOFPixels.initHistograms(): "+this.detName);  
         
-        double amax[]= {4000.,8000.,8000.};
+        double amax[]= {4000.,6000.,4000.};
         
         DetectorCollection<H1D> H1_a_Sevd = new DetectorCollection<H1D>();
         DetectorCollection<H1D> H1_t_Sevd = new DetectorCollection<H1D>();
@@ -124,7 +124,7 @@ public class FTOFPixels {
         
         for (int is=1; is<7 ; is++) {
             H2_a_Hist.add(is, 0, 0, new H2D("a_Hist_GM_",  100,   0., amax[id],nstr, 1., nend));
-            H2_t_Hist.add(is, 0, 0, new H2D("t_Hist_TD_",  100,   0.,      50.,nstr, 1., nend));
+            H2_t_Hist.add(is, 0, 0, new H2D("t_Hist_TD_",  100, -35.,      35.,nstr, 1., nend));
             for (int il=1 ; il<3 ; il++){
                 H2_a_Hist.add(is, il, 0, new H2D("a_Hist_Raw_"+il, 100,   0., 4000.,nstr, 1., nend));
                 H2_t_Hist.add(is, il, 0, new H2D("t_Hist_Raw_"+il, 100,1330., 1370.,nstr, 1., nend));

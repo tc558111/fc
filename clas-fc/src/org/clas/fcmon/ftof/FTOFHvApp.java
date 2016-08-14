@@ -169,9 +169,14 @@ public class FTOFHvApp extends FCEpics {
         canvas.divide(4, 1);
         
         h = H1_HV.get(is, 1+off, 0); h.setXTitle("Sector "+is+" Left PMT"); h.setYTitle("VOLTS");
-        h.setFillColor(32); canvas.cd(0); canvas.draw(h);
+        h.setFillColor(33); canvas.cd(0); canvas.draw(h);
         h = H1_HV.get(is, 2+off, 0); h.setXTitle("Sector "+is+" Right PMT"); h.setYTitle("VOLTS");
-        h.setFillColor(32); canvas.cd(1);    canvas.draw(h);
+        h.setFillColor(33); canvas.cd(1);    canvas.draw(h);
+        
+        h = H1_HV.get(is, 1+off, 1); h.setXTitle("Sector "+is+" Left PMT"); h.setYTitle("VOLTS");
+        h.setFillColor(32); canvas.cd(0); canvas.draw(h,"same");
+        h = H1_HV.get(is, 2+off, 1); h.setXTitle("Sector "+is+" Right PMT"); h.setYTitle("VOLTS");
+        h.setFillColor(32); canvas.cd(1);    canvas.draw(h,"same");
 
         h = H1_HV.get(is, 1+off, 2); h.setXTitle("Sector "+is+" Left PMT"); h.setYTitle("MICROAMPS");
         h.setFillColor(32); canvas.cd(2); canvas.draw(h);

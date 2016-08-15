@@ -19,11 +19,15 @@ public class FTOFMode1App extends FCApplication {
         int  lr = layer;
         int ilm = ilmap;
         
+        int nstr = ftofPix[ilm].nstr;
+        int min=0, max=nstr;
+        
         switch (ilmap) {
-          case 0: canvas.divide(4,6); break;
-          case 1: canvas.divide(8,8); break;
-          case 2: canvas.divide(2,3);
-        }
+        case 0: canvas.divide(4,6); break;
+        case 1: canvas.divide(4,6); max=24 ; if (ic>23) {min=24; max=48;} if (ic>47) {min=48; max=nstr;} break;
+        case 2: canvas.divide(2,3);
+        }    
+
         canvas.setAxisFontSize(14);
         canvas.setTitleFontSize(14);
         canvas.setAxisTitleFontSize(14);
@@ -41,8 +45,8 @@ public class FTOFMode1App extends FCApplication {
         F1D f2 = new F1D("p0",0.,100.); f2.setParameter(0,app.mode7Emulation.CCDB_tet);
         f2.setLineColor(4);f2.setLineStyle(2);
        
-        for(int ip=0;ip<ftofPix[ilm].nstr;ip++){
-            canvas.cd(ip); canvas.getPad().setAxisRange(0.,100.,-100.,4000*app.displayControl.pixMax);
+        for(int ip=min;ip<max;ip++){
+            canvas.cd(ip-min); canvas.getPad().setAxisRange(0.,100.,-100.,4000*app.displayControl.pixMax);
             h = ftofPix[ilm].strips.hmap2.get("H2_a_Sevd").get(is,lr,0).sliceY(ip); h.setXTitle("Samples (4 ns)"); h.setYTitle("Counts");
             h.setTitle("Sector "+is+otab[lr-1]+(ip+1)); h.setFillColor(4); canvas.draw(h);
             h = ftofPix[ilm].strips.hmap2.get("H2_a_Sevd").get(is,lr,1).sliceY(ip); h.setFillColor(2); canvas.draw(h,"same");

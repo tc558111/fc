@@ -223,12 +223,12 @@ public class FCDetector {
         double pixMin = app.displayControl.pixMin ; double pixMax = app.displayControl.pixMax;
         if (inProcess!=0) {
             if (!app.isSingleEvent()) color=(double)(Math.log10(z)-pixMin*Math.log10(rmin))/(pixMax*Math.log10(rmax)-pixMin*Math.log10(rmin));
-            if ( app.isSingleEvent()) color=(double)(Math.log10(z)-pixMin*Math.log10(rmin))/(pixMax*Math.log10(smax)-pixMin*Math.log10(rmin));
+            if ( app.isSingleEvent()) color=(double)(z-pixMin*rmin)/(smax*pixMax-rmin*pixMin);
         }
         
         // Set color bar min,max
-        app.getDetectorView().getView().zmax = pixMax*rmax;
-        app.getDetectorView().getView().zmin = pixMin*rmin;
+        app.getDetectorView().getView().zmax = rmax*pixMax;
+        app.getDetectorView().getView().zmin = rmin*pixMin;
         
         if (color>1)   color=1;
         if (color<=0)  color=0.;

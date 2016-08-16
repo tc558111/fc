@@ -38,8 +38,8 @@ public class FTOFTdcApp extends FCApplication {
         H2D h2a = ftofPix[ilm].strips.hmap2.get("H2_t_Hist").get(is,1,0); h2a.setYTitle("Sector "+is+" Left PMT")  ; h2a.setXTitle("Left PMT TDC");
         H2D h2b = ftofPix[ilm].strips.hmap2.get("H2_t_Hist").get(is,2,0); h2b.setYTitle("Sector "+is+" Right PMT") ; h2b.setXTitle("Right PMT TDC");
         H2D h2c = ftofPix[ilm].strips.hmap2.get("H2_t_Hist").get(is,0,0); h2c.setYTitle("Sector "+is+" PADDLE")    ; h2c.setXTitle("TDIF");
-        canvas.cd(0); canvas.getPad().setAxisRange(1300.,1410.,1.,nstr+1) ; canvas.setLogZ(); canvas.draw(h2a); 
-        canvas.cd(1); canvas.getPad().setAxisRange(1300.,1410.,1.,nstr+1) ; canvas.setLogZ(); canvas.draw(h2b); 
+        canvas.cd(0); canvas.getPad().setAxisRange(1300.,1420.,1.,nstr+1) ; canvas.setLogZ(); canvas.draw(h2a); 
+        canvas.cd(1); canvas.getPad().setAxisRange(1300.,1420.,1.,nstr+1) ; canvas.setLogZ(); canvas.draw(h2b); 
         canvas.cd(2); canvas.getPad().setAxisRange(-35.,35.,1.,nstr+1)    ; canvas.setLogZ(); canvas.draw(h2c); 
         
         F1D f1 = new F1D("p0",0.,4000.); f1.setParameter(0,ic+1);

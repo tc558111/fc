@@ -42,9 +42,9 @@ public class FTOFMon extends DetectorMonitor {
     public boolean               inMC = false; //true=MC false=DATA
     public int              inProcess = 0;     //0=init 1=processing 2=end-of-run 3=post-run
     int                         detID = 0;
-    int                           is1 = 2 ;
-    int                           is2 = 3 ;  
-    int nsa,nsb,tet,p1,p2,pedref      = 0;
+    int                           is1 = 4;
+    int                           is2 = 5; 
+    int      nsa,nsb,tet,p1,p2,pedref = 0;
     double                 PCMon_zmin = 0;
     double                 PCMon_zmax = 0;
     
@@ -207,7 +207,7 @@ public class FTOFMon extends DetectorMonitor {
     public void update(DetectorShape2D shape) {
         putGlob("inProcess", inProcess);
         ftofDet.update(shape);
-        ftofCalib.updateDetectorView(shape);
+//        ftofCalib.updateDetectorView(shape);
     }
 		
     @Override
@@ -215,7 +215,7 @@ public class FTOFMon extends DetectorMonitor {
         this.inProcess = process; glob.put("inProcess", process);
         if (process==1||process==2) {
             ftofRecon.makeMaps();	
-//            ftofCalib.engines[0].analyze();
+            ftofCalib.engines[0].analyze();
         }
     }
 

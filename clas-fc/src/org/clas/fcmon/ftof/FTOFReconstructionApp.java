@@ -64,14 +64,15 @@ public class FTOFReconstructionApp extends FCApplication {
    
    public void clearHistograms() {
        
-       for (int idet=0; idet<ftofPix.length ; idet++) {
-           DetectorCollection<H2D> H2_a_Hist = new DetectorCollection<H2D>();
-           H2_a_Hist = ftofPix[idet].strips.hmap2.get("H2_a_Hist");
+       for (int idet=0; idet<ftofPix.length; idet++) {
            for (int is=1 ; is<7 ; is++) {
+               ftofPix[idet].strips.hmap2.get("H2_a_Hist").get(is,0,0).reset();
+               ftofPix[idet].strips.hmap2.get("H2_t_Hist").get(is,0,0).reset();
                for (int il=1 ; il<3 ; il++) {
-                    H2_a_Hist.get(is,il,0).reset();
-                    H2_a_Hist.get(is,il,3).reset();
-                    H2_a_Hist.get(is,il,5).reset();
+                   ftofPix[idet].strips.hmap2.get("H2_a_Hist").get(is,il,0).reset();
+                   ftofPix[idet].strips.hmap2.get("H2_a_Hist").get(is,il,3).reset();
+                   ftofPix[idet].strips.hmap2.get("H2_a_Hist").get(is,il,5).reset();
+                   ftofPix[idet].strips.hmap2.get("H2_t_Hist").get(is,il,0).reset();
                }
            }       
        } 
@@ -132,6 +133,11 @@ public class FTOFReconstructionApp extends FCApplication {
             int iil = strip.getDescriptor().getLayer();  
             int ip  = strip.getDescriptor().getComponent();
             int iord= strip.getDescriptor().getOrder(); 
+            
+            app.currentCrate = icr;
+            app.currentSlot  = isl;
+            app.currentChan  = ich;
+            
             if (iil>0) {
                 
             if (strip.getTDCSize()>0) {
@@ -174,7 +180,7 @@ public class FTOFReconstructionApp extends FCApplication {
                }               
                if (ped>0) ftofPix[iil-1].strips.hmap2.get("H2_a_Hist").get(is,il,3).fill(this.pedref-ped, ip);
              } 
- //              System.out.println(icr+" "+isl+" "+ich+" "+is+" "+il+" "+ip+" "+iord+" "+tdc+" "+adc);
+//               System.out.println(icr+" "+isl+" "+ich+" "+is+" "+il+" "+ip+" "+iord+" "+tdc+" "+adc);
             
              fill(is, il, ip, adc, tdc, tdcf, iil-1);    
             }

@@ -34,7 +34,9 @@ public class FTOFMode1App extends FCApplication {
         
         H1D h = new H1D() ; 
         String otab[]={" Left PMT "," Right PMT "};
-        
+
+//        app.mode7Emulation.init("/daq/fadc/ftof",app.currentCrate, app.currentSlot, app.currentChan);
+       
         int tet = app.mode7Emulation.tet;
         
         if (app.mode7Emulation.User_tet>0)  tet=app.mode7Emulation.User_tet;

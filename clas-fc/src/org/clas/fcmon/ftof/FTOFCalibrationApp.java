@@ -25,19 +25,14 @@ public class FTOFCalibrationApp extends FCApplication implements CalibrationCons
     ArrayList<CalibrationConstants> list = new ArrayList<CalibrationConstants>();
 
     public FTOFCalibrationEngine[] engines = {
-            new CCHVEventListener(),
-            new CCStatusEventListener(),
-            new CCTimingEventListener()
+            new FTOFHVEventListener(),
+            new FTOFStatusEventListener()
     };
 
     public final int     HV  = 0;
     public final int STATUS  = 1;
-    public final int TIMING  = 2;
-    public final int SUMMARY = 3;
     
-    String[] names = {"/calibration/ltcc/gain",
-                      "/calibration/ltcc/status",
-                      "/calibration/ltcc/timing_offset"};
+    String[] names = {"/calibration/ftof/gain_balance,/calibration/ftof/status"};
     
     String selectedDir = names[HV];
        
@@ -47,8 +42,7 @@ public class FTOFCalibrationApp extends FCApplication implements CalibrationCons
     
     public void init(int is1, int is2) {
         engines[0].init(is1,is2);
-        engines[1].init(is1,is2);
-        engines[2].init(is1,is2);   
+        engines[1].init(is1,is2);   
     }
     
     public FTOFCalibrationApp(String name , FTOFPixels[] ftofPix) {
@@ -57,14 +51,15 @@ public class FTOFCalibrationApp extends FCApplication implements CalibrationCons
     
     public JPanel getCalibPane() {        
         engineView.setLayout(new BorderLayout());
-        JSplitPane enginePane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT); 
+        JSplitPane enginePane = new JSplitPane(JSplitPane.VERTICAL_SPLIT); 
         ccview.getTabbedPane().addChangeListener(this);
         for (int i=0; i < engines.length; i++) {
             ccview.addConstants(engines[i].getCalibrationConstants().get(0),this);
-        }        
-        enginePane.setRightComponent(canvas);
-        enginePane.setLeftComponent(ccview);       
-        enginePane.setDividerLocation(0.5);
+        }   
+
+        enginePane.setTopComponent(canvas);
+        enginePane.setBottomComponent(ccview);       
+        enginePane.setResizeWeight(0.8);
         engineView.add(enginePane);
         return engineView;       
     }  
@@ -77,37 +72,43 @@ public class FTOFCalibrationApp extends FCApplication implements CalibrationCons
             engine = engines[HV];
         } else if (selectedDir == names[STATUS]) {
             engine = engines[STATUS];
-        } else if (selectedDir == names[TIMING]) {
-            engine = engines[TIMING];
-        } else if (selectedDir == names[SUMMARY]) {
-            engine = engines[SUMMARY];
         } 
         return engine;
     }
 
     
-    public class CCHVEventListener extends FTOFCalibrationEngine {
+    public class FTOFHVEventListener extends FTOFCalibrationEngine {
         
-        public final int[]    EXPECTED_SPE_CHANNEL = {350,350};
-        public final int          ALLOWED_SPE_DIFF = 50;
+        public final int[]      EXPECTED_MIP_CHANNEL = {800, 2000, 800};
+        public final int        ALLOWED_MIP_DIFF = 50;        
+        
         int is1,is2;
         
-        CCHVEventListener(){};
+        FTOFHVEventListener(){};
         
         public void init(int is1, int is2) {
             
             this.is1=is1;
             this.is2=is2;
             
-            calib = new CalibrationConstants(3,"gain/F");
-            calib.setName("/calibration/ltcc/gain");
+            calib = new CalibrationConstants(3,
+                    "mipa_left/F:mipa_right/F:mipa_left_err/F:mipa_right_err/F:logratio/F:logratio_err/F");
+            calib.setName("/calibration/ftof/gain_balance");
             calib.setPrecision(3);
-            
-            for (int il=1 ; il<3; il++) {
-                calib.addConstraint(3, EXPECTED_SPE_CHANNEL[il-1]-ALLOWED_SPE_DIFF,
-                                       EXPECTED_SPE_CHANNEL[il-1]+ALLOWED_SPE_DIFF);
+
+            for (int i=0; i<3; i++) {
+                
+                int layer = i+1;
+                calib.addConstraint(3, EXPECTED_MIP_CHANNEL[i]-ALLOWED_MIP_DIFF, 
+                                       EXPECTED_MIP_CHANNEL[i]+ALLOWED_MIP_DIFF, 1, layer);
+                // calib.addConstraint(calibration column, min value, max value,
+                // col to check if constraint should apply, value of col if constraint should be applied);
+                // (omit last two if applying to all rows)
+                calib.addConstraint(4, EXPECTED_MIP_CHANNEL[i]-ALLOWED_MIP_DIFF, 
+                                       EXPECTED_MIP_CHANNEL[i]+ALLOWED_MIP_DIFF, 1, layer);
             }
             
+/*            
             for(int is=is1; is<is2; is++) {                
                 for(int il=1; il<3; il++) {
                     for(int ip = 1; ip < 19; ip++) {
@@ -116,7 +117,9 @@ public class FTOFCalibrationApp extends FCApplication implements CalibrationCons
                     }
                 }
             }
+            */
             list.add(calib);
+            
         }
      
         public List<CalibrationConstants>  getCalibrationConstants(){
@@ -126,7 +129,7 @@ public class FTOFCalibrationApp extends FCApplication implements CalibrationCons
         @Override
         public void analyze() {
             for (int sector = is1; sector < is2; sector++) {
-                for (int layer = 1; layer < 3; layer++) {
+                for (int layer = 1; layer < 4; layer++) {
                     for (int paddle = 1; paddle<NUM_PADDLES[layer-1]+1; paddle++) {
                         fit(sector, layer, paddle, 0.0, 0.0);
                     }
@@ -137,35 +140,43 @@ public class FTOFCalibrationApp extends FCApplication implements CalibrationCons
         
         @Override
         public void fit(int sector, int layer, int paddle, double minRange, double maxRange){ 
-           double mean = ccPix.strips.hmap2.get("H2_CCa_Hist").get(sector,layer,0).sliceY(paddle-1).getMean();
+           double mean = ftofPix[layer-1].strips.hmap2.get("H2_a_Hist").get(sector,0,0).sliceY(paddle-1).getMean();
            calib.addEntry(sector, layer, paddle);
-           calib.setDoubleValue(mean, "gain", sector, layer, paddle);
+           calib.setDoubleValue(mean, "mipa_left", sector, layer, paddle);
+           calib.setDoubleValue(mean, "mipa_right", sector, layer, paddle);
+        }
+        
+        public double getMipChannel(int sector, int layer, int paddle) {
+            return calib.getDoubleValue("mipa_left", sector, layer, paddle);
         }
         
         @Override
         public boolean isGoodPaddle(int sector, int layer, int paddle) {
-            int rowCount = (sector-1)*36+layer*18+paddle;
-            return calib.isValid(rowCount, 3);
-        }
+
+            return (getMipChannel(sector,layer,paddle) >= EXPECTED_MIP_CHANNEL[layer-1]-ALLOWED_MIP_DIFF  &&
+                    getMipChannel(sector,layer,paddle) <= EXPECTED_MIP_CHANNEL[layer-1]+ALLOWED_MIP_DIFF);
+
+        }        
+
     }
     
-    private class CCStatusEventListener extends FTOFCalibrationEngine {
+    private class FTOFStatusEventListener extends FTOFCalibrationEngine {
         
-        public final int[]    EXPECTED_STATUS = {0,0};
+        public final int[]    EXPECTED_STATUS = {0,0,0};
         public final int  ALLOWED_STATUS_DIFF = 1;
         
-        CCStatusEventListener(){};
+        FTOFStatusEventListener(){};
         
         public void init(int is1, int is2){
-            calib = new CalibrationConstants(3,"status/I");
-            calib.setName("/calibration/ltcc/status");
+            calib = new CalibrationConstants(3,"stat_left/I:stat_right/I");
+            calib.setName("/calibration/ftof/status");
             calib.setPrecision(3);
             
-            for (int i=0 ; i<2; i++) {
+            for (int i=0 ; i<3; i++) {
                 calib.addConstraint(3, EXPECTED_STATUS[i]-ALLOWED_STATUS_DIFF,
                                        EXPECTED_STATUS[i]+ALLOWED_STATUS_DIFF);
             }
-            
+/*            
             for(int is=is1; is<is2; is++) {                
                 for(int il=1; il<3; il++) {
                     for(int ip = 1; ip < 19; ip++) {
@@ -174,39 +185,9 @@ public class FTOFCalibrationApp extends FCApplication implements CalibrationCons
                     }
                 }
             }
+            */
             list.add(calib);
         }
-        
-    }
-    
-    private class CCTimingEventListener extends FTOFCalibrationEngine {
-        
-        public final int[]    EXPECTED_TIMING = {0,0};
-        public final int  ALLOWED_TIMING_DIFF = 1;
-        
-        CCTimingEventListener(){};
-        
-        public void init(int is1, int is2) {
-            calib = new CalibrationConstants(3,"offset/F");
-            calib.setName("/calibration/ltcc/timing_offset");
-            calib.setPrecision(3);
-            
-            for (int i=0 ; i<2; i++) {
-                calib.addConstraint(3, EXPECTED_TIMING[i]-ALLOWED_TIMING_DIFF,
-                                       EXPECTED_TIMING[i]+ALLOWED_TIMING_DIFF);
-            }
-            
-            for(int is=is1; is<is2; is++) {                
-                for(int il=1; il<3; il++) {
-                    for(int ip = 1; ip < 19; ip++) {
-                        calib.addEntry(is,il,ip);
-                        calib.setDoubleValue(0.0,"offset",is,il,ip);
-                    }
-                }
-            }
-            list.add(calib);
-        }
-                
     }
            
     public void updateDetectorView(DetectorShape2D shape) {

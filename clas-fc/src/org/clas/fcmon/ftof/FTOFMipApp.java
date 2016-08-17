@@ -3,9 +3,12 @@ package org.clas.fcmon.ftof;
 import org.clas.fcmon.tools.FCApplication;
 import org.jlab.detector.base.DetectorDescriptor;
 import org.root.basic.EmbeddedCanvas;
+import org.root.func.F1D;
 import org.root.histogram.H1D;
 
 public class FTOFMipApp extends FCApplication {
+    
+//    F1D f1 = new F1D("landau",300.,3000.);
 
     public FTOFMipApp(String name, FTOFPixels[] ftofPix) {
         super(name,ftofPix);    
@@ -46,21 +49,10 @@ public class FTOFMipApp extends FCApplication {
             canvas.cd(iip-min); h = ftofPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,lr,0).sliceY(iip); 
             h.setXTitle(alab); h.setTitle(""); h.setFillColor(32); canvas.draw(h,"S");
             h = ftofPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,0,0).sliceY(iip);
-            h.setFillColor(col1); canvas.draw(h,"same");
+            h.setFillColor(col1); canvas.draw(h,"same");  
+//            if (h.getEntries()>100) {h.fit(f1,"REQ");}
         }
-/*
-        il = 2;
-        
-        for(int iip=0;iip<nstr;iip++) {
-            alab = otab[il-1]+(iip+1)+lab4[0];
-            canvas.cd(nstr+iip); h = ccPix.strips.hmap2.get("H2_CCa_Hist").get(is+1,il,0).sliceY(iip); 
-            h.setXTitle(alab); h.setTitle(""); h.setFillColor(col1); canvas.draw(h,"S");
-        }       
-        canvas.cd((lr-1)*nstr+ic); h = ccPix.strips.hmap2.get("H2_CCa_Hist").get(is+1,lr,0).sliceY(ic); 
-        h.setTitle(""); h.setFillColor(col2); canvas.draw(h,"same");  
-        */
-        
-//        canvas.cd(ic-min); h = ftofPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,lr,0).sliceY(ic); 
+
         canvas.cd(ic-min); h = ftofPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,0,0).sliceY(ic); 
         alab = "PMT "+(ic+1)+" GMEAN"; h.setXTitle(alab); h.setTitle(""); h.setFillColor(col2); canvas.draw(h,"S");    
 

@@ -108,18 +108,7 @@ public class FTOFCalibrationApp extends FCApplication implements CalibrationCons
                                        EXPECTED_MIP_CHANNEL[i]+ALLOWED_MIP_DIFF, 1, layer);
             }
             
-/*            
-            for(int is=is1; is<is2; is++) {                
-                for(int il=1; il<3; il++) {
-                    for(int ip = 1; ip < 19; ip++) {
-                        calib.addEntry(is,il,ip);
-                        calib.setDoubleValue(1.0,"gain",is,il,ip);
-                    }
-                }
-            }
-            */
-            list.add(calib);
-            
+            list.add(calib);         
         }
      
         public List<CalibrationConstants>  getCalibrationConstants(){

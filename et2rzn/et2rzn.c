@@ -31,6 +31,7 @@ int quest_[100];
 
 #define max1A  23
 #define max1B  64
+#define max2    5
 #define maxPC 192
 #define maxEC 216
 #define maxCC  18
@@ -54,6 +55,14 @@ int  tSC1BL[max1B];
 int  tSC1BR[max1B];
 int  aSC1BL[max1B];
 int  aSC1BR[max1B];
+
+int    nSC2;
+int  secSC2[max2];
+int   idSC2[max2];
+int   tSC2L[max2];
+int   tSC2R[max2];
+int   aSC2L[max2];
+int   aSC2R[max2];
 
 int      nPC;
 int    secPC[maxPC];
@@ -114,20 +123,20 @@ static int nslabs[3]={62,23,5};
 /* translated data */
 
 #define NHITSSC 100
-static int nadc[3][2][62], adc[3][2][62][NHITSSC];
-static int ntdc[3][2][62], tdc[3][2][62][NHITSSC];
+static int nadc[6][3][2][62], adc[6][3][2][62][NHITSSC];
+static int ntdc[6][3][2][62], tdc[6][3][2][62][NHITSSC];
 #define NHITSPC 192
-static int npadc[3][68], padc[3][68][NHITSPC];
-static int nptdc[3][68], ptdc[3][68][NHITSPC];
-static int npl[3],adcrp[3][68],strrp[3][68];
+static int npadc[6][3][68], padc[6][3][68][NHITSPC];
+static int nptdc[6][3][68], ptdc[6][3][68][NHITSPC];
+static int   npl[6][3],adcrp[6][3][68],strrp[6][3][68];
 #define NHITSEC 216
-static int neadc[6][36], eadc[6][36][NHITSEC];
-static int netdc[6][36], etdc[6][36][NHITSEC];
-static int nel[6],adcre[6][36],strre[6][36];
+static int neadc[6][6][36], eadc[6][6][36][NHITSEC];
+static int netdc[6][6][36], etdc[6][6][36][NHITSEC];
+static int   nel[6][6],adcre[6][6][36],strre[6][6][36];
 #define NHITSCC 36
-static int ncadc[2][18], cadc[2][18][NHITSCC];
-static int nctdc[2][18], ctdc[2][18][NHITSCC];
-static int ncl[2],adcrc[2][18],strrc[2][18];
+static int ncadc[6][2][18], cadc[6][2][18][NHITSCC];
+static int nctdc[6][2][18], ctdc[6][2][18][NHITSCC];
+static int   ncl[6][2],adcrc[6][2][18],strrc[6][2][18];
 
 #define ABS(x) ((x) < 0 ? -(x) : (x))
 
@@ -220,9 +229,9 @@ int main(int argc, char **argv)
   lun = 11;
   lrec = LREC;
 
-  runnum = atoi(argv[2]);
-  sec = atoi(argv[3]);
-  int maxev = atoi(argv[4]);
+             runnum = atoi(argv[2]);
+                sec = atoi(argv[3]);
+  int         maxev = atoi(argv[4]);
   if(argc>5) doevio = atoi(argv[5]);
   if(argc>6) dofadc = atoi(argv[6]);
   
@@ -260,6 +269,14 @@ int main(int argc, char **argv)
    hbname_(&idnt,"SC1B",&tSC1BR,"tSC1BR(nSC1B):I",4L,15L);
    hbname_(&idnt,"SC1B",&aSC1BL,"aSC1BL(nSC1B):I",4L,15L);
    hbname_(&idnt,"SC1B",&aSC1BR,"aSC1BR(nSC1B):I",4L,15L);
+
+   hbname_(&idnt,"SC2",&nSC2,"nSC2[0,5]:I",3L,11L);
+   hbname_(&idnt,"SC2",&secSC2,"secSC2(nSC2)[1,6]:I",3L,19L);
+   hbname_(&idnt,"SC2",&idSC2,"idSC2(nSC2)[1,5]:I",3L,18L);
+   hbname_(&idnt,"SC2",&tSC2L,"tSC2L(nSC2):I",3L,13L);
+   hbname_(&idnt,"SC2",&tSC2R,"tSC2R(nSC2):I",3L,13L);
+   hbname_(&idnt,"SC2",&aSC2L,"aSC2L(nSC2):I",3L,13L);
+   hbname_(&idnt,"SC2",&aSC2R,"aSC2R(nSC2):I",3L,13L);
 
    hbname_(&idnt,"PCAL",&nPC,"nPC[0,192]:I",4L,12L);
    hbname_(&idnt,"PCAL",&secPC,"secPC(nPC)[1,6]:I",4L,17L);
@@ -335,14 +352,14 @@ int main(int argc, char **argv)
 
   //int nsat[3]={76,156,60};  /* runs 170,171 */
   // int nsat[4]={60,156,44,44};    /* runs 184,185 */
-  int nsbt[4]={12,12,8,8};   /* ns */
-  int nsat[4]={60,156,28,68};
-  int nsb[4] ={3,3,2,2};      /* samples */
-  int nsa[4] ={15,39,7,17};
-  int tet[4] ={20,6,20,20};
+  int nsbt[5] = {12,12,8,8,8};   /* ns */
+  int nsat[5] = {60,156,28,68,28};
+  int  nsb[5] = {3,3,2,2,2};      /* samples */
+  int  nsa[5] = {15,39,7,17,7};
+  int  tet[5] = {20,6,20,20,20};
 
 /* PEDESTAL TABLES */
-
+/*
   float tabecal[22][16];
   float tabpcal[22][16];
   float tabftof[22][16];
@@ -539,38 +556,41 @@ a123:
     }
 
    /* Clear LTCC,ECAL,PCAL,FTOF counters */
+    int is;
 
-    for(jj=0; jj<2; jj++)
+    for(is=0; is<6; is++)  {
+
+    for(ii=0; ii<2; ii++)
     {
       for(kk=0; kk<18; kk++)
         {
-        ncadc[jj][kk] = 0;
-        nctdc[jj][kk] = 0;
-	strrc[jj][kk] = 0;
+        ncadc[is][ii][kk] = 0;
+        nctdc[is][ii][kk] = 0;
+	strrc[is][ii][kk] = 0;
 	}
-      ncl[jj]=0;
+      ncl[is][ii]=0;
     }
 
     for(ii=0; ii<6; ii++)
     {
       for(kk=0; kk<36; kk++)
         {
-        neadc[ii][kk] = 0;
-        netdc[ii][kk] = 0;
-	strre[ii][kk] = 0;
+        neadc[is][ii][kk] = 0;
+        netdc[is][ii][kk] = 0;
+	strre[is][ii][kk] = 0;
 	}
-      nel[ii]=0;
+      nel[is][ii]=0;
     }
 
     for(ii=0; ii<3; ii++)
     {
       for(kk=0; kk<68; kk++)
         {
-        npadc[ii][kk] = 0;
-        nptdc[ii][kk] = 0;
-        strrp[ii][kk] = 0;
+        npadc[is][ii][kk] = 0;
+        nptdc[is][ii][kk] = 0;
+        strrp[is][ii][kk] = 0;
 	}
-      npl[ii] = 0;
+      npl[is][ii] = 0;
     }
 
     for(ii=0; ii<3; ii++)
@@ -579,10 +599,11 @@ a123:
       {
         for(kk=0; kk<62; kk++)
         {
-        nadc[ii][jj][kk] = 0;
-        ntdc[ii][jj][kk] = 0;
+        nadc[is][ii][jj][kk] = 0;
+        ntdc[is][ii][jj][kk] = 0;
 	}
       }
+    }
     }
 
     nEC2 = nPC2 = nSC = nCC = nCC2 = 0;
@@ -611,7 +632,7 @@ a123:
 #ifdef DEBUG
       printf("ind1=%d, nbytes=%d (from 0x%08x to 0x%08x)\n",ind1,nbytes,b08,end);fflush(stdout);
 #endif
-      sector   = (fragment-1)/6 + 1;
+      sector   = (fragment-1)/6 + 1; is=sector-1;
       detector = (fragment/2)%6;
 
       tdcl = tdcr = 0;
@@ -632,15 +653,15 @@ a123:
 	  {
           ii = tdclayerecal[slot][chan]-1;
 	  kk = tdcstripecal[slot][chan]-1;
-          etdc[ii][kk][netdc[ii][kk]] = val;
-	  netdc[ii][kk]++;
+           etdc[is][ii][kk][netdc[is][ii][kk]] = val;
+	  netdc[is][ii][kk]++;
 	  }
         if(detector==2 || detector==5)
 	  {
           ii = tdclayerpcal[slot][chan]-1;
 	  kk = tdcstrippcal[slot][chan]-1;
-          ptdc[ii][kk][nptdc[ii][kk]] = val;
-	  nptdc[ii][kk]++;
+           ptdc[is][ii][kk][nptdc[is][ii][kk]] = val;
+	  nptdc[is][ii][kk]++;
 	  }
         if(detector==3 || detector==0)
 	  {
@@ -649,8 +670,8 @@ a123:
           kk =  tdcslabftof[slot][chan] - 1;
           if(ii>=0)
 	    {
-            tdc[ii][jj][kk][ntdc[ii][jj][kk]] = val;
-            ntdc[ii][jj][kk] ++;
+             tdc[is][ii][jj][kk][ntdc[is][ii][jj][kk]] = val;
+            ntdc[is][ii][jj][kk]++;
 	    }
 #ifdef DEBUG
         printf("TDC[0x%08x]:  slot=%2d  chan=%3d  edge=%1d  tdc=%5d(%f)  (hist_id=%d)\n",
@@ -673,6 +694,7 @@ a123:
       int ndata0[22], data0[21][8];
       int baseline, sum, channel, summing_in_progress, mmsum, mmt0;
       int datasaved[1000];
+      int iedet;
 
 #ifdef DEBUG
       printf("ind1=%d, nbytes=%d\n",ind1,nbytes);
@@ -683,7 +705,7 @@ a123:
       printf("ind1=%d, nbytes=%d (from 0x%08x to 0x%08x)\n",ind1,nbytes,b08,end);
 #endif
 
-      sector   = (fragment-1)/6 + 1;
+      sector   = (fragment-1)/6 + 1; is = sector-1;
       detector = (fragment/2)%6 + 1;
 
       edet = -1;
@@ -701,6 +723,7 @@ a123:
         GET32(trig);
         GET64(time);
         GET32(nchan);
+
 #ifdef DEBUG
         printf("slot=%d, trig=%d, time=%lld nchan=%d\n",slot,trig,time,nchan);
 #endif
@@ -709,6 +732,11 @@ a123:
           GET8(chan);
           GET32(nsamples);
 
+          iedet=edet;
+          if (edet==2&&(adclayerftof[slot][chan]-1)==1) iedet=2;
+          if (edet==2&&(adclayerftof[slot][chan]-1)==0) iedet=3;
+          if (edet==2&&(adclayerftof[slot][chan]-1)==2) iedet=4;
+          
           baseline = sum = summing_in_progress = mmsum = mmt0 = 0;
           for(mm=0; mm<nsamples; mm++)
 	    {
@@ -724,14 +752,14 @@ a123:
 	      }
             if(mm>25 && mm<100)
               {
-              if(summing_in_progress==0 && data>(baseline+tet[edet]))
+              if(summing_in_progress==0 && data>(baseline+tet[iedet]))
 		{
                 summing_in_progress = 1;
-                for (ii=1;ii<(nsb[edet]+1);ii++) sum += (datasaved[mm-ii]-baseline);
-                mmsum=nsb[edet];
+                for (ii=1;ii<(nsb[iedet]+1);ii++) sum += (datasaved[mm-ii]-baseline);
+                mmsum=nsb[iedet];
                 mmt0=mm;
 		}
-	      if(summing_in_progress>0 && mmsum>(nsa[edet]+nsb[edet]))
+	      if(summing_in_progress>0 && mmsum>(nsa[iedet]+nsb[iedet]))
 		{
 		summing_in_progress = -1;
                 //if (edet==1) printf("det=%d sum=%d tsa+tsb=%d\n",edet,sum,nsa[edet]+nsb[edet]);
@@ -759,9 +787,9 @@ a123:
 		kk = adcstripecal[slot][chan]-1;
 		if(ii>=0 && sum>0)
 		  {
-		  eadc[ii][kk][neadc[ii][kk]] = sum;
-		  neadc[ii][kk]++;
-                  if (sum>100) {strre[ii][nel[ii]]=kk+1;nel[ii]++;}
+		  eadc[is][ii][kk][neadc[is][ii][kk]] = sum;
+		 neadc[is][ii][kk]++;
+                  if (sum>100) {strre[is][ii][nel[is][ii]]=kk+1;nel[is][ii]++;}
 
 		  if (dofadc)
 		    {
@@ -783,9 +811,9 @@ a123:
 		kk = adcstrippcal[slot][chan]-1;
 		if(ii>=0 && sum>0)
 		  {	  
-		  padc[ii][kk][npadc[ii][kk]] = sum;
-		  npadc[ii][kk]++;
-		  if (sum>100) {strrp[ii][npl[ii]]=kk+1;npl[ii]++;}
+		   padc[is][ii][kk][npadc[is][ii][kk]] = sum;
+		  npadc[is][ii][kk]++;
+		  if (sum>100) {strrp[is][ii][npl[is][ii]]=kk+1;npl[is][ii]++;}
 
 		  if (dofadc)
 		    {
@@ -808,8 +836,8 @@ a123:
                 kk =  adcslabftof[slot][chan] - 1;
 	        if(ii>=0 && sum>0)
 		  {
-                  adc[ii][jj][kk][nadc[ii][jj][kk]] = sum;
-                  nadc[ii][jj][kk] ++;
+                   adc[is][ii][jj][kk][nadc[is][ii][jj][kk]] = sum;
+                  nadc[is][ii][jj][kk] ++;
 
 		  if (dofadc) 
 		    {
@@ -832,8 +860,8 @@ a123:
 		kk = adcstripltcc[slot][chan]-1;
 		if(jj>=0 && sum>0)
 		  {
-		  cadc[jj][kk][ncadc[jj][kk]] = sum;
-		  ncadc[jj][kk]++;
+		   cadc[is][jj][kk][ncadc[is][jj][kk]] = sum;
+		  ncadc[is][jj][kk]++;
 		  if (dofadc)
 		    {
 		    if (nCC2<maxCC2) 
@@ -883,7 +911,7 @@ a123:
         GET64(time);
 	GET32(nchan);
 
-        sector   = (fragment-1)/6 + 1;
+        sector   = (fragment-1)/6 + 1; is = sector-1;
         detector = (fragment/2)%6 + 1;
 
         edet = -1;
@@ -910,11 +938,11 @@ a123:
 		sum  = (float)pulse_integral-pulse_min*(nsa[edet]+nsb[edet]);
 		ii = adclayerecal[slot][chan]-1;
 		kk = adcstripecal[slot][chan]-1;
-                if (sum>100) {strre[ii][nel[ii]]=kk+1;nel[ii]++;}
+                if (sum>100) {strre[is][ii][nel[is][ii]]=kk+1;nel[is][ii]++;}
 		if(ii>=0 && sum>0)
 		  {
-		  eadc[ii][kk][neadc[ii][kk]] = sum;
-		  neadc[ii][kk]++;
+		   eadc[is][ii][kk][neadc[is][ii][kk]] = sum;
+		  neadc[is][ii][kk]++;
 		  }
 		}
 	      if(edet==1)
@@ -922,11 +950,11 @@ a123:
 		sum  = (float)pulse_integral-pulse_min*(nsa[edet]+nsb[edet]);
 		ii = adclayerpcal[slot][chan]-1;
 		kk = adcstrippcal[slot][chan]-1;
-		if (sum>100) {strrp[ii][npl[ii]]=kk+1;npl[ii]++;}
+		if (sum>100) {strrp[is][ii][npl[is][ii]]=kk+1;npl[is][ii]++;}
 		if(ii>=0 && sum>0)
 		  {
-		  padc[ii][kk][npadc[ii][kk]] = sum;
-		  npadc[ii][kk]++;
+		   padc[is][ii][kk][npadc[is][ii][kk]] = sum;
+		  npadc[is][ii][kk]++;
 		  }
 		}
               if(edet==2) 
@@ -937,11 +965,12 @@ a123:
 	       
                 if(ii==1) iedet=2;
 		if(ii==0) iedet=3;
+		if(ii==2) iedet=4;
 		sum  = (float)pulse_integral-pulse_min*(nsa[iedet]+nsb[iedet]);
 	        if(ii>=0 && sum>0)
 		  {
-                  adc[ii][jj][kk][nadc[ii][jj][kk]] = sum;
-                  nadc[ii][jj][kk] ++;
+                   adc[is][ii][jj][kk][nadc[is][ii][jj][kk]] = sum;
+                  nadc[is][ii][jj][kk] ++;
 		  }
 		}	      
               if(edet==3) 
@@ -951,8 +980,8 @@ a123:
 		sum  = (float)pulse_integral-pulse_min*(nsa[edet]+nsb[edet]);
 	        if(sum>0)
 		  {
-                  cadc[jj][kk][ncadc[jj][kk]] = sum;
-                  ncadc[jj][kk] ++;
+                   cadc[is][jj][kk][ncadc[is][jj][kk]] = sum;
+                  ncadc[is][jj][kk] ++;
 		  }
 		}	      
 	    }
@@ -968,40 +997,41 @@ a123:
 
     /* PCAL M=3 CUT */
 
-    int il,good_lay[6],ad[6],rs[6],good_12[6],good_a12[6],good_uw,good_vu,good_wv,good_uvw[3];
-
+    int il,good_lay[6][6],ad[6],rs[6][6],good_12[6],good_a12[6],good_uw,good_vu,good_wv,good_uvw[6][3];
+    for (is=0; is<6 ; is++) {
     for (il=0; il<3 ; il++)
       {
-	good_lay[il]=npl[il]==1;
-        if (good_lay[il]){rs[il]=strrp[il][0];}
+	good_lay[is][il]=npl[is][il]==1;
+        if (good_lay[is][il]){rs[is][il]=strrp[is][il][0];}
       }
 
-    good_uvw[0]= good_lay[0] && good_lay[1] && good_lay[2];
+    good_uvw[is][0]= good_lay[is][0] && good_lay[is][1] && good_lay[is][2];
 
-    if (good_uvw[0]) {printf("PCAL pixel event: u,v,w= %d %d %d\n",rs[0],rs[1],rs[2]);}
+    if (good_uvw[is][0]) {printf("PCAL pixel event: sector,u,v,w= %d %d %d %d\n",is+1,rs[is][0],rs[is][1],rs[is][2]);}
 
     /* EC Inner M=3 CUT */
 
     for (il=0; il<3 ; il++)
       {
-	good_lay[il]=nel[il]==1;
-        if (good_lay[il]){rs[il]=strre[il][0];}
+	good_lay[is][il]=nel[is][il]==1;
+        if (good_lay[is][il]){rs[is][il]=strre[is][il][0];}
       }
 
 
-    good_uvw[1] = good_lay[0] && good_lay[1] && good_lay[2];
-    if (good_uvw[1]) {printf("ECinner pixel event: u,v,w= %d %d %d\n",rs[0],rs[1],rs[2]);}
+    good_uvw[is][1] = good_lay[is][0] && good_lay[is][1] && good_lay[is][2];
+    if (good_uvw[is][1]) {printf("ECinner pixel event: sector,u,v,w= %d %d %d %d\n",is+1,rs[is][0],rs[is][1],rs[is][2]);}
 
     /* EC Outer M=3 CUT */
 
     for (il=3; il<6 ; il++)
       {
-	good_lay[il]=nel[il]==1;
-        if (good_lay[il]){rs[il]=strre[il][0];}
+	good_lay[is][il]=nel[is][il]==1;
+        if (good_lay[is][il]){rs[is][il]=strre[is][il][0];}
       }
 
-    good_uvw[2] = good_lay[0] && good_lay[1] && good_lay[2];
-    if (good_uvw[2]) {printf("ECouter pixel event: u,v,w= %d %d %d\n",rs[3],rs[4],rs[5]);}
+    good_uvw[is][2] = good_lay[is][0] && good_lay[is][1] && good_lay[is][2];
+    if (good_uvw[is][2]) {printf("ECouter pixel event: sector,u,v,w= %d %d %d %d\n",is+1,rs[is][3],rs[is][4],rs[is][5]);}
+    }
 
     /*
     good_12[0] = good_uw && rs[2]==61;
@@ -1046,92 +1076,122 @@ a123:
     /* Fill columnwise ntuple */
     
     nEC=0;nECi=0;nECo=0;
+    for(is=0;is<6;is++) {
     for(ii=0;ii<6;ii++)
       {
-      for(kk=0; kk<36; kk++) 
+      for(kk=0; kk<36; kk++) /* ECAL STRIP */
         { 
-      if(neadc[ii][kk]>=1)
+      if(neadc[is][ii][kk]>=1)
 	  {
-	    secEC[nEC]=sec;
+	    secEC[nEC]=is+1;
 	  layerEC[nEC]=ii+1;
           stripEC[nEC]=kk+1;
-            tdcEC[nEC]=etdc[ii][kk][0];
-            adcEC[nEC]=eadc[ii][kk][0];
+            tdcEC[nEC]=etdc[is][ii][kk][0];
+            adcEC[nEC]=eadc[is][ii][kk][0];
           nEC++;
 	  if (layerEC[nEC]<4) {nECi++;}
 	  if (layerEC[nEC]>3) {nECo++;}
 	  }
 	}
       }
+    }
 
     nPC=0;
+    for(is=0; is<6; is++) {
     for(ii=0;ii<3;ii++)
       {
-      for(kk=0; kk<68; kk++) /* counter # */
+      for(kk=0; kk<68; kk++) /* PCAL STRIP */
         { 
-      if(npadc[ii][kk]>=1)
+      if(npadc[is][ii][kk]>=1)
 	  {
-	    secPC[nPC]=sec;
+	    secPC[nPC]=is+1;
 	  layerPC[nPC]=ii+1;
           stripPC[nPC]=kk+1;
-            tdcPC[nPC]=ptdc[ii][kk][0];
-            adcPC[nPC]=padc[ii][kk][0];
+            tdcPC[nPC]=ptdc[is][ii][kk][0];
+            adcPC[nPC]=padc[is][ii][kk][0];
           nPC++;
 	  }
 	}
       }
+    }
 
     ii=1;
     nSC1A=0;
-    for(kk=0; kk<23; kk++) /* counter # */
+    for(is=0; is<6; is++) {
+    for(kk=0; kk<23; kk++) /* FTOF 1A PADDLE*/
     { 
-      if(ntdc[ii][0][kk]==1 || ntdc[ii][1][kk]==1 || nadc[ii][0][kk]==1 || nadc[ii][1][kk]==1 )
+      if(ntdc[is][ii][0][kk]==1 || ntdc[is][ii][1][kk]==1 || nadc[is][ii][0][kk]==1 || nadc[is][ii][1][kk]==1 )
 	{
-	  secSC1A[nSC1A]=sec;
+	  secSC1A[nSC1A]=is+1;
 	  idSC1A[nSC1A]=kk+1;
-          tSC1AL[nSC1A]=tdc[ii][0][kk][0];
-          tSC1AR[nSC1A]=tdc[ii][1][kk][0];
-          aSC1AL[nSC1A]=adc[ii][0][kk][0];
-          aSC1AR[nSC1A]=adc[ii][1][kk][0];
+          tSC1AL[nSC1A]=tdc[is][ii][0][kk][0];
+          tSC1AR[nSC1A]=tdc[is][ii][1][kk][0];
+          aSC1AL[nSC1A]=adc[is][ii][0][kk][0];
+          aSC1AR[nSC1A]=adc[is][ii][1][kk][0];
           nSC1A++;
 	}
+    }
     }
 
     ii=0;
     nSC1B=0;
-    for(kk=0; kk<62; kk++) /* counter # */
+    for(is=0; is<6; is++) {
+    for(kk=0; kk<62; kk++) /* FTOF 1B PADDLE */
     { 
-      if(ntdc[ii][0][kk]==1 || ntdc[ii][1][kk]==1 || nadc[ii][0][kk]==1 || nadc[ii][1][kk]==1 )
+      if(ntdc[is][ii][0][kk]==1 || ntdc[is][ii][1][kk]==1 || nadc[is][ii][0][kk]==1 || nadc[is][ii][1][kk]==1 )
 	{
-	  secSC1B[nSC1B]=sec;
+	  secSC1B[nSC1B]=is+1;
 	  idSC1B[nSC1B]=kk+1;
-          tSC1BL[nSC1B]=tdc[ii][0][kk][0];
-          tSC1BR[nSC1B]=tdc[ii][1][kk][0];
-          aSC1BL[nSC1B]=adc[ii][0][kk][0];
-          aSC1BR[nSC1B]=adc[ii][1][kk][0];
+          tSC1BL[nSC1B]=tdc[is][ii][0][kk][0];
+          tSC1BR[nSC1B]=tdc[is][ii][1][kk][0];
+          aSC1BL[nSC1B]=adc[is][ii][0][kk][0];
+          aSC1BR[nSC1B]=adc[is][ii][1][kk][0];
           nSC1B++;
 	}
     }
+    }
+
+    ii=2;
+    nSC2=0;
+    for(is=0; is<6; is++) {
+    for(kk=0; kk<5; kk++) /* FTOF 2 PADDLE */
+    { 
+      if(ntdc[is][ii][0][kk]==1 || ntdc[is][ii][1][kk]==1 || nadc[is][ii][0][kk]==1 || nadc[is][ii][1][kk]==1 )
+	{
+	  secSC2[nSC2]=is+1;
+	  idSC2[nSC2]=kk+1;
+          tSC2L[nSC2]=tdc[is][ii][0][kk][0];
+          tSC2R[nSC2]=tdc[is][ii][1][kk][0];
+          aSC2L[nSC2]=adc[is][ii][0][kk][0];
+          aSC2R[nSC2]=adc[is][ii][1][kk][0];
+          nSC2++;
+	}
+    }
+    }
+
     nCC=0;
-      for(kk=0; kk<18; kk++) /* counter # */
+    for(is=0; is<6 ; is++) {
+      for(kk=0; kk<18; kk++) /* LTCC PMT */
 	{ 
-	  if(ncadc[0][kk]>0 || ncadc[1][kk]>0 )
+	  if(ncadc[is][0][kk]>0 || ncadc[is][1][kk]>0 )
 	    {
-	      secCC[nCC]=sec;
+	      secCC[nCC]=is+1;
 	      idCC[nCC]=kk+1;
-	      tCCL[nCC]=ctdc[0][kk][0];
-	      tCCR[nCC]=ctdc[1][kk][0];
-	      aCCL[nCC]=cadc[0][kk][0];
-	      aCCR[nCC]=cadc[1][kk][0];
+	      tCCL[nCC]=ctdc[is][0][kk][0];
+	      tCCR[nCC]=ctdc[is][1][kk][0];
+	      aCCL[nCC]=cadc[is][0][kk][0];
+	      aCCR[nCC]=cadc[is][1][kk][0];
 	      nCC++;
 	    }
     }
+    }
+
     //    if( nEC==3 || nPC==3 || nSC1A==1 || nSC1B==1 ) hfnt_(&idnt);	
     //if( nEC>=6 || nPC>=3 || (nSC1A==1 && nSC1B==1 )) {iev++ ; hfnt_(&idnt);}
     //if( good_uvw[0] || good_uvw[1] || good_uvw[2] || nSC1A==1 || nSC1B==1) {hfnt_(&idnt);}
-
     //if (nPC<5) printf("nPC,nSC1A,nSC1B=%d,%d,%d \n",nPC,nSC1A,nSC1B);
-    if(nECi==3 || nECo==3 || nPC==3 || nSC1A==1 || nSC1B==1 || nCC>0) 
+
+    if(nECi==3 || nECo==3 || nPC>2 || nSC1A==1 || nSC1B==1 || nCC>0) 
       {hfnt_(&idnt);
 	if (doevio)
 	  {

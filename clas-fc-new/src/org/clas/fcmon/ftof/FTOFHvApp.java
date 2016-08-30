@@ -195,7 +195,7 @@ public class FTOFHvApp extends FCEpics {
         c.setBinContent(ip, H1_HV.get(is, lr+off, 2).getBinContent(ip));
         c.setFillColor(2);  canvas.cd(lr-1+2); canvas.draw(c,"same");
         
-        canvas.update();
+        canvas.repaint();
     }
     
     public void update2DScalers(EmbeddedCanvas canvas, int flag) {
@@ -214,17 +214,17 @@ public class FTOFHvApp extends FCEpics {
         
         canvas.divide(4, 1);
         
-        h = H2_HV.get(is, 1+off, 0); h.setXTitle("Sector "+is+" Left PMT"); h.setYTitle("TIME");
+        h = H2_HV.get(is, 1+off, 0); h.setTitleX("Sector "+is+" Left PMT"); h.setTitleY("TIME");
         canvas.cd(0); canvas.draw(h);
-        h = H2_HV.get(is, 2+off, 0); h.setXTitle("Sector "+is+" Right PMT"); h.setYTitle("TIME");
+        h = H2_HV.get(is, 2+off, 0); h.setTitleX("Sector "+is+" Right PMT"); h.setTitleY("TIME");
         canvas.cd(1);    canvas.draw(h);
 
-        h = H2_HV.get(is, 1+off, 2); h.setXTitle("Sector "+is+" Left PMT"); h.setYTitle("TIME");
+        h = H2_HV.get(is, 1+off, 2); h.setTitleX("Sector "+is+" Left PMT"); h.setTitleY("TIME");
         canvas.cd(2); canvas.draw(h);
-        h = H2_HV.get(is, 2+off, 2); h.setXTitle("Sector "+is+" Right PMT"); h.setYTitle("TIME");
+        h = H2_HV.get(is, 2+off, 2); h.setTitleX("Sector "+is+" Right PMT"); h.setTitleY("TIME");
         canvas.cd(3); canvas.draw(h);
         
-        canvas.update();
+        canvas.repaint();
         
         isCurrentSector = is;
         

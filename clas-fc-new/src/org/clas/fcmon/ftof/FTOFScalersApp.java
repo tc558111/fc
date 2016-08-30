@@ -178,7 +178,7 @@ public class FTOFScalersApp extends FCEpics {
             c.setBinContent(ip, H1_HV.get(is, lr, 1).getBinContent(ip));
             c.setFillColor(2);  canvas.cd(1); canvas.draw(c,"same");
               
-            canvas.update();
+            canvas.repaint();
         }
         
         public void update2DScalers(EmbeddedCanvas canvas, int flag) {
@@ -197,16 +197,16 @@ public class FTOFScalersApp extends FCEpics {
             
             String tit = "Sector "+is+" "+layMap.get(detName)[lr-1]+" PMT";
             
-            h = H2_HV.get(is, lr, 0); h.setXTitle(tit); h.setYTitle("TIME");
+            h = H2_HV.get(is, lr, 0); h.setTitleX(tit); h.setTitleY("TIME");
             canvas.cd(0); canvas.draw(h);
             
-            h = H2_HV.get(is, lr, 1); h.setXTitle(tit); h.setYTitle("TIME");
+            h = H2_HV.get(is, lr, 1); h.setTitleX(tit); h.setTitleY("TIME");
             canvas.cd(1); canvas.draw(h);
             
             isCurrentSector = is;
             isCurrentLayer  = lr;
             
-            canvas.update();
+            canvas.repaint();
             
         }
 

@@ -65,7 +65,7 @@ public class FTOFMode1App extends FCApplication {
             c.draw(f1,"same"); c.draw(f2,"same");
             }  
             
-        c.update();
+        c.repaint();
     }   
     
 }

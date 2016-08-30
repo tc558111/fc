@@ -41,7 +41,7 @@ public class FTOFPedestalApp extends FCApplication {
         
         for(int il=1;il<3;il++){
             H2F hpix = ftofPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,il,3);
-            hpix.setXTitle("PED (Ref-Measured)") ; hpix.setYTitle(otab[il-1]);         
+            hpix.setTitleX("PED (Ref-Measured)") ; hpix.setTitleY(otab[il-1]);         
             canvasConfig(c,il-1,-20.,20.,1.,nstr+1,true) ; c.draw(hpix);
             if(lr==il) {
                 F1D f1 = new F1D("p0","[a]",-20.,20.); f1.setParameter(0,ic+1);
@@ -56,7 +56,7 @@ public class FTOFPedestalApp extends FCApplication {
             
         }  
         
-        c.update();
+        c.repaint();
         ics = ic;
     }
     

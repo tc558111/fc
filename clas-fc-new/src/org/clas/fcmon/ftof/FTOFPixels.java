@@ -28,6 +28,9 @@ public class FTOFPixels {
     int     adcr[][][] = new    int[6][2][62];      
     float   tdcr[][][] = new  float[6][2][62]; 
     
+    public DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new DetectorCollection<TreeMap<Integer,Object>>();
+    public DetectorCollection<TreeMap<Integer,Object>> Lmap_t = new DetectorCollection<TreeMap<Integer,Object>>();
+    
     int id;
 	public int nstr;
 	public String detName = null;

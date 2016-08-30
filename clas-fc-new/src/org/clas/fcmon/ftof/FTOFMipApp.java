@@ -59,7 +59,7 @@ public class FTOFMipApp extends FCApplication {
         h.setOptStat(Integer.parseInt("110")); 
         alab = "PMT "+(ic+1)+" GMEAN"; h.setTitleX(alab); h.setTitle(""); h.setFillColor(2); c.draw(h); 
         
-        c.update();
+        c.repaint();
 
     }
 }

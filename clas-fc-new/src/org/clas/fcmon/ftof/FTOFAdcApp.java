@@ -46,9 +46,9 @@ public class FTOFAdcApp extends FCApplication {
         int ilm = ilmap;
         double nstr = ftofPix[ilm].nstr;
         
-        H2F h2a = ftofPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,1,0); h2a.setYTitle("Sector "+is+" Left PMT")  ; h2a.setXTitle("Left PMT ADC");
-        H2F h2b = ftofPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,2,0); h2b.setYTitle("Sector "+is+" Right PMT") ; h2b.setXTitle("Right PMT ADC");
-        H2F h2c = ftofPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,0,0); h2c.setYTitle("Sector "+is+" PADDLE")    ; h2c.setXTitle("GMEAN");
+        H2F h2a = ftofPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,1,0); h2a.setTitleY("Sector "+is+" Left PMT")  ; h2a.setTitleX("Left PMT ADC");
+        H2F h2b = ftofPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,2,0); h2b.setTitleY("Sector "+is+" Right PMT") ; h2b.setTitleX("Right PMT ADC");
+        H2F h2c = ftofPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,0,0); h2c.setTitleY("Sector "+is+" PADDLE")    ; h2c.setTitleX("GMEAN");
         canvasConfig(c,0,0.,    4000.,1.,nstr+1.,true).draw(h2a);
         canvasConfig(c,1,0.,    4000.,1.,nstr+1.,true).draw(h2b);
         canvasConfig(c,2,0.,amax[ilm],1.,nstr+1.,true).draw(h2c);
@@ -86,7 +86,7 @@ public class FTOFAdcApp extends FCApplication {
         c.cd(7); h1b.setOptStat(Integer.parseInt("110")); h1b.setTitle(""); c.draw(h1b); 
         c.cd(8); h1c.setOptStat(Integer.parseInt("110")); h1c.setTitle(""); c.draw(h1c);      
        
-        c.update();
+        c.repaint();
         
         ics=ic;
         

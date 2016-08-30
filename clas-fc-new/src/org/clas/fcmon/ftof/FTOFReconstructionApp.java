@@ -42,9 +42,6 @@ public class FTOFReconstructionApp extends FCApplication {
    DetectorEventDecoder   detectorDecoder = new DetectorEventDecoder();
    List<DetectorDataDgtz>  detectorData   = new ArrayList<DetectorDataDgtz>();
    
-   public DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new DetectorCollection<TreeMap<Integer,Object>>();
-   public DetectorCollection<TreeMap<Integer,Object>> Lmap_t = new DetectorCollection<TreeMap<Integer,Object>>();
-   
    double[]                sed7=null,sed8=null;
    TreeMap<Integer,Object> map7=null,map8=null; 
    
@@ -355,8 +352,8 @@ public class FTOFReconstructionApp extends FCApplication {
            H1_a_Sevd = ftofPix[idet].strips.hmap1.get("H1_a_Sevd");
                for (int is=1;is<7;is++) {
                    for (int il=1 ; il<3 ; il++) {
-                       if (!app.isSingleEvent()) Lmap_a.add(is,il,idet, toTreeMap(H2_a_Hist.get(is,il,0).projectionY().getData())); //Strip View ADC 
-                       if  (app.isSingleEvent()) Lmap_a.add(is,il,idet, toTreeMap(H1_a_Sevd.get(is,il,0).getData()));           
+                       if (!app.isSingleEvent()) ftofPix[idet].Lmap_a.add(is,il,idet, toTreeMap(H2_a_Hist.get(is,il,0).projectionY().getData())); //Strip View ADC 
+                       if  (app.isSingleEvent()) ftofPix[idet].Lmap_a.add(is,il,idet, toTreeMap(H1_a_Sevd.get(is,il,0).getData()));           
                    }
                } 
            }

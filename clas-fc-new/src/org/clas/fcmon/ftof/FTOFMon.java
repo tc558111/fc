@@ -90,7 +90,6 @@ public class FTOFMon extends DetectorMonitor {
         ftofDet.setMonitoringClass(this);
         ftofDet.setApplicationClass(app);
         ftofDet.init(is1,is2);
-        ftofDet.addLMaps("Lmap_a", ftofRecon.Lmap_a); 	    
     }
 	
     public void makeApps() {

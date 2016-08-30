@@ -4,10 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.jlab.clas.detector.DetectorDescriptor;
-import org.root.histogram.GraphErrors;
-import org.root.data.DataSetXY;
-import org.root.fitter.DataFitter;
-import org.root.func.F1D;
+import org.jlab.groot.data.GraphErrors;
+import org.jlab.groot.fitter.DataFitter;
+import org.jlab.groot.math.F1D;
 
 public class CalibrationData {
 	
@@ -71,29 +70,29 @@ public class CalibrationData {
         		n++;
         	}
         }
-        graph = new GraphErrors(xpfit,ypfit,xpfite,ypfite);   
-        graph.setXTitle("Pixel Distance (cm)");
-        graph.setYTitle("Mean ADC");
-        graph.setMarkerStyle(2);
-        graph.setMarkerSize(8);
+        graph = new GraphErrors("FIT",xpfit,ypfit,xpfite,ypfite);   
+        graph.getAttributes().setTitleX("Pixel Distance (cm)");
+        graph.getAttributes().setTitleY("Mean ADC");
+        graph.getAttributes().setMarkerStyle(2);
+        graph.getAttributes().setMarkerSize(8);
         
-        int sector=getDescriptor().getSector()+1;
+        int sector=getDescriptor().getSector();
         int   view=getDescriptor().getLayer();
         int  strip=getDescriptor().getComponent()+1;
         
-        graph.setTitle("EXP FIT: Sector "+sector+" "+otab[view-1]+""+strip);        
+        graph.getAttributes().setTitle("EXP FIT: Sector "+sector+" "+otab[view-1]+""+strip);        
         this.fitgraphs.add(graph);
         
-        graph = new GraphErrors(xpraw,ypraw,xprawe,yprawe);   
-        graph.setXTitle("Pixel Distance (cm)");
-        graph.setYTitle("Mean ADC");
-        graph.setMarkerStyle(2);  
-        graph.setMarkerSize(6); 
-        graph.setMarkerColor(4);
-        
-        graph.setTitle("EXP FIT: Sector "+sector+" "+otab[view-1]+" "+strip);        
+        graph = new GraphErrors("RAW",xpraw,ypraw,xprawe,yprawe);   
+        graph.getAttributes().setTitleX("Pixel Distance (cm)");
+        graph.getAttributes().setTitleY("Mean ADC");
+        graph.getAttributes().setMarkerStyle(2);  
+        graph.getAttributes().setMarkerSize(6); 
+        graph.getAttributes().setMarkerColor(4);
+        graph.getAttributes().setTitle("EXP FIT: Sector "+sector+" "+otab[view-1]+" "+strip);        
         this.rawgraphs.add(graph);
-        F1D f1 = new F1D("exp",0.,400.);
+        
+        F1D f1 = new F1D("exp","[a]*exp(x*[b])",0.,400.);
         this.functions.add(f1);
     }
     
@@ -103,25 +102,24 @@ public class CalibrationData {
             F1D func = this.functions.get(loop);
             func.setParameter(0,0.);
             func.setParameter(1,0.);
-            double [] dataY=this.fitgraphs.get(loop).getDataY().getArray();
+            double [] dataY=this.fitgraphs.get(loop).getVectorY().getArray();
             if (dataY.length>0) {
             	int imax = Math.min(2,dataY.length-1);
             	double p0try = dataY[imax] ; double p0min = p0try-30. ; double p0max=p0try+30.;
             	func.setParameter(0, p0try);
             	func.setParameter(1,-0.00277);
             	func.setParLimits(0,p0min,p0max);
-            	func.setLineColor(2);
- 
-            	this.fitgraphs.get(loop).fit(this.functions.get(loop),"REQ");	//Fit data
+            	func.setLineColor(2); 
+            	DataFitter.fit(func,this.fitgraphs.get(loop),"REQ");	//Fit data
             	double yfit,ydat,yerr,ch=0;
             	if (fitSize>0) {
             		for (int i=0 ; i<fitSize ; i++) {
-            			yfit = func.eval(this.fitgraphs.get(loop).getDataX(i));
+            			yfit = func.evaluate(this.fitgraphs.get(loop).getDataX(i));
             			ydat = this.fitgraphs.get(loop).getDataY(i);
-            			yerr = this.fitgraphs.get(loop).getErrorY(i);
+            			yerr = this.fitgraphs.get(loop).getDataEY(i);
             			ch   = ch + Math.pow((ydat-yfit)/yerr,2);
             		}
-            		ch = ch/(fitSize-func.getNParams()-1);
+            		ch = ch/(fitSize-func.getNPars()-1);
             	}
             	this.chi2.add(ch);
             }

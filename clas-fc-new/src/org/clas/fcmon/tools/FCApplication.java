@@ -118,21 +118,24 @@ public class FCApplication implements ActionListener  {
         is    = dd.getSector();
         layer = dd.getLayer();
         ic    = dd.getComponent(); 	 
-                
+        
         panel = omap;
-        io    = ilmap+1;
-        of    = (io-1)*3;
+//      io    = ilmap+1;
+//      if (ilmap==0) of = (io-1)*3;
+        of    = 0;
         lay   = 0;
         opt   = 0;
-        
+        io    = 1;
+      
         if (panel==1) opt = 1;
         if (layer<4)  lay = layer+of;
         if (layer==4) lay = layer+2+io;
         if (panel==9) lay = panel+io-1;
         if (panel>10) lay = panel+of;
-        
+      
         l1 = of+1;
-        l2 = of+4;  
+        l2 = of+4;   
+       
 	}
 	
 	public void addH1DMaps(String name, DetectorCollection<H1F> map) {
@@ -154,8 +157,11 @@ public class FCApplication implements ActionListener  {
 	public void analyze() {
 	}
 	
-	public void analyze(int is1, int is2, int il1, int il2, int ip1, int ip2) {
-	}
+    public void analyze(int is1, int is2, int il1, int il2, int ip1, int ip2) {
+    }
+    
+    public void analyze(int idet, int is1, int is2, int il1, int il2) {
+    }
 	
 	public void updateCanvas(DetectorDescriptor dd, EmbeddedCanvas canvas) {		
 	}

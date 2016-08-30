@@ -39,9 +39,6 @@ public class FCDetector {
     public TreeMap<String,JPanel>  rbPanes = new TreeMap<String,JPanel>();
     public TreeMap<String,Integer>  bStore = new TreeMap<String,Integer>();
     
-    public DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new  DetectorCollection<TreeMap<Integer,Object>>();
-    public DetectorCollection<TreeMap<Integer,Object>> Lmap_t = new  DetectorCollection<TreeMap<Integer,Object>>();
-    
     public int is,layer,ic;
     public int panel,opt,io,of,lay,l1,l2;
     
@@ -67,12 +64,12 @@ public class FCDetector {
     public FCDetector(String name, ECPixels[] ecPix) {
         this.appName = name;
         this.ecPix = ecPix;  
-        this.nStrips[0] = ecPix[0].pc_nstr[0];
-        this.nStrips[1] = ecPix[0].pc_nstr[1];
-        this.nStrips[2] = ecPix[0].pc_nstr[2];
-        this.nStrips[3] = ecPix[0].pc_nstr[0];
-        this.nStrips[4] = ecPix[0].pc_nstr[1];
-        this.nStrips[5] = ecPix[0].pc_nstr[2];
+        this.nStrips[0] = ecPix[0].ec_nstr[0];
+        this.nStrips[1] = ecPix[0].ec_nstr[1];
+        this.nStrips[2] = ecPix[0].ec_nstr[2];
+        this.nStrips[3] = ecPix[0].ec_nstr[0];
+        this.nStrips[4] = ecPix[0].ec_nstr[1];
+        this.nStrips[5] = ecPix[0].ec_nstr[2];
     }
     
     public FCDetector(String name, CCPixels ccPix) {
@@ -98,10 +95,6 @@ public class FCDetector {
     public void setMonitoringClass(DetectorMonitor mon) {
         this.mon = mon;
     }    
-    
-    public void addLMaps(String name, DetectorCollection<TreeMap<Integer,Object>> map) {
-        this.Lmap_a=map;
-    }
   
     public void getDetIndices(DetectorDescriptor dd) {
         is    = dd.getSector();
@@ -114,6 +107,7 @@ public class FCDetector {
         of    = 0;
         lay   = 0;
         opt   = 0;
+        io    = 1;
         
         if (panel==1) opt = 1;
         if (layer<4)  lay = layer+of;
@@ -167,8 +161,8 @@ public class FCDetector {
             app.currentView = name;
             name = name+Integer.toString(ilmap);
             app.getDetectorView().getView().setLayerState(name, true);
-            if (key<4) {rbPanes.get("PMT").setVisible(true);rbPanes.get("PIX").setVisible(false);omap=bStore.get("PMT");}       
-            if (key>3) {rbPanes.get("PIX").setVisible(true);rbPanes.get("PMT").setVisible(false);omap=bStore.get("PIX");}
+            if (key<3) {rbPanes.get("PMT").setVisible(true);rbPanes.get("PIX").setVisible(false);omap=bStore.get("PMT");}       
+            if (key>2) {rbPanes.get("PIX").setVisible(true);rbPanes.get("PMT").setVisible(false);omap=bStore.get("PIX");}
         }
         if(group=="DET") {
             ilmap = key;            
@@ -194,10 +188,10 @@ public class FCDetector {
         
         if (inProcess==0){ // Assign default colors upon starting GUI (before event processing)
              if(layer<7) colorfraction = (double)ic/nStrips[ilmap]; 
-            if(layer>=7) colorfraction = getcolor((TreeMap<Integer, Object>) Lmap_a.get(0,0,0), ic);  
+            if(layer>=7) colorfraction = getcolor((TreeMap<Integer, Object>) ecPix[ilmap].Lmap_a.get(0,0,0), ic);  
         }
-        if (inProcess>0){      
-                         colorfraction = getcolor((TreeMap<Integer, Object>) Lmap_a.get(is,layer,ilmap), ic);
+        if (inProcess>0){   
+                         colorfraction = getcolor((TreeMap<Integer, Object>) ecPix[ilmap].Lmap_a.get(is,layer,opt), ic);
         }
         
         if (colorfraction<0.05) colorfraction = 0.05;

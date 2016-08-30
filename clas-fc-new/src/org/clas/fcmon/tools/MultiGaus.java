@@ -5,6 +5,7 @@ import java.util.Random;
 
 import javax.swing.JFrame;
 
+import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
 import org.jlab.groot.fitter.DataFitter;
@@ -59,6 +60,13 @@ public class MultiGaus {
             f1.setLineStyle(i%4);
             
         }
+        
+        c1.cd(15);    
+        GraphErrors junk = h1[14].getGraph();
+        junk.getAttributes().setMarkerColor(2);
+        junk.getAttributes().setMarkerStyle(4);
+        c1.draw(junk);
+        
         c1.showFPS(true);
         
         frame.add(c1);

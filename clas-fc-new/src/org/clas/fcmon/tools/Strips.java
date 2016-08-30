@@ -74,6 +74,21 @@ public class Strips {
     	}
     } 
     
+    public void putpixels(int layer, int strip, int val, float[] in) {
+        Integer[] dum = this.getPixels(0,layer,strip); 
+        for (int j=0; j<dum.length; j++){
+            int pixel = dum[j];
+            if (in[pixel-1]==0) in[pixel-1] = val;
+        }
+    } 
+    
+    public double[] getpixels(int layer, int strip, float[] in) {
+        Integer[] pixe = this.getPixels(0,layer,strip); 
+        double[] out = new double[pixe.length]; 
+        for (int j=0; j<pixe.length; j++)  out[j] = in[pixe[j]-1];
+        return out;
+    } 
+    
     public double[] getpixels(int layer, int strip, double[] in) {
     	Integer[] pixe = this.getPixels(0,layer,strip); 
     	double[] out = new double[pixe.length]; 

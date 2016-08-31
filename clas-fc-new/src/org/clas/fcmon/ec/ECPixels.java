@@ -108,7 +108,7 @@ public class ECPixels {
 	}
 	
 	public void init() {
-	    System.out.println("ECPixels.init();");
+	    System.out.println("ECPixels.init(): "+this.detName);
 	    Lmap_a.clear();
 	    Lmap_t.clear();
 	    collection.clear();

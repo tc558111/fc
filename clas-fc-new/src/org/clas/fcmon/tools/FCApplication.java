@@ -128,13 +128,13 @@ public class FCApplication implements ActionListener  {
         io    = 1;
       
         if (panel==1) opt = 1;
-        if (layer<4)  lay = layer+of;
-        if (layer==4) lay = layer+2+io;
-        if (panel==9) lay = panel+io-1;
-        if (panel>10) lay = panel+of;
+        if (layer<4)  lay = layer;
+        if (layer==4) lay = 7;
+        if (panel==9) lay = panel;
+        if (panel>10) lay = panel;
       
-        l1 = of+1;
-        l2 = of+4;   
+        l1 = 1;
+        l2 = 4;   
        
 	}
 	

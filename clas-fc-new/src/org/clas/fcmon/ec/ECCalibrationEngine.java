@@ -94,7 +94,14 @@ public class ECCalibrationEngine extends CalibrationEngine {
         public IndexedList<DataGroup>  getDataGroup(){
             return dataGroups;
         }
-
+        
+        public void analyze(int idet, int is1, int is2, int il1, int il2) {
+        }  
+        
+        public void drawPlots(int sector, int layer, int component, EmbeddedCanvas cl, EmbeddedCanvas cr) {
+            
+        }
+        
         public void showPlots(int sector, int layer) {
             // Overridden in calibration application class
         }

@@ -39,10 +39,9 @@ public class ECMon extends DetectorMonitor {
     ECAdcApp                  ecAdc = null;
     ECTdcApp                  ecTdc = null;
     ECCalibrationApp        ecCalib = null;
-    ECAttenApp              ecAtten = null;
     ECPedestalApp        ecPedestal = null;
-//    ECScalersApp          ecScalers = null;
-//    ECHvApp                    ecHv = null;   
+    ECScalersApp          ecScalers = null;
+    ECHvApp                    ecHv = null;   
     
     DatabaseConstantProvider   ccdb = null;
    
@@ -132,11 +131,7 @@ public class ECMon extends DetectorMonitor {
         ecCalib.setMonitoringClass(this);
         ecCalib.setApplicationClass(app);  
         ecCalib.init(is1,is2);    
-        
-        ecAtten = new ECAttenApp("Attenuation",ecPix);  
-        ecAtten.setMonitoringClass(this);
-        ecAtten.setApplicationClass(app);
-/*                
+                
         ecHv = new ECHvApp("HV","EC");
         ecHv.setMonitoringClass(this);
         ecHv.setApplicationClass(app);  
@@ -144,7 +139,7 @@ public class ECMon extends DetectorMonitor {
         ecScalers = new ECScalersApp("Scalers","EC");
         ecScalers.setMonitoringClass(this);
         ecScalers.setApplicationClass(app);     
-    */    
+        
     }
     
     public void addCanvas() {
@@ -154,14 +149,13 @@ public class ECMon extends DetectorMonitor {
         app.addCanvas(ecAdc.getName(),                ecAdc.getCanvas());          
         app.addCanvas(ecTdc.getName(),                ecTdc.getCanvas());          
         app.addCanvas(ecPedestal.getName(),      ecPedestal.getCanvas());         
-        app.addCanvas(ecAtten.getName(),            ecAtten.getCanvas());
         app.addFrame(ecCalib.getName(),             ecCalib.getCalibPane());
-//        app.addFrame(ecHv.getName(),          ecHv.getScalerPane());
-//        app.addFrame(ecScalers.getName(),     ecScalers.getScalerPane());        
+        app.addFrame(ecHv.getName(),                   ecHv.getScalerPane());
+        app.addFrame(ecScalers.getName(),         ecScalers.getScalerPane());        
     }
 	
     public void init( ) {	    
-        System.out.println("init()");	
+        System.out.println("monitor.init()");	
         initApps();
         for (int i=0; i<ecPix.length; i++) ecPix[i].initHistograms(" ");
     }
@@ -172,10 +166,9 @@ public class ECMon extends DetectorMonitor {
         ecRecon.init();        
         for (int i=0; i<ecPix.length; i++)   ecPix[i].Lmap_a.add(0,0,0, ecRecon.toTreeMap(ecPix[i].ec_cmap));
         for (int i=0; i<ecPix.length; i++)   ecPix[i].Lmap_a.add(0,0,1, ecRecon.toTreeMap(ecPix[i].ec_zmap));
-        ecAtten.init(); 
         if (app.doEpics) {
-//          ecHv.init(is1,is2);        
-//          ecScalers.init(is1,is2); 
+          ecHv.init(is1,is2);        
+          ecScalers.init(is1,is2); 
         }          
     }
 	
@@ -194,7 +187,6 @@ public class ECMon extends DetectorMonitor {
         putGlob("fadc",fadc);
         putGlob("mondet",mondet);
         putGlob("is1",is1);
-        putGlob("inCRT",inCRT);
     }
     
     @Override
@@ -237,10 +229,9 @@ public class ECMon extends DetectorMonitor {
 			case 1: 
 				ecRecon.makeMaps(); break;
 			case 2: 
-				ecRecon.makeMaps(); 
-	            //ecCalib.engines[0].analyze();
+				ecRecon.makeMaps();
 				for (int idet=0; idet<ecPix.length; idet++){
-		           ecAtten.analyze(idet,is1,is2,1,4);
+				   ecCalib.analyze(idet,is1,is2,1,4); // Final analysis of full detector at end of run
 		        }
 		        inProcess=3; glob.put("inProcess", process);
 		        break;
@@ -252,14 +243,14 @@ public class ECMon extends DetectorMonitor {
         DetectorDescriptor dd = shape.getDescriptor();
         this.analyze(inProcess);	
         switch (app.getSelectedTabName()) {
-        case "Mode1":             ecMode1.updateCanvas(dd); break;
-        case "SingleEvent": ecSingleEvent.updateCanvas(dd); break;
-        case "ADC":                 ecAdc.updateCanvas(dd); break;
-        case "TDC":                 ecTdc.updateCanvas(dd); break;
-        case "Pedestal":       ecPedestal.updateCanvas(dd); break;
-        case "Attenuation":       ecAtten.updateCanvas(dd); break;
-//        case "HV":                   ecHv.updateCanvas(dd); break;
-//        case "Scalers":         ecScalers.updateCanvas(dd);
+        case "Mode1":                       ecMode1.updateCanvas(dd); break;
+        case "SingleEvent":           ecSingleEvent.updateCanvas(dd); break;
+        case "ADC":                           ecAdc.updateCanvas(dd); break;
+        case "TDC":                           ecTdc.updateCanvas(dd); break;
+        case "Pedestal":                 ecPedestal.updateCanvas(dd); break;
+        case "Calibration":                 ecCalib.updateCanvas(dd); break;
+        case "HV":        if(app.doEpics)      ecHv.updateCanvas(dd); break;
+        case "Scalers":   if(app.doEpics) ecScalers.updateCanvas(dd);
         }				
     }
 

@@ -24,7 +24,7 @@ public class ECDetector extends FCDetector {
         initViewButtons(0, 0);
         initViewButtons(1, 3);
         app.getDetectorView().setFPS(10);
-        app.setSelectedTab(3); 
+        app.setSelectedTab(2); 
         
     }
     

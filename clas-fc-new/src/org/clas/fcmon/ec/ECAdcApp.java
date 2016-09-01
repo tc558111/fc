@@ -27,17 +27,17 @@ public class ECAdcApp extends FCApplication {
             {" U Outer PMT "," V Outer PMT "," W Outer PMT "}};
     
     int ics[][] = new int[3][10];
-    int is,la,ic,ilm ;
+    int la,ilm ;
     
     public ECAdcApp(String name, ECPixels[] ftofPix) {
         super(name,ftofPix);    
      }
     
     public void updateCanvas(DetectorDescriptor dd) {
-        this.is  = dd.getSector();
-        this.la  = dd.getLayer();
-        this.ic  = dd.getComponent();   
+   
         this.ilm = ilmap;
+        this.getDetIndices(dd);
+        this.la = lay;
 
         this.dc2a = ecPix[ilm].strips.hmap2.get("H2_a_Hist");        
 
@@ -49,8 +49,8 @@ public class ECAdcApp extends FCApplication {
        
         F1D f1 = new F1D("p0","[a]",0.,250.); 
         F1D f2 = new F1D("p0","[a]",0.,250.); 
-        f1.setParameter(0,ic+1); f1.setLineColor(2);
-        f2.setParameter(0,ic+2); f2.setLineColor(2);
+        f1.setParameter(0,ic+1); f1.setLineWidth(1); f1.setLineColor(2);
+        f2.setParameter(0,ic+2); f2.setLineWidth(1); f2.setLineColor(2); 
 
         H1F copy1=null;
         H1F h1; H2F h2;
@@ -61,11 +61,7 @@ public class ECAdcApp extends FCApplication {
         for (int il=1; il<4; il++) {
             h2 = dc2a.get(is,il,0); h2.setTitleY("Sector "+is+otab[ilm][il-1]) ; h2.setTitleX("ADC");
             canvasConfig(c,il-1,0.,250.,1.,ecPix[ilm].ec_nstr[il-1]+1.,true).draw(h2);
-        }
-       
-        c.cd(la-1); c.draw(f1,"same"); c.draw(f2,"same");
-        
-        for (int il=1; il<4; il++) {
+            if (la==il) {c.draw(f1,"same"); c.draw(f2,"same");}
             h1 = dc2a.get(is,il,0).projectionY(); h1.setTitleX("Sector "+is+otab[ilm][il-1]); h1.setFillColor(0); 
             if (la==il) {h1.setFillColor(4); copy1=h1.histClone("Copy"); copy1.reset(); copy1.setBinContent(ic, h1.getBinContent(ic)); copy1.setFillColor(2);}
             c.cd(il+2); h1.setOptStat(Integer.parseInt("10")); c.draw(h1);  if (il==la) c.draw(copy1,"same");            
@@ -87,18 +83,22 @@ public class ECAdcApp extends FCApplication {
         c.divide(3,3);
         c.setAxisFontSize(14);
         c.setStatBoxFontSize(12);
-                  
+        
+//        System.out.println("la= "+la);
+                          
         for (int il=1; il<4; il++) {
             h2 = dc2a.get(is,il,1); h2.setTitleY("Sector "+is+otab[ilm][il-1]) ; h2.setTitleX("ADC");
             canvasConfig(c,il-1,0.,250.,1.,ecPix[ilm].ec_nstr[il-1]+1.,true).draw(h2);
             int strip = ecPix[ilm].pixels.getStrip(il,ic+1);
-            F1D f1 = new F1D("p0","[a]",0.,250.); f1.setLineColor(2); f1.setParameter(0,strip);
-            F1D f2 = new F1D("p0","[a]",0.,250.); f2.setLineColor(2); f2.setParameter(0,strip+1);
+            F1D f1 = new F1D("p0","[a]",0.,250.); f1.setLineColor(2); f1.setLineWidth(1); f1.setParameter(0,strip);
+            F1D f2 = new F1D("p0","[a]",0.,250.); f2.setLineColor(2); f2.setLineWidth(1); f2.setParameter(0,strip+1);
             c.draw(f1,"same");
             c.draw(f2,"same");  
             h1 = dc2a.get(is,il,1).sliceY(strip-1); h1.setTitleX("Sector "+is+otab[ilm][il-1]+strip+" ADC");  
+            if (la>10&&la-10==il) h1.setFillColor(2);
             c.cd(il+2); h1.setOptStat(Integer.parseInt("110")); h1.setTitle(""); c.draw(h1); 
             h1 = dc2a.get(is,il,2).sliceY(ic); h1.setTitleX("Sector "+is+otab[ilm][il-1]+strip+" Pixel "+(ic+1)+" ADC");
+            if (la>10&&la-10==il) h1.setFillColor(2);
             c.cd(il+5); h1.setOptStat(Integer.parseInt("110")); h1.setTitle(""); c.draw(h1);
         }       
         c.repaint();        

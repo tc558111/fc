@@ -73,8 +73,10 @@ public class CalibrationData {
         graph = new GraphErrors("FIT",xpfit,ypfit,xpfite,ypfite);   
         graph.getAttributes().setTitleX("Pixel Distance (cm)");
         graph.getAttributes().setTitleY("Mean ADC");
-        graph.getAttributes().setMarkerStyle(2);
-        graph.getAttributes().setMarkerSize(8);
+        graph.getAttributes().setFillStyle(1);
+        graph.getAttributes().setMarkerStyle(1);
+        graph.getAttributes().setMarkerSize(3);
+        graph.getAttributes().setLineWidth(1);
         
         int sector=getDescriptor().getSector();
         int   view=getDescriptor().getLayer();
@@ -86,13 +88,17 @@ public class CalibrationData {
         graph = new GraphErrors("RAW",xpraw,ypraw,xprawe,yprawe);   
         graph.getAttributes().setTitleX("Pixel Distance (cm)");
         graph.getAttributes().setTitleY("Mean ADC");
-        graph.getAttributes().setMarkerStyle(2);  
-        graph.getAttributes().setMarkerSize(6); 
+        graph.getAttributes().setMarkerStyle(1);  
+        graph.getAttributes().setMarkerSize(3); 
         graph.getAttributes().setMarkerColor(4);
+        graph.getAttributes().setLineColor(4);
+        graph.getAttributes().setLineWidth(1);
+        
         graph.getAttributes().setTitle("EXP FIT: Sector "+sector+" "+otab[view-1]+" "+strip);        
         this.rawgraphs.add(graph);
         
         F1D f1 = new F1D("exp","[a]*exp(x*[b])",0.,400.);
+        f1.setLineWidth(1);
         this.functions.add(f1);
     }
     

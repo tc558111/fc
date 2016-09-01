@@ -98,9 +98,11 @@ public class ECCalibrationApp extends FCApplication implements CalibrationConsta
     public class ECAttenEventListener extends ECCalibrationEngine {
         
         public final int[][] PARAM = {{100,100,100,100,100,100,160,160,160},
-                                      {300,300,300,300,300,300,300,300,300},
+                                      {360,360,360,360,360,360,360,360,360},
                                       {50,50,50,50,50,50,50,50,50}};
-        public final int[]   DELTA = {10,10,50};
+        public final int[][] DELTA =  {{10,10,10,10,10,10,16,16,16},
+                                       {60,60,60,60,60,60,60,60,60},
+                                       {50,50,50,50,50,50,50,50,50}};
         
         int is1,is2;
         
@@ -118,8 +120,8 @@ public class ECCalibrationApp extends FCApplication implements CalibrationConsta
 
             for (int k=0; k<3; k++) {
             for (int i=0; i<9; i++) {  
-                calib.addConstraint(k+3, PARAM[k][i]-DELTA[k], 
-                                         PARAM[k][i]+DELTA[k], 1, i+1);
+                calib.addConstraint(k+3, PARAM[k][i]-DELTA[k][i], 
+                                         PARAM[k][i]+DELTA[k][i], 1, i+1);
             }
             }
             
@@ -205,15 +207,15 @@ public class ECCalibrationApp extends FCApplication implements CalibrationConsta
         @Override
         public boolean isGoodPaddle(int sector, int layer, int paddle) {
 
-            return (getTestChannel(sector,layer,paddle) >=PARAM[1][layer-1]-DELTA[1]  &&
-                    getTestChannel(sector,layer,paddle) <=PARAM[1][layer-1]+DELTA[1] );
+            return (getTestChannel(sector,layer,paddle) >=PARAM[1][layer-1]-DELTA[1][layer-1]  &&
+                    getTestChannel(sector,layer,paddle) <=PARAM[1][layer-1]+DELTA[1][layer-1] );
 
         }    
               
         @Override
         public void drawPlots(int is, int il, int ic, EmbeddedCanvas cl, EmbeddedCanvas cr) {
             
-            DetectorCollection<CalibrationData> calib = ecPix[ilmap].collection;
+            DetectorCollection<CalibrationData> fit = ecPix[ilmap].collection;
             DatabaseConstantProvider ccdb = (DatabaseConstantProvider) mon.getGlob().get("ccdb");
             DetectorCollection<H2F>  dc2a = ecPix[ilmap].strips.hmap2.get("H2_a_Hist");    
             
@@ -269,14 +271,14 @@ public class ECCalibrationApp extends FCApplication implements CalibrationConsta
                   if (isPix) {layer=layer-10; lay=layer;int component = ecPix[ilmap].pixels.getStrip(lay,ic+1); ic=component-1;}
                      nstr = ecPix[ilmap].ec_nstr[layer-1];
                      if (inProcess==1)  {analyze(ilmap,is,is+1,layer,layer+1);}
-                     if (calib.hasEntry(is+ilmap*10, layer, ic)) {
+                     if (fit.hasEntry(is+ilmap*10, layer, ic)) {
                                           
                      for (int ip=0; ip<nstr ; ip++) {
-                        double gain  = calib.get(is1+ilmap*10,layer,ip).getFunc(0).parameter(0).value();
-                        double gaine = calib.get(is1+ilmap*10,layer,ip).getFunc(0).parameter(0).error();    
-                        double att   = calib.get(is1+ilmap*10,layer,ip).getFunc(0).parameter(1).value();
-                        double atte  = calib.get(is1+ilmap*10,layer,ip).getFunc(0).parameter(1).error();
-                        double chi2  = calib.get(is1+ilmap*10,layer,ip).getChi2(0);
+                        double gain  = fit.get(is1+ilmap*10,layer,ip).getFunc(0).parameter(0).value();
+                        double gaine = fit.get(is1+ilmap*10,layer,ip).getFunc(0).parameter(0).error();    
+                        double att   = fit.get(is1+ilmap*10,layer,ip).getFunc(0).parameter(1).value();
+                        double atte  = fit.get(is1+ilmap*10,layer,ip).getFunc(0).parameter(1).error();
+                        double chi2  = fit.get(is1+ilmap*10,layer,ip).getChi2(0);
                         int index = ECCommon.getCalibrationIndex(is,layer+ilmap*3,ip+1);
                         double attdb = ccdb.getDouble("/calibration/ec/attenuation/B",index);
                         if (att!=0) att=-1./att; else att=0 ; 
@@ -286,6 +288,9 @@ public class ECCalibrationApp extends FCApplication implements CalibrationConsta
                          vatt[ip] = att  ;   vatte[ip] = atte;
                        vattdb[ip] = attdb; vattdbe[ip] = 0.;
                         vchi2[ip] = Math.min(4, chi2) ; vchi2e[ip]=0.;   
+                        calib.addEntry(is1, layer+ilmap*3, ip+1);
+                        calib.setDoubleValue(gain, "A", is1, layer+ilmap*3, ip+1);
+                        calib.setDoubleValue(att,  "B", is1, layer+ilmap*3, ip+1);
                      }
                       
                      GraphErrors   gainGraph = new GraphErrors("gain",xp,vgain,xpe,vgaine);
@@ -293,21 +298,30 @@ public class ECCalibrationApp extends FCApplication implements CalibrationConsta
                      GraphErrors  attdbGraph = new GraphErrors("attdb",xp,vattdb,xpe,vattdbe);
                      GraphErrors   chi2Graph = new GraphErrors("chi2",xp,vchi2,xpe,vchi2e);
                      GraphErrors    pixGraph = new GraphErrors("pix",xpix,ypix,xerr,yerr);
-                       
-                     gainGraph.getAttributes().setMarkerStyle(2);   
-                     gainGraph.getAttributes().setMarkerSize(6);   
+                  
+                     gainGraph.getAttributes().setMarkerStyle(1);   
+                     gainGraph.getAttributes().setMarkerSize(3);   
                      gainGraph.getAttributes().setMarkerColor(2);
-                      attGraph.getAttributes().setMarkerStyle(2);    
-                      attGraph.getAttributes().setMarkerSize(6);    
+                     gainGraph.getAttributes().setFillStyle(1);
+                     gainGraph.getAttributes().setLineWidth(1);;
+                     gainGraph.getAttributes().setLineColor(2);
+                      attGraph.getAttributes().setMarkerStyle(1);    
+                      attGraph.getAttributes().setMarkerSize(3);    
                       attGraph.getAttributes().setMarkerColor(2);
-                    attdbGraph.getAttributes().setMarkerStyle(2);  
-                    attdbGraph.getAttributes().setMarkerSize(7);  
+                      attGraph.getAttributes().setLineWidth(1);;
+                      attGraph.getAttributes().setLineColor(2);
+                    attdbGraph.getAttributes().setMarkerStyle(1);  
+                    attdbGraph.getAttributes().setMarkerSize(3);  
+                    attdbGraph.getAttributes().setFillStyle(1);
                     attdbGraph.getAttributes().setMarkerColor(1);
-                     chi2Graph.getAttributes().setMarkerStyle(2);   
-                     chi2Graph.getAttributes().setMarkerSize(6);   
+                    attdbGraph.getAttributes().setLineWidth(1);;
+                     chi2Graph.getAttributes().setMarkerStyle(1);   
+                     chi2Graph.getAttributes().setFillStyle(2);                       
+                     chi2Graph.getAttributes().setMarkerSize(3);   
                      chi2Graph.getAttributes().setMarkerColor(2);
-                      pixGraph.getAttributes().setMarkerStyle(1);    
-                      pixGraph.getAttributes().setMarkerSize(6);    
+                      pixGraph.getAttributes().setMarkerStyle(1); 
+                      pixGraph.getAttributes().setFillStyle(1);                       
+                      pixGraph.getAttributes().setMarkerSize(3);    
                       pixGraph.getAttributes().setMarkerColor(2); 
                        
                      gainGraph.getAttributes().setTitleX(otab[ilmap][lay-1]) ;  
@@ -320,14 +334,14 @@ public class ECCalibrationApp extends FCApplication implements CalibrationConsta
                      chi2Graph.getAttributes().setTitleY("REDUCED CHI^2"); 
                      chi2Graph.getAttributes().setTitle(" ");
                       
-                     F1D f1 = new F1D("p0","[a]",0,nstr+1); f1.setParameter(0,mip[ilmap]); f1.setLineStyle(2);
+                     F1D f1 = new F1D("p0","[a]",0,nstr+1); f1.setParameter(0,mip[ilmap]); f1.setLineWidth(1);
                                       
                      double ymax=200; if(!inMC) ymax=350;
                      cl.cd(0);cl.getPad(0).getAxisX().setRange(0.,400.);cl.getPad(0).getAxisY().setRange(0.,ymax);
-                     cl.draw(calib.get(is+ilmap*10,layer,ic).getRawGraph(0));                 
-                     if(calib.get(is+ilmap*10,layer,ic).getFitGraph(0).getDataSize(0)>0) 
-                     cl.draw(calib.get(is+ilmap*10,layer,ic).getFitGraph(0),"same");                             
-                     cl.draw(calib.get(is+ilmap*10,layer,ic).getFunc(0),"same");
+                     cl.draw(fit.get(is+ilmap*10,layer,ic).getRawGraph(0));                 
+                     if(fit.get(is+ilmap*10,layer,ic).getFitGraph(0).getDataSize(0)>0) 
+                     cl.draw(fit.get(is+ilmap*10,layer,ic).getFitGraph(0),"same");                             
+                     cl.draw(fit.get(is+ilmap*10,layer,ic).getFunc(0),"same");
                      cl.draw(pixGraph,"same");
                      
                      if (isPix) {                                              
@@ -349,7 +363,7 @@ public class ECCalibrationApp extends FCApplication implements CalibrationConsta
                   }
                }
             }
-
+            calib.fireTableDataChanged();
         }
 
     }
@@ -493,9 +507,7 @@ public class ECCalibrationApp extends FCApplication implements CalibrationConsta
     public void updateCanvas(DetectorDescriptor dd) {
         
         ECCalibrationEngine engine = getSelectedEngine();
-
         this.getDetIndices(dd);
-        
         engine.drawPlots(is,lay,ic,leftCanvas,rightCanvas);
         
     }

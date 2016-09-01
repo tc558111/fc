@@ -208,6 +208,7 @@ public class FCApplication implements ActionListener  {
             bStore.replace(group,key);
         }
         omap = key;
+//        System.out.println("mapButtonAction omap= "+omap);
         app.getDetectorView().getView().updateGUI();     
     }
     
@@ -220,6 +221,7 @@ public class FCApplication implements ActionListener  {
             app.getDetectorView().getView().setLayerState(name, true);
             if (key<4) {rbPanes.get("PMT").setVisible(true);rbPanes.get("PIX").setVisible(false);omap=bStore.get("PMT");}       
             if (key>3) {rbPanes.get("PIX").setVisible(true);rbPanes.get("PMT").setVisible(false);omap=bStore.get("PIX");}
+//            System.out.println("viewButtonAction omap= "+omap);
         }
         if(group=="DET") {
             ilmap = key;  

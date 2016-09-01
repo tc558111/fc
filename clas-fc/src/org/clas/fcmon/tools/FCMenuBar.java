@@ -15,8 +15,7 @@ import org.clas.fcmon.tools.EventControl;
 public class FCMenuBar extends JMenuBar implements ActionListener {
     
     JMenu             file = new JMenu("File");
-    JMenuItem    file_open = new JMenuItem("Load EVIO File");
-    
+    JMenuItem    file_open = new JMenuItem("Load EVIO or HIPO File");    
     JMenu          ET_open = new JMenu("Attach to ET");
     JMenuItem           s1 = new JMenuItem("Sector 1");
     JMenuItem           s2 = new JMenuItem("Sector 2");
@@ -32,6 +31,7 @@ public class FCMenuBar extends JMenuBar implements ActionListener {
     String          ethost = null;
     String          etfile = null;
     
+    String      fileformat = null;
     File          eviofile = null;
     
     EventControl eventControl;
@@ -58,7 +58,7 @@ public class FCMenuBar extends JMenuBar implements ActionListener {
      ET_open.add(s6);
      ET_open.add(s0);
    
-    file_open.addActionListener(this);        
+    file_open.addActionListener(this);              
            s1.addActionListener(this);
            s2.addActionListener(this);
            s3.addActionListener(this);
@@ -79,7 +79,7 @@ public class FCMenuBar extends JMenuBar implements ActionListener {
         if(e.getActionCommand().compareTo("Sector 6")==0) {ethost="adcecal6";etfile="/tmp/et_sys_clasprod6";}       
         if(e.getActionCommand().compareTo("Sector 0")==0) {ethost="clondaq6";etfile="/tmp/et_sys_clastest0";}       
     	if(ethost!=null) this.eventControl.openEtFile(ethost,etfile);    	
-        if(e.getActionCommand().compareTo("Load EVIO File")==0) this.chooseEvioFile();
+        if(e.getActionCommand().compareTo("Load EVIO or HIPO File")==0) this.chooseEvioFile();
 	}
 	
     public void chooseEvioFile() {
@@ -87,7 +87,9 @@ public class FCMenuBar extends JMenuBar implements ActionListener {
     	
     	fc.setFileFilter(new javax.swing.filechooser.FileFilter(){
     		public boolean accept(File f) {
-    			return f.getName().toLowerCase().endsWith(".evio") || f.isDirectory();
+    			return f.getName().toLowerCase().endsWith(".evio") || 
+    			       f.getName().toLowerCase().endsWith(".hipo") || 
+    			       f.isDirectory();
     		}
             public String getDescription() {
                     return "EVIO CLAS data format";
@@ -102,6 +104,6 @@ public class FCMenuBar extends JMenuBar implements ActionListener {
             this.eventControl.openEvioFile(eviofile);
         }
     }
-               
+             
 }
 

@@ -19,12 +19,14 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
 import org.clas.fcmon.detector.view.DetectorPane2D;
+import org.jlab.io.base.DataSource;
 //import org.jlab.evio.clas12.EvioDataEvent;
 //import org.jlab.evio.clas12.EvioETSource;
 //import org.jlab.evio.clas12.EvioSource;
 import org.jlab.io.evio.EvioDataEvent;
 import org.jlab.io.evio.EvioETSource;
 import org.jlab.io.evio.EvioSource;
+import org.jlab.io.hipo.HipoDataSource;
 
 public class EventControl extends JPanel implements ActionListener, ChangeListener {
 	
@@ -33,7 +35,7 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
     JLabel      fileLabel = new JLabel("");
     JLabel    statusLabel = new JLabel("No Opened File");       
 	
-    EvioSource                       evReader;      
+    DataSource                       evReader;      
     boolean  isRegularFileOpen = false;
     File                  file = null;
     String            filename = null;
@@ -134,7 +136,11 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
     	isRemote = false;
         isSingleEvent = false;
         this.monitoringClass.init();
-        evReader = new EvioSource();
+        if(eviofile.getName().contains("hipo")==true){
+            evReader = new HipoDataSource();
+        } else {
+            evReader = new EvioSource();
+        }        
         eviofilename = eviofile.getAbsolutePath();
         evReader.open(eviofilename);
         isRegularFileOpen = true;
@@ -145,7 +151,7 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
         this.fileLabel.setText("FILE: "+eviofile.getName());
         this.statusLabel.setText("   EVENTS IN FILE : " + nevents.toString() + "  CURRENT : " + current.toString());
     }
-
+    
     @Override
 	public void stateChanged(ChangeEvent e) {
         double delay = (double) spinnerDelay.getValue();
@@ -289,7 +295,7 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
         
     		try {
                 Thread.sleep(threadDelay);
-                monitoringClass.dataEventAction(event);
+               monitoringClass.dataEventAction(event);
     		} catch (Exception ex) {
     			ex.printStackTrace();
     		}

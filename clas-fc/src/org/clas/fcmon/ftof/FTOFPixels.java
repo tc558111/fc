@@ -6,8 +6,10 @@ import org.clas.fcmon.tools.FCCalibrationData;
 import org.clas.fcmon.tools.Strips;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clasrec.utils.DatabaseConstantProvider;
-import org.root.histogram.H1D;
-import org.root.histogram.H2D;
+import org.jlab.groot.data.H1F;
+import org.jlab.groot.data.H2F;
+//import org.root.histogram.H1D;
+//import org.root.histogram.H2D;
 
 public class FTOFPixels {
 	
@@ -24,7 +26,10 @@ public class FTOFPixels {
     int    strra[][][] = new    int[6][2][62]; 
     int    strrt[][][] = new    int[6][2][62]; 
     int     adcr[][][] = new    int[6][2][62];      
-    double  tdcr[][][] = new double[6][2][62]; 
+    float   tdcr[][][] = new  float[6][2][62]; 
+    
+    public DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new DetectorCollection<TreeMap<Integer,Object>>();
+    public DetectorCollection<TreeMap<Integer,Object>> Lmap_t = new DetectorCollection<TreeMap<Integer,Object>>();
     
     int id;
 	public int nstr;
@@ -115,27 +120,27 @@ public class FTOFPixels {
         String iid;
         double amax[]= {4000.,6000.,4000.};
         
-        DetectorCollection<H1D> H1_a_Sevd = new DetectorCollection<H1D>();
-        DetectorCollection<H1D> H1_t_Sevd = new DetectorCollection<H1D>();
-        DetectorCollection<H2D> H2_a_Hist = new DetectorCollection<H2D>();
-        DetectorCollection<H2D> H2_t_Hist = new DetectorCollection<H2D>();
-        DetectorCollection<H2D> H2_a_Sevd = new DetectorCollection<H2D>();
+        DetectorCollection<H1F> H1_a_Sevd = new DetectorCollection<H1F>();
+        DetectorCollection<H1F> H1_t_Sevd = new DetectorCollection<H1F>();
+        DetectorCollection<H2F> H2_a_Hist = new DetectorCollection<H2F>();
+        DetectorCollection<H2F> H2_t_Hist = new DetectorCollection<H2F>();
+        DetectorCollection<H2F> H2_a_Sevd = new DetectorCollection<H2F>();
         
         double nend = nstr+1;  
         
         for (int is=1; is<7 ; is++) {
             int ill=0; iid="s"+Integer.toString(is)+"_l"+Integer.toString(ill)+"_c";
-            H2_a_Hist.add(is, 0, 0, new H2D("a_gmean_"+iid+0, 100,   0., amax[id],nstr, 1., nend));
-            H2_t_Hist.add(is, 0, 0, new H2D("a_tdif_"+iid+0,  100, -35.,      35.,nstr, 1., nend));
+            H2_a_Hist.add(is, 0, 0, new H2F("a_gmean_"+iid+0, 100,   0., amax[id],nstr, 1., nend));
+            H2_t_Hist.add(is, 0, 0, new H2F("a_tdif_"+iid+0,  100, -35.,      35.,nstr, 1., nend));
             for (int il=1 ; il<3 ; il++){
                 iid="s"+Integer.toString(is)+"_l"+Integer.toString(il)+"_c";
-                H2_a_Hist.add(is, il, 0, new H2D("a_raw_"+iid+0,      100,   0., 4000.,nstr, 1., nend));
-                H2_t_Hist.add(is, il, 0, new H2D("a_raw_"+iid+0,      100,1300., 1420.,nstr, 1., nend));
-                H2_a_Hist.add(is, il, 3, new H2D("a_ped_"+iid+3,       40, -20.,  20., nstr, 1., nend)); 
-                H2_a_Hist.add(is, il, 5, new H2D("a_fadc_"+iid+5,     100,   0., 100., nstr, 1., nend));
-                H1_a_Sevd.add(is, il, 0, new H1D("a_sed_"+iid+0,                       nstr, 1., nend));
-                H2_a_Sevd.add(is, il, 0, new H2D("a_sed_fadc_"+iid+0, 100,   0., 100., nstr, 1., nend));
-                H2_a_Sevd.add(is, il, 1, new H2D("a_sed_fadc_"+iid+1, 100,   0., 100., nstr, 1., nend));
+                H2_a_Hist.add(is, il, 0, new H2F("a_raw_"+iid+0,      100,   0., 4000.,nstr, 1., nend));
+                H2_t_Hist.add(is, il, 0, new H2F("a_raw_"+iid+0,      100,1300., 1420.,nstr, 1., nend));
+                H2_a_Hist.add(is, il, 3, new H2F("a_ped_"+iid+3,       40, -20.,  20., nstr, 1., nend)); 
+                H2_a_Hist.add(is, il, 5, new H2F("a_fadc_"+iid+5,     100,   0., 100., nstr, 1., nend));
+                H1_a_Sevd.add(is, il, 0, new H1F("a_sed_"+iid+0,                       nstr, 1., nend));
+                H2_a_Sevd.add(is, il, 0, new H2F("a_sed_fadc_"+iid+0, 100,   0., 100., nstr, 1., nend));
+                H2_a_Sevd.add(is, il, 1, new H2F("a_sed_fadc_"+iid+1, 100,   0., 100., nstr, 1., nend));
             }
         }       
 

@@ -1,69 +1,70 @@
 package org.clas.fcmon.ec;
 
-import org.clas.fcmon.tools.ECPixels;
+
 import org.clas.fcmon.tools.FCApplication;
 import org.jlab.detector.base.DetectorDescriptor;
-import org.root.basic.EmbeddedCanvas;
-import org.root.func.F1D;
-import org.root.histogram.H1D;
- 
+//import org.root.basic.EmbeddedCanvas;
+//import org.root.func.F1D;
+//import org.root.histogram.H1D;
+//groot
+import org.jlab.groot.graphics.EmbeddedCanvas;
+import org.jlab.groot.math.F1D;
+import org.jlab.groot.data.H1F;
+import org.jlab.groot.data.H2F;
+
 
 public class ECMode1App extends FCApplication  {
 	
+   EmbeddedCanvas c = this.getCanvas(this.getName()); 
+    
    public ECMode1App(String name, ECPixels[] ecPix) {
       super(name,ecPix);	
    }
    
    public void updateCanvas(DetectorDescriptor dd) {
 		
-      EmbeddedCanvas canvas = this.getCanvas(this.getName()); 
-      int inProcess =     (int) mon.getGlob().get("inProcess"); 
+      int  is = dd.getSector();
+      int  la = dd.getLayer();
+      int  ic = dd.getComponent();   
+      int ilm = ilmap;	     
+	
+      int nstr = ecPix[ilm].ec_nstr[la-1];
+      int min=0, max=nstr;
       
-      if (inProcess==0) return;
-        
-      Boolean  inMC = (Boolean) mon.getGlob().get("inMC");
-      int     detID =     (int) mon.getGlob().get("detID");
-      double   zmax =  (double) mon.getGlob().get("PCMon_zmax");
+      switch (ilmap) {
+      case 0: c.divide(4,6); max=24 ; if (ic>23) {min=24; max=48;} if (ic>47) {min=48; max=nstr;} break;
+      case 1: c.divide(6,6); break;
+      case 2: c.divide(6,6);
+      }   
       
-      if (inMC) return;
-		
-      this.getDetIndices(dd);
-	     
-      if (layer>3) return;
-      layer = lay ; 
-		
-      if (detID==0) {
-         if (layer==1) canvas.divide(9,8);
-         if (layer>1)  canvas.divide(9,7);
-       }
-      
-      if (detID>0) canvas.divide(6,6);
-		
-      canvas.setAxisFontSize(14);
-      canvas.setTitleFontSize(14);
+      c.setAxisFontSize(14);
 		
       int tet = app.mode7Emulation.tet;
       
       if (app.mode7Emulation.User_tet>0)  tet=app.mode7Emulation.User_tet;
       if (app.mode7Emulation.User_tet==0) tet=app.mode7Emulation.CCDB_tet;
       
-      F1D f1 = new F1D("p0",0.,100.); f1.setParameter(0,tet);
+      F1D f1 = new F1D("p0","[a]",0.,100.); f1.setParameter(0,tet);
       f1.setLineColor(2);
-      F1D f2 = new F1D("p0",0.,100.); f2.setParameter(0,app.mode7Emulation.CCDB_tet);
+      F1D f2 = new F1D("p0","[a]",0.,100.); f2.setParameter(0,app.mode7Emulation.CCDB_tet);
       f2.setLineColor(4); f2.setLineStyle(2);	
 		
-      String otab[]={"U Inner Strip","V Inner Strip","W Inner Strip","U Outer Strip","V Outer Strip","W Outer Strip"};
+      H1F h ;
+      String otab[][]={{" U PMT ","V PMT ","W PMT "},
+              {" U Inner PMT","V Inner PMT","W Inner PMT"},
+              {" U Outer PMT","V Outer PMT","W Outer PMT"}};
       
-      for(int ip=0;ip<ecPix[io-1].pc_nstr[layer-of-1];ip++){
-         canvas.cd(ip); canvas.getPad().setAxisRange(0.,100.,-15.,zmax*app.displayControl.pixMax); //Vertical scale set by ZMAX slider
-         H1D h1 = ecPix[0].strips.hmap2.get("H2_Mode1_Sevd").get(is+1,layer,0).sliceY(ip); 
-         H1D h2 = ecPix[0].strips.hmap2.get("H2_Mode1_Sevd").get(is+1,layer,1).sliceY(ip); 
-         h1.setXTitle("Sample (4 ns)"); h1.setYTitle("Counts"); h1.setTitle(""); h1.setTitle(otab[layer-1]+" "+(ip+1));
-         h1.setFillColor(4); canvas.draw(h1); 
-         h2.setFillColor(2); canvas.draw(h2,"same"); 
-         canvas.draw(f1,"same"); 
-         canvas.draw(f2,"same");
-      }
-      
+      for(int ip=min;ip<max;ip++){
+          c.cd(ip-min); 
+          c.getPad(ip-min).setOptStat(Integer.parseInt("0"));
+          c.getPad(ip-min).getAxisX().setRange(0.,100.);
+          c.getPad(ip-min).getAxisY().setRange(-100.,4000*app.displayControl.pixMax);
+          h = ecPix[ilm].strips.hmap2.get("H2_Mode1_Sevd").get(is,la,0).sliceY(ip); h.setTitleX("Samples (4 ns)"); h.setTitleY("Counts");
+          h.setTitle("Sector "+is+otab[ilm][la-1]+(ip+1)); h.setFillColor(4); c.draw(h);
+          h = ecPix[ilm].strips.hmap2.get("H2_Mode1_Sevd").get(is,la,1).sliceY(ip); h.setFillColor(2); c.draw(h,"same");
+          c.draw(f1,"same"); c.draw(f2,"same");
+          }  
+
+      c.repaint();
    }
 }

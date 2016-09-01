@@ -14,17 +14,20 @@ import javax.swing.JRadioButton;
 
 import org.clas.fcmon.cc.CCPixels;
 import org.clas.fcmon.detector.view.DetectorShape2D;
+import org.clas.fcmon.ec.ECPixels;
 import org.clas.fcmon.ftof.FTOFPixels;
-import org.clas.fcmon.tools.ECPixels;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.detector.base.DetectorDescriptor;
 import org.jlab.detector.calib.tasks.CalibrationEngine;
 import org.jlab.detector.calib.tasks.CalibrationEngineView;
 import org.jlab.evio.clas12.EvioDataBank;
 import org.root.attr.ColorPalette;
-import org.root.basic.EmbeddedCanvas;
-import org.root.histogram.H1D;
-import org.root.histogram.H2D;
+//import org.root.basic.EmbeddedCanvas;
+//import org.root.histogram.H1D;
+//import org.root.histogram.H2D;
+import org.jlab.groot.graphics.EmbeddedCanvas;
+import org.jlab.groot.data.H1F;
+import org.jlab.groot.data.H2F;
 
 public class FCApplication implements ActionListener  {
 	
@@ -42,8 +45,8 @@ public class FCApplication implements ActionListener  {
     public FTOFPixels[]                               ftofPix = null;
     
 	public DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new  DetectorCollection<TreeMap<Integer,Object>>();
-	public TreeMap<String, DetectorCollection<H1D>>     hmap1 = new TreeMap<String, DetectorCollection<H1D>>();
-	public TreeMap<String, DetectorCollection<H2D>>     hmap2 = new TreeMap<String, DetectorCollection<H2D>>();
+	public TreeMap<String, DetectorCollection<H1F>>     hmap1 = new TreeMap<String, DetectorCollection<H1F>>();
+	public TreeMap<String, DetectorCollection<H2F>>     hmap2 = new TreeMap<String, DetectorCollection<H2F>>();
 	 
 	public MonitorApp      app = null;
 	public DetectorMonitor mon = null;
@@ -115,28 +118,31 @@ public class FCApplication implements ActionListener  {
         is    = dd.getSector();
         layer = dd.getLayer();
         ic    = dd.getComponent(); 	 
-                
+        
         panel = omap;
-        io    = ilmap+1;
-        of    = (io-1)*3;
+//      io    = ilmap+1;
+//      if (ilmap==0) of = (io-1)*3;
+        of    = 0;
         lay   = 0;
         opt   = 0;
-        
+        io    = 1;
+      
         if (panel==1) opt = 1;
-        if (layer<4)  lay = layer+of;
-        if (layer==4) lay = layer+2+io;
-        if (panel==9) lay = panel+io-1;
-        if (panel>10) lay = panel+of;
-        
-        l1 = of+1;
-        l2 = of+4;  
+        if (layer<4)  lay = layer;
+        if (layer==4) lay = 7;
+        if (panel==9) lay = panel;
+        if (panel>10) lay = panel;
+      
+        l1 = 1;
+        l2 = 4;   
+       
 	}
 	
-	public void addH1DMaps(String name, DetectorCollection<H1D> map) {
+	public void addH1DMaps(String name, DetectorCollection<H1F> map) {
 		this.hmap1.put(name,map);
 	}
 	
-	public void addH2DMaps(String name, DetectorCollection<H2D> map) {
+	public void addH2DMaps(String name, DetectorCollection<H2F> map) {
 		this.hmap2.put(name,map);
 	}
 	
@@ -151,8 +157,11 @@ public class FCApplication implements ActionListener  {
 	public void analyze() {
 	}
 	
-	public void analyze(int is1, int is2, int il1, int il2, int ip1, int ip2) {
-	}
+    public void analyze(int is1, int is2, int il1, int il2, int ip1, int ip2) {
+    }
+    
+    public void analyze(int idet, int is1, int is2, int il1, int il2) {
+    }
 	
 	public void updateCanvas(DetectorDescriptor dd, EmbeddedCanvas canvas) {		
 	}
@@ -199,6 +208,7 @@ public class FCApplication implements ActionListener  {
             bStore.replace(group,key);
         }
         omap = key;
+//        System.out.println("mapButtonAction omap= "+omap);
         app.getDetectorView().getView().updateGUI();     
     }
     
@@ -211,6 +221,7 @@ public class FCApplication implements ActionListener  {
             app.getDetectorView().getView().setLayerState(name, true);
             if (key<4) {rbPanes.get("PMT").setVisible(true);rbPanes.get("PIX").setVisible(false);omap=bStore.get("PMT");}       
             if (key>3) {rbPanes.get("PIX").setVisible(true);rbPanes.get("PMT").setVisible(false);omap=bStore.get("PIX");}
+//            System.out.println("viewButtonAction omap= "+omap);
         }
         if(group=="DET") {
             ilmap = key;  
@@ -290,4 +301,13 @@ public class FCApplication implements ActionListener  {
             canvasSelect = this.canvases.get(0).getName();
         }
     }
+    
+    public EmbeddedCanvas canvasConfig(EmbeddedCanvas canvas, int num, double xmin, double xmax, double ymin, double ymax, boolean linlog) {
+        canvas.cd(num);
+        canvas.getPad(num).getAxisX().setRange(xmin,xmax);
+        canvas.getPad(num).getAxisY().setRange(ymin,ymax);
+        canvas.getPad(num).getAxisZ().setAutoScale(true);
+        canvas.getPad(num).getAxisFrame().getAxisZ().setLog(linlog);
+        return canvas;
+    }    
 }

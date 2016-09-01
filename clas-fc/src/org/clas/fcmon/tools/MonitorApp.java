@@ -22,10 +22,12 @@ import javax.swing.JTextField;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 
-import org.root.basic.EmbeddedCanvas;
+//import org.root.basic.EmbeddedCanvas;
 import org.clas.fcmon.detector.view.DetectorPane2D;
 import org.clas.fcmon.tools.DetectorShapeTabView;
- 
+//groot
+import org.jlab.groot.graphics.EmbeddedCanvas;
+
 /*
  * @author gavalian
  * Revised by L. C. Smith in Sep-Nov 2015 for development of ECMon.java.

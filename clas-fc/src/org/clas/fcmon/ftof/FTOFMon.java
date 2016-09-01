@@ -42,8 +42,8 @@ public class FTOFMon extends DetectorMonitor {
     public boolean               inMC = false; //true=MC false=DATA
     public int              inProcess = 0;     //0=init 1=processing 2=end-of-run 3=post-run
     int                         detID = 0;
-    int                           is1 = 4;
-    int                           is2 = 5; 
+    int                           is1 = 2;
+    int                           is2 = 3; 
     int      nsa,nsb,tet,p1,p2,pedref = 0;
     double                 PCMon_zmin = 0;
     double                 PCMon_zmax = 0;
@@ -90,7 +90,6 @@ public class FTOFMon extends DetectorMonitor {
         ftofDet.setMonitoringClass(this);
         ftofDet.setApplicationClass(app);
         ftofDet.init(is1,is2);
-        ftofDet.addLMaps("Lmap_a", ftofRecon.Lmap_a); 	    
     }
 	
     public void makeApps() {
@@ -231,7 +230,7 @@ public class FTOFMon extends DetectorMonitor {
         case "MIP":                 ftofMip.updateCanvas(dd); break; 
         case "HV":                   ftofHv.updateCanvas(dd); break;
         case "Scalers":         ftofScalers.updateCanvas(dd);
-        }                       
+        } 
     }
 
     @Override
@@ -261,8 +260,8 @@ public class FTOFMon extends DetectorMonitor {
           String hipoFileName = app.hipoPath+"/"+mondet+idet+"_"+app.calibRun+".hipo";
           System.out.println("Saving Histograms to "+hipoFileName);
           HipoFile histofile = new HipoFile(hipoFileName);
-          H2_a_Hist = ftofPix[idet].strips.hmap2.get("H2_a_Hist");
-          H2_t_Hist = ftofPix[idet].strips.hmap2.get("H2_t_Hist");
+//          H2_a_Hist = ftofPix[idet].strips.hmap2.get("H2_a_Hist");
+//          H2_t_Hist = ftofPix[idet].strips.hmap2.get("H2_t_Hist");
           histofile.addToMap("H2_a_Hist", H2_a_Hist);
           histofile.addToMap("H2_t_Hist", H2_t_Hist);
           histofile.writeHipoFile(hipoFileName);

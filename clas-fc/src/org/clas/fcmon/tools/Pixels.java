@@ -9,30 +9,32 @@ import java.util.TreeMap;
 import org.clas.containers.FTHashCollection;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas12.calib.DetectorShape2D;
-import org.root.histogram.H1D;
-import org.root.histogram.H2D;
+import org.jlab.groot.data.H1F;
+import org.jlab.groot.data.H2F;
+//import org.root.histogram.H1F;
+//import org.root.histogram.H2F;
 
 public class Pixels {
 
     FTHashCollection<Integer>       pixelDummy = null;
-    FTHashCollection<Pixel>        pixelStrips = null;
+    public FTHashCollection<Pixel>        pixelStrips = null;
     FTHashCollection<Pixel>        pixelNumber = null;
     
-    DetectorCollection<List<H1D>>       pixelH1D = null;
-    DetectorCollection<List<H2D>>       pixelH2D = null;
+    DetectorCollection<List<H1F>>       pixelH1D = null;
+    DetectorCollection<List<H2F>>       pixelH2D = null;
     
-    public TreeMap<String, DetectorCollection<H1D>>   hmap1 = null; 
-    public TreeMap<String, DetectorCollection<H2D>>   hmap2 = null; 
+    public TreeMap<String, DetectorCollection<H1F>>   hmap1 = null; 
+    public TreeMap<String, DetectorCollection<H2F>>   hmap2 = null; 
     
     double maxPixelArea = 0;
     
     public Pixels() {
         this.pixelStrips = new FTHashCollection<Pixel>(3);
         this.pixelNumber = new FTHashCollection<Pixel>(1);
-        this.pixelH1D    = new DetectorCollection<List<H1D>>();
-        this.pixelH2D    = new DetectorCollection<List<H2D>>();
-        this.hmap1       = new TreeMap<String, DetectorCollection<H1D>>();
-        this.hmap2       = new TreeMap<String, DetectorCollection<H2D>>();
+        this.pixelH1D    = new DetectorCollection<List<H1F>>();
+        this.pixelH2D    = new DetectorCollection<List<H2F>>();
+        this.hmap1       = new TreeMap<String, DetectorCollection<H1F>>();
+        this.hmap2       = new TreeMap<String, DetectorCollection<H2F>>();
     }
     
     public void addPixel(int pix, int u, int v, int w) {
@@ -44,21 +46,21 @@ public class Pixels {
         pixelNumber.add(pixel, pix);
     }
 
-    public void addH1D(int sector, int layer, int component, H1D h1) {
-        if(!pixelH1D.hasEntry(sector,layer,component)) pixelH1D.add(sector,layer,component,new ArrayList<H1D>());
+    public void addH1D(int sector, int layer, int component, H1F h1) {
+        if(!pixelH1D.hasEntry(sector,layer,component)) pixelH1D.add(sector,layer,component,new ArrayList<H1F>());
         pixelH1D.get(sector,layer,component).add(h1);       
     }
     
-    public void addH2D(int sector, int layer, int component, H2D h2) {
-        if(!pixelH2D.hasEntry(sector,layer,component)) pixelH2D.add(sector,layer,component,new ArrayList<H2D>());
+    public void addH2D(int sector, int layer, int component, H2F h2) {
+        if(!pixelH2D.hasEntry(sector,layer,component)) pixelH2D.add(sector,layer,component,new ArrayList<H2F>());
         pixelH2D.get(sector,layer,component).add(h2);       
     }    
     
-    public void addH1DMap(String name, DetectorCollection<H1D> map) {
+    public void addH1DMap(String name, DetectorCollection<H1F> map) {
         this.hmap1.put(name,map);
     }
     
-    public void addH2DMap(String name, DetectorCollection<H2D> map) {
+    public void addH2DMap(String name, DetectorCollection<H2F> map) {
         this.hmap2.put(name,map);
     }   
     
@@ -143,11 +145,11 @@ public class Pixels {
     	return str[layer-1];	
     }
     
-    public H1D getH1D(String name, int pixel) {
+    public H1F getH1D(String name, int pixel) {
         return getPixel(pixel).h1d.get(name);
     }
     
-    public H2D getH2D(String name, int pixel) {
+    public H2F getH2D(String name, int pixel) {
         return getPixel(pixel).h2d.get(name);
     }
 

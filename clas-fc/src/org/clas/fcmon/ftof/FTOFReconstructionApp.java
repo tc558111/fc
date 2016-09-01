@@ -8,13 +8,17 @@ import java.util.List;
 import java.util.TreeMap;
 
 //clas12
-import org.clas.fcmon.tools.ECPixels;
 import org.clas.fcmon.tools.FADCFitter;
 import org.clas.fcmon.tools.FCApplication;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas12.detector.FADCConfigLoader;
-import org.root.histogram.H1D;
-import org.root.histogram.H2D;
+//import org.root.histogram.H1D;
+//import org.root.histogram.H2D;
+
+//groot
+//import org.jlab.groot.graphics.EmbeddedCanvas;
+import org.jlab.groot.data.H1F;
+import org.jlab.groot.data.H2F;
 
 //clas12rec
 import org.jlab.detector.decode.CodaEventDecoder;
@@ -23,7 +27,7 @@ import org.jlab.detector.decode.DetectorEventDecoder;
 import org.jlab.io.evio.EvioDataEvent;
 import org.jlab.io.evio.EvioDataBank;
 
-import org.clas.fcmon.jroot.*;
+//import org.clas.fcmon.jroot.*;
 
 public class FTOFReconstructionApp extends FCApplication {
     
@@ -37,9 +41,6 @@ public class FTOFReconstructionApp extends FCApplication {
    CodaEventDecoder            newdecoder = new CodaEventDecoder();
    DetectorEventDecoder   detectorDecoder = new DetectorEventDecoder();
    List<DetectorDataDgtz>  detectorData   = new ArrayList<DetectorDataDgtz>();
-   
-   public DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new DetectorCollection<TreeMap<Integer,Object>>();
-   public DetectorCollection<TreeMap<Integer,Object>> Lmap_t = new DetectorCollection<TreeMap<Integer,Object>>();
    
    double[]                sed7=null,sed8=null;
    TreeMap<Integer,Object> map7=null,map8=null; 
@@ -264,7 +265,7 @@ public class FTOFReconstructionApp extends FCApplication {
        if(tdc>1200&&tdc<1500){
              ftofPix[idet].nht[is-1][il-1]++; int inh = ftofPix[idet].nht[is-1][il-1];
              if (inh>nstr) inh=nstr;
-             ftofPix[idet].tdcr[is-1][il-1][inh-1] = tdc;
+             ftofPix[idet].tdcr[is-1][il-1][inh-1] = (float) tdc;
              ftofPix[idet].strrt[is-1][il-1][inh-1] = ip;
              ftofPix[idet].strips.hmap2.get("H2_t_Hist").get(is,il,0).fill(tdc,ip,1.0);
              }
@@ -288,7 +289,7 @@ public class FTOFReconstructionApp extends FCApplication {
                ipL = ftofPix[idet].strra[is-1][0][0];
                ipR = ftofPix[idet].strra[is-1][1][0];
                if ((iL==1&&iR==1)&&(ipL==ipR)) {
-                   double gm = Math.sqrt(ftofPix[idet].adcr[is-1][0][0]*ftofPix[idet].adcr[is-1][1][0]);
+                   float gm = (float) Math.sqrt(ftofPix[idet].adcr[is-1][0][0]*ftofPix[idet].adcr[is-1][1][0]);
                    ftofPix[idet].strips.hmap2.get("H2_a_Hist").get(is, 0, 0).fill(gm, ipL,1.0);
                }
                iL = ftofPix[idet].nht[is-1][0];
@@ -296,7 +297,7 @@ public class FTOFReconstructionApp extends FCApplication {
               ipL = ftofPix[idet].strrt[is-1][0][0];
               ipR = ftofPix[idet].strrt[is-1][1][0];
               if ((iL==1&&iR==1)&&(ipL==ipR)) {
-                  double td = ftofPix[idet].tdcr[is-1][0][0]-ftofPix[idet].tdcr[is-1][1][0];
+                  float td = ftofPix[idet].tdcr[is-1][0][0]-ftofPix[idet].tdcr[is-1][1][0];
                   ftofPix[idet].strips.hmap2.get("H2_t_Hist").get(is, 0, 0).fill(td, ipL,1.0);
               }
            }
@@ -325,10 +326,10 @@ public class FTOFReconstructionApp extends FCApplication {
        
    }
 
-   public TreeMap<Integer, Object> toTreeMap(double dat[]) {
+   public TreeMap<Integer, Object> toTreeMap(float dat[]) {
        TreeMap<Integer, Object> hcontainer = new TreeMap<Integer, Object>();
        hcontainer.put(1, dat);
-       double[] b = Arrays.copyOf(dat, dat.length);
+       float[] b = Arrays.copyOf(dat, dat.length);
        double min=100000,max=0;
        for (int i =0 ; i < b.length; i++){
            if (b[i] !=0 && b[i] < min) min=b[i];
@@ -345,14 +346,14 @@ public class FTOFReconstructionApp extends FCApplication {
    public void makeMaps() {
        
        for (int idet=0; idet<ftofPix.length ; idet++) {
-           DetectorCollection<H2D> H2_a_Hist = new DetectorCollection<H2D>();
-           DetectorCollection<H1D> H1_a_Sevd = new DetectorCollection<H1D>();
+           DetectorCollection<H2F> H2_a_Hist = new DetectorCollection<H2F>();
+           DetectorCollection<H1F> H1_a_Sevd = new DetectorCollection<H1F>();
            H2_a_Hist = ftofPix[idet].strips.hmap2.get("H2_a_Hist");
            H1_a_Sevd = ftofPix[idet].strips.hmap1.get("H1_a_Sevd");
                for (int is=1;is<7;is++) {
                    for (int il=1 ; il<3 ; il++) {
-                       if (!app.isSingleEvent()) Lmap_a.add(is,il,idet, toTreeMap(H2_a_Hist.get(is,il,0).projectionY().getData())); //Strip View ADC 
-                       if  (app.isSingleEvent()) Lmap_a.add(is,il,idet, toTreeMap(H1_a_Sevd.get(is,il,0).getData()));           
+                       if (!app.isSingleEvent()) ftofPix[idet].Lmap_a.add(is,il,idet, toTreeMap(H2_a_Hist.get(is,il,0).projectionY().getData())); //Strip View ADC 
+                       if  (app.isSingleEvent()) ftofPix[idet].Lmap_a.add(is,il,idet, toTreeMap(H1_a_Sevd.get(is,il,0).getData()));           
                    }
                } 
            }

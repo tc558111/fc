@@ -9,14 +9,15 @@ import javax.swing.Timer;
 import org.clas.fcmon.tools.FCEpics;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.detector.base.DetectorDescriptor;
-import org.root.basic.EmbeddedCanvas;
-import org.root.histogram.H1D;
-import org.root.histogram.H2D;
+
+import org.jlab.groot.graphics.EmbeddedCanvas;
+import org.jlab.groot.data.H1F;
+import org.jlab.groot.data.H2F;
 
 public class ECHvApp extends FCEpics {
    
-    DetectorCollection<H1D> H1_HV = new DetectorCollection<H1D>();
-    DetectorCollection<H2D> H2_HV = new DetectorCollection<H2D>();
+    DetectorCollection<H1F> H1_HV = new DetectorCollection<H1F>();
+    DetectorCollection<H2F> H2_HV = new DetectorCollection<H2F>();
     DetectorCollection<LinkedList<Double>> fifo1 = new DetectorCollection<LinkedList<Double>>();
     DetectorCollection<LinkedList<Double>> fifo2 = new DetectorCollection<LinkedList<Double>>();
     DetectorCollection<LinkedList<Double>> fifo3 = new DetectorCollection<LinkedList<Double>>();
@@ -62,12 +63,12 @@ public class ECHvApp extends FCEpics {
         for (int is=is1; is<is2 ; is++) {
             for (int il=1 ; il<layMap.get(detName).length+1 ; il++){
                 int nb=nlayMap.get(detName)[il-1]; int mx=nb+1;
-                H1_HV.add(is, il, 0, new H1D("HV_vset"+is+"_"+il, nb,1,mx));                
-                H1_HV.add(is, il, 1, new H1D("HV_vmon"+is+"_"+il, nb,1,mx));                
-                H1_HV.add(is, il, 2, new H1D("HV_imon"+is+"_"+il, nb,1,mx));                
-                H2_HV.add(is, il, 0, new H2D("HV_vset"+is+"_"+il, nb,1,mx,nmax,0,nmax));                
-                H2_HV.add(is, il, 1, new H2D("HV_vmon"+is+"_"+il, nb,1,mx,nmax,0,nmax));                
-                H2_HV.add(is, il, 2, new H2D("HV_imon"+is+"_"+il, nb,1,mx,nmax,0,nmax));                
+                H1_HV.add(is, il, 0, new H1F("HV_vset"+is+"_"+il, nb,1,mx));                
+                H1_HV.add(is, il, 1, new H1F("HV_vmon"+is+"_"+il, nb,1,mx));                
+                H1_HV.add(is, il, 2, new H1F("HV_imon"+is+"_"+il, nb,1,mx));                
+                H2_HV.add(is, il, 0, new H2F("HV_vset"+is+"_"+il, nb,1,mx,nmax,0,nmax));                
+                H2_HV.add(is, il, 1, new H2F("HV_vmon"+is+"_"+il, nb,1,mx,nmax,0,nmax));                
+                H2_HV.add(is, il, 2, new H2F("HV_imon"+is+"_"+il, nb,1,mx,nmax,0,nmax));                
             }
         }
     }
@@ -152,8 +153,8 @@ public class ECHvApp extends FCEpics {
     
     public void update1DScalers(EmbeddedCanvas canvas, int flag) {
         
-        H1D h = new H1D();
-        H1D c = new H1D();
+        H1F h = new H1F();
+        H1F c = new H1F();
         
         int is = sectorSelected;
         int lr = layerSelected;
@@ -165,10 +166,10 @@ public class ECHvApp extends FCEpics {
         
         String tit = "Sector "+is+" "+layMap.get(detName)[lr-1]+" PMT";
         
-        h = H1_HV.get(is, lr, 0); h.setXTitle(tit); h.setYTitle("VOLTS");
+        h = H1_HV.get(is, lr, 0); h.setTitleX(tit); h.setTitleY("VOLTS");
         h.setFillColor(32); canvas.cd(0); canvas.draw(h);
 
-        h = H1_HV.get(is, lr, 2); h.setXTitle(tit); h.setYTitle("MICROAMPS");
+        h = H1_HV.get(is, lr, 2); h.setTitleX(tit); h.setTitleY("MICROAMPS");
         h.setFillColor(32); canvas.cd(1); canvas.draw(h);
 
         
@@ -184,7 +185,7 @@ public class ECHvApp extends FCEpics {
     
     public void update2DScalers(EmbeddedCanvas canvas, int flag) {
         
-        H2D h = new H2D();
+        H2F h = new H2F();
         
         int is = sectorSelected;
         int lr = layerSelected;
@@ -198,11 +199,11 @@ public class ECHvApp extends FCEpics {
         
         String tit = "Sector "+is+" "+layMap.get(detName)[lr-1]+" PMT";
         
-        h = H2_HV.get(is, lr, 0); h.setXTitle(tit); h.setYTitle("TIME");
+        h = H2_HV.get(is, lr, 0); h.setTitleX(tit); h.setTitleY("TIME");
         canvas.cd(0); canvas.draw(h);
 
 
-        h = H2_HV.get(is, lr, 2); h.setXTitle(tit); h.setYTitle("TIME");
+        h = H2_HV.get(is, lr, 2); h.setTitleX(tit); h.setTitleY("TIME");
         canvas.cd(1); canvas.draw(h);
 
         

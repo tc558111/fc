@@ -3,8 +3,10 @@ package org.clas.fcmon.tools;
 import java.util.TreeMap;
 
 import org.jlab.clas12.calib.DetectorShape2D;
-import org.root.histogram.H1D;
-import org.root.histogram.H2D;
+import org.jlab.groot.data.H1F;
+import org.jlab.groot.data.H2F;
+//import org.root.histogram.H1D;
+//import org.root.histogram.H2D;
 
 public class Pixel {
     
@@ -18,8 +20,8 @@ public class Pixel {
     public double udist;
     public double vdist;
     public double wdist;
-    public TreeMap<String, H1D>   h1d = null; 
-    public TreeMap<String, H2D>   h2d = null; 
+    public TreeMap<String, H1F>   h1d = null; 
+    public TreeMap<String, H2F>   h2d = null; 
     public boolean status;
     
     double[] theta={0.0,60.0,120.0,180.0,240.0,300.0};
@@ -51,11 +53,11 @@ public class Pixel {
         this.wdist=wdist;   
     } 
     
-    public void addH1DMap(String name, H1D h1d) {
+    public void addH1DMap(String name, H1F h1d) {
         this.h1d.put(name,h1d);
     }
     
-    public void addH2DMap(String name, H2D h2d) {
+    public void addH2DMap(String name, H2F h2d) {
         this.h2d.put(name,h2d);
     }  
     

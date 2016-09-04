@@ -26,9 +26,11 @@ public class ECMode1App extends FCApplication  {
       int  is = dd.getSector();
       int  la = dd.getLayer();
       int  ic = dd.getComponent();   
-      int ilm = ilmap;	     
-	
-      int nstr = ecPix[ilm].ec_nstr[la-1];
+      int idet = ilmap;	  
+      
+      if (la>3) return;
+      
+      int nstr = ecPix[idet].ec_nstr[la-1];
       int min=0, max=nstr;
       
       switch (ilmap) {
@@ -59,9 +61,9 @@ public class ECMode1App extends FCApplication  {
           c.getPad(ip-min).setOptStat(Integer.parseInt("0"));
           c.getPad(ip-min).getAxisX().setRange(0.,100.);
           c.getPad(ip-min).getAxisY().setRange(-100.,4000*app.displayControl.pixMax);
-          h = ecPix[ilm].strips.hmap2.get("H2_Mode1_Sevd").get(is,la,0).sliceY(ip); h.setTitleX("Samples (4 ns)"); h.setTitleY("Counts");
-          h.setTitle("Sector "+is+otab[ilm][la-1]+(ip+1)); h.setFillColor(4); c.draw(h);
-          h = ecPix[ilm].strips.hmap2.get("H2_Mode1_Sevd").get(is,la,1).sliceY(ip); h.setFillColor(2); c.draw(h,"same");
+          h = ecPix[idet].strips.hmap2.get("H2_Mode1_Sevd").get(is,la,0).sliceY(ip); h.setTitleX("Samples (4 ns)"); h.setTitleY("Counts");
+          h.setTitle("Sector "+is+otab[idet][la-1]+(ip+1)); h.setFillColor(4); c.draw(h);
+          h = ecPix[idet].strips.hmap2.get("H2_Mode1_Sevd").get(is,la,1).sliceY(ip); h.setFillColor(2); c.draw(h,"same");
           c.draw(f1,"same"); c.draw(f2,"same");
           }  
 

@@ -30,7 +30,6 @@ public class ECSingleEventApp extends FCApplication {
       double   zmax =  (double) mon.getGlob().get("PCMon_zmax");
       
       this.getDetIndices(dd);
-      layer = lay;
 		
       c.divide(3,3);
       c.setAxisFontSize(14);

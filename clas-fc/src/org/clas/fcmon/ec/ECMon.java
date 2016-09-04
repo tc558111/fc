@@ -49,8 +49,8 @@ public class ECMon extends DetectorMonitor {
     public boolean            inCRT = true; //true=CRT preinstallation CRT data
     public int            inProcess = 0;     //0=init 1=processing 2=end-of-run 3=post-run
     int                       detID = 0;
-    int                         is1 = 2 ;
-    int                         is2 = 3 ;  
+    int                         is1 = 1 ;
+    int                         is2 = 4 ;  
     int    nsa,nsb,tet,p1,p2,pedref = 0;
     double               PCMon_zmin = 0;
     double               PCMon_zmax = 0;
@@ -227,14 +227,13 @@ public class ECMon extends DetectorMonitor {
 		this.inProcess = process; glob.put("inProcess", process);
 		switch (inProcess) {
 			case 1: 
-				ecRecon.makeMaps(); break;
+			    for (int idet=0; idet<ecPix.length; idet++) ecRecon.makeMaps(idet); 
+			    break;
 			case 2: 
-				ecRecon.makeMaps();
-				for (int idet=0; idet<ecPix.length; idet++){
-				   ecCalib.analyze(idet,is1,is2,1,4); // Final analysis of full detector at end of run
-		        }
+			    for (int idet=0; idet<ecPix.length; idet++) ecRecon.makeMaps(idet);
+				// Final analysis of full detector at end of run
+				for (int idet=0; idet<ecPix.length; idet++) ecCalib.analyze(idet,is1,is2,1,4);
 		        inProcess=3; glob.put("inProcess", process);
-		        break;
 		}
 	}
 	
@@ -271,7 +270,7 @@ public class ECMon extends DetectorMonitor {
             String hipoFileName = app.hipoPath+"/"+mondet+idet+"_"+app.calibRun+".hipo";
             System.out.println("Loading Histograms from "+hipoFileName);
             ecPix[idet].initHistograms(hipoFileName);
-            ecRecon.makeMaps();
+            ecRecon.makeMaps(idet);
           }
           inProcess = 2;          
     }

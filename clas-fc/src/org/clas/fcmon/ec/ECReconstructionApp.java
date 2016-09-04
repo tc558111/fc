@@ -53,7 +53,6 @@ public class ECReconstructionApp extends FCApplication {
    int npix = ecPix[0].pixels.getNumPixels();  
    
    int nsa,nsb,tet,pedref;     
-   int thr[] = {15,20,20};
    short[] pulse = new short[100]; 
     
    public ECReconstructionApp(String name, ECPixels[] ecPix) {
@@ -101,23 +100,33 @@ public class ECReconstructionApp extends FCApplication {
       }
       
       if (app.isSingleEvent()) {
-         findPixels();     // Process all pixels for SED
-         processSED();
+         for (int idet=0; idet<ecPix.length; idet++) findPixels(idet);     // Process all pixels for SED
+         for (int idet=0; idet<ecPix.length; idet++) processSED(idet);
       } else {
-          processPixels();  // Process only single pixels 
+         for (int idet=0; idet<ecPix.length; idet++) processPixels(idet); // Process only single pixels 
  //         processCalib();  // Process only single pixels 
       }
    }
    
+   public int getDet(int layer) {
+       int[] il = {0,0,0,1,1,1,2,2,2}; // layer 1-3: PCAL 4-6: ECinner 7-9: ECouter  
+       return il[layer-1];
+    }
+   
    public int getLay(int layer) {
-      int[] il = {1,2,3,1,2,3,1,2,3}; // 1-3: PCAL 4-6: ECinner 7-9: ECouter
-      return il[layer-1];
-   }
+       int[] il = {1,2,3,1,2,3,1,2,3}; // layer 1-3: PCAL 4-6: ECinner 7-9: ECouter  
+       return il[layer-1];
+    }
+   
+   public int getThr(int layer) {
+       int[] il = {15,15,15,20,20,20,20,20,20}; 
+       return il[layer-1];
+    }
   
    
    public void updateRealData(EvioDataEvent event){
 
-      int adc,ped,npk;
+      int adc,npk,ped;
       double tdc=0,tdcf=0;
       String AdcType ;
       
@@ -129,11 +138,13 @@ public class ECReconstructionApp extends FCApplication {
       this.detectorData.addAll(dataSet);
       
       clear(0); clear(1); clear(2);
-      int nsum=0;
+
+      int ilay=0;
+      int idet=-1;
       
       for (DetectorDataDgtz strip : detectorData) {
          if(strip.getDescriptor().getType().getName()=="EC") {
-            adc=ped=pedref=npk=0 ; tdc=tdcf=0;
+            adc=npk=ped=pedref=0 ; tdc=tdcf=0;
             int icr = strip.getDescriptor().getCrate(); 
             int isl = strip.getDescriptor().getSlot(); 
             int ich = strip.getDescriptor().getChannel(); 
@@ -142,13 +153,14 @@ public class ECReconstructionApp extends FCApplication {
             int ip  = strip.getDescriptor().getComponent();
             int iord= strip.getDescriptor().getOrder(); 
             
-            int iil = getLay(il);
+            idet = getDet(il);
+            ilay = getLay(il);
             
             app.currentCrate = icr;
             app.currentSlot  = isl;
             app.currentChan  = ich;
  
-            if (iil>0) {
+            if (idet>-1) {
                             
             if (strip.getTDCSize()>0) {
                 tdc = strip.getTDCData(0).getTime()*24./1000.;
@@ -178,17 +190,17 @@ public class ECReconstructionApp extends FCApplication {
                   adc = fitter.adc/10;
                   ped = fitter.pedsum;
                   for (int i=0 ; i< pulse.length ; i++) {
-                     ecPix[iil-1].strips.hmap2.get("H2_Mode1_Hist").get(is,il,0).fill(i,ip,pulse[i]-this.pedref);
+                     ecPix[idet].strips.hmap2.get("H2_Mode1_Hist").get(is,ilay,0).fill(i,ip,pulse[i]-this.pedref);
                      if (app.isSingleEvent()) {
-                        ecPix[iil-1].strips.hmap2.get("H2_Mode1_Sevd").get(is,il,0).fill(i,ip,pulse[i]-this.pedref);
+                        ecPix[idet].strips.hmap2.get("H2_Mode1_Sevd").get(is,ilay,0).fill(i,ip,pulse[i]-this.pedref);
                         int w1 = fitter.t0-this.nsb ; int w2 = fitter.t0+this.nsa;
-                        if (fitter.adc>0&&i>=w1&&i<=w2) ecPix[iil-1].strips.hmap2.get("H2_Mode1_Sevd").get(is,il,1).fill(i,ip,pulse[i]-this.pedref);                     
+                        if (fitter.adc>0&&i>=w1&&i<=w2) ecPix[idet].strips.hmap2.get("H2_Mode1_Sevd").get(is,ilay,1).fill(i,ip,pulse[i]-this.pedref);                     
                      }
                   }
                }               
-               if (ped>0) ecPix[iil-1].strips.hmap2.get("H2_Peds_Hist").get(is,il,0).fill(this.pedref-ped, ip);
+               if (ped>0) ecPix[idet].strips.hmap2.get("H2_Peds_Hist").get(is,ilay,0).fill(this.pedref-ped, ip);
              }           
-             fill(is, il, ip, adc, tdc, tdcf, iil-1);    
+             fill(idet, is, ilay, ip, adc, tdc, tdcf);    
             }
          }
       }
@@ -208,7 +220,7 @@ public class ECReconstructionApp extends FCApplication {
       
       for (int idet=0; idet<detlen; idet++) {
           
-          if(event.hasBank(det[idet]+"::true")==true) {
+          if(event.hasBank(det[idet]+"::true")==true || inCRT==false) {
               EvioDataBank bank = (EvioDataBank) event.getBank(det[idet]+"::true");
               for(int i=0; i < bank.rows(); i++) mc_t = bank.getDouble("avgT",i);
               fac = 1;
@@ -240,7 +252,7 @@ public class ECReconstructionApp extends FCApplication {
                   goodstrip= true;
                   if(inCRT&&il==2&&ip==53) goodstrip=false;
                   tdc = (((float)tdcc-(float)mc_t*1000)-tdcmax+1340000)/1000; 
-                  if (goodstrip) fill(is, il, ip, adc, tdc, tdcf, idet); 
+                  if (goodstrip) fill(idet, is, il, ip, adc, tdc, tdcf); 
               }
           }
       }  
@@ -289,7 +301,7 @@ public class ECReconstructionApp extends FCApplication {
           for (int il=0 ; il<3 ; il++) {
              ecPix[idet].nha[is][il] = 0;
              ecPix[idet].nht[is][il] = 0;
-             for (int ip=0 ; ip<ecPix[idet].ec_nstr[0] ; ip++) {
+             for (int ip=0 ; ip<ecPix[idet].ec_nstr[il] ; ip++) {
                  ecPix[idet].strra[is][il][ip]    = 0;
                  ecPix[idet].strrt[is][il][ip]    = 0;
                  ecPix[idet].adcr[is][il][ip]     = 0;
@@ -320,7 +332,7 @@ public class ECReconstructionApp extends FCApplication {
       }           
    }
         
-   public void fill(int is, int il, int ip, int adc, double tdc, double tdcf, int idet) {
+   public void fill(int idet, int is, int il, int ip, int adc, double tdc, double tdcf) {
 
        if(tdc>1200&&tdc<1500){
            ecPix[idet].uvwt[is-1]=ecPix[idet].uvwt[is-1]+ecPix[idet].uvw_dalitz(idet,il,ip); //Dalitz tdc 
@@ -328,115 +340,118 @@ public class ECReconstructionApp extends FCApplication {
            if (inh>nstr) inh=nstr;
            ecPix[idet].tdcr[is-1][il-1][inh-1] = tdc;
            ecPix[idet].strrt[is-1][il-1][inh-1] = ip;                  
-           ecPix[idet].strips.hmap2.get("H2_t_Hist").get(is,il,0).fill(tdc,ip,1.0);
+           ecPix[idet].strips.hmap2.get("H2_t_Hist").get(is,il,0).fill(tdc,ip,1.);
            ecPix[idet].strips.hmap2.get("H2_PC_Stat").get(is,0,2).fill(ip,il,tdc);
        }
 
-       if(adc>thr[ic]){
+       if(adc>getThr(idet*3+il)){
            ecPix[idet].uvwa[is-1]=ecPix[idet].uvwa[is-1]+ecPix[idet].uvw_dalitz(idet,il,ip); //Dalitz adc
            ecPix[idet].nha[is-1][il-1]++; int inh = ecPix[idet].nha[is-1][il-1];
            if (inh>nstr) inh=nstr;
            ecPix[idet].adcr[is-1][il-1][inh-1] = adc;
            ecPix[idet].ftdcr[is-1][il-1][inh-1] = tdcf;
            ecPix[idet].strra[is-1][il-1][inh-1] = ip;
-           ecPix[idet].strips.hmap2.get("H2_a_Hist").get(is,il,0).fill(adc,ip,1.0);
+           ecPix[idet].strips.hmap2.get("H2_a_Hist").get(is,il,0).fill(adc,ip,1.);  
            ecPix[idet].strips.hmap2.get("H2_PC_Stat").get(is,0,0).fill(ip,il,1.);
            ecPix[idet].strips.hmap2.get("H2_PC_Stat").get(is,0,1).fill(ip,il,adc);
        }   
    }
         
-   public void findPixels() {
+   public void findPixels(int idet) {
 
        int u,v,w,ii;
 
-       for (int idet=0; idet<ecPix.length; idet++) { // Loop over PCAL, ECinner, ECouter
-           for (int is=0 ; is<6 ; is++) { // Loop over sectors
-               for (int i=0; i<ecPix[idet].nha[is][0]; i++) { // Loop over U strips
-                   u=ecPix[idet].strra[is][0][i];
-                   for (int j=0; j<ecPix[idet].nha[is][1]; j++) { // Loop over V strips
-                       v=ecPix[idet].strra[is][1][j];
-                       for (int k=0; k<ecPix[idet].nha[is][2]; k++){ // Loop over W strips
-                           w=ecPix[idet].strra[is][2][k];
-                           int dalitz = u+v+w;
-                           if (dalitz==73||dalitz==74) { // Dalitz test
-                               ecPix[idet].mpix[is]++;      ii = ecPix[idet].mpix[is]-1;
-                               ecPix[idet].ecadcpix[is][0][ii] = ecPix[idet].adcr[is][0][i];
-                               ecPix[idet].ecadcpix[is][1][ii] = ecPix[idet].adcr[is][1][i];
-                               ecPix[idet].ecadcpix[is][2][ii] = ecPix[idet].adcr[is][2][i];
+       for (int is=0 ; is<6 ; is++) { // Loop over sectors
+           for (int i=0; i<ecPix[idet].nha[is][0]; i++) { // Loop over U strips
+               u=ecPix[idet].strra[is][0][i];
+               for (int j=0; j<ecPix[idet].nha[is][1]; j++) { // Loop over V strips
+                   v=ecPix[idet].strra[is][1][j];
+                   for (int k=0; k<ecPix[idet].nha[is][2]; k++){ // Loop over W strips
+                       w=ecPix[idet].strra[is][2][k];
+                       int dalitz = u+v+w;
+                       if (dalitz==73||dalitz==74) { // Dalitz test
+                           ecPix[idet].mpix[is]++;      ii = ecPix[idet].mpix[is]-1;
+                           ecPix[idet].ecadcpix[is][0][ii] = ecPix[idet].adcr[is][0][i];
+                           ecPix[idet].ecadcpix[is][1][ii] = ecPix[idet].adcr[is][1][i];
+                           ecPix[idet].ecadcpix[is][2][ii] = ecPix[idet].adcr[is][2][i];
 
-                               ecPix[idet].ecsumpix[is][ii] = ecPix[idet].ecadcpix[is][0][ii]
-                                                             +ecPix[idet].ecadcpix[is][1][ii]
-                                                             +ecPix[idet].ecadcpix[is][2][ii];
-                               ecPix[idet].esum[is]         = ecPix[idet].esum[is] + ecPix[idet].ecsumpix[is][ii];
-                               ecPix[idet].ecpixel[is][ii]  = ecPix[idet].pixels.getPixelNumber(u,v,w);
-                               ecPix[idet].strips.hmap1.get("H1_Pixa_Sevd").get(is+1,1,0).fill(ecPix[idet].ecpixel[is][ii],ecPix[idet].esum[is]); 
-                           }
+                           ecPix[idet].ecsumpix[is][ii] = ecPix[idet].ecadcpix[is][0][ii]
+                                                         +ecPix[idet].ecadcpix[is][1][ii]
+                                                         +ecPix[idet].ecadcpix[is][2][ii];
+                           ecPix[idet].esum[is]         = ecPix[idet].esum[is] + ecPix[idet].ecsumpix[is][ii];
+                           ecPix[idet].ecpixel[is][ii]  = ecPix[idet].pixels.getPixelNumber(u,v,w);
+                           ecPix[idet].strips.hmap1.get("H1_Pixa_Sevd").get(is+1,1,0).fill(ecPix[idet].ecpixel[is][ii],ecPix[idet].esum[is]); 
                        }
                    }
                }
            }
+       }
            //              if (is==1){
            //                  System.out.println("is,inner nhit="+is+" "+nha[is][3]+","+nha[is][4]+","+nha[is][5]);
            //                  System.out.println("is,outer nhit="+is+" "+nha[is][6]+","+nha[is][7]+","+nha[is][8]);
            //                  System.out.println("mpix,ecpix="+mpix[is][0]+","+mpix[is][1]+","+ecpixel[is][0][0]+","+ecpixel[is][1][0]);
            //                  System.out.println(" ");
-           //              }
-       }
+           //              } 
    }
     
-   public void processSED() {
-
-       for (int idet=0; idet<ecPix.length ; idet++) {
-           for (int is=0; is<6; is++) {
-               float[] sed7 = ecPix[idet].strips.hmap1.get("H1_Pixa_Sevd").get(is+1,1,0).getData();
-               for (int il=1; il<4; il++ ){               
-                   for (int n=1 ; n<ecPix[idet].nha[is][il-1]+1 ; n++) {
-                       int ip=ecPix[idet].strra[is][il-1][n-1]; int ad=ecPix[idet].adcr[is][il-1][n-1];
-                       ecPix[idet].strips.hmap1.get("H1_Stra_Sevd").get(is+1,il,0).fill(ip,ad);
-                       ecPix[idet].strips.putpixels(il,ip,ad,sed7);
-                   }
+   public void processSED(int idet) {
+       for (int is=0; is<6; is++) {
+           float[] sed7 = ecPix[idet].strips.hmap1.get("H1_Pixa_Sevd").get(is+1,1,0).getData();
+           for (int il=1; il<4; il++ ){               
+               for (int n=1 ; n<ecPix[idet].nha[is][il-1]+1 ; n++) {
+                   int ip=ecPix[idet].strra[is][il-1][n-1]; int ad=ecPix[idet].adcr[is][il-1][n-1];
+                   ecPix[idet].strips.hmap1.get("H1_Stra_Sevd").get(is+1,il,0).fill(ip,ad);
+                   ecPix[idet].strips.putpixels(il,ip,ad,sed7);
                }
-               for (int i=0; i<sed7.length; i++) {
-                   ecPix[idet].strips.hmap1.get("H1_Pixa_Sevd").get(is+1,1,0).setBinContent(i, sed7[i]);  
-               }
-           }  
-       }
+           }
+           for (int i=0; i<sed7.length; i++) {
+               ecPix[idet].strips.hmap1.get("H1_Pixa_Sevd").get(is+1,1,0).setBinContent(i, sed7[i]);  
+           }
+       }  
    }
         
-   public void processPixels() {
+   public void processPixels(int idet) {
 
        boolean good_ua, good_va, good_wa, good_uvwa;
+       boolean[] good_pix = {false,false,false};
        boolean good_ut, good_vt, good_wt, good_uvwt;
        boolean good_dalitz=false, good_pixel;
        int pixel;
 
-       for (int idet=0; idet<ecPix.length ; idet++) {
-           TreeMap<Integer, Object> map= (TreeMap<Integer, Object>) ecPix[idet].Lmap_a.get(0,0,1); //PCAL
-           float pixelLength[] = (float[]) map.get(1);
+       TreeMap<Integer, Object> map= (TreeMap<Integer, Object>) ecPix[idet].Lmap_a.get(0,0,1); //PCAL
+       float pixelLength[] = (float[]) map.get(1);
+       
        for (int is=0 ; is<6 ; is++) {      
 
                good_ua = ecPix[idet].nha[is][0]==1;
                good_va = ecPix[idet].nha[is][1]==1;
                good_wa = ecPix[idet].nha[is][2]==1;
                good_uvwa = good_ua && good_va && good_wa; //Multiplicity test (NU=NV=NW=1)
+               
+               good_pix[0] = good_ua&&ecPix[idet].adcr[is][1][0]>35&&ecPix[idet].adcr[is][2][0]>35;
+               good_pix[1] = good_va&&ecPix[idet].adcr[is][0][0]>35&&ecPix[idet].adcr[is][2][0]>35; 
+               good_pix[2] = good_wa&&ecPix[idet].adcr[is][0][0]>35&&ecPix[idet].adcr[is][1][0]>35;  
 
                if (idet>0)   good_dalitz = (ecPix[idet].uvwa[is]-2.0)>0.02 && (ecPix[idet].uvwa[is]-2.0)<0.056; //EC               
                if (idet==0 ) good_dalitz = Math.abs(ecPix[idet].uvwa[is]-2.0)<0.1; //PCAL
+               
                pixel = ecPix[idet].pixels.getPixelNumber(ecPix[idet].strra[is][0][0],ecPix[idet].strra[is][1][0],ecPix[idet].strra[is][2][0]);
                good_pixel = pixel!=0;
 
-               if (good_uvwa && good_dalitz && good_pixel) { 
+               if (good_dalitz && good_pixel && good_uvwa) { 
 
-                   ecPix[idet].pixels.hmap1.get("H1_a_Maps").get(is+1,7,0).fill(pixel,1.0);
+                   ecPix[idet].pixels.hmap1.get("H1_a_Maps").get(is+1,7,0).fill(pixel,1.0); // Events per pixel
                    ecPix[idet].pixels.hmap1.get("H1_a_Maps").get(is+1,7,3).fill(pixel,1.0/ecPix[idet].pixels.getNormalizedArea(pixel)); //Normalized to pixel area
 
                    for (int il=1; il<4 ; il++){
                        double adcc = ecPix[idet].adcr[is][il-1][0]/pixelLength[pixel-1];
-                       ecPix[idet].strips.hmap2.get("H2_a_Hist").get(is+1,il,1).fill(adcc,ecPix[idet].strra[is][il-1][0],1.0) ;
-                       ecPix[idet].strips.hmap2.get("H2_a_Hist").get(is+1,il,2).fill(adcc,pixel,1.0);                        
-                       ecPix[idet].pixels.hmap1.get("H1_a_Maps").get(is+1,7,1).fill(pixel,adcc);
-                       ecPix[idet].pixels.hmap1.get("H1_a_Maps").get(is+1,il,0).fill(pixel,adcc);
-                       ecPix[idet].pixels.hmap1.get("H1_a_Maps").get(is+1,il,2).fill(pixel,Math.pow(adcc,2));
+//                       if (good_pix[il-1]) {
+                         ecPix[idet].strips.hmap2.get("H2_a_Hist").get(is+1,il,1).fill(adcc,ecPix[idet].strra[is][il-1][0],1.0) ;
+                         ecPix[idet].strips.hmap2.get("H2_a_Hist").get(is+1,il,2).fill(adcc,pixel,1.0);                        
+                         ecPix[idet].pixels.hmap1.get("H1_a_Maps").get(is+1,7,1).fill(pixel,adcc);
+                         ecPix[idet].pixels.hmap1.get("H1_a_Maps").get(is+1,il,0).fill(pixel,adcc);
+                         ecPix[idet].pixels.hmap1.get("H1_a_Maps").get(is+1,il,2).fill(pixel,Math.pow(adcc,2));
+//                       }
                    }
                }  
                
@@ -461,7 +476,52 @@ public class ECReconstructionApp extends FCApplication {
                    }
                }   
        }  
+       
+   }
+  
+   public void makeMaps(int idet) {
+
+       DetectorCollection<H2F> H2_a_Hist    = new DetectorCollection<H2F>() ; 
+       DetectorCollection<H2F> H2_t_Hist    = new DetectorCollection<H2F>() ; 
+       DetectorCollection<H1F> H1_Stra_Sevd = new DetectorCollection<H1F>() ;
+       DetectorCollection<H1F> H1_Pixa_Sevd = new DetectorCollection<H1F>() ; 
+       DetectorCollection<H1F> H1_a_Maps    = new DetectorCollection<H1F>() ;
+       DetectorCollection<H1F> H1_t_Maps    = new DetectorCollection<H1F>() ;
+      
+       H2_a_Hist    = ecPix[idet].strips.hmap2.get("H2_a_Hist");
+       H2_t_Hist    = ecPix[idet].strips.hmap2.get("H2_t_Hist");
+       H1_Stra_Sevd = ecPix[idet].strips.hmap1.get("H1_Stra_Sevd");
+       H1_Pixa_Sevd = ecPix[idet].strips.hmap1.get("H1_Pixa_Sevd");
+       H1_a_Maps    = ecPix[idet].pixels.hmap1.get("H1_a_Maps");
+       H1_t_Maps    = ecPix[idet].pixels.hmap1.get("H1_t_Maps");
+
+       // Layer assignments:
+       // il=1-3 (U,V,W strips) il=7 (Inner Pixels) il=8 (Outer Pixels)
+         
+        for (int is=1;is<7;is++) {
+           for (int il=1 ; il<4 ; il++) {
+               divide(H1_a_Maps.get(is,il,0),H1_a_Maps.get(is,7,0),H1_a_Maps.get(is,il,1)); //Normalize Raw View Energy Sum to Events
+               divide(H1_t_Maps.get(is,il,0),H1_t_Maps.get(is,7,0),H1_t_Maps.get(is,il,1)); //Normalize Raw View Timing Sum to Events
+               divide(H1_a_Maps.get(is,il,2),H1_a_Maps.get(is,7,0),H1_a_Maps.get(is,il,3)); //Normalize Raw ADC^2 Sum to Events
+               ecPix[idet].Lmap_a.add(is,il,   0, toTreeMap(H2_a_Hist.get(is,il,0).projectionY().getData()));  //Strip View ADC  
+               ecPix[idet].Lmap_a.add(is,il+10,0, toTreeMap(H1_a_Maps.get(is,il,1).getData()));                //Pixel View ADC 
+               ecPix[idet].Lmap_t.add(is,il,   0, toTreeMap(H2_t_Hist.get(is,il,0).projectionY().getData()));  //Strip View TDC  
+               ecPix[idet].Lmap_t.add(is,il,   1, toTreeMap(H1_t_Maps.get(is,il,1).getData()));                //Pixel View TDC  
+           }           
+           for (int il=7; il<9; il++) {    
+               divide(H1_a_Maps.get(is, il, 1),H1_a_Maps.get(is, il, 0),H1_a_Maps.get(is, il, 2)); // Normalize Raw Energy Sum to Events
+               divide(H1_t_Maps.get(is, il, 1),H1_t_Maps.get(is, il, 0),H1_t_Maps.get(is, il, 2)); // Normalize Raw Timing Sum to Events
+           }
+           ecPix[idet].Lmap_a.add(is, 7,0, toTreeMap(H1_a_Maps.get(is,7,0).getData())); //Pixel Events  
+           ecPix[idet].Lmap_a.add(is, 9,0, toTreeMap(H1_a_Maps.get(is,7,2).getData())); //Pixel U+V+W Energy     
+           ecPix[idet].Lmap_t.add(is, 7,2, toTreeMap(H1_t_Maps.get(is,7,2).getData())); //Pixel U+V+W Time  
+           ecPix[idet].Lmap_a.add(is, 7,1, toTreeMap(H1_a_Maps.get(is,7,3).getData())); //Pixel Events Normalized  
+           if (app.isSingleEvent()){
+               for (int il=1 ; il<4 ; il++) ecPix[idet].Lmap_a.add(is,il,0,   toTreeMap(H1_Stra_Sevd.get(is,il,0).getData())); 
+               for (int il=1 ; il<2 ; il++) ecPix[idet].Lmap_a.add(is,il+6,0, toTreeMap(H1_Pixa_Sevd.get(is,il,0).getData())); 
+           }
        }
+     
    }
 
    public TreeMap<Integer, Object> toTreeMap(float dat[]) {
@@ -495,52 +555,8 @@ public class ECReconstructionApp extends FCApplication {
            h3.setBinContent(bin, numer.number());
            h3.setBinError(bin, numer.error());
        }
-   }
+   }   
    
-   public void makeMaps() {
-
-       for (int idet=0; idet<ecPix.length; idet++) {
-           DetectorCollection<H2F> H2_a_Hist    = new DetectorCollection<H2F>() ; 
-           DetectorCollection<H2F> H2_t_Hist    = new DetectorCollection<H2F>() ; 
-           DetectorCollection<H1F> H1_Stra_Sevd = new DetectorCollection<H1F>() ;
-           DetectorCollection<H1F> H1_Pixa_Sevd = new DetectorCollection<H1F>() ;
-           DetectorCollection<H1F> H1_a_Maps    = new DetectorCollection<H1F>() ;
-           DetectorCollection<H1F> H1_t_Maps    = new DetectorCollection<H1F>() ;
-      
-           H2_a_Hist    = ecPix[idet].strips.hmap2.get("H2_a_Hist");
-           H2_t_Hist    = ecPix[idet].strips.hmap2.get("H2_t_Hist");
-           H1_Stra_Sevd = ecPix[idet].strips.hmap1.get("H1_Stra_Sevd");
-           H1_Pixa_Sevd = ecPix[idet].strips.hmap1.get("H1_Pixa_Sevd");
-           H1_a_Maps    = ecPix[idet].pixels.hmap1.get("H1_a_Maps");
-           H1_t_Maps    = ecPix[idet].pixels.hmap1.get("H1_t_Maps");
-
-           // il=1-3 (U,V,W Inner strips) il=4-6 (U,V,W Outer Strips) il=7 (Inner Pixels) il=8 (Outer Pixels)
-         
-           for (int is=1;is<7;is++) {
-               for (int il=1 ; il<4 ; il++) {
-                   divide(H1_a_Maps.get(is,il,0),H1_a_Maps.get(is,7,0),H1_a_Maps.get(is,il,1)); //Normalize Raw View Energy Sum to Events
-                   divide(H1_t_Maps.get(is,il,0),H1_t_Maps.get(is,7,0),H1_t_Maps.get(is,il,1)); //Normalize Raw View Timing Sum to Events
-                   divide(H1_a_Maps.get(is,il,2),H1_a_Maps.get(is,7,0),H1_a_Maps.get(is,il,3)); //Normalize Raw ADC^2 Sum to Events
-                   ecPix[idet].Lmap_a.add(is,il,   0, toTreeMap(H2_a_Hist.get(is,il,0).projectionY().getData()));  //Strip View ADC  
-                   ecPix[idet].Lmap_a.add(is,il+10,0, toTreeMap(H1_a_Maps.get(is,il,1).getData()));                //Pixel View ADC 
-                   ecPix[idet].Lmap_t.add(is,il,   0, toTreeMap(H2_t_Hist.get(is,il,0).projectionY().getData()));  //Strip View TDC  
-                   ecPix[idet].Lmap_t.add(is,il,   1, toTreeMap(H1_t_Maps.get(is,il,1).getData()));                //Pixel View TDC  
-               }           
-               for (int il=7; il<9; il++) {    
-                   divide(H1_a_Maps.get(is, il, 1),H1_a_Maps.get(is, il, 0),H1_a_Maps.get(is, il, 2)); // Normalize Raw Energy Sum to Events
-                   divide(H1_t_Maps.get(is, il, 1),H1_t_Maps.get(is, il, 0),H1_t_Maps.get(is, il, 2)); // Normalize Raw Timing Sum to Events
-               }
-               ecPix[idet].Lmap_a.add(is, 7,0, toTreeMap(H1_a_Maps.get(is,7,0).getData())); //Pixel Events  
-               ecPix[idet].Lmap_a.add(is, 9,0, toTreeMap(H1_a_Maps.get(is,7,2).getData())); //Pixel U+V+W Energy     
-               ecPix[idet].Lmap_t.add(is, 7,2, toTreeMap(H1_t_Maps.get(is,7,2).getData())); //Pixel U+V+W Time  
-               ecPix[idet].Lmap_a.add(is, 7,1, toTreeMap(H1_a_Maps.get(is,7,3).getData())); //Pixel Events Normalized  
-                if (app.isSingleEvent()){
-                   for (int il=1 ; il<4 ; il++) ecPix[idet].Lmap_a.add(is,il,0,   toTreeMap(H1_Stra_Sevd.get(is,il,0).getData())); 
-                   for (int il=1 ; il<2 ; il++) ecPix[idet].Lmap_a.add(is,il+6,0, toTreeMap(H1_Pixa_Sevd.get(is,il,0).getData())); 
-               }
-           }
-       }
-   }
 }
     
     

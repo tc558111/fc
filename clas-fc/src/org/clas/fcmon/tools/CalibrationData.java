@@ -18,6 +18,8 @@ public class CalibrationData {
     private List<Double>             chi2 = new ArrayList<Double>(); 
     private int dataSize; 
     private int fitSize;
+    F1D f1 = null;
+    
     
     public CalibrationData(int sector, int layer, int component){
         this.desc.setSectorLayerComponent(sector, layer, component);
@@ -43,10 +45,10 @@ public class CalibrationData {
         double[] xprawe = new double[dataSize];
         double[] yprawe = new double[dataSize]; 
  
-        // For raw graph
+        // For raw graph cnts>5 data>20
         n=0;          
         for(int loop=0; loop < data.length; loop++) {
-        	if (cnts[loop]>5&&data[loop]>20&&!status[loop]) n++;   		
+        	if (cnts[loop]>110&&data[loop]>20&&!status[loop]) n++;   		
     		xpraw[loop]  = xdata[loop]; 
     		xprawe[loop] = 0.;
     		ypraw[loop]  = data[loop];
@@ -62,7 +64,7 @@ public class CalibrationData {
         // For fit graph
         n=0;
         for(int loop = 0; loop < data.length; loop++){
-        	if (cnts[loop]>5&&data[loop]>20&&!status[loop]) {
+        	if (cnts[loop]>110&&data[loop]>20&&!status[loop]) {
          		xpfit[n]  = xpraw[loop]; 
         		xpfite[n] = xprawe[loop];
         		ypfit[n]  = ypraw[loop];
@@ -97,8 +99,7 @@ public class CalibrationData {
         graph.getAttributes().setTitle("EXP FIT: Sector "+sector+" "+otab[view-1]+" "+strip);        
         this.rawgraphs.add(graph);
         
-        F1D f1 = new F1D("exp","[a]*exp(x*[b])",0.,400.);
-        f1.setLineWidth(1);
+        f1 = new F1D("exp","[a]*exp(-x/[b])+[c]",0.,400.);
         this.functions.add(f1);
     }
     
@@ -106,16 +107,17 @@ public class CalibrationData {
     	DataFitter.FITPRINTOUT=false;
         for(int loop = 0; loop < this.fitgraphs.size(); loop++){
             F1D func = this.functions.get(loop);
-            func.setParameter(0,0.);
-            func.setParameter(1,0.);
+            func.setParameter(0, 0.);
+            func.setParameter(1, 50000.);
+            func.setParameter(2, 0.);
             double [] dataY=this.fitgraphs.get(loop).getVectorY().getArray();
             if (dataY.length>0) {
             	int imax = Math.min(2,dataY.length-1);
             	double p0try = dataY[imax] ; double p0min = p0try-30. ; double p0max=p0try+30.;
-            	func.setParameter(0, p0try);
-            	func.setParameter(1,-0.00277);
-            	func.setParLimits(0,p0min,p0max);
-            	func.setLineColor(2); 
+            	func.setParameter(0, p0try);     func.setParLimits(0,p0min,p0max);
+                func.setParameter(1,376.);       func.setParLimits(1, 100., 500.);
+                func.setParameter(2, p0try*0.1); func.setParLimits(2, 0., 500.);
+            	func.setLineWidth(1); func.setLineColor(2); 
             	DataFitter.fit(func,this.fitgraphs.get(loop),"REQ");	//Fit data
             	double yfit,ydat,yerr,ch=0;
             	if (fitSize>0) {

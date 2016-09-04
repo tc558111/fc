@@ -114,15 +114,33 @@ public class ECCalibrationApp extends FCApplication implements CalibrationConsta
             this.is1=is1;
             this.is2=is2;
             
-            calib = new CalibrationConstants(3,"A/F:B/F:C/F");
+            calib = new CalibrationConstants(3,"A/F:Aerr/F:B/F:Berr/F:C/F:Cerr:F");
             calib.setName("/calibration/ec/atten");
             calib.setPrecision(3);
-
+            int kk=0;
             for (int k=0; k<3; k++) {
             for (int i=0; i<9; i++) {  
-                calib.addConstraint(k+3, PARAM[k][i]-DELTA[k][i], 
+                calib.addConstraint(kk+3,PARAM[k][i]-DELTA[k][i], 
                                          PARAM[k][i]+DELTA[k][i], 1, i+1);
+                kk=kk+2;
             }
+            }
+            
+            for(int is=is1; is<is2; is++) {                
+                for(int idet=0; idet<3; idet++) {
+                    for (int il=0; il<3 ; il++) {
+                        int layer = il+idet*3;
+                        for(int ip = 0; ip < ecPix[idet].ec_nstr[il]; ip++) {
+                            calib.addEntry(is, layer+1, ip+1);
+                            calib.setDoubleValue(0., "A",    is, layer+1, ip+1);
+                            calib.setDoubleValue(0., "Aerr", is, layer+1, ip+1);
+                            calib.setDoubleValue(0., "B",    is, layer+1, ip+1);
+                            calib.setDoubleValue(0., "Berr", is, layer+1, ip+1);
+                            calib.setDoubleValue(0., "C",    is, layer+1, ip+1);
+                            calib.setDoubleValue(0., "Cerr", is, layer+1, ip+1);
+                        }
+                    }
+                }
             }
             
             list.add(calib);         
@@ -140,6 +158,7 @@ public class ECCalibrationApp extends FCApplication implements CalibrationConsta
             calib.fireTableDataChanged();
         }
         
+        @Override
         public void analyze(int idet, int is1, int is2, int il1, int il2) {
             
             TreeMap<Integer, Object> map;
@@ -184,6 +203,13 @@ public class ECCalibrationApp extends FCApplication implements CalibrationConsta
                                       ecPix[idet].strips.getpixels(il,ip+1,meanerr),
                                       ecPix[idet].strips.getpixels(il,ip+1,status));
                         fits.analyze();
+                        calib.addEntry(is, il+idet*3, ip+1);
+                        calib.setDoubleValue(fits.getFunc(0).parameter(0).value(), "A", is, il+idet*3, ip+1);
+                        calib.setDoubleValue(fits.getFunc(0).parameter(1).value(), "B", is, il+idet*3, ip+1);
+                        calib.setDoubleValue(fits.getFunc(0).parameter(2).value(), "C", is, il+idet*3, ip+1);
+                        calib.setDoubleValue(fits.getFunc(0).parameter(0).error(), "Aerr", is, il+idet*3, ip+1);
+                        calib.setDoubleValue(fits.getFunc(0).parameter(1).error(), "Berr", is, il+idet*3, ip+1);
+                        calib.setDoubleValue(fits.getFunc(0).parameter(2).error(), "Cerr", is, il+idet*3, ip+1);
                         ecPix[idet].collection.add(fits.getDescriptor(),fits);
                      }
                   }
@@ -226,7 +252,6 @@ public class ECCalibrationApp extends FCApplication implements CalibrationConsta
             int        nstr = ecPix[0].ec_nstr[0];
             int   inProcess =     (int) mon.getGlob().get("inProcess");
             Boolean    inMC = (Boolean) mon.getGlob().get("inMC");
-            int         is1 =     (int) mon.getGlob().get("is1");      
               
             double[] xp     = new double[nstr];
             double[] xpe    = new double[nstr];
@@ -274,23 +299,23 @@ public class ECCalibrationApp extends FCApplication implements CalibrationConsta
                      if (fit.hasEntry(is+ilmap*10, layer, ic)) {
                                           
                      for (int ip=0; ip<nstr ; ip++) {
-                        double gain  = fit.get(is1+ilmap*10,layer,ip).getFunc(0).parameter(0).value();
-                        double gaine = fit.get(is1+ilmap*10,layer,ip).getFunc(0).parameter(0).error();    
-                        double att   = fit.get(is1+ilmap*10,layer,ip).getFunc(0).parameter(1).value();
-                        double atte  = fit.get(is1+ilmap*10,layer,ip).getFunc(0).parameter(1).error();
-                        double chi2  = fit.get(is1+ilmap*10,layer,ip).getChi2(0);
+                        double gain  = fit.get(is+ilmap*10,layer,ip).getFunc(0).parameter(0).value();
+                        double gaine = fit.get(is+ilmap*10,layer,ip).getFunc(0).parameter(0).error();    
+                        double att   = fit.get(is+ilmap*10,layer,ip).getFunc(0).parameter(1).value();
+                        double atte  = fit.get(is+ilmap*10,layer,ip).getFunc(0).parameter(1).error();
+                        double chi2  = fit.get(is+ilmap*10,layer,ip).getChi2(0);
                         int index = ECCommon.getCalibrationIndex(is,layer+ilmap*3,ip+1);
                         double attdb = ccdb.getDouble("/calibration/ec/attenuation/B",index);
-                        if (att!=0) att=-1./att; else att=0 ; 
-                           atte = att*att*atte;
+//                        if (att!=0) att=-1./att; else att=0 ; 
+//                           atte = att*att*atte;
                            xp[ip] = ip+1 ;     xpe[ip] = 0.; 
                         vgain[ip] = gain ;  vgaine[ip] = gaine;
                          vatt[ip] = att  ;   vatte[ip] = atte;
                        vattdb[ip] = attdb; vattdbe[ip] = 0.;
                         vchi2[ip] = Math.min(4, chi2) ; vchi2e[ip]=0.;   
-                        calib.addEntry(is1, layer+ilmap*3, ip+1);
-                        calib.setDoubleValue(gain, "A", is1, layer+ilmap*3, ip+1);
-                        calib.setDoubleValue(att,  "B", is1, layer+ilmap*3, ip+1);
+//                        calib.addEntry(is, layer+ilmap*3, ip+1);
+//                        calib.setDoubleValue(gain, "A", is, layer+ilmap*3, ip+1);
+//                        calib.setDoubleValue(att,  "B", is, layer+ilmap*3, ip+1);
                      }
                       
                      GraphErrors   gainGraph = new GraphErrors("gain",xp,vgain,xpe,vgaine);

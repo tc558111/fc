@@ -48,7 +48,7 @@ public class CalibrationData {
         // For raw graph cnts>5 data>20
         n=0;          
         for(int loop=0; loop < data.length; loop++) {
-        	if (cnts[loop]>110&&data[loop]>20&&!status[loop]) n++;   		
+        	if (cnts[loop]>11&&data[loop]>20&&!status[loop]) n++;   		
     		xpraw[loop]  = xdata[loop]; 
     		xprawe[loop] = 0.;
     		ypraw[loop]  = data[loop];
@@ -64,11 +64,12 @@ public class CalibrationData {
         // For fit graph
         n=0;
         for(int loop = 0; loop < data.length; loop++){
-        	if (cnts[loop]>110&&data[loop]>20&&!status[loop]) {
+        	if (cnts[loop]>11&&data[loop]>20&&!status[loop]) {
          		xpfit[n]  = xpraw[loop]; 
         		xpfite[n] = xprawe[loop];
         		ypfit[n]  = ypraw[loop];
         		ypfite[n] = yprawe[loop];
+//        		ypfite[n] = 5.0;
         		n++;
         	}
         }
@@ -99,7 +100,8 @@ public class CalibrationData {
         graph.getAttributes().setTitle("EXP FIT: Sector "+sector+" "+otab[view-1]+" "+strip);        
         this.rawgraphs.add(graph);
         
-        f1 = new F1D("exp","[a]*exp(-x/[b])+[c]",0.,400.);
+        f1 = new F1D("A*exp(-x/B)+C","[A]*exp(-x/[B])+[C]",0.,400.);
+        f1.setOptStat(11111);
         this.functions.add(f1);
     }
     
@@ -112,13 +114,13 @@ public class CalibrationData {
             func.setParameter(2, 0.);
             double [] dataY=this.fitgraphs.get(loop).getVectorY().getArray();
             if (dataY.length>0) {
-            	int imax = Math.min(2,dataY.length-1);
-            	double p0try = dataY[imax] ; double p0min = p0try-30. ; double p0max=p0try+30.;
-            	func.setParameter(0, p0try);     func.setParLimits(0,p0min,p0max);
-                func.setParameter(1,376.);       func.setParLimits(1, 100., 500.);
-                func.setParameter(2, p0try*0.1); func.setParLimits(2, 0., 500.);
+            	int imax = Math.min(4,dataY.length-1);
+            	double p0try = dataY[imax] ; 
+            	func.setParameter(0, p0try);      func.setParLimits(0,p0try-50.,p0try+100.);
+                func.setParameter(1,376.);        func.setParLimits(1,1.,1000.);
+                func.setParameter(2, p0try*0.1);  func.setParLimits(2, 0.,100.);
             	func.setLineWidth(1); func.setLineColor(2); 
-            	DataFitter.fit(func,this.fitgraphs.get(loop),"REQ");	//Fit data
+            	DataFitter.fit(func,this.fitgraphs.get(loop),"Q");	//Fit data
             	double yfit,ydat,yerr,ch=0;
             	if (fitSize>0) {
             		for (int i=0 ; i<fitSize ; i++) {

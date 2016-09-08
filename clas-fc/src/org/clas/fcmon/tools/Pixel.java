@@ -13,6 +13,7 @@ public class Pixel {
     public int index;
     public DetectorShape2D shape;  
     public double area;
+    public int zone;
     public int u;
     public int v;
     public int w;
@@ -38,6 +39,13 @@ public class Pixel {
         this.area = area;
     }
     
+    public void setZone(int u, int v, int w){
+        if (u<53&&v>15&&w>15) this.zone=0;
+        if (u>52&&v>15&&w>15) this.zone=1;
+        if (v<16)             this.zone=2;
+        if (w<16)             this.zone=3;
+    }
+    
     public void setReadout(int u, int v, int w) {
         this.u=u;
         this.v=v;
@@ -45,6 +53,7 @@ public class Pixel {
         this.strips[0]=u;
         this.strips[1]=v;
         this.strips[2]=w;
+        setZone(u,v,w);
     }
     
     public void setReadoutDist(double udist, double vdist, double wdist) {
@@ -77,6 +86,14 @@ public class Pixel {
             rotshape.getShapePath().point(i).set(xrot, yrot, 0.0);
         }
         return rotshape;
+    }
+    
+    public double getArea() {
+        return area;
+    }
+    
+    public int getZone() {
+        return zone;
     }
     
 }

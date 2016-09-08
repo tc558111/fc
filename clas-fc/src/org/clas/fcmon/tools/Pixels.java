@@ -17,7 +17,7 @@ import org.jlab.groot.data.H2F;
 public class Pixels {
 
     FTHashCollection<Integer>       pixelDummy = null;
-    public FTHashCollection<Pixel>        pixelStrips = null;
+    public FTHashCollection<Pixel> pixelStrips = null;
     FTHashCollection<Pixel>        pixelNumber = null;
     
     DetectorCollection<List<H1F>>       pixelH1D = null;
@@ -26,8 +26,8 @@ public class Pixels {
     public TreeMap<String, DetectorCollection<H1F>>   hmap1 = null; 
     public TreeMap<String, DetectorCollection<H2F>>   hmap2 = null; 
     
-    double maxPixelArea = 0;
-    
+    double[] maxZonePixelArea = {0,0,0,0};
+    double       maxPixelArea = 0;
     public Pixels() {
         this.pixelStrips = new FTHashCollection<Pixel>(3);
         this.pixelNumber = new FTHashCollection<Pixel>(1);
@@ -44,8 +44,9 @@ public class Pixels {
     public void addPixel(Pixel pixel, int pix, int u, int v, int w) {
         pixelStrips.add(pixel,u,v,w); 
         pixelNumber.add(pixel, pix);
+        findMaxPixelArea(pixel);
     }
-
+    
     public void addH1D(int sector, int layer, int component, H1F h1) {
         if(!pixelH1D.hasEntry(sector,layer,component)) pixelH1D.add(sector,layer,component,new ArrayList<H1F>());
         pixelH1D.get(sector,layer,component).add(h1);       
@@ -64,8 +65,8 @@ public class Pixels {
         this.hmap2.put(name,map);
     }   
     
-    public void setMaxPixelArea(double area) {
-    	this.maxPixelArea = area;
+    public void setMaxPixelArea(int zone, double area) {
+    	this.maxZonePixelArea[zone] = area;
     }
     
     public Pixel getPixel(int u, int v, int w) {
@@ -132,8 +133,31 @@ public class Pixels {
     	return getPixel(pixel).area;
     }
     
+    public int getZone(int pixel) {
+        return getPixel(pixel).zone;
+    }
+    
+    public void findMaxPixelArea(Pixel pixel) {
+        double a = pixel.getArea();
+        int    z = pixel.getZone();
+        if(a>maxZonePixelArea[z]) maxZonePixelArea[z]=a;    
+        if(a>maxPixelArea) maxPixelArea=a;
+    }
+    
+    public double getMaxZonePixelArea(int pixel){
+        return maxZonePixelArea[getZone(pixel)];
+    }
+    
+    public double getZoneNormalizedArea(int pixel) {
+    	return getArea(pixel)/getMaxZonePixelArea(pixel);
+    }
+    
+    public double getMaxPixelArea(int pixel){
+        return maxPixelArea;
+    }
+    
     public double getNormalizedArea(int pixel) {
-    	return getArea(pixel)/maxPixelArea;
+        return getArea(pixel)/getMaxPixelArea(pixel);
     }
     
     public int[] getStrips(int pixel) {

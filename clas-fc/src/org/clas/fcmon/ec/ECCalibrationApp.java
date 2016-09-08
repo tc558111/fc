@@ -114,7 +114,7 @@ public class ECCalibrationApp extends FCApplication implements CalibrationConsta
             this.is1=is1;
             this.is2=is2;
             
-            calib = new CalibrationConstants(3,"A/F:Aerr/F:B/F:Berr/F:C/F:Cerr:F");
+            calib = new CalibrationConstants(3,"A/F:Aerr/F:B/F:Berr/F:C/F:Cerr/F");
             calib.setName("/calibration/ec/atten");
             calib.setPrecision(3);
             int kk=0;
@@ -171,7 +171,7 @@ public class ECCalibrationApp extends FCApplication implements CalibrationConsta
             for (int is=is1 ; is<is2 ; is++) {
                for (int il=il1 ; il<il2 ; il++) { 
                   //Extract raw arrays for error bar calculation
-                  float  cnts[] = ecPix[idet].pixels.hmap1.get("H1_a_Maps").get(is,7,0).getData();                
+                  float  cnts[] = ecPix[idet].pixels.hmap1.get("H1_a_Maps").get(is,il,4).getData();                
                   float   adc[] = ecPix[idet].pixels.hmap1.get("H1_a_Maps").get(is,il,1).getData();
                   float adcsq[] = ecPix[idet].pixels.hmap1.get("H1_a_Maps").get(is,il,3).getData();
                   doCalibration = false;
@@ -195,7 +195,7 @@ public class ECCalibrationApp extends FCApplication implements CalibrationConsta
                       
                   for (int ip=0 ; ip<ecPix[idet].ec_nstr[il-1] ; ip++) {
                      if (doCalibration) {
-                        fits = new CalibrationData(is+idet*10,il,ip);
+                        fits = new CalibrationData(is+idet*10,il,ip+1);
                         fits.getDescriptor().setType(DetectorType.EC);
                         fits.addGraph(ecPix[idet].strips.getpixels(il,ip+1,cnts),
                                       ecPix[idet].strips.getpixels(il,ip+1,distmap),
@@ -204,9 +204,9 @@ public class ECCalibrationApp extends FCApplication implements CalibrationConsta
                                       ecPix[idet].strips.getpixels(il,ip+1,status));
                         fits.analyze();
                         calib.addEntry(is, il+idet*3, ip+1);
-                        calib.setDoubleValue(fits.getFunc(0).parameter(0).value(), "A", is, il+idet*3, ip+1);
-                        calib.setDoubleValue(fits.getFunc(0).parameter(1).value(), "B", is, il+idet*3, ip+1);
-                        calib.setDoubleValue(fits.getFunc(0).parameter(2).value(), "C", is, il+idet*3, ip+1);
+                        calib.setDoubleValue(fits.getFunc(0).parameter(0).value(), "A",    is, il+idet*3, ip+1);
+                        calib.setDoubleValue(fits.getFunc(0).parameter(1).value(), "B",    is, il+idet*3, ip+1);
+                        calib.setDoubleValue(fits.getFunc(0).parameter(2).value(), "C",    is, il+idet*3, ip+1);
                         calib.setDoubleValue(fits.getFunc(0).parameter(0).error(), "Aerr", is, il+idet*3, ip+1);
                         calib.setDoubleValue(fits.getFunc(0).parameter(1).error(), "Berr", is, il+idet*3, ip+1);
                         calib.setDoubleValue(fits.getFunc(0).parameter(2).error(), "Cerr", is, il+idet*3, ip+1);
@@ -239,15 +239,16 @@ public class ECCalibrationApp extends FCApplication implements CalibrationConsta
         }    
               
         @Override
-        public void drawPlots(int is, int il, int ic, EmbeddedCanvas cl, EmbeddedCanvas cr) {
+        public void drawPlots(int is, int layer, int ic, EmbeddedCanvas cl, EmbeddedCanvas cr) {
             
             DetectorCollection<CalibrationData> fit = ecPix[ilmap].collection;
             DatabaseConstantProvider ccdb = (DatabaseConstantProvider) mon.getGlob().get("ccdb");
             DetectorCollection<H2F>  dc2a = ecPix[ilmap].strips.hmap2.get("H2_a_Hist");    
             
             Boolean   isPix = false;
-            Boolean   isStr = true;
+            Boolean   isStr = false;
             H1F      pixADC = null;
+            int          il = 0;
             int    pixStrip = 0;
             int        nstr = ecPix[0].ec_nstr[0];
             int   inProcess =     (int) mon.getGlob().get("inProcess");
@@ -273,9 +274,10 @@ public class ECCalibrationApp extends FCApplication implements CalibrationConsta
                     {" U Inner PMT "," V Inner PMT "," W Inner PMT "},
                     {" U Outer PMT "," V Outer PMT "," W Outer PMT "}};
                       
-            layer = il ; 
             isPix = layer > 10;
-            isStr = layer <  7;            
+            isStr = layer <  7;  
+            il    = layer;
+            pixStrip = ic+1;
             
             if (isStr) cl.divide(1,1);
             if (isPix) cl.divide(1,2);
@@ -283,39 +285,34 @@ public class ECCalibrationApp extends FCApplication implements CalibrationConsta
                             
             if (isPix) {
                float meanmap[] = (float[]) ecPix[ilmap].Lmap_a.get(is, layer, 0).get(1);
-               xpix[0] = ecPix[ilmap].pixels.getDist(layer-10, ic+1);
+               il = layer-10;
+               xpix[0] = ecPix[ilmap].pixels.getDist(il, ic+1);
                ypix[0] = meanmap[ic];
                xerr[0] = 0.;
                yerr[0] = 0.;
-               pixStrip = ecPix[ilmap].pixels.getStrip(layer-10,ic+1);
-                 pixADC = dc2a.get(is,layer-10,2).sliceY(ic) ;
+               pixStrip = ecPix[ilmap].pixels.getStrip(il,ic+1);
+                 pixADC = dc2a.get(is,il,2).sliceY(ic) ; pixADC.setFillColor(2);
             }
               
             if (isStr||isPix) {
                if (inProcess>0) {
-                  if (isPix) {layer=layer-10; lay=layer;int component = ecPix[ilmap].pixels.getStrip(lay,ic+1); ic=component-1;}
-                     nstr = ecPix[ilmap].ec_nstr[layer-1];
-                     if (inProcess==1)  {analyze(ilmap,is,is+1,layer,layer+1);}
-                     if (fit.hasEntry(is+ilmap*10, layer, ic)) {
+                     nstr = ecPix[ilmap].ec_nstr[il-1];
+                     if (inProcess==1)  {analyze(ilmap,is,is+1,il,il+1);}
+                     if (fit.hasEntry(is+ilmap*10, il, pixStrip)) {
                                           
                      for (int ip=0; ip<nstr ; ip++) {
-                        double gain  = fit.get(is+ilmap*10,layer,ip).getFunc(0).parameter(0).value();
-                        double gaine = fit.get(is+ilmap*10,layer,ip).getFunc(0).parameter(0).error();    
-                        double att   = fit.get(is+ilmap*10,layer,ip).getFunc(0).parameter(1).value();
-                        double atte  = fit.get(is+ilmap*10,layer,ip).getFunc(0).parameter(1).error();
-                        double chi2  = fit.get(is+ilmap*10,layer,ip).getChi2(0);
-                        int index = ECCommon.getCalibrationIndex(is,layer+ilmap*3,ip+1);
+                        double gain  = fit.get(is+ilmap*10,il,ip+1).getFunc(0).parameter(0).value();
+                        double gaine = fit.get(is+ilmap*10,il,ip+1).getFunc(0).parameter(0).error();    
+                        double att   = fit.get(is+ilmap*10,il,ip+1).getFunc(0).parameter(1).value();
+                        double atte  = fit.get(is+ilmap*10,il,ip+1).getFunc(0).parameter(1).error();
+                        double chi2  = fit.get(is+ilmap*10,il,ip+1).getChi2(0);
+                        int index = ECCommon.getCalibrationIndex(is,il+ilmap*3,ip+1);
                         double attdb = ccdb.getDouble("/calibration/ec/attenuation/B",index);
-//                        if (att!=0) att=-1./att; else att=0 ; 
-//                           atte = att*att*atte;
                            xp[ip] = ip+1 ;     xpe[ip] = 0.; 
                         vgain[ip] = gain ;  vgaine[ip] = gaine;
                          vatt[ip] = att  ;   vatte[ip] = atte;
                        vattdb[ip] = attdb; vattdbe[ip] = 0.;
                         vchi2[ip] = Math.min(4, chi2) ; vchi2e[ip]=0.;   
-//                        calib.addEntry(is, layer+ilmap*3, ip+1);
-//                        calib.setDoubleValue(gain, "A", is, layer+ilmap*3, ip+1);
-//                        calib.setDoubleValue(att,  "B", is, layer+ilmap*3, ip+1);
                      }
                       
                      GraphErrors   gainGraph = new GraphErrors("gain",xp,vgain,xpe,vgaine);
@@ -349,32 +346,34 @@ public class ECCalibrationApp extends FCApplication implements CalibrationConsta
                       pixGraph.getAttributes().setMarkerSize(3);    
                       pixGraph.getAttributes().setMarkerColor(2); 
                        
-                     gainGraph.getAttributes().setTitleX(otab[ilmap][lay-1]) ;  
+                     gainGraph.getAttributes().setTitleX(otab[ilmap][il-1]) ;  
                      gainGraph.getAttributes().setTitleY("PMT GAIN")  ; 
                      gainGraph.getAttributes().setTitle(" ");
-                    attdbGraph.getAttributes().setTitleX(otab[ilmap][lay-1]) ; 
+                    attdbGraph.getAttributes().setTitleX(otab[ilmap][il-1]) ; 
                     attdbGraph.getAttributes().setTitleY("ATTENUATION (CM)") ; 
                     attdbGraph.getAttributes().setTitle(" ");
-                     chi2Graph.getAttributes().setTitleX(otab[ilmap][lay-1]) ;  
+                     chi2Graph.getAttributes().setTitleX(otab[ilmap][il-1]) ;  
                      chi2Graph.getAttributes().setTitleY("REDUCED CHI^2"); 
                      chi2Graph.getAttributes().setTitle(" ");
                       
                      F1D f1 = new F1D("p0","[a]",0,nstr+1); f1.setParameter(0,mip[ilmap]); f1.setLineWidth(1);
-                                      
+                               
                      double ymax=200; if(!inMC) ymax=350;
-                     cl.cd(0);cl.getPad(0).getAxisX().setRange(0.,400.);cl.getPad(0).getAxisY().setRange(0.,ymax);
-                     cl.draw(fit.get(is+ilmap*10,layer,ic).getRawGraph(0));                 
-                     if(fit.get(is+ilmap*10,layer,ic).getFitGraph(0).getDataSize(0)>0) 
-                     cl.draw(fit.get(is+ilmap*10,layer,ic).getFitGraph(0),"same");                             
-                     cl.draw(fit.get(is+ilmap*10,layer,ic).getFunc(0),"same");
-                     cl.draw(pixGraph,"same");
-                     
-                     if (isPix) {                                              
-                        pixADC.setTitleX("Sector "+is+otab[ilmap][lay-1]+pixStrip+" Pixel "+(ic+1)+" ADC");
-                        cl.cd(1); pixADC.setOptStat(Integer.parseInt("110")); pixADC.setTitle(""); cl.draw(pixADC);
+                     cl.cd(0);
+                     cl.getPad(0).getAxisX().setRange(0.,400.);cl.getPad(0).getAxisY().setRange(0.,ymax); 
+                     cl.getPad(0).setTitle("Sector "+is+otab[ilmap][il-1]+pixStrip+" - Fit to pixels");
+                     cl.draw(fit.get(is+ilmap*10,il,pixStrip).getRawGraph(0));                 
+                     if(fit.get(is+ilmap*10,il,pixStrip).getFitGraph(0).getDataSize(0)>0) 
+                     cl.draw(fit.get(is+ilmap*10,il,pixStrip).getFitGraph(0),"same");                      
+                     cl.draw(fit.get(is+ilmap*10,il,pixStrip).getFunc(0),"same");
+
+                     if (isPix) {                                 
+                         cl.draw(pixGraph,"same");                     
+                         pixADC.setTitleX("Sector "+is+otab[ilmap][il-1]+pixStrip+" Pixel "+(ic+1)+" ADC");
+                         cl.cd(1); pixADC.setOptStat(Integer.parseInt("110")); pixADC.setTitle(""); cl.draw(pixADC);
                      }
                       
-                     double xmax = ecPix[ilmap].ec_nstr[layer-1]+1;
+                     double xmax = ecPix[ilmap].ec_nstr[il-1]+1;
                      cr.cd(0); cr.getPad(0).getAxisX().setRange(0.,xmax);cr.getPad(0).getAxisY().setRange(0.,4.);
                      cr.draw(chi2Graph) ; 
                      cr.cd(1); cr.getPad(1).getAxisX().setRange(0.,xmax);cr.getPad(1).getAxisY().setRange(0.,ymax);

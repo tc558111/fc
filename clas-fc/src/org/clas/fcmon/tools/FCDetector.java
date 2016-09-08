@@ -102,21 +102,14 @@ public class FCDetector {
         ic    = dd.getComponent();   
                 
         panel = omap;
-//        io    = ilmap+1;
-//        if (ilmap==0) of = (io-1)*3;
-        of    = 0;
         lay   = 0;
         opt   = 0;
-        io    = 1;
         
         if (panel==1) opt = 1;
-        if (layer<4)  lay = layer+of;
-        if (layer==4) lay = layer+2+io;
-        if (panel==9) lay = panel+io-1;
-        if (panel>10) lay = panel+of;
-        
-        l1 = of+1;
-        l2 = of+4;  
+        if (layer<4)  lay = layer;
+        if (layer==4) lay = 7;
+        if (panel==9) lay = panel;
+        if (panel>10) lay = panel; 
     } 
     
     public void addButtons(String group, String store, String arg) {
@@ -213,6 +206,7 @@ public class FCDetector {
         if (z==0) return 0;
         
         PCMon_zmax = rmax*1.2; mon.getGlob().put("PCMon_zmax", PCMon_zmax);
+
         if (inProcess==0)  color=(double)(z-rmin)/(rmax-rmin);
         double pixMin = app.displayControl.pixMin ; double pixMax = app.displayControl.pixMax;
         if (inProcess!=0) {

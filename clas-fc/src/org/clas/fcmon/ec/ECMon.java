@@ -46,11 +46,11 @@ public class ECMon extends DetectorMonitor {
     DatabaseConstantProvider   ccdb = null;
    
     public boolean             inMC = true; //true=MC false=DATA
-    public boolean            inCRT = true; //true=CRT preinstallation CRT data
-    public int            inProcess = 0;     //0=init 1=processing 2=end-of-run 3=post-run
+    public boolean            inCRT = false; //true=CRT preinstallation CRT data
+    public int            inProcess = 0;    //0=init 1=processing 2=end-of-run 3=post-run
     int                       detID = 0;
-    int                         is1 = 1 ;
-    int                         is2 = 4 ;  
+    int                         is1 = 2 ;
+    int                         is2 = 3 ;  
     int    nsa,nsb,tet,p1,p2,pedref = 0;
     double               PCMon_zmin = 0;
     double               PCMon_zmax = 0;
@@ -118,7 +118,7 @@ public class ECMon extends DetectorMonitor {
         ecAdc = new ECAdcApp("ADC",ecPix);        
         ecAdc.setMonitoringClass(this);
         ecAdc.setApplicationClass(app);     
-        
+               
         ecTdc = new ECTdcApp("TDC",ecPix);        
         ecTdc.setMonitoringClass(this);
         ecTdc.setApplicationClass(app); 

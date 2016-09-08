@@ -28,6 +28,7 @@ import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
 //import org.root.histogram.H1F;
 //import org.root.histogram.H2F;
+import org.jlab.groot.graphics.EmbeddedCanvas;
 
 import math.geom2d.polygon.Polygons2D;
 import math.geom2d.polygon.SimplePolygon2D;
@@ -91,6 +92,7 @@ public class ECPixels {
 	  pixdef();
       pixrot();
       System.out.println("ECPixels("+det+") is done");
+//      pixHistos();
 //    this.writeFPGALookupTable("/Users/colesmith/pcal_att376_DB.dat",376.,1); 
 //    this.testStrips();
 //    this.testPixels();
@@ -104,7 +106,7 @@ public class ECPixels {
 	}
 	
 	public static void main(String[] args) {
-		ECPixels pix = new ECPixels("PCAL");
+		ECPixels pix = new ECPixels("PCAL");		
 	}
 	
 	public void init() {
@@ -159,7 +161,6 @@ public class ECPixels {
 	            		double vDist = calDB.getVPixelDistance(uStrip, vStrip, wStrip);
 	            		double wDist = calDB.getWPixelDistance(uStrip, vStrip, wStrip);
 	            		shape.setColor(130,(int)(255*vStrip/ec_nstr[1]),(int)(255*wStrip/ec_nstr[2]));	            		
-	            		ec_cmap[pix-1] = 255*pix/6916;
 	            		ec_zmap[pix-1] = 1;
 	            		ec_nvrt[pix-1] = shape.getShapePath().size();
                         pixel = new Pixel();
@@ -176,20 +177,48 @@ public class ECPixels {
 	            	    strips.addPixDist(sector, 1, uStrip+1, (int) (uDist*100));
 	            		strips.addPixDist(sector, 2, vStrip+1, (int) (vDist*100));
 	            		strips.addPixDist(sector, 3, wStrip+1, (int) (wDist*100));
-		        		if (pol1.area()>maxPixArea) maxPixArea = pol1.area();
 	            	}
 	            }
     		}
     	}
-    	// Sort pixels in each strip according to distance from edge
+    	// Sort pixels in each strip according to distance from readout edge
     	for (int lay=0; lay<3 ; lay++ ){
     		System.out.println("ECPixels: Sorting pixels in layer "+lay);
     		for(int strip = 0; strip < ec_nstr[lay]; strip++) {
     			strips.getSortedPixels(0, lay+1, strip+1);
     		}
     	}   	
-    	pixels.setMaxPixelArea(maxPixArea);
     	}
+	}
+	
+	public void pixHistos() {
+	    
+        JFrame frame = new JFrame("pixHistos");
+        EmbeddedCanvas canvas = new EmbeddedCanvas();
+        int ic;
+
+        frame.setSize(800,500);
+        canvas.divide(2, 2);
+        
+	    H1F h[] = new H1F[4];
+	    for (int i=0; i<4 ; i++) h[i] = new H1F("Pix Area Zone "+i, 50,0.,1.1);
+	    
+        for (int ipix=0; ipix<pixels.getNumPixels(); ipix++) {
+            h[pixels.getZone(ipix+1)].fill(pixels.getZoneNormalizedArea(ipix+1));
+            int str[] = pixels.getStrips(ipix+1);
+            System.out.println("ipix= "+(ipix+1)+" zone= "+pixels.getZone(ipix+1));
+            System.out.println("U="+str[0]+" V="+str[1]+" W="+str[2]);
+            System.out.println("Normalized Area= "+pixels.getZoneNormalizedArea(ipix+1) );
+            System.out.println("Pixel number= "+pixels.getPixelNumber(str[0],str[1],str[2]));
+            System.out.println(" ");
+        }
+        
+        for (ic=0; ic<4; ic++) {canvas.cd(ic); canvas.draw(h[ic]);}
+
+        frame.add(canvas);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+        
 	}
 	
     public void initHistograms(String hipoFile) {
@@ -210,56 +239,63 @@ public class ECPixels {
         DetectorCollection<H1F> H1_Pixa_Sevd  = new DetectorCollection<H1F>();
         DetectorCollection<H1F> H1_Pixt_Sevd  = new DetectorCollection<H1F>();
         
+        String id;
         int nstr = ec_nstr[0]            ; double nend = nstr+1;  
         int npix = pixels.getNumPixels() ; double pend = npix+1;
         
         for (int is=1; is<7 ; is++) {           
-            for (int il=1 ; il<4 ; il++){               
-                // Occupancy Histos
-                String id="s"+Integer.toString(is)+"_l"+Integer.toString(il)+"_c";
-                H2_a_Hist.add(is, il, 0, new H2F("a_raw_"+id+0, 120,   0., 250., nstr, 1., nend));
-                H2_a_Hist.add(is, il, 1, new H2F("b_pix_"+id+1, 120,   0., 250., nstr, 1., nend));
-                H2_a_Hist.add(is, il, 2, new H2F("c_pix_"+id+2,  25,   0., 250., npix, 1., pend));
+            // Strip based data  
+            for (int il=1 ; il<4 ; il++){                
+                // Occupancy  
+                id="s"+Integer.toString(is)+"_l"+Integer.toString(il)+"_c";
+                H2_a_Hist.add(is, il, 0, new H2F("a_raw_"+id+0, 125,   0., 250., nstr, 1., nend));
+                H2_a_Hist.add(is, il, 1, new H2F("b_pix_"+id+1, 125,   0., 250., nstr, 1., nend));
                 H2_t_Hist.add(is, il, 0, new H2F("a_raw_"+id+0, 100,1300.,1420., nstr, 1., nend));
                 H2_t_Hist.add(is, il, 1, new H2F("b_pix_"+id+1, 100,1300.,1420., nstr, 1., nend));
-                H2_t_Hist.add(is, il, 2, new H2F("c_pix_"+id+2,  40,1300.,1420., npix, 1., pend));
-                // Pedestal Noise Histos
+                // Pedestal Noise  
                 H2_Peds_Hist.add(is, il, 0, new H2F("a_ped_"+id+0,  20, -10.,  10., nstr, 1., nend)); 
-                // Mode1 Histos
+                // Mode1  
                 H2_Mode1_Hist.add(is, il, 0, new H2F("a_fadc_"+id+0,100,   0., 100.,  nstr, 1., nend));
-                // Layer Maps
-                H1_a_Maps.add(is, il, 0, new H1F("a_adcpix_" +id+0, npix, 1., pend));
-                H1_a_Maps.add(is, il, 1, new H1F("b_pixa_"   +id+1, npix, 1., pend));
-                H1_a_Maps.add(is, il, 2, new H1F("c_adcpix2_"+id+2, npix, 1., pend));
-                H1_a_Maps.add(is, il, 3, new H1F("d_pixa2_"  +id+3, npix, 1., pend));
-                H1_t_Maps.add(is, il, 0, new H1F("a_tdcpix_" +id+0, npix, 1., pend)); 
-                H1_t_Maps.add(is, il, 1, new H1F("b_pixt_"   +id+1, npix, 1., pend)); 
                 // Single Event Strip Occupancy
-                H1_Stra_Sevd.add(is, il, 0, new H1F("a_str_"+id+0, nstr,  1., nend));
-                H1_Strt_Sevd.add(is, il, 0, new H1F("a_str_"+id+0, nstr,  1., nend));
+                H1_Stra_Sevd.add(is, il, 0, new H1F("a_sed_str_"+id+0, nstr,  1., nend));
+                H1_Strt_Sevd.add(is, il, 0, new H1F("a_sed_str_"+id+0, nstr,  1., nend));
                 // Single Event fADC bins
                 H2_Mode1_Sevd.add(is, il, 0, new H2F("a_sed_fadc_"+id+0,100, 0., 100., nstr, 1., nend));
                 H2_Mode1_Sevd.add(is, il, 1, new H2F("b_sed_fadc_"+id+1,100, 0., 100., nstr, 1., nend));
             }
+            //Pixel based data
+            for (int il=1; il<4 ; il++) { 
+                // Occupancy 
+                id="s"+Integer.toString(is)+"_l"+Integer.toString(il)+"_c";
+                H2_a_Hist.add(is, il, 2, new H2F("c_pix_"+id+2,  25,   0., 250., npix, 1., pend));
+                H2_t_Hist.add(is, il, 2, new H2F("c_pix_"+id+2,  40,1300.,1420., npix, 1., pend));
+                // Layer Maps
+                H1_a_Maps.add(is, il, 0, new H1F("a_apix_"   +id+0, npix, 1., pend)); //adc weighted pixel
+                H1_a_Maps.add(is, il, 1, new H1F("b_napix_"  +id+1, npix, 1., pend)); //normalized adc weighted pixel
+                H1_a_Maps.add(is, il, 2, new H1F("c_apix2_"  +id+2, npix, 1., pend)); //adc^2 weighted pixel
+                H1_a_Maps.add(is, il, 3, new H1F("d_napix2_" +id+3, npix, 1., pend)); //normalized adc^2 weighted pixel
+                H1_a_Maps.add(is, il, 4, new H1F("e_epix_"   +id+4, npix, 1., pend)); //event weighted pixel
+                H1_t_Maps.add(is, il, 0, new H1F("a_tdcpix_" +id+0, npix, 1., pend)); 
+                H1_t_Maps.add(is, il, 1, new H1F("b_pixt_"   +id+1, npix, 1., pend));                  
+            }
             for (int il=1 ; il<3 ; il++) {
                 // Single Event Pixel Occupancy
-                String id="s"+Integer.toString(is)+"_l"+Integer.toString(il)+"_c";
+                id="s"+Integer.toString(is)+"_l"+Integer.toString(il)+"_c";
                 H1_Pixa_Sevd.add(is, il, 0, new H1F("a_pix_"+id+0, npix,  1., pend));
                 H1_Pixt_Sevd.add(is, il, 0, new H1F("a_pix_"+id+0, npix,  1., pend));
-            }
-            for (int il=7 ; il<9 ; il++){
+            }           
                 // Non-layer Pixel Maps
-                String id="s"+Integer.toString(is)+"_l"+Integer.toString(il)+"_c";
-                H1_a_Maps.add(is, il, 0, new H1F("a_evtpixa_" +id+0, npix, 1., pend)); // pixel event
-                H1_a_Maps.add(is, il, 1, new H1F("b_pixasum_" +id+1, npix, 1., pend)); // pixel adc U+V+W
-                H1_a_Maps.add(is, il, 2, new H1F("c_pixas_"   +id+2, npix, 1., pend)); // pixel adc^2 U+V+W
-                H1_a_Maps.add(is, il, 3, new H1F("d_nevtpixa_"+id+3, npix, 1., pend)); // pixel event normalized
-                H1_t_Maps.add(is, il, 0, new H1F("a_evtpixt_" +id+0, npix, 1., pend));    
-                H1_t_Maps.add(is, il, 1, new H1F("b_pixtsum_" +id+1, npix, 1., pend));    
-                H1_t_Maps.add(is, il, 2, new H1F("c_pixat_"   +id+2, npix, 1., pend));
-                H1_t_Maps.add(is, il, 3, new H1F("d_nevtpixt_"+id+3, npix, 1., pend));    
-            }            
-                String id="s"+Integer.toString(is)+"_l"+Integer.toString(0)+"_c";
+                id="s"+Integer.toString(is)+"_l"+Integer.toString(7)+"_c";
+                H1_a_Maps.add(is, 7, 0, new H1F("a_epix_"    +id+0, npix, 1., pend)); // event weighted pixel
+                H1_a_Maps.add(is, 7, 1, new H1F("b_asumpix_" +id+1, npix, 1., pend)); // adc   U+V+W weighted pixel
+                H1_a_Maps.add(is, 7, 2, new H1F("c_nsumpix_" +id+2, npix, 1., pend)); // adc   U+V+W weighted normalized pixel
+                H1_a_Maps.add(is, 7, 3, new H1F("d_nepix_"   +id+3, npix, 1., pend)); // event weighted normalized pixel
+                H1_t_Maps.add(is, 7, 0, new H1F("a_epix_"    +id+0, npix, 1., pend));    
+                H1_t_Maps.add(is, 7, 1, new H1F("b_tsumpix_" +id+1, npix, 1., pend));    
+                H1_t_Maps.add(is, 7, 2, new H1F("c_nsumpix_" +id+2, npix, 1., pend));  
+                H1_t_Maps.add(is, 7, 3, new H1F("d_nepix_"   +id+3, npix, 1., pend));    
+                        
+                id="s"+Integer.toString(is)+"_l"+Integer.toString(0)+"_c";
                 H2_PC_Stat.add(is, 0, 0, new H2F("a_evt_"+id+0, nstr, 1., nend,  3, 1., 4.));              
                 H2_PC_Stat.add(is, 0, 1, new H2F("b_adc_"+id+1, nstr, 1., nend,  3, 1., 4.));              
                 H2_PC_Stat.add(is, 0, 2, new H2F("c_tdc_"+id+2, nstr, 1., nend,  3, 1., 4.));                       
@@ -308,6 +344,7 @@ public class ECPixels {
 			}
 		    // Rotate pixels	   		    	   
 			for (int ipix=0; ipix<pixels.getNumPixels(); ipix++) {
+                ec_cmap[ipix] = 255*ipix/pixels.getNumPixels();
 				for (int k=0;k<ec_nvrt[ipix];k++) {
 					ec_xpix[k][ipix][is]= -(ec_xpix[k][ipix][6]*ct+ec_ypix[k][ipix][6]*st); 
 					ec_ypix[k][ipix][is]=  -ec_xpix[k][ipix][6]*st+ec_ypix[k][ipix][6]*ct;

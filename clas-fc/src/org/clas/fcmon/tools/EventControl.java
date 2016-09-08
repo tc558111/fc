@@ -224,6 +224,7 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
             buttonStop.setEnabled(false);
             buttonNext.setEnabled(true);
             buttonPrev.setEnabled(true);
+            //monitoringClass.analyze(2);
         }
         
         

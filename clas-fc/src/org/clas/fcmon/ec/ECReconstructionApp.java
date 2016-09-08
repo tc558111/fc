@@ -220,13 +220,13 @@ public class ECReconstructionApp extends FCApplication {
       
       for (int idet=0; idet<detlen; idet++) {
           
-          if(event.hasBank(det[idet]+"::true")==true || inCRT==false) {
+          fac = (inCRT==true) ? 6:1;
+          
+          if(event.hasBank(det[idet]+"::true")==true) {
               EvioDataBank bank = (EvioDataBank) event.getBank(det[idet]+"::true");
               for(int i=0; i < bank.rows(); i++) mc_t = bank.getDouble("avgT",i);
-              fac = 1;
-          } else {
-              mc_t = 0;
-              fac  = 6;
+          }else{
+              mc_t = 0.;
           }
           
           inMC = true; mon.putGlob("inMC",true); 
@@ -247,8 +247,9 @@ public class ECReconstructionApp extends FCApplication {
                       adc = bank.getInt("ADC",i)/fac;
                      tdcc = bank.getInt("TDC",i);
                      tdcf = tdcc;
-                  if (ic>1&&idet==1) idet=idet+1;
-                  //System.out.println("Sector "+is+" Stack "+ic+" View "+il+" Strip "+ip+" Det "+idet+" ADC "+adc);
+                  if (idet>0&&ic==1) idet=1;
+                  if (idet>0&&ic==2) idet=2;
+//                  System.out.println("Sector "+is+" Stack "+ic+" View "+il+" Strip "+ip+" Det "+idet+" ADC "+adc);
                   goodstrip= true;
                   if(inCRT&&il==2&&ip==53) goodstrip=false;
                   tdc = (((float)tdcc-(float)mc_t*1000)-tdcmax+1340000)/1000; 
@@ -445,13 +446,14 @@ public class ECReconstructionApp extends FCApplication {
 
                    for (int il=1; il<4 ; il++){
                        double adcc = ecPix[idet].adcr[is][il-1][0]/pixelLength[pixel-1];
-//                       if (good_pix[il-1]) {
+                       if (good_pix[il-1]) {
+                         ecPix[idet].pixels.hmap1.get("H1_a_Maps").get(is+1,il,4).fill(pixel,1.0); // Events per pixel
                          ecPix[idet].strips.hmap2.get("H2_a_Hist").get(is+1,il,1).fill(adcc,ecPix[idet].strra[is][il-1][0],1.0) ;
                          ecPix[idet].strips.hmap2.get("H2_a_Hist").get(is+1,il,2).fill(adcc,pixel,1.0);                        
                          ecPix[idet].pixels.hmap1.get("H1_a_Maps").get(is+1,7,1).fill(pixel,adcc);
                          ecPix[idet].pixels.hmap1.get("H1_a_Maps").get(is+1,il,0).fill(pixel,adcc);
                          ecPix[idet].pixels.hmap1.get("H1_a_Maps").get(is+1,il,2).fill(pixel,Math.pow(adcc,2));
-//                       }
+                       }
                    }
                }  
                
@@ -500,22 +502,21 @@ public class ECReconstructionApp extends FCApplication {
          
         for (int is=1;is<7;is++) {
            for (int il=1 ; il<4 ; il++) {
-               divide(H1_a_Maps.get(is,il,0),H1_a_Maps.get(is,7,0),H1_a_Maps.get(is,il,1)); //Normalize Raw View Energy Sum to Events
-               divide(H1_t_Maps.get(is,il,0),H1_t_Maps.get(is,7,0),H1_t_Maps.get(is,il,1)); //Normalize Raw View Timing Sum to Events
-               divide(H1_a_Maps.get(is,il,2),H1_a_Maps.get(is,7,0),H1_a_Maps.get(is,il,3)); //Normalize Raw ADC^2 Sum to Events
+               divide(H1_a_Maps.get(is,il,0),H1_a_Maps.get(is,il,4),H1_a_Maps.get(is,il,1)); //Normalize Raw View ADC   to Events
+               divide(H1_a_Maps.get(is,il,2),H1_a_Maps.get(is,il,4),H1_a_Maps.get(is,il,3)); //Normalize Raw View ADC^2 to Events
+               divide(H1_t_Maps.get(is,il,0),H1_t_Maps.get(is,il,0),H1_t_Maps.get(is,il,1)); //Normalize Raw View TDC   to Events
                ecPix[idet].Lmap_a.add(is,il,   0, toTreeMap(H2_a_Hist.get(is,il,0).projectionY().getData()));  //Strip View ADC  
                ecPix[idet].Lmap_a.add(is,il+10,0, toTreeMap(H1_a_Maps.get(is,il,1).getData()));                //Pixel View ADC 
                ecPix[idet].Lmap_t.add(is,il,   0, toTreeMap(H2_t_Hist.get(is,il,0).projectionY().getData()));  //Strip View TDC  
                ecPix[idet].Lmap_t.add(is,il,   1, toTreeMap(H1_t_Maps.get(is,il,1).getData()));                //Pixel View TDC  
-           }           
-           for (int il=7; il<9; il++) {    
-               divide(H1_a_Maps.get(is, il, 1),H1_a_Maps.get(is, il, 0),H1_a_Maps.get(is, il, 2)); // Normalize Raw Energy Sum to Events
-               divide(H1_t_Maps.get(is, il, 1),H1_t_Maps.get(is, il, 0),H1_t_Maps.get(is, il, 2)); // Normalize Raw Timing Sum to Events
            }
+           
+           divide(H1_a_Maps.get(is, 7, 1),H1_a_Maps.get(is, 7, 0),H1_a_Maps.get(is, 7, 2)); // Normalize Raw ADC Sum to Events
+           divide(H1_t_Maps.get(is, 7, 1),H1_t_Maps.get(is, 7, 0),H1_t_Maps.get(is, 7, 2)); // Normalize Raw TDC Sum to Events 
            ecPix[idet].Lmap_a.add(is, 7,0, toTreeMap(H1_a_Maps.get(is,7,0).getData())); //Pixel Events  
-           ecPix[idet].Lmap_a.add(is, 9,0, toTreeMap(H1_a_Maps.get(is,7,2).getData())); //Pixel U+V+W Energy     
-           ecPix[idet].Lmap_t.add(is, 7,2, toTreeMap(H1_t_Maps.get(is,7,2).getData())); //Pixel U+V+W Time  
            ecPix[idet].Lmap_a.add(is, 7,1, toTreeMap(H1_a_Maps.get(is,7,3).getData())); //Pixel Events Normalized  
+           ecPix[idet].Lmap_a.add(is, 9,0, toTreeMap(H1_a_Maps.get(is,7,2).getData())); //Pixel U+V+W ADC     
+           ecPix[idet].Lmap_t.add(is, 7,2, toTreeMap(H1_t_Maps.get(is,7,2).getData())); //Pixel U+V+W TDC  
            if (app.isSingleEvent()){
                for (int il=1 ; il<4 ; il++) ecPix[idet].Lmap_a.add(is,il,0,   toTreeMap(H1_Stra_Sevd.get(is,il,0).getData())); 
                for (int il=1 ; il<2 ; il++) ecPix[idet].Lmap_a.add(is,il+6,0, toTreeMap(H1_Pixa_Sevd.get(is,il,0).getData())); 

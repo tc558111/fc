@@ -20,6 +20,7 @@ import org.jlab.clas.detector.DetectorDescriptor;
 import org.jlab.clas.detector.DetectorType;
 import org.jlab.clas12.calib.DetectorShape2D;
 import org.jlab.clasrec.utils.DataBaseLoader;
+import org.jlab.data.graph.PaveText;
 import org.jlab.geom.detector.ec.ECDetector;
 import org.jlab.geom.detector.ec.ECFactory;
 import org.jlab.geom.detector.ec.ECLayer;
@@ -92,7 +93,7 @@ public class ECPixels {
 	  pixdef();
       pixrot();
       System.out.println("ECPixels("+det+") is done");
-//      pixHistos();
+      pixHistos();
 //    this.writeFPGALookupTable("/Users/colesmith/pcal_att376_DB.dat",376.,1); 
 //    this.testStrips();
 //    this.testPixels();
@@ -201,6 +202,7 @@ public class ECPixels {
         canvas.divide(2, 2);
         
 	    H1F h[] = new H1F[4];
+        PaveText label[] = new PaveText[4];
 	    for (int i=0; i<4 ; i++) h[i] = new H1F("Pix Area Zone "+i, 50,0.,1.1);
 	    
         for (int ipix=0; ipix<pixels.getNumPixels(); ipix++) {
@@ -212,9 +214,11 @@ public class ECPixels {
             System.out.println("Pixel number= "+pixels.getPixelNumber(str[0],str[1],str[2]));
             System.out.println(" ");
         }
-        
-        for (ic=0; ic<4; ic++) {canvas.cd(ic); canvas.draw(h[ic]);}
-
+        for (ic=0; ic<4; ic++) {h[ic].setOptStat(Integer.parseInt("1"));
+          String val=String.format("Max Area: %1$.3f",pixels.maxZonePixelArea[ic]);
+          h[ic].setName(String.format("Max Area: %1$.2f cm2",pixels.maxZonePixelArea[ic]));
+          canvas.cd(ic); canvas.draw(h[ic]);
+        }
         frame.add(canvas);
         frame.setLocationRelativeTo(null);
         frame.setVisible(true);

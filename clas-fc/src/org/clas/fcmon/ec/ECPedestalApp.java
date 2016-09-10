@@ -43,7 +43,7 @@ public class ECPedestalApp extends FCApplication {
 		      
       c.divide(3,2);
       c.setAxisFontSize(14);
-      
+     
       for(int il=0;il<3;il++){
          H2F hpix = ecPix[ilm].strips.hmap2.get("H2_Peds_Hist").get(is,il+1,0);
          hpix.setTitleX("PED (Ref-Measured)") ; hpix.setTitleY(otab[ilm][il]);        

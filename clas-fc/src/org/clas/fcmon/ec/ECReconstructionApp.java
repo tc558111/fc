@@ -419,7 +419,7 @@ public class ECReconstructionApp extends FCApplication {
        boolean good_dalitz=false, good_pixel;
        int pixel;
 
-       TreeMap<Integer, Object> map= (TreeMap<Integer, Object>) ecPix[idet].Lmap_a.get(0,0,1); //PCAL
+       TreeMap<Integer, Object> map= (TreeMap<Integer, Object>) ecPix[idet].Lmap_a.get(0,0,1); 
        float pixelLength[] = (float[]) map.get(1);
        
        for (int is=0 ; is<6 ; is++) {      
@@ -427,6 +427,7 @@ public class ECReconstructionApp extends FCApplication {
                good_ua = ecPix[idet].nha[is][0]==1;
                good_va = ecPix[idet].nha[is][1]==1;
                good_wa = ecPix[idet].nha[is][2]==1;
+               
                good_uvwa = good_ua && good_va && good_wa; //Multiplicity test (NU=NV=NW=1)
                
                good_pix[0] = good_ua&&ecPix[idet].adcr[is][1][0]>35&&ecPix[idet].adcr[is][2][0]>35;
@@ -439,8 +440,15 @@ public class ECReconstructionApp extends FCApplication {
                pixel = ecPix[idet].pixels.getPixelNumber(ecPix[idet].strra[is][0][0],ecPix[idet].strra[is][1][0],ecPix[idet].strra[is][2][0]);
                good_pixel = pixel!=0;
 
+                              ecPix[idet].strips.hmap2.get("H2_PC_Stat").get(is+1,0,3).fill(ecPix[idet].uvwa[is]-2.0,1.,1.);
+               if (good_uvwa) ecPix[idet].strips.hmap2.get("H2_PC_Stat").get(is+1,0,3).fill(ecPix[idet].uvwa[is]-2.0,2.,1.);
+               
                if (good_dalitz && good_pixel && good_uvwa) { 
-
+                   
+                   double area = ecPix[idet].pixels.getZoneNormalizedArea(pixel);
+                   int    zone = ecPix[idet].pixels.getZone(pixel);
+                   
+                   ecPix[idet].strips.hmap2.get("H2_PC_Stat").get(is+1,0,4).fill(area,zone,1.);
                    ecPix[idet].pixels.hmap1.get("H1_a_Maps").get(is+1,7,0).fill(pixel,1.0); // Events per pixel
                    ecPix[idet].pixels.hmap1.get("H1_a_Maps").get(is+1,7,3).fill(pixel,1.0/ecPix[idet].pixels.getNormalizedArea(pixel)); //Normalized to pixel area
 
@@ -460,10 +468,12 @@ public class ECReconstructionApp extends FCApplication {
                good_ut = ecPix[idet].nht[is][0]==1;
                good_vt = ecPix[idet].nht[is][1]==1;
                good_wt = ecPix[idet].nht[is][2]==1;
+               
                good_uvwt = good_ut && good_vt && good_wt; //Multiplicity test (NU=NV=NW=1)                 
                
                if (idet>0)  good_dalitz = (ecPix[idet].uvwt[is]-2.0)>0.02 && (ecPix[idet].uvwt[is]-2.0)<0.056; //EC               
                if (idet==0) good_dalitz = Math.abs(ecPix[idet].uvwt[is]-2.0)<0.1; //PCAL
+               
                pixel  = ecPix[idet].pixels.getPixelNumber(ecPix[idet].strrt[is][0][0],ecPix[idet].strrt[is][1][0],ecPix[idet].strrt[is][2][0]);
                good_pixel  = pixel!=0;
 

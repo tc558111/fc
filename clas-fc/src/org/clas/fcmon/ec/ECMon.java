@@ -40,6 +40,7 @@ public class ECMon extends DetectorMonitor {
     ECTdcApp                  ecTdc = null;
     ECCalibrationApp        ecCalib = null;
     ECPedestalApp        ecPedestal = null;
+    ECPixelsApp            ecPixels = null;
     ECScalersApp          ecScalers = null;
     ECHvApp                    ecHv = null;   
     
@@ -123,6 +124,10 @@ public class ECMon extends DetectorMonitor {
         ecTdc.setMonitoringClass(this);
         ecTdc.setApplicationClass(app); 
         
+        ecPixels = new ECPixelsApp("Pixels",ecPix);       
+        ecPixels.setMonitoringClass(this);
+        ecPixels.setApplicationClass(app); 
+        
         ecPedestal = new ECPedestalApp("Pedestal",ecPix);       
         ecPedestal.setMonitoringClass(this);
         ecPedestal.setApplicationClass(app);  
@@ -149,6 +154,7 @@ public class ECMon extends DetectorMonitor {
         app.addCanvas(ecAdc.getName(),                ecAdc.getCanvas());          
         app.addCanvas(ecTdc.getName(),                ecTdc.getCanvas());          
         app.addCanvas(ecPedestal.getName(),      ecPedestal.getCanvas());         
+        app.addCanvas(ecPixels.getName(),          ecPixels.getCanvas());         
         app.addFrame(ecCalib.getName(),             ecCalib.getCalibPane());
         app.addFrame(ecHv.getName(),                   ecHv.getScalerPane());
         app.addFrame(ecScalers.getName(),         ecScalers.getScalerPane());        
@@ -247,6 +253,7 @@ public class ECMon extends DetectorMonitor {
         case "ADC":                           ecAdc.updateCanvas(dd); break;
         case "TDC":                           ecTdc.updateCanvas(dd); break;
         case "Pedestal":                 ecPedestal.updateCanvas(dd); break;
+        case "Pixels":                     ecPixels.updateCanvas(dd); break;
         case "Calibration":                 ecCalib.updateCanvas(dd); break;
         case "HV":        if(app.doEpics)      ecHv.updateCanvas(dd); break;
         case "Scalers":   if(app.doEpics) ecScalers.updateCanvas(dd);

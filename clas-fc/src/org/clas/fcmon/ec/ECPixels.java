@@ -93,7 +93,7 @@ public class ECPixels {
 	  pixdef();
       pixrot();
       System.out.println("ECPixels("+det+") is done");
-      pixHistos();
+//      pixHistos();
 //    this.writeFPGALookupTable("/Users/colesmith/pcal_att376_DB.dat",376.,1); 
 //    this.testStrips();
 //    this.testPixels();
@@ -303,6 +303,8 @@ public class ECPixels {
                 H2_PC_Stat.add(is, 0, 0, new H2F("a_evt_"+id+0, nstr, 1., nend,  3, 1., 4.));              
                 H2_PC_Stat.add(is, 0, 1, new H2F("b_adc_"+id+1, nstr, 1., nend,  3, 1., 4.));              
                 H2_PC_Stat.add(is, 0, 2, new H2F("c_tdc_"+id+2, nstr, 1., nend,  3, 1., 4.));                       
+                H2_PC_Stat.add(is, 0, 3, new H2F("d_pix_"+id+3,   50,-1.,    1,  3, 1., 4.));                       
+                H2_PC_Stat.add(is, 0, 4, new H2F("e_pix_"+id+4,   50, 0.,  1.1,  4, 0., 4.));                       
         }
         
         if(hipoFile!=" "){

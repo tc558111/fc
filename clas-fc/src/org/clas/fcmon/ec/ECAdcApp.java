@@ -29,8 +29,8 @@ public class ECAdcApp extends FCApplication {
     int ics[][] = new int[3][10];
     int la,ilm ;
     
-    public ECAdcApp(String name, ECPixels[] ftofPix) {
-        super(name,ftofPix);    
+    public ECAdcApp(String name, ECPixels[] ecPix) {
+        super(name,ecPix);    
      }
     
     public void updateCanvas(DetectorDescriptor dd) {

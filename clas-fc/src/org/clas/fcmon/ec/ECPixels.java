@@ -27,8 +27,6 @@ import org.jlab.geom.detector.ec.ECLayer;
 import org.jlab.geom.prim.Path3D;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
-//import org.root.histogram.H1F;
-//import org.root.histogram.H2F;
 import org.jlab.groot.graphics.EmbeddedCanvas;
 
 import math.geom2d.polygon.Polygons2D;

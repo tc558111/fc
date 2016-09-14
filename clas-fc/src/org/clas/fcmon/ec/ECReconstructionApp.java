@@ -94,12 +94,12 @@ public class ECReconstructionApp extends FCApplication {
    public void addEvent(EvioDataEvent event) {
       if(inMC==true) {
           this.updateSimulatedData(event);
-//          this.processECRec(event);
       } else {
           this.updateRealData(event);         
       }
       
       if (app.isSingleEvent()) {
+         this.processECRec(event);
          for (int idet=0; idet<ecPix.length; idet++) findPixels(idet);     // Process all pixels for SED
          for (int idet=0; idet<ecPix.length; idet++) processSED(idet);
       } else {
@@ -270,9 +270,9 @@ public class ECReconstructionApp extends FCApplication {
             int ip  = bank.getInt("strip",i);
             int id  = bank.getInt("peakID",i);
           double en = bank.getDouble("energy",i);
-           // System.out.println("sector,layer,strip="+is+" "+il+" "+ip);  
-           // System.out.println("peakid,energy="+id+" "+en+" ");  
-           // System.out.println(" ");
+            System.out.println("sector,layer,strip="+is+" "+il+" "+ip);  
+            System.out.println("peakid,energy="+id+" "+en+" ");  
+            System.out.println(" ");
          }
       }  
       if(event.hasBank("ECDetector::clusters")){
@@ -285,9 +285,9 @@ public class ECReconstructionApp extends FCApplication {
              double      Y = bank.getDouble("Y",i);
              double      Z = bank.getDouble("Z",i);
           
-            // System.out.println("sector,layer ="+is+" "+il);  
-            // System.out.println("X,Y,Z,energy="+X+" "+Y+" "+Z+" "+energy);  
-            // System.out.println(" ");
+             System.out.println("sector,layer ="+is+" "+il);  
+             System.out.println("X,Y,Z,energy="+X+" "+Y+" "+Z+" "+energy);  
+             System.out.println(" ");
           }
        }  
    }
@@ -357,7 +357,23 @@ public class ECReconstructionApp extends FCApplication {
            ecPix[idet].strips.hmap2.get("H2_PC_Stat").get(is,0,1).fill(ip,il,adc);
        }   
    }
-        
+   
+  public void processSED(int idet) {
+      for (int is=0; is<6; is++) {
+          float[] sed7 = ecPix[idet].strips.hmap1.get("H1_Pixa_Sevd").get(is+1,1,0).getData();
+          for (int il=1; il<4; il++ ){               
+              for (int n=1 ; n<ecPix[idet].nha[is][il-1]+1 ; n++) {
+                  int ip=ecPix[idet].strra[is][il-1][n-1]; int ad=ecPix[idet].adcr[is][il-1][n-1];
+                  ecPix[idet].strips.hmap1.get("H1_Stra_Sevd").get(is+1,il,0).fill(ip,ad);
+                  ecPix[idet].strips.putpixels(il,ip,ad,sed7);
+              }
+          }
+          for (int i=0; i<sed7.length; i++) {
+              ecPix[idet].strips.hmap1.get("H1_Pixa_Sevd").get(is+1,1,0).setBinContent(i, sed7[i]);  
+          }
+      }  
+  }
+  
    public void findPixels(int idet) {
 
        int u,v,w,ii;
@@ -394,22 +410,7 @@ public class ECReconstructionApp extends FCApplication {
            //                  System.out.println(" ");
            //              } 
    }
-    
-   public void processSED(int idet) {
-       for (int is=0; is<6; is++) {
-           float[] sed7 = ecPix[idet].strips.hmap1.get("H1_Pixa_Sevd").get(is+1,1,0).getData();
-           for (int il=1; il<4; il++ ){               
-               for (int n=1 ; n<ecPix[idet].nha[is][il-1]+1 ; n++) {
-                   int ip=ecPix[idet].strra[is][il-1][n-1]; int ad=ecPix[idet].adcr[is][il-1][n-1];
-                   ecPix[idet].strips.hmap1.get("H1_Stra_Sevd").get(is+1,il,0).fill(ip,ad);
-                   ecPix[idet].strips.putpixels(il,ip,ad,sed7);
-               }
-           }
-           for (int i=0; i<sed7.length; i++) {
-               ecPix[idet].strips.hmap1.get("H1_Pixa_Sevd").get(is+1,1,0).setBinContent(i, sed7[i]);  
-           }
-       }  
-   }
+
         
    public void processPixels(int idet) {
 

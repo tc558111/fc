@@ -127,7 +127,7 @@ public class ECCalibrationApp extends FCApplication implements CalibrationConsta
             }
             
             for(int is=is1; is<is2; is++) {                
-                for(int idet=0; idet<3; idet++) {
+                for(int idet=0; idet<ecPix.length; idet++) {
                     for (int il=0; il<3 ; il++) {
                         int layer = il+idet*3;
                         for(int ip = 0; ip < ecPix[idet].ec_nstr[il]; ip++) {

@@ -19,7 +19,8 @@ import org.jlab.io.base.DataEvent;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
 
-import org.jlab.rec.ecn.ECDetectorReconstruction;
+import org.jlab.service.ec.*;
+import org.jlab.rec.ecn.*;
  
 import java.util.TreeMap;
 
@@ -33,7 +34,6 @@ public class ECMon extends DetectorMonitor {
     ECDetector                ecDet = null;
     
     ECReconstructionApp     ecRecon = null;
-    ECDetectorReconstruction  ecRec = null;
     ECMode1App              ecMode1 = null;
     ECSingleEventApp  ecSingleEvent = null;
     ECAdcApp                  ecAdc = null;
@@ -44,6 +44,8 @@ public class ECMon extends DetectorMonitor {
     ECScalersApp          ecScalers = null;
     ECHvApp                    ecHv = null;   
     
+    ECEngine                  ecEng = null;
+    ECDetectorReconstruction  ecRec = null;
     DatabaseConstantProvider   ccdb = null;
    
     public boolean             inMC = true; //true=MC false=DATA
@@ -103,6 +105,9 @@ public class ECMon extends DetectorMonitor {
     
     public void makeApps() {
         System.out.println("monitor.makeApps()");   
+        
+        ecEng   = new ECEngine();
+        ecRec   = new ECDetectorReconstruction();
         
         ecRecon = new ECReconstructionApp("ECREC",ecPix);        
         ecRecon.setMonitoringClass(this);
@@ -169,7 +174,9 @@ public class ECMon extends DetectorMonitor {
     public void initApps() {
         System.out.println("monitor.initApps()");
         for (int i=0; i<ecPix.length; i++)   ecPix[i].init();
-        ecRecon.init();        
+        ecRecon.init();      
+        ecEng.init();
+        ecRec.init();
         for (int i=0; i<ecPix.length; i++)   ecPix[i].Lmap_a.add(0,0,0, ecRecon.toTreeMap(ecPix[i].ec_cmap));
         for (int i=0; i<ecPix.length; i++)   ecPix[i].Lmap_a.add(0,0,1, ecRecon.toTreeMap(ecPix[i].ec_zmap));
         if (app.doEpics) {
@@ -218,6 +225,8 @@ public class ECMon extends DetectorMonitor {
 
     @Override
     public void dataEventAction(DataEvent de) {        
+//        ecEng.processDataEvent(de);
+        if (app.isSingleEvent()) ecRec.processEvent((EvioDataEvent) de);
         ecRecon.addEvent((EvioDataEvent) de);
     }
     

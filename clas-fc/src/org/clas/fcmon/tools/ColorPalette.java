@@ -88,11 +88,10 @@ public class ColorPalette {
         
         if(mode==4){
             palette.clear();
-            palette.add(new Color(245,245,245));
             for(int loop = 0; loop < red.length; loop++){
-                int pred   = (int) (255.0*red[loop]);
-                int pgreen = (int) (255.0*green[loop]);
-                int pblue  = 0;
+                int pred   = (int) (255.0*loop/red.length);
+                int pgreen = (int) (255.0*loop/red.length);
+                int pblue  = (int) 150/(loop+1);
                 palette.add(new Color(pred,pgreen,pblue));
             }
         }

@@ -265,6 +265,15 @@ public class ECPixels {
                 H2_Mode1_Sevd.add(is, il, 0, new H2F("a_sed_fadc_"+id+0,100, 0., 100., nstr, 1., nend));
                 H2_Mode1_Sevd.add(is, il, 1, new H2F("b_sed_fadc_"+id+1,100, 0., 100., nstr, 1., nend));
             }
+            
+            // Reco data
+                id="s"+Integer.toString(is)+"_l"+Integer.toString(4)+"_c";
+                H2_a_Hist.add(is, 4, 0, new H2F("a_reco_"+id+0, 200, 0.,100., 4, 1., 5.));
+                id="s"+Integer.toString(is)+"_l"+Integer.toString(5)+"_c";
+                H2_a_Hist.add(is, 5, 0, new H2F("b_raw_"+id+0,  200, 0.,100., 3, 1., 4.));                
+                id="s"+Integer.toString(is)+"_l"+Integer.toString(6)+"_c";
+                H2_a_Hist.add(is, 6, 0, new H2F("c_reco_"+id+0, 200, 0.,100., 3, 1., 4.));   
+                
             //Pixel based data
             for (int il=1; il<4 ; il++) { 
                 // Occupancy 

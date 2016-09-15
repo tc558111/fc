@@ -19,7 +19,7 @@ import org.clas.fcmon.ec.ECPixels;
 import org.clas.fcmon.ftof.FTOFPixels;
 import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.detector.base.DetectorDescriptor;
-import org.root.attr.ColorPalette;
+//import org.root.attr.ColorPalette;
 
 /**
  *
@@ -27,7 +27,8 @@ import org.root.attr.ColorPalette;
  */
 public class FCDetector {
     
-    ColorPalette palette = new ColorPalette();
+    ColorPalette palette3 = new ColorPalette(3);
+    ColorPalette palette4 = new ColorPalette(4);
 
     private String                 appName = null;
     
@@ -167,6 +168,7 @@ public class FCDetector {
     
     public void update(DetectorShape2D shape) {
         
+        ColorPalette pal = null;
         DetectorDescriptor dd = shape.getDescriptor();
         this.getDetIndices(dd);
         layer = lay;
@@ -188,7 +190,9 @@ public class FCDetector {
         }
         
         if (colorfraction<0.05) colorfraction = 0.05;
-        Color col = palette.getRange(colorfraction);
+        if (!app.isSingleEvent()) pal=palette3;
+        if ( app.isSingleEvent()) pal=palette4;
+        Color col = pal.getRange(colorfraction);
         shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
 
     }

@@ -66,7 +66,7 @@ public class Strips {
     	return pixNmbr.get(sector,layer,component).get(index);
     }
     
-    public void putpixels(int layer, int strip, int val, double[] in) {
+    public void putpixels(int layer, int strip, float val, float[] in) {
     	Integer[] dum = this.getPixels(0,layer,strip); 
     	for (int j=0; j<dum.length; j++){
     		int pixel = dum[j];

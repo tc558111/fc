@@ -155,7 +155,7 @@ public class ECMon extends DetectorMonitor {
     public void addCanvas() {
         System.out.println("monitor.addCanvas()"); 
         app.addCanvas(ecMode1.getName(),            ecMode1.getCanvas());
-        app.addCanvas(ecSingleEvent.getName(),ecSingleEvent.getCanvas());
+        app.addFrame(ecSingleEvent.getName(), ecSingleEvent.getCalibPane());
         app.addCanvas(ecAdc.getName(),                ecAdc.getCanvas());          
         app.addCanvas(ecTdc.getName(),                ecTdc.getCanvas());          
         app.addCanvas(ecPedestal.getName(),      ecPedestal.getCanvas());         
@@ -226,7 +226,7 @@ public class ECMon extends DetectorMonitor {
     @Override
     public void dataEventAction(DataEvent de) {        
 //        ecEng.processDataEvent(de);
-        if (app.isSingleEvent()) ecRec.processEvent((EvioDataEvent) de);
+        ecRec.processEvent((EvioDataEvent) de);
         ecRecon.addEvent((EvioDataEvent) de);
     }
     

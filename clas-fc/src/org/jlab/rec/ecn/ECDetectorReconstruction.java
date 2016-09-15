@@ -143,7 +143,21 @@ public class ECDetectorReconstruction extends DetectorReconstruction {
                 bankC.setInt("coordV", c, clusters.get(c).getPeak(1).getCoord());
                 bankC.setInt("coordW", c, clusters.get(c).getPeak(2).getCoord());
             }
-            de.appendBanks(bankS,bankP,bankC);
+           
+            EvioDataBank  bankD =  (EvioDataBank) EvioFactory.createBank("ECDetector::calib", clusters.size());
+            for(int c = 0; c < clusters.size(); c++){
+                bankD.setInt("sector", c, clusters.get(c).clusterPeaks.get(0).getDescriptor().getSector());
+                bankD.setInt("layer", c, clusters.get(c).clusterPeaks.get(0).getDescriptor().getLayer());
+                bankD.setDouble("energy", c, clusters.get(c).getEnergy());
+                bankD.setDouble("rawEU", c, clusters.get(c).getRawEnergy(0));
+                bankD.setDouble("rawEV", c, clusters.get(c).getRawEnergy(1));
+                bankD.setDouble("rawEW", c, clusters.get(c).getRawEnergy(2));
+                bankD.setDouble("recEU", c, clusters.get(c).getEnergy(0));
+                bankD.setDouble("recEV", c, clusters.get(c).getEnergy(1));
+                bankD.setDouble("recEW", c, clusters.get(c).getEnergy(2));            
+            }
+            
+            de.appendBanks(bankS,bankP,bankC,bankD);
         }
         
         

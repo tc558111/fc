@@ -97,7 +97,7 @@ public class ECPeak {
 	    int str = strip.getDescriptor().getComponent() - 1;
 	    str = str*8+4;
             energy_norm += strip.getEnergy()*str;
-        }        
+        }    
         return (int) (energy_norm/energy_summ);
     }
     

@@ -325,6 +325,7 @@ public class ECReconstructionApp extends FCApplication {
            
 //             double[] dum = {orig.x(),-orig.y(),orig.z(),end.x(),-end.y(),end.z()};
 //            if (app.isSingleEvent()) ecPix[getDet(il)].peakXY.get(is).add(dum);
+//
 //            System.out.println("sector,layer="+is+" "+il);  
 //            System.out.println("Xo,Yo,Zo= "+xo+" "+yo+" "+zo);
 //           System.out.println("Xe,Ye,Ze= "+xe+" "+ye+" "+ze);

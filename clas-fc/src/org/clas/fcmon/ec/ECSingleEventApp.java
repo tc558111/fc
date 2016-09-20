@@ -55,12 +55,13 @@ public class ECSingleEventApp extends FCApplication {
       
       this.getDetIndices(dd);
 		
-      l.divide(3,6); ru.divide(2,2);rd.divide(1,2);
+      l.divide(3,6); ru.divide(3,2);rd.divide(3,2);
       l.setAxisFontSize(14);
       l.setStatBoxFontSize(12);
       
       int ii=0;
       int jj=0;
+      int kk=0;
       
 	  for(ilm=0; ilm<3; ilm++) {
       for(int il=1;il<4;il++) {
@@ -96,9 +97,16 @@ public class ECSingleEventApp extends FCApplication {
 	  for(ilm=0; ilm<3; ilm++) {
           ru.cd(jj); 
           h = ecPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,4,0).sliceY((int)3) ; h.setTitleX(dtab[ilm]+"Cluster Energy (MeV)"); h.setFillColor(2);          
-          ru.draw(h);
+          h.setOptStat(Integer.parseInt("1100")); ru.draw(h);
           jj++;   
 	  }
+	  
+      rd.cd(0); h = ecPix[0].strips.hmap2.get("H2_a_Hist").get(is,8,0).sliceY(0) ; h.setTitleX("PCAL Cluster X - GEMC X (cm)"); h.setFillColor(2); 
+      h.setOptStat(Integer.parseInt("1100")); h.setTitle(" "); rd.draw(h);
+      rd.cd(1); h = ecPix[0].strips.hmap2.get("H2_a_Hist").get(is,8,0).sliceY(1) ; h.setTitleX("PCAL Cluster Y - GEMC Y (cm)"); h.setFillColor(2);
+      h.setOptStat(Integer.parseInt("1100")); h.setTitle(" "); rd.draw(h);
+      rd.cd(2); h = ecPix[0].strips.hmap2.get("H2_a_Hist").get(is,8,0).sliceY(2) ; h.setTitleX("PCAL Cluster Z - GEMC Z (cm)"); h.setFillColor(2); 
+      h.setOptStat(Integer.parseInt("1100")); h.setTitle(" "); rd.draw(h);
 	  
       l.repaint(); ru.repaint(); rd.repaint();
    }

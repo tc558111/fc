@@ -44,6 +44,7 @@ public class ECReconstructionApp extends FCApplication {
    String          config = null;
    String BankType        = null;
    int              detID = 0;
+   double pcX,pcY,pcZ;
    
    CodaEventDecoder            newdecoder = new CodaEventDecoder();
    DetectorEventDecoder   detectorDecoder = new DetectorEventDecoder();
@@ -223,13 +224,27 @@ public class ECReconstructionApp extends FCApplication {
       if (ecPix.length>1)  {detlen=det.length; clear(0); clear(1); clear(2);} 
       if (ecPix.length==1) {detlen=1;          clear(0);}
       
+      System.out.println(" ");
+      
+      
       for (int idet=0; idet<detlen; idet++) {
           
           fac = (inCRT==true) ? 6:1;
           
           if(event.hasBank(det[idet]+"::true")==true) {
               EvioDataBank bank = (EvioDataBank) event.getBank(det[idet]+"::true");
+              if(idet==0) {
+                 pcX = bank.getDouble("avgX",0);
+                 pcY = bank.getDouble("avgY",0);
+                 pcZ = bank.getDouble("avgZ",0);
+              }
               for(int i=0; i < bank.rows(); i++) mc_t = bank.getDouble("avgT",i);
+              for(int i=0; i < bank.rows(); i++) {
+                  if (idet==0) System.out.println("PCAL x,y,z,t="+bank.getDouble("avgX",i)+" "+
+                                                                  bank.getDouble("avgY",i)+" "+
+                                                                  bank.getDouble("avgZ",i)+" "+
+                                                                  bank.getDouble("avgT",i));
+              }
           }else{
               mc_t = 0.;
           }
@@ -329,7 +344,13 @@ public class ECReconstructionApp extends FCApplication {
              double      X = bank.getDouble("X",i);
              double      Y = bank.getDouble("Y",i);
              double      Z = bank.getDouble("Z",i);
-             //Display uses tilted coordinates.  Must transform X,Y,Z from CLAS into tilted.
+            System.out.println("Cluster: "+X+" "+Y+" "+Z);
+            if(getDet(il)==0) {
+                ecPix[0].strips.hmap2.get("H2_a_Hist").get(is,8,0).fill(0.1*pcX-X,1.);
+                ecPix[0].strips.hmap2.get("H2_a_Hist").get(is,8,0).fill(0.1*pcY-Y,2.);
+                ecPix[0].strips.hmap2.get("H2_a_Hist").get(is,8,0).fill(0.1*pcZ-Z,3.);
+            }
+            //Display uses tilted coordinates.  Must transform X,Y,Z from CLAS into tilted.
              Point3D xyz = new Point3D(-X,Y,Z);
              xyz.rotateZ(Math.toRadians(60*(is-1)));
              xyz.rotateY(Math.toRadians(25));
@@ -337,7 +358,8 @@ public class ECReconstructionApp extends FCApplication {
              xyz.rotateZ(Math.toRadians(-60*(is-1)));
              double[] dum  = {xyz.x(),-xyz.y()}; 
 //             System.out.println("sector,layer="+is+" "+il);  
-//             System.out.println("Cluster: "+dum[0]+" "+dum[1]+" "+xyz.z());
+//           System.out.println("Cluster: "+dum[0]+" "+dum[1]+" "+xyz.z());
+//           System.out.println("Cluster: "+X+" "+Y+" "+Z);
              if (app.isSingleEvent()) ecPix[getDet(il)].clusterXY.get(is).add(dum);
              ecPix[getDet(il)].strips.hmap2.get("H2_a_Hist").get(is,4,0).fill(energy*1e3,4,1.);            
           }

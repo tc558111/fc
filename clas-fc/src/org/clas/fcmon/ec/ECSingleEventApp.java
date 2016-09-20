@@ -16,7 +16,8 @@ public class ECSingleEventApp extends FCApplication {
 
     JPanel                     engineView = new JPanel();
     EmbeddedCanvas                      l = new EmbeddedCanvas();
-    EmbeddedCanvas                      r = new EmbeddedCanvas();  
+    EmbeddedCanvas                     ru = new EmbeddedCanvas();  
+    EmbeddedCanvas                     rd = new EmbeddedCanvas();  
 
    public ECSingleEventApp(String name, ECPixels[] ecPix) {
       super(name,ecPix);		
@@ -24,11 +25,15 @@ public class ECSingleEventApp extends FCApplication {
    
    public JPanel getCalibPane() {        
        engineView.setLayout(new BorderLayout());
-       JSplitPane   viewPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT); 
-       viewPane.setLeftComponent(l);
-       viewPane.setRightComponent(r);
-       viewPane.setResizeWeight(0.5);
-       engineView.add(viewPane);
+       JSplitPane   hPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT); 
+       JSplitPane   vPane = new JSplitPane(JSplitPane.VERTICAL_SPLIT); 
+       vPane.setTopComponent(ru);
+       vPane.setBottomComponent(rd);
+       hPane.setLeftComponent(l);
+       hPane.setRightComponent(vPane);
+       hPane.setResizeWeight(0.5);
+       vPane.setResizeWeight(0.5);
+       engineView.add(hPane);
        return engineView;       
    }  
    
@@ -50,7 +55,7 @@ public class ECSingleEventApp extends FCApplication {
       
       this.getDetIndices(dd);
 		
-      l.divide(3,6); r.divide(2,3);
+      l.divide(3,6); ru.divide(2,2);rd.divide(1,2);
       l.setAxisFontSize(14);
       l.setStatBoxFontSize(12);
       
@@ -89,13 +94,13 @@ public class ECSingleEventApp extends FCApplication {
 	  }
 	  
 	  for(ilm=0; ilm<3; ilm++) {
-          r.cd(jj); 
+          ru.cd(jj); 
           h = ecPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,4,0).sliceY((int)3) ; h.setTitleX(dtab[ilm]+"Cluster Energy (MeV)"); h.setFillColor(2);          
-          r.draw(h);
+          ru.draw(h);
           jj++;   
 	  }
 	  
-      l.repaint(); r.repaint();
+      l.repaint(); ru.repaint(); rd.repaint();
    }
    
 }

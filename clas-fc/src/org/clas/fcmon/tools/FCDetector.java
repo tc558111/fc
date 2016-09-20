@@ -151,14 +151,14 @@ public class FCDetector {
     public void viewButtonAction(String group, String name, int key) {
         this.bStore  = app.getDetectorView().bStore;
         this.rbPanes = app.getDetectorView().rbPanes;
-        if(group=="LAY") {
+        if (group=="LAY") {
             app.currentView = name;
             name = name+Integer.toString(ilmap);
             app.getDetectorView().getView().setLayerState(name, true);
             if (key<3) {rbPanes.get("PMT").setVisible(true);rbPanes.get("PIX").setVisible(false);omap=bStore.get("PMT");}       
             if (key>2) {rbPanes.get("PIX").setVisible(true);rbPanes.get("PMT").setVisible(false);omap=bStore.get("PIX");}
         }
-        if(group=="DET") {
+        if (group=="DET") {
             ilmap = key;            
             name = app.currentView+Integer.toString(ilmap);  
             app.getDetectorView().getView().setLayerState(name, true);
@@ -175,6 +175,7 @@ public class FCDetector {
         
         double colorfraction=1;
         
+        Boolean peakShapes = (opt==0&&layer==0);
         inProcess = (int) mon.getGlob().get("inProcess"); // Get process status
         
         // Update shape color map depending on process status and layer
@@ -185,13 +186,23 @@ public class FCDetector {
              if(layer<7) colorfraction = (double)ic/nStrips[ilmap]; 
             if(layer>=7) colorfraction = getcolor((TreeMap<Integer, Object>) ecPix[ilmap].Lmap_a.get(0,0,0), ic);  
         }
-        if (inProcess>0){   
+        if (inProcess>0&&!peakShapes){   
                          colorfraction = getcolor((TreeMap<Integer, Object>) ecPix[ilmap].Lmap_a.get(is,layer,opt), ic);
         }
         
         if (colorfraction<0.05) colorfraction = 0.05;
         if (!app.isSingleEvent()) pal=palette3;
-        if ( app.isSingleEvent()) pal=palette4;
+        if ( app.isSingleEvent()&&!peakShapes) {
+            shape.reset();
+            pal=palette4;            
+            List<double[]> clusterList = ecPix[ilmap].clusterXY.get(is);
+            for(int i=0; i<clusterList.size(); i++) {
+               double dum[] = clusterList.get(i);
+               if(shape.isContained(dum[0],dum[1])) shape.setCounter(i+1, dum[0], dum[1]);
+            }   
+        }
+        if (app.isSingleEvent()&&peakShapes) colorfraction=0.7;
+        
         Color col = pal.getRange(colorfraction);
         shape.setColor(col.getRed(),col.getGreen(),col.getBlue());
 

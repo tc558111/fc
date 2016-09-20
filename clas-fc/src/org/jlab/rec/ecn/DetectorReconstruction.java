@@ -187,6 +187,7 @@ public abstract class DetectorReconstruction implements Engine {
             ECFactory factory = new ECFactory();
             ConstantProvider  data = DataBaseLoader.getDetectorConstants(DetectorType.EC);
             Detector geomEC = factory.createDetectorCLAS(data);
+//            Detector geomEC = factory.createDetectorTilted(data);
             detectorGeometry.put("EC", geomEC);
             System.err.println(mainModuleName + "geometry for detector " +
                     geometryPackage + " is loaded...");

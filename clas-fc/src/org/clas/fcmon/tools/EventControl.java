@@ -193,6 +193,7 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
         }
         
         if(e.getActionCommand().compareTo(">")==0){
+            if (!running) running = true;
         	isSingleEvent = true;
         	this.processNextEvent();
         	buttonPrev.setEnabled(true);
@@ -290,7 +291,8 @@ public class EventControl extends JPanel implements ActionListener, ChangeListen
     	if(evReader.hasEvent()){	 
     		EvioDataEvent event = (EvioDataEvent) evReader.getNextEvent();
     		int current = evReader.getCurrentIndex();
-    		int nevents = evReader.getSize();                
+    		int nevents = evReader.getSize();  
+    		if(isSingleEvent) monitoringClass.analyze(1);
     		if( current>100&&current%500==0) monitoringClass.analyze(1);
     		this.statusLabel.setText("   EVENTS IN FILE : " + nevents + "  CURRENT : " + current);
         

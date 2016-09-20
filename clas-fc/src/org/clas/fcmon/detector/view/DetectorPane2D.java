@@ -139,7 +139,7 @@ public class DetectorPane2D extends JPanel {
     public void setFPS(int fps){
         if (fps==0) getView().stop();
         if (fps>0)  getView().start(fps);
-      }
+    }
     
     public DetectorView2D  getView(){
         return this.view2D;

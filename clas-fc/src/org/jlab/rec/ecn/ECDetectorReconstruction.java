@@ -35,8 +35,9 @@ public class ECDetectorReconstruction extends DetectorReconstruction {
 //    EventDecoder          decoder = new EventDecoder();
     DetectorEventDecoder   detectorDecoder = new DetectorEventDecoder();
     List<DetectorDataDgtz>  detectorData   = new ArrayList<DetectorDataDgtz>();
-        List<ECStrip>         recStrips = new ArrayList<ECStrip>();
-    
+    List<ECStrip>                recStrips = new ArrayList<ECStrip>();
+    int[]                     stripThreshold = new int[3];
+    int[]                      peakThreshold = new int[3];
     
     public ECDetectorReconstruction(){
         super("ECREC","gavalian","1.0");
@@ -116,6 +117,9 @@ public class ECDetectorReconstruction extends DetectorReconstruction {
                 bankP.setDouble("Xo", p,peaks.get(p).getLine().origin().x());
                 bankP.setDouble("Yo", p,peaks.get(p).getLine().origin().y());
                 bankP.setDouble("Zo", p,peaks.get(p).getLine().origin().z());
+                bankP.setDouble("Xe", p,peaks.get(p).getLine().end().x());
+                bankP.setDouble("Ye", p,peaks.get(p).getLine().end().y());
+                bankP.setDouble("Ze", p,peaks.get(p).getLine().end().z());
                 bankP.setDouble("energy",p,peaks.get(p).getEnergy());
                 bankP.setDouble("time",p,peaks.get(p).getTime());
             }
@@ -167,8 +171,20 @@ public class ECDetectorReconstruction extends DetectorReconstruction {
             genBank.show();
         }*/
     }
-
     
+    public void setStripThresholds(int thr0, int thr1, int thr2) {
+        System.out.println("ECDetectorReconstruction: Strip ADC thresholds = "+thr0+" "+thr1+" "+thr2);
+        ECCommon.stripThreshold[0] = thr0;
+        ECCommon.stripThreshold[1] = thr1;
+        ECCommon.stripThreshold[2] = thr2;
+    }
+    
+    public void setPeakThresholds(int thr0, int thr1, int thr2) {
+        System.out.println("ECDetectorReconstruction: Peak ADC thresholds = "+thr0+" "+thr1+" "+thr2);
+        ECCommon.peakThreshold[0] = thr0;
+        ECCommon.peakThreshold[1] = thr1;
+        ECCommon.peakThreshold[2] = thr2;
+    }
     
     @Override
     public void init() {

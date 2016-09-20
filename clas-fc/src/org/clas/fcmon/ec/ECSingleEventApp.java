@@ -35,6 +35,7 @@ public class ECSingleEventApp extends FCApplication {
    public void updateCanvas(DetectorDescriptor dd) {
 	       
       H1F h,h1,h2;
+      H2F hh;
       
       String otab[][]={{"U ","V ","W "},
               {" U Inner ","V Inner ","W Inner "},
@@ -44,11 +45,12 @@ public class ECSingleEventApp extends FCApplication {
       
       int ilm = ilmap;
         
-      double   zmax =  (double) mon.getGlob().get("PCMon_zmax");
+      double   zmax = (double) mon.getGlob().get("PCMon_zmax");
+      String config = (String) mon.getGlob().get("config");
       
       this.getDetIndices(dd);
 		
-      l.divide(3,6); r.divide(1,3);
+      l.divide(3,6); r.divide(2,3);
       l.setAxisFontSize(14);
       l.setStatBoxFontSize(12);
       
@@ -57,17 +59,23 @@ public class ECSingleEventApp extends FCApplication {
       
 	  for(ilm=0; ilm<3; ilm++) {
       for(int il=1;il<4;il++) {
+         F1D f1 = new F1D("p0","[a]",0.,ecPix[ilm].ec_nstr[il-1]+1); 
+         f1.setParameter(0,0.1*ecPix[ilm].getStripThr(config,il));
+         f1.setLineColor(4);
          l.cd(ii); 
          l.getPad(ii).getAxisX().setRange(0.,ecPix[ilm].ec_nstr[il-1]+1);
          l.getPad(ii).getAxisY().setRange(0.,1.2*zmax*app.displayControl.pixMax);
-         h = ecPix[ilm].strips.hmap1.get("H1_Stra_Sevd").get(is,il,0); 
-         h.setTitleX(otab[ilm][il-1]+"PMT"); 
-         h.setTitleY(" ");
-         if (il==1) h.setTitleY("Strip Energy (MeV)"); 
-         h.setFillColor(4);
-         l.draw(h);
+         h1 = ecPix[ilm].strips.hmap1.get("H1_Stra_Sevd").get(is,il,1); 
+         h2 = ecPix[ilm].strips.hmap1.get("H1_Stra_Sevd").get(is,il,0); 
+         h1.setTitleX(otab[ilm][il-1]+"PMT"); h1.setTitleY(" ");
+         if (il==1) h1.setTitleY("Strip Energy (MeV)"); 
+         h1.setFillColor(0); l.draw(h1);
+         h2.setFillColor(4); l.draw(h2,"same"); 
+         l.draw(f1,"same");
          ii++;
       }
+	  }
+	  for(ilm=0; ilm<3; ilm++) {
       for(int il=1;il<4; il++) {
           l.cd(ii);
           l.getPad(ii).getAxisX().setRange(0.,40.);
@@ -78,13 +86,15 @@ public class ECSingleEventApp extends FCApplication {
           l.draw(h1,"same"); l.draw(h2,"same");
           ii++;
       }
-          r.cd(jj);
-          h = ecPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,4,0).sliceY((int)3) ; h.setTitleX(dtab[ilm]+"Cluster Energy (MeV)"); h.setFillColor(2);
-          r.draw(h);
-          jj++;
-   
 	  }
-      
+	  
+	  for(ilm=0; ilm<3; ilm++) {
+          r.cd(jj); 
+          h = ecPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,4,0).sliceY((int)3) ; h.setTitleX(dtab[ilm]+"Cluster Energy (MeV)"); h.setFillColor(2);          
+          r.draw(h);
+          jj++;   
+	  }
+	  
       l.repaint(); r.repaint();
    }
    

@@ -30,8 +30,8 @@ import org.jlab.geom.prim.Path3D;
  */
 public class DetectorShape2D {
     
-    DetectorDescriptor  desc = new DetectorDescriptor();
-    Path3D              shapePath = new Path3D();
+    DetectorDescriptor         desc = new DetectorDescriptor();
+    Path3D                shapePath = new Path3D();
     
     int                 colorRed    = 213;
     int                 colorGreen  = 246;
@@ -41,9 +41,12 @@ public class DetectorShape2D {
     int                 counter     = 0;
     int                 lineWidth   = 2;
     
+    double                       xc = 0;
+    double                       yc = 0;
+    
     String              shapeTitle  = "";
     
-    private             DetectorShape2D  activeShape = null;
+    DetectorShape2D     activeShape = null;
     
     List<DetectorListener>    detectorListeners = new ArrayList<DetectorListener>();
         
@@ -65,14 +68,14 @@ public class DetectorShape2D {
     public Path3D              getShapePath(){ return shapePath;}
     
     public void setColor(int r, int g, int b){
-        this.colorRed = r;
+        this.colorRed   = r;
         this.colorGreen = g;
         this.colorBlue  = b;
         this.colorAlpha = 255;
     }
     
     public void setColor(int r, int g, int b, int alpha){
-        this.colorRed = r;
+        this.colorRed   = r;
         this.colorGreen = g;
         this.colorBlue  = b;
         this.colorAlpha = alpha;
@@ -142,11 +145,15 @@ public class DetectorShape2D {
         }
     }
     
-    public void reset() {this.counter = 0;}
-    
+    public void     reset() {this.counter = 0; this.xc=0 ; this.yc=0;}    
     public int getCounter() {return counter;}
     
-    public DetectorShape2D setCounter(int c) {this.counter = c ; return this;}
+    public DetectorShape2D setCounter(int c, double x, double y){
+        this.counter = c ; 
+        this.xc = x;
+        this.yc = y;
+        return this;
+    }
     
     public void setColorByStatus(int status){
         int rs = status;
@@ -170,7 +177,6 @@ public class DetectorShape2D {
                 c = !c;
         }
         return c;
-        //return false;
     }
     
     
@@ -179,31 +185,33 @@ public class DetectorShape2D {
         if(this.shapePath.size()>0){
             double xp = shapePath.point(0).x();
             double yp = shapePath.point(0).y();
+            
             path.moveTo(world.getPointX(xp),world.getPointY(yp));
             for(int i = 1; i < shapePath.size(); i++){
                 xp = shapePath.point(i).x();
                 yp = shapePath.point(i).y();
                 path.lineTo(world.getPointX(xp),world.getPointY(yp));
-            }
-            
+            }            
             xp = shapePath.point(0).x();
-            yp = shapePath.point(0).y();
-            
+            yp = shapePath.point(0).y();           
             path.lineTo(world.getPointX(xp),world.getPointY(yp));
+            
             g2d.setColor(fillcolor);
             g2d.fill(path);
             g2d.setColor(strokecolor);
             //g2d.setStroke(new BasicStroke(2));
             g2d.draw(path);
+            
+            if(this.counter>0) {
+                this.setColor(255, 0, 0);
+                g2d.setColor(this.getSwingColor());
+                g2d.fill(path);
+            }
         }        
     }
     
     public GeneralPath  getGeneralPath(){
-        GeneralPath path = new GeneralPath();
-        
-        return path;
+        return new GeneralPath();
     }
-
-    
-  
+ 
 }

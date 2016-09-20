@@ -67,7 +67,7 @@ public class CalDrawDB{
 		
 		if(unit==0)
 		{
-			myInitVert();
+			initPCALVert();
 			validoverlap = new int[3][68][62];
 			//[0=uw,1=uv,2=vw][first layer strip][second layer strip]
 			validpixel = new int[68][62][62];
@@ -75,7 +75,7 @@ public class CalDrawDB{
 		}
 		if(unit>0)   
 		{
-			initVert();
+			initECVert();
 			validoverlap = new int[3][36][36];
 			//[0=uw,1=uv,2=vw][first layer strip][second layer strip]
 			validpixel = new int[36][36][36];
@@ -1369,7 +1369,7 @@ public class CalDrawDB{
 		
 	}
 	
-	private void myInitVert() {
+	private void initPCALVert() {
 		ECLayer  ecLayer;
 		Point3D point1 = new Point3D();
 		int[] vertices = {0,4,5,1};
@@ -1388,7 +1388,7 @@ public class CalDrawDB{
 		    			point1.rotateZ(sector * Math.PI/3.0);
 		    			point1.translateXYZ(333.1042, 0.0, 0.0);
 		    			xPoint[sector][l][n][j] =  point1.x();
-		    			yPoint[sector][l][n][j] = -point1.y();
+		    			yPoint[sector][l][n][j] = -point1.y(); // why minus sign?
 		    		}
 	    			n++;
 		    	}
@@ -1396,7 +1396,9 @@ public class CalDrawDB{
         }
 	}
 		
-	private void initVert()
+	private void initECVert()
+	// Projective geometry means U,V,W strips get progressively larger with depth.  For
+	// display purposes V,W vertices are projected back to the first U strip plane.
 	{
 		ECLayer  ecLayer;
 		int sector = 0;

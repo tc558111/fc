@@ -48,9 +48,11 @@ public class ECMon extends DetectorMonitor {
     ECDetectorReconstruction  ecRec = null;
     DatabaseConstantProvider   ccdb = null;
    
-    public boolean             inMC = true; //true=MC false=DATA
+    public boolean             inMC = true;  //true=MC false=DATA
     public boolean            inCRT = false; //true=CRT preinstallation CRT data
-    public int            inProcess = 0;    //0=init 1=processing 2=end-of-run 3=post-run
+    public boolean            doRec = true;  //true=offline EC processor
+    public String            config = "pizero"; //configs: pizero,muon,elec
+    public int            inProcess = 0;     //0=init 1=processing 2=end-of-run 3=post-run
     int                       detID = 0;
     int                         is1 = 2 ;
     int                         is2 = 3 ;  
@@ -58,8 +60,8 @@ public class ECMon extends DetectorMonitor {
     double               PCMon_zmin = 0;
     double               PCMon_zmax = 0;
    
-    String mondet                   = "EC";
-    String detnam[]                 = {"PCAL","ECin","ECout"};
+    String                   mondet = "EC";
+    String                 detnam[] = {"PCAL","ECin","ECout"};
 
     DetectorCollection<H2F> H2_a_Hist = new DetectorCollection<H2F>();
     DetectorCollection<H2F> H2_t_Hist = new DetectorCollection<H2F>();
@@ -173,10 +175,17 @@ public class ECMon extends DetectorMonitor {
 
     public void initApps() {
         System.out.println("monitor.initApps()");
+        System.out.println("Configuration: "+config);
         for (int i=0; i<ecPix.length; i++)   ecPix[i].init();
         ecRecon.init();      
         ecEng.init();
         ecRec.init();
+        ecRec.setStripThresholds(ecPix[0].getStripThr(config, 1),
+                                 ecPix[1].getStripThr(config, 1),
+                                 ecPix[2].getStripThr(config, 1));  
+        ecRec.setPeakThresholds(ecPix[0].getPeakThr(config, 1),
+                                ecPix[1].getPeakThr(config, 1),
+                                ecPix[2].getPeakThr(config, 1));  
         for (int i=0; i<ecPix.length; i++)   ecPix[i].Lmap_a.add(0,0,0, ecRecon.toTreeMap(ecPix[i].ec_cmap));
         for (int i=0; i<ecPix.length; i++)   ecPix[i].Lmap_a.add(0,0,1, ecRecon.toTreeMap(ecPix[i].ec_zmap));
         if (app.doEpics) {
@@ -191,6 +200,7 @@ public class ECMon extends DetectorMonitor {
         putGlob("detID", detID);
         putGlob("inMC", inMC);
         putGlob("inCRT",inCRT);
+        putGlob("doRec",doRec);
         putGlob("nsa", nsa);
         putGlob("nsb", nsb);
         putGlob("tet", tet);		
@@ -200,6 +210,7 @@ public class ECMon extends DetectorMonitor {
         putGlob("fadc",fadc);
         putGlob("mondet",mondet);
         putGlob("is1",is1);
+        putGlob("config",config);
     }
     
     @Override

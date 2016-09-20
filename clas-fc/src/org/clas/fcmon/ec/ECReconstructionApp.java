@@ -11,6 +11,7 @@ import java.util.TreeMap;
 import org.clas.fcmon.tools.FADCFitter;
 import org.clas.fcmon.tools.FCApplication;
 import org.jlab.clas.detector.DetectorCollection;
+
 import org.jlab.clas12.detector.FADCConfigLoader;
 //import org.root.histogram.H1D;
 //import org.root.histogram.H2D;
@@ -24,9 +25,12 @@ import org.jlab.groot.math.StatNumber;
 import org.jlab.detector.decode.CodaEventDecoder;
 import org.jlab.detector.decode.DetectorDataDgtz;
 import org.jlab.detector.decode.DetectorEventDecoder;
+import org.jlab.detector.base.DetectorType;
+import org.jlab.geom.prim.Line3D;
+import org.jlab.geom.prim.Point3D;
 import org.jlab.io.evio.EvioDataEvent;
 import org.jlab.io.evio.EvioDataBank;
-
+import org.clas.fcmon.detector.view.DetectorShape2D;
 import org.clas.fcmon.jroot.*;
 
 public class ECReconstructionApp extends FCApplication {
@@ -36,9 +40,11 @@ public class ECReconstructionApp extends FCApplication {
    String          mondet = null;
    Boolean           inMC = null;
    Boolean          inCRT = null;
+   Boolean          doRec = null;
+   String          config = null;
    String BankType        = null;
    int              detID = 0;
-
+   
    CodaEventDecoder            newdecoder = new CodaEventDecoder();
    DetectorEventDecoder   detectorDecoder = new DetectorEventDecoder();
    List<DetectorDataDgtz>  detectorData   = new ArrayList<DetectorDataDgtz>();
@@ -54,6 +60,8 @@ public class ECReconstructionApp extends FCApplication {
    
    int nsa,nsb,tet,pedref;     
    short[] pulse = new short[100]; 
+   
+   DetectorType[] detNames = {DetectorType.PCAL, DetectorType.ECIN, DetectorType.ECOUT};
     
    public ECReconstructionApp(String name, ECPixels[] ecPix) {
        super(name,ecPix);
@@ -65,6 +73,8 @@ public class ECReconstructionApp extends FCApplication {
        mondet =           (String) mon.getGlob().get("mondet");
        inMC   =          (Boolean) mon.getGlob().get("inMC");
        inCRT  =          (Boolean) mon.getGlob().get("inCRT");
+       doRec =           (Boolean) mon.getGlob().get("doRec");
+       config =           (String) mon.getGlob().get("config");
    }
    
    public void clearHistograms() {
@@ -98,12 +108,11 @@ public class ECReconstructionApp extends FCApplication {
           this.updateRealData(event);         
       }
       
-      this.processECRec(event);
+      if (doRec) this.processECRec(event);
       
       if (app.isSingleEvent()) {
 //         for (int idet=0; idet<ecPix.length; idet++) findPixels(idet);     // Process all pixels for SED
          for (int idet=0; idet<ecPix.length; idet++) processSED(idet);
-         this.processECRec(event);
       } else {
          for (int idet=0; idet<ecPix.length; idet++) processPixels(idet); // Process only single pixels 
  //         processCalib();  // Process only single pixels 
@@ -119,13 +128,7 @@ public class ECReconstructionApp extends FCApplication {
        int[] il = {1,2,3,1,2,3,1,2,3}; // layer 1-3: PCAL 4-6: ECinner 7-9: ECouter  
        return il[layer-1];
     }
-   
-   public int getThr(int layer) {
-       int[] il = {15,15,15,20,20,20,20,20,20}; 
-       return il[layer-1];
-    }
-  
-   
+     
    public void updateRealData(EvioDataEvent event){
 
       int adc,npk,ped;
@@ -263,22 +266,62 @@ public class ECReconstructionApp extends FCApplication {
    }
     
    public void processECRec(EvioDataEvent event) {
-        
+       
+       if (app.isSingleEvent()) {
+           for (int i=0; i<3; i++) app.getDetectorView().getView().removeLayer("L"+i);
+           for (int i=0; i<3; i++) app.getDetectorView().getView().addLayer("L"+i);
+       }
+       
+      int ipp = 0;
+      
       if(event.hasBank("ECDetector::peaks")){
          EvioDataBank bank = (EvioDataBank) event.getBank("ECDetector::peaks");
          for(int i=0; i < bank.rows(); i++) {
-            int is  = bank.getInt("sector",i);
-            int il  = bank.getInt("layer",i);
-          double en = bank.getDouble("energy",i);
-          ecPix[getDet(il)].strips.hmap2.get("H2_a_Hist").get(is,4,0).fill(en*1e3,getLay(il),1.);  
-//            System.out.println("sector,layer,strip="+is+" "+il+" "+ip);  
-//            System.out.println("peakid,energy="+id+" "+en+" ");  
+            int   is  = bank.getInt("sector",i);
+            int   il  = bank.getInt("layer",i);
+            double en = bank.getDouble("energy",i);
+            ecPix[getDet(il)].strips.hmap2.get("H2_a_Hist").get(is,4,0).fill(en*1e3,getLay(il),1.);  
+            if (app.isSingleEvent()) {
+                double xo = bank.getDouble("Xo",i);
+                double yo = bank.getDouble("Yo",i);
+                double zo = bank.getDouble("Zo",i);
+                double xe = bank.getDouble("Xe",i);
+                double ye = bank.getDouble("Ye",i);
+                double ze = bank.getDouble("Ze",i);
+                Line3D xyz = new Line3D(-xo,yo,zo,-xe,ye,ze);
+                xyz.rotateZ(Math.toRadians(60*(is-1)));
+                xyz.rotateY(Math.toRadians(25));
+                xyz.translateXYZ(-333.1042, 0.0, 0.0);
+                xyz.rotateZ(Math.toRadians(-60*(is-1)));
+                Point3D orig = xyz.origin();
+                Point3D  end = xyz.end();
+                orig.setY(-orig.y()); end.setY(-end.y());                        
+                DetectorShape2D shape = new DetectorShape2D(detNames[getDet(il)],is,ipp++,0); 
+                shape.getShapePath().addPoint(orig.x(),orig.y(),0.);
+                shape.getShapePath().addPoint(end.x(),end.y(),0.);
+                app.getDetectorView().getView().addShape("L"+getDet(il), shape);
+                double[] dum = {orig.x(),orig.y(),end.x(),end.y()};
+                ecPix[getDet(il)].peakXY.get(is).add(dum);
+//                System.out.println("sector,layer="+is+" "+il);  
+//                System.out.println(orig.x()+" "+orig.y()+" "+orig.z());
+//                System.out.println(end.x()+" "+end.y()+" "+end.z());
+//                System.out.println(" ");
+            }
+           
+//             double[] dum = {orig.x(),-orig.y(),orig.z(),end.x(),-end.y(),end.z()};
+//            if (app.isSingleEvent()) ecPix[getDet(il)].peakXY.get(is).add(dum);
+//            System.out.println("sector,layer="+is+" "+il);  
+//            System.out.println("Xo,Yo,Zo= "+xo+" "+yo+" "+zo);
+//           System.out.println("Xe,Ye,Ze= "+xe+" "+ye+" "+ze);
+//            System.out.println("energy="+en);  
 //            System.out.println(" ");
          }
+        
       } 
       
       if(event.hasBank("ECDetector::clusters")){
           EvioDataBank bank = (EvioDataBank) event.getBank("ECDetector::clusters");
+          int sign[] = {-1,1,1};
           for(int i=0; i < bank.rows(); i++) {
              int is = bank.getInt("sector",i);
              int il = bank.getInt("layer",i);
@@ -286,11 +329,17 @@ public class ECReconstructionApp extends FCApplication {
              double      X = bank.getDouble("X",i);
              double      Y = bank.getDouble("Y",i);
              double      Z = bank.getDouble("Z",i);
-             mon.update(shape);app.getDetectorView().
+             //Display uses tilted coordinates.  Must transform X,Y,Z from CLAS into tilted.
+             Point3D xyz = new Point3D(-X,Y,Z);
+             xyz.rotateZ(Math.toRadians(60*(is-1)));
+             xyz.rotateY(Math.toRadians(25));
+             xyz.translateXYZ(-333.1042, 0.0, 0.0);
+             xyz.rotateZ(Math.toRadians(-60*(is-1)));
+             double[] dum  = {xyz.x(),-xyz.y()}; 
+//             System.out.println("sector,layer="+is+" "+il);  
+//             System.out.println("Cluster: "+dum[0]+" "+dum[1]+" "+xyz.z());
+             if (app.isSingleEvent()) ecPix[getDet(il)].clusterXY.get(is).add(dum);
              ecPix[getDet(il)].strips.hmap2.get("H2_a_Hist").get(is,4,0).fill(energy*1e3,4,1.);            
-//             System.out.println("sector,layer ="+is+" "+il);  
-//             System.out.println("X,Y,Z,energy="+X+" "+Y+" "+Z+" "+energy);  
-//             System.out.println(" ");
           }
       }
       
@@ -319,6 +368,24 @@ public class ECReconstructionApp extends FCApplication {
  
    }
    
+   private class toLocal {
+       
+       void toLocal(int is, Line3D line) {
+           line.rotateZ(Math.toRadians(60*(is-1)));
+           line.rotateY(Math.toRadians(25));
+           line.translateXYZ(-333.1042, 0.0, 0.0);
+           line.rotateZ(Math.toRadians(-60*(is-1)));           
+       }
+       
+       void toLocal(int is, Point3D point) {
+           point.rotateZ(Math.toRadians(60*(is-1)));
+           point.rotateY(Math.toRadians(25));
+           point.translateXYZ(-333.1042, 0.0, 0.0);
+           point.rotateZ(Math.toRadians(-60*(is-1)));                      
+       }
+       
+   }
+   
    public void clear(int idet) {
             
       for (int is=0 ; is<6 ; is++) {     
@@ -341,13 +408,16 @@ public class ECReconstructionApp extends FCApplication {
             
       if (app.isSingleEvent()) {
          for (int is=0 ; is<6 ; is++) {
+            ecPix[idet].clusterXY.get(is+1).clear();
             for (int il=0 ; il<3 ; il++) {
-               ecPix[idet].strips.hmap1.get("H1_Stra_Sevd").get(is+1,il+1,0).reset();
-               ecPix[idet].strips.hmap2.get("H2_Mode1_Sevd").get(is+1,il+1,0).reset();
-               ecPix[idet].strips.hmap2.get("H2_Mode1_Sevd").get(is+1,il+1,1).reset();
-               for (int ip=0; ip<ecPix[idet].pixels.getNumPixels() ; ip++) {
-                   ecPix[idet].ecadcpix[is][il][ip] = 0;                
-               }
+                ecPix[idet].strips.hmap1.get("H1_Stra_Sevd").get(is+1,il+1,0).reset();
+                ecPix[idet].strips.hmap1.get("H1_Stra_Sevd").get(is+1,il+1,1).reset();
+                ecPix[idet].strips.hmap2.get("H2_Mode1_Sevd").get(is+1,il+1,0).reset();
+                ecPix[idet].strips.hmap2.get("H2_Mode1_Sevd").get(is+1,il+1,1).reset();
+                for (int ip=0; ip<ecPix[idet].pixels.getNumPixels() ; ip++) {
+                    ecPix[idet].ecadcpix[is][il][ip] = 0;                
+                }
+                
             }
             for (int ip=0; ip<ecPix[idet].pixels.getNumPixels() ; ip++) {
                 ecPix[idet].ecpixel[is][ip] = 0;                
@@ -371,8 +441,10 @@ public class ECReconstructionApp extends FCApplication {
            ecPix[idet].strips.hmap2.get("H2_t_Hist").get(is,il,0).fill(tdc,ip,1.);
            ecPix[idet].strips.hmap2.get("H2_PC_Stat").get(is,0,2).fill(ip,il,tdc);
        }
-
-       if(adc>getThr(idet*3+il)){
+       
+       ecPix[idet].strips.hmap1.get("H1_Stra_Sevd").get(is,il,1).fill(ip,0.1*adc);
+       
+       if(adc>ecPix[idet].getStripThr(config,il)){
            ecPix[idet].uvwa[is-1]=ecPix[idet].uvwa[is-1]+ecPix[idet].uvw_dalitz(idet,il,ip); //Dalitz adc
            ecPix[idet].nha[is-1][il-1]++; int inh = ecPix[idet].nha[is-1][il-1];
            if (inh>nstr) inh=nstr;

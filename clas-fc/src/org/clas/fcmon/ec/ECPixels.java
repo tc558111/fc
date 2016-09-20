@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.TreeMap;
 
 import javax.swing.JFrame;
@@ -40,6 +41,8 @@ public class ECPixels {
     PrintWriter       writer = null;
 	DetectorShape2D    shape = new DetectorShape2D();
 	
+    public TreeMap<Integer,List<double[]>>          clusterXY = new TreeMap<Integer, List<double[]>>();
+    public TreeMap<Integer,List<double[]>>             peakXY = new TreeMap<Integer, List<double[]>>();
     public DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new DetectorCollection<TreeMap<Integer,Object>>();
     public DetectorCollection<TreeMap<Integer,Object>> Lmap_t = new DetectorCollection<TreeMap<Integer,Object>>();
     public DetectorCollection<CalibrationData>     collection = new DetectorCollection<CalibrationData>();  
@@ -72,8 +75,16 @@ public class ECPixels {
     int     adcr[][][] = new    int[6][3][68];      
     double ftdcr[][][] = new double[6][3][68];      
     double  tdcr[][][] = new double[6][3][68]; 	
+    
+    int[][] sthrMuon = {{15,15,15},{20,20,20},{20,20,20}};
+    int[][] sthrPi0  = {{10,10,10},{10,10,10},{10,10,10}};
+    int[][] sthrElec = {{10,10,10},{10,10,10},{10,10,10}};
+    
+    int[][] pthrMuon = {{15,15,15},{20,20,20},{20,20,20}};
+    int[][] pthrPi0  = {{30,30,30},{30,30,30},{30,30,30}};
+    int[][] pthrElec = {{30,30,30},{30,30,30},{30,30,30}};
         
-	int id=0;
+	public int id=0;
     public String detName = null;
 	
 	public ECPixels(String det) {		
@@ -87,25 +98,47 @@ public class ECPixels {
   		  ec_nstr[layer] = ecLayer.getAllComponents().size();
   	    }
   	  }
+	  for (int is=1; is<7; is++) {
+          clusterXY.put(is, new ArrayList<double[]>());
+             peakXY.put(is, new ArrayList<double[]>());
+	  }
 	  detName = det;
 	  pixdef();
       pixrot();
       System.out.println("ECPixels("+det+") is done");
-//      pixHistos();
+//    pixHistos();
 //    this.writeFPGALookupTable("/Users/colesmith/pcal_att376_DB.dat",376.,1); 
 //    this.testStrips();
 //    this.testPixels();
 	}
-	
+    
+    public static void main(String[] args) {
+        ECPixels pix = new ECPixels("PCAL");        
+    }
+    
+    public int getStripThr(String config, int layer) {
+        switch (config) {
+        case  "pizero": return  sthrPi0[id][layer-1] ;  
+        case    "muon": return sthrMuon[id][layer-1] ; 
+        case    "elec": return sthrElec[id][layer-1] ;
+        }
+        return 0;
+     }
+    
+    public int getPeakThr(String config, int layer) {
+        switch (config) {
+        case  "pizero": return  pthrPi0[id][layer-1] ;  
+        case    "muon": return pthrMuon[id][layer-1] ; 
+        case    "elec": return pthrElec[id][layer-1] ;
+        }
+        return 0;
+     }
+    
 	public void pixdef() {
         System.out.println("ECPixels.pixdef(): "+this.detName); 
 	    calDB = new CalDrawDB(detName);
 	    GetStripsDB();
 	    GetPixelsDB();
-	}
-	
-	public static void main(String[] args) {
-		ECPixels pix = new ECPixels("PCAL");		
 	}
 	
 	public void init() {
@@ -260,6 +293,7 @@ public class ECPixels {
                 H2_Mode1_Hist.add(is, il, 0, new H2F("a_fadc_"+id+0,100,   0., 100.,  nstr, 1., nend));
                 // Single Event Strip Occupancy
                 H1_Stra_Sevd.add(is, il, 0, new H1F("a_sed_str_"+id+0, nstr,  1., nend));
+                H1_Stra_Sevd.add(is, il, 1, new H1F("b_sed_str_"+id+1, nstr,  1., nend));
                 H1_Strt_Sevd.add(is, il, 0, new H1F("a_sed_str_"+id+0, nstr,  1., nend));
                 // Single Event fADC bins
                 H2_Mode1_Sevd.add(is, il, 0, new H2F("a_sed_fadc_"+id+0,100, 0., 100., nstr, 1., nend));
@@ -273,6 +307,9 @@ public class ECPixels {
                 H2_a_Hist.add(is, 5, 0, new H2F("b_raw_"+id+0,  200, 0.,100., 3, 1., 4.));                
                 id="s"+Integer.toString(is)+"_l"+Integer.toString(6)+"_c";
                 H2_a_Hist.add(is, 6, 0, new H2F("c_reco_"+id+0, 200, 0.,100., 3, 1., 4.));   
+                id="s"+Integer.toString(is)+"_l"+Integer.toString(7)+"_c";
+                H2_a_Hist.add(is, 7, 0, new H2F("d_reco_"+id+0, 200, -600., 600., 200, -600., 600.));   
+                H2_a_Hist.add(is, 7, 1, new H2F("e_reco_"+id+0, 200, -600., 600., 200, -600., 600.));   
                 
             //Pixel based data
             for (int il=1; il<4 ; il++) { 

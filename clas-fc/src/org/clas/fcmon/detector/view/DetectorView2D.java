@@ -5,6 +5,7 @@
  */
 package org.clas.fcmon.detector.view;
 
+import java.awt.BasicStroke;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Graphics;
@@ -25,6 +26,7 @@ import org.jlab.detector.base.DetectorDescriptor;
 import org.jlab.detector.base.DetectorType;
 import org.jlab.detector.decode.DetectorDataDgtz;
 import org.jlab.detector.view.ViewWorld;
+import org.jlab.geom.prim.Path3D;
 import org.jlab.groot.base.ColorPalette;
 import org.jlab.groot.graphics.GraphicsAxis;
 import org.jlab.groot.math.Dimension1D;
@@ -155,21 +157,24 @@ public class DetectorView2D extends JPanel implements MouseMotionListener {
            // System.out.println("[Drawing] ---> layer : " + entry.getKey() + " " + 
            //                                                entry.getValue().getBounds());
             if (n==0) {
-            commonDimension.copy(entry.getValue().getBounds());
-            commonDimension.getDimension(0).addPadding(0.1);
-            commonDimension.getDimension(1).addPadding(0.1);
-            
-            //ViewWorld  world = new ViewWorld();
-            world.setWorld(viewBounds);
-            world.setView(commonDimension);
-            n++;
+                commonDimension.copy(entry.getValue().getBounds());
+                commonDimension.getDimension(0).addPadding(0.1);
+                commonDimension.getDimension(1).addPadding(0.1);
+                world.setWorld(viewBounds);
+                world.setView(commonDimension);
+                n++;
             }
             
             //world.show();
-            if(entry.getValue().isActive()==true){
-                entry.getValue().drawLayer(g2d, world);
-            }
+            if(entry.getValue().isActive()==true) entry.getValue().drawLayer(g2d, world);
         }
+        
+        if (viewLayers.containsKey("L0")) {
+            if(activeLayer.equals("PIX0")) viewLayers.get("L0").drawLines(g2d, world);
+            if(activeLayer.equals("PIX1")) viewLayers.get("L1").drawLines(g2d, world);
+            if(activeLayer.equals("PIX2")) viewLayers.get("L2").drawLines(g2d, world);
+        }
+                
     }
     
     public void changeBackground(Color bkg){
@@ -248,7 +253,7 @@ public class DetectorView2D extends JPanel implements MouseMotionListener {
             for(String layer : this.viewLayerNames){
                 if(viewLayers.get(layer).isActive()==true){
                     this.viewLayers.get(layer).resetSelection();
-                    selection = this.viewLayers.get(layer).getShapeByXY( x,y);
+                    selection = this.viewLayers.get(layer).getShapeByXY(x,y);
                     if(selection!=null) {
                         index = selection.hashCode();
                         this.viewLayers.get(layer).setSelected(selection);
@@ -286,7 +291,7 @@ public class DetectorView2D extends JPanel implements MouseMotionListener {
         private boolean                    showHitMap = false;
         private int                           opacity = 255;
         private ColorPalette                  palette = new ColorPalette();
-        
+        private Color                     strokeColor = Color.black;        
         List<DetectorListener>    detectorListeners = new ArrayList<DetectorListener>();
         
         public DetectorViewLayer2D() {
@@ -350,7 +355,7 @@ public class DetectorView2D extends JPanel implements MouseMotionListener {
         }
         
         public DetectorShape2D  getShapeByXY(double x, double y){
-            for(Map.Entry<Long,DetectorShape2D>  shape : shapes.getMap().entrySet()){
+            for(Map.Entry<Long,DetectorShape2D>  shape : shapes.getMap().entrySet()){                
                 if(shape.getValue().isContained(x, y)==true) return shape.getValue();
             }
             return null;
@@ -383,55 +388,58 @@ public class DetectorView2D extends JPanel implements MouseMotionListener {
                             ){                            
                         //System.out.println("COLORING COMPONENT " + shape.getValue().getDescriptor());
                         int cv = shape.getValue().getCounter();
-                        shape.getValue().setCounter(cv+1);
+                        shape.getValue().setCounter(cv+1,0.,0.);
                     }
                 }
             }
         }
         
-        public void drawLayer(Graphics2D g2d, ViewWorld world){
-            //System.out.println(" WORLD      = " + d2d);
-            //System.out.println(" Layer Boundaries = " + this.boundaries);
+        public void drawLines(Graphics2D g2d, ViewWorld world){
             
-            //if(this.showHitMap==true){
-            //    this.getAxisRange();
-            //}
-            int counterZero = 0;
-            int counterOne  = 0;
+            for(Map.Entry<Long,DetectorShape2D> entry : this.shapes.getMap().entrySet()){           
+                int x0 = (int) world.getPointX(entry.getValue().shapePath.point(0).x());
+                int y0 = (int) world.getPointY(entry.getValue().shapePath.point(0).y());
+                int x1 = (int) world.getPointX(entry.getValue().shapePath.point(1).x());
+                int y1 = (int) world.getPointY(entry.getValue().shapePath.point(1).y());
+                entry.getValue().setColor(255,0,0);
+                g2d.setColor(entry.getValue().getSwingColor());
+                g2d.setStroke(new BasicStroke(2));
+                g2d.drawLine(x0, y0, x1, y1);                
+                g2d.setStroke(new BasicStroke(0));
+            }
+                        
+        }
+        
+        public void drawLayer(Graphics2D g2d, ViewWorld world){
+            
+            List<DetectorShape2D> hits = new ArrayList<DetectorShape2D>();
             
             for(Map.Entry<Long,DetectorShape2D> entry : this.shapes.getMap().entrySet()){
+                
                 DetectorShape2D shape = entry.getValue();
                 for(DetectorListener lt : this.detectorListeners) lt.update(shape);
+                
                 Color shapeColor = shape.getSwingColorWithAlpha(this.opacity);
                 
-                //System.out.println(" drawing shape ----> " + entry.getKey());
-                //double x = world.getPointX(shape.getShapePath().point(0).x());
-                //double y = world.getPointY(shape.getShapePath().point(0).y());
-                //g2d.drawOval( (int) x, (int) y,5,5);
-                
-                if(this.showHitMap==true){
-                    if(shape.getCounter()>0){
-                        counterOne++;
-                    } else {
-                        counterZero++;
-                    }
-                    //Color mapColor = ;//ColorPalette.gaxisRange.getMax();
-                    shapeColor = palette.getColor3D(shape.getCounter(),axisRange.getMax(), false);
-                    
-                    //System.out.println(" AXIS MAX = " + axisRange.getMax() + "  VALUE = " + shape.getCounter());
-                }
+                if (shape.getCounter()>0) hits.add(shape);
 
                 if(this.selectedDescriptor.compare(shape.getDescriptor())==true){
                     shape.drawShape(g2d, world, Color.red, Color.black);
                 } else {                 
                     shape.drawShape(g2d, world, shapeColor, Color.black);                        
                 }
-                
-                //if(this.showHitMap==true){
-                   // System.out.println("Counters Zero = " + counterZero + "  One = "
-                   //         + counterOne);
-                //}
             }
+                      
+            for(DetectorShape2D shape : hits){
+                double x = world.getPointX(shape.xc);
+                double y = world.getPointY(shape.yc);
+                shape.setColor(150,150,255);
+                g2d.setColor(shape.getSwingColor());
+                g2d.setStroke(new BasicStroke(2));
+                g2d.fillOval((int) x, (int) y,10, 10);
+                g2d.setStroke(new BasicStroke(0));           
+            }
+            
         }
         
     }

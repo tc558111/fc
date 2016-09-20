@@ -26,11 +26,11 @@ public class ECStore {
     List<ECStrip>    ecStrips    = new ArrayList<ECStrip>();
     List<ECPeak>     ecPeaks     = null;
     List<ECCluster>  ecClusters  = null;
-             
+    int                   ind[]  = {0,0,0,1,1,1,2,2,2}; 
+    
     public ECStore(){
         
     }
-    
     
     public void processGemc(EvioDataEvent event, Detector  geom, ConstantProvider  calib){
         this.initStripsGemc(event, geom, calib);
@@ -70,7 +70,7 @@ public class ECStore {
                 );
                 
                 strip.setGain(calib.getDouble("/calibration/ec/gain/gain", index));
-                if(strip.getADC()>10)
+                if(strip.getADC()>ECCommon.stripThreshold[ind[layer-1]])
                     ecStrips.add(strip);                       
             }
             
@@ -101,16 +101,16 @@ public class ECStore {
                 );
                 
                 strip.setGain(calib.getDouble("/calibration/ec/gain/gain", index));
-                if(strip.getADC()>10)
+                if(strip.getADC()>ECCommon.stripThreshold[ind[layer-1]])
                     ecStrips.add(strip);                       
             }
             
         }        
     }
     
-    public List<ECStrip>    getStrips(){ return this.ecStrips; }
-    public List<ECPeak>     getPeaks(){ return this.ecPeaks; }
-    public List<ECCluster>  getClusters(){ return this.ecClusters; }
+    public List<ECStrip>     getStrips(){return this.ecStrips;}
+    public List<ECPeak>       getPeaks(){return this.ecPeaks;}
+    public List<ECCluster> getClusters(){return this.ecClusters;}
     
     public void           showStrips(){
         System.out.println("************************  STRIPS  *********************");

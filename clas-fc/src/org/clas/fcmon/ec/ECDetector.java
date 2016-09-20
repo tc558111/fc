@@ -7,6 +7,8 @@ import org.jlab.geom.prim.Path3D;
 
 public class ECDetector extends FCDetector {
     
+    DetectorType[] detNames = {DetectorType.PCAL, DetectorType.ECIN, DetectorType.ECOUT};
+    
     public ECDetector(String name , ECPixels[] ecPix) {
         super(name, ecPix);       
      }  
@@ -58,9 +60,9 @@ public class ECDetector extends FCDetector {
          
     }
     
-    public DetectorShape2D getPixel(int det,int sector, int layer, int pixel){
+    public DetectorShape2D getPixel(int det, int sector, int layer, int pixel){
 
-        DetectorShape2D shape = new DetectorShape2D(DetectorType.EC,sector,layer,pixel);               
+        DetectorShape2D shape = new DetectorShape2D(detNames[det],sector,layer,pixel);               
         Path3D      shapePath = shape.getShapePath();
         
         for(int j = 0; j < ecPix[det].ec_nvrt[pixel]; j++){
@@ -73,7 +75,7 @@ public class ECDetector extends FCDetector {
     
     public DetectorShape2D getStrip(int det, int sector, int layer, int str) {
 
-        DetectorShape2D shape = new DetectorShape2D(DetectorType.EC,sector,layer,str);               
+        DetectorShape2D shape = new DetectorShape2D(detNames[det],sector,layer,str);               
         Path3D      shapePath = shape.getShapePath();
         
         for(int j = 0; j <4; j++){

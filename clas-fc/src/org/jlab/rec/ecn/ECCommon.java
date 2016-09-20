@@ -31,6 +31,8 @@ public class ECCommon {
     
     public static int[]    EC_VIEW_STRIPS = new int[]{68,62,62,36,36,36,36,36,36};
     
+    public static int[]  stripThreshold = new int[3];
+    public static int[]   peakThreshold = new int[3];    
     
     public static ECStrip  createStrip(int sector, int layer, int component, Detector det){
         try {

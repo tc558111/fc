@@ -346,6 +346,8 @@ public class ECReconstructionApp extends FCApplication {
              double      Y = bank.getDouble("Y",i);
              double      Z = bank.getDouble("Z",i);
             System.out.println("Cluster: "+X+" "+Y+" "+Z);
+            System.out.println("Cluster radius:"+Math.sqrt(X*X+Y*Y+Z*Z));
+            System.out.println("GEMC radius:"+0.1*Math.sqrt(pcX*pcX+pcY*pcY+pcZ*pcZ));
             if(getDet(il)==0) {
                 ecPix[0].strips.hmap2.get("H2_a_Hist").get(is,8,0).fill(0.1*pcX-X,1.);
                 ecPix[0].strips.hmap2.get("H2_a_Hist").get(is,8,0).fill(0.1*pcY-Y,2.);

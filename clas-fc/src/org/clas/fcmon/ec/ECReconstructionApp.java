@@ -44,7 +44,7 @@ public class ECReconstructionApp extends FCApplication {
    String          config = null;
    String BankType        = null;
    int              detID = 0;
-   double pcX,pcY,pcZ;
+   double pcx,pcy,pcz;
    
    CodaEventDecoder            newdecoder = new CodaEventDecoder();
    DetectorEventDecoder   detectorDecoder = new DetectorEventDecoder();
@@ -214,7 +214,8 @@ public class ECReconstructionApp extends FCApplication {
    
    public void updateSimulatedData(EvioDataEvent event) {
        
-      float tdcmax=100000;
+      float tdcmax=2000000;
+      double tmax = 30;
       int adc, tdcc, fac, detlen=0;
       double mc_t=0.,tdc=0,tdcf=0;
       boolean goodstrip = true;
@@ -233,20 +234,16 @@ public class ECReconstructionApp extends FCApplication {
           
           if(event.hasBank(det[idet]+"::true")==true) {
               EvioDataBank bank = (EvioDataBank) event.getBank(det[idet]+"::true");
-              if(idet==0) {
-                 pcX = bank.getDouble("avgX",0);
-                 pcY = bank.getDouble("avgY",0);
-                 pcZ = bank.getDouble("avgZ",0);
-              }
-              for(int i=0; i < bank.rows(); i++) mc_t = bank.getDouble("avgT",i);
               for(int i=0; i < bank.rows(); i++) {
-                  if (idet==0) System.out.println("PCAL x,y,z,t="+bank.getDouble("avgX",i)+" "+
-                                                                  bank.getDouble("avgY",i)+" "+
-                                                                  bank.getDouble("avgZ",i)+" "+
-                                                                  bank.getDouble("avgT",i));
+                  if(idet==0) {
+                     double pcX = bank.getDouble("avgX",i);
+                     double pcY = bank.getDouble("avgY",i);
+                     double pcZ = bank.getDouble("avgZ",i);
+                     double pcT = bank.getDouble("avgT",i);
+                     if(pcT<tmax){pcx=pcX; pcy=pcY; pcz=pcZ ; tmax = pcT;}
+                  }
               }
-          }else{
-              mc_t = 0.;
+              if (idet==0) System.out.println("PCAL x,y,z,t="+pcx+" "+pcy+" "+pcz+" "+tmax);
           }
           
           inMC = true; mon.putGlob("inMC",true); 
@@ -255,8 +252,8 @@ public class ECReconstructionApp extends FCApplication {
               EvioDataBank bank = (EvioDataBank) event.getBank(det[idet]+"::dgtz");
               
               for(int i = 0; i < bank.rows(); i++){
-                  float dum = (float)bank.getInt("TDC",i)-(float)mc_t*1000;
-                  if (dum<tdcmax) tdcmax=dum; //Find and save latest hit time
+                  float dum = (float)bank.getInt("TDC",i);
+                  if (dum<tdcmax) tdcmax=dum; //Find and save longest hit time
               }
               
               for(int i = 0; i < bank.rows(); i++){
@@ -272,7 +269,7 @@ public class ECReconstructionApp extends FCApplication {
 //                  System.out.println("Sector "+is+" Stack "+ic+" View "+il+" Strip "+ip+" Det "+idet+" ADC "+adc);
                   goodstrip= true;
                   if(inCRT&&il==2&&ip==53) goodstrip=false;
-                  tdc = (((float)tdcc-(float)mc_t*1000)-tdcmax+1340000)/1000; 
+                  tdc = ((float)tdcc-tdcmax+1364000)/1000; 
                   if (goodstrip) fill(idet, is, il, ip, adc, tdc, tdcf); 
               }
           }
@@ -337,7 +334,7 @@ public class ECReconstructionApp extends FCApplication {
       
       if(event.hasBank("ECDetector::clusters")){
           EvioDataBank bank = (EvioDataBank) event.getBank("ECDetector::clusters");
-          int sign[] = {-1,1,1};
+          int sign[] = {-1,1,1}; double esum=0;
           for(int i=0; i < bank.rows(); i++) {
              int is = bank.getInt("sector",i);
              int il = bank.getInt("layer",i);
@@ -345,14 +342,23 @@ public class ECReconstructionApp extends FCApplication {
              double      X = bank.getDouble("X",i);
              double      Y = bank.getDouble("Y",i);
              double      Z = bank.getDouble("Z",i);
+             double    pcR = Math.sqrt(X*X+Y*Y+Z*Z);
+             double pcThet = Math.asin(Math.sqrt(X*X+Y*Y)/pcR)*180/3.14159;
+             double    mcR = Math.sqrt(pcx*pcx+pcy*pcy+pcz*pcz);
+             double mcThet = Math.asin(Math.sqrt(pcx*pcx+pcy*pcy)/mcR)*180/3.14159;
             System.out.println("Cluster: "+X+" "+Y+" "+Z);
-            System.out.println("Cluster radius:"+Math.sqrt(X*X+Y*Y+Z*Z));
-            System.out.println("GEMC radius:"+0.1*Math.sqrt(pcX*pcX+pcY*pcY+pcZ*pcZ));
+            System.out.println("Cluster-target:"+pcR);
+            System.out.println("GEMC-target:"+0.1*mcR);
+            System.out.println("Cluster thet: "+pcThet);
+            System.out.println("GEMC thet: "+mcThet);
+            System.out.println(" ");
             if(getDet(il)==0) {
-                ecPix[0].strips.hmap2.get("H2_a_Hist").get(is,8,0).fill(0.1*pcX-X,1.);
-                ecPix[0].strips.hmap2.get("H2_a_Hist").get(is,8,0).fill(0.1*pcY-Y,2.);
-                ecPix[0].strips.hmap2.get("H2_a_Hist").get(is,8,0).fill(0.1*pcZ-Z,3.);
+                ecPix[getDet(il)].strips.hmap2.get("H2_a_Hist").get(is,8,0).fill(0.1*pcx-X,1.);
+                ecPix[getDet(il)].strips.hmap2.get("H2_a_Hist").get(is,8,0).fill(0.1*pcy-Y,2.);
+                ecPix[getDet(il)].strips.hmap2.get("H2_a_Hist").get(is,8,0).fill(0.1*pcz-Z,3.);
             }
+            ecPix[getDet(il)].strips.hmap2.get("H2_a_Hist").get(is,9,0).fill(25.0-mcThet,1.);
+            ecPix[getDet(il)].strips.hmap2.get("H2_a_Hist").get(is,9,0).fill(pcThet-mcThet,2.);
             //Display uses tilted coordinates.  Must transform X,Y,Z from CLAS into tilted.
              Point3D xyz = new Point3D(-X,Y,Z);
              xyz.rotateZ(Math.toRadians(60*(is-1)));
@@ -364,8 +370,11 @@ public class ECReconstructionApp extends FCApplication {
 //           System.out.println("Cluster: "+dum[0]+" "+dum[1]+" "+xyz.z());
 //           System.out.println("Cluster: "+X+" "+Y+" "+Z);
              if (app.isSingleEvent()) ecPix[getDet(il)].clusterXY.get(is).add(dum);
-             ecPix[getDet(il)].strips.hmap2.get("H2_a_Hist").get(is,4,0).fill(energy*1e3,4,1.);            
+             ecPix[getDet(il)].strips.hmap2.get("H2_a_Hist").get(is,4,0).fill(energy*1e3,4,1.); 
+             ecPix[getDet(il)].strips.hmap2.get("H2_a_Hist").get(is,4,0).fill(energy*1e3,4,1.); 
+             esum=esum+energy*1e3;
           }
+         ecPix[0].strips.hmap2.get("H2_a_Hist").get(2,4,0).fill(esum,5,1.);            
       }
       
       if(event.hasBank("ECDetector::calib")){

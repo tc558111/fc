@@ -77,11 +77,11 @@ public class ECPixels {
     double  tdcr[][][] = new double[6][3][68]; 	
     
     int[][] sthrMuon = {{15,15,15},{20,20,20},{20,20,20}};
-    int[][] sthrPi0  = {{10,10,10},{10,10,10},{10,10,10}};
+    int[][] sthrPhot = {{10,10,10},{10,10,10},{10,10,10}};
     int[][] sthrElec = {{10,10,10},{10,10,10},{10,10,10}};
     
     int[][] pthrMuon = {{15,15,15},{20,20,20},{20,20,20}};
-    int[][] pthrPi0  = {{30,30,30},{30,30,30},{30,30,30}};
+    int[][] pthrPhot = {{30,30,30},{30,30,30},{30,30,30}};
     int[][] pthrElec = {{30,30,30},{30,30,30},{30,30,30}};
         
 	public int id=0;
@@ -118,7 +118,7 @@ public class ECPixels {
     
     public int getStripThr(String config, int layer) {
         switch (config) {
-        case  "pizero": return  sthrPi0[id][layer-1] ;  
+        case    "phot": return sthrPhot[id][layer-1] ;  
         case    "muon": return sthrMuon[id][layer-1] ; 
         case    "elec": return sthrElec[id][layer-1] ;
         }
@@ -127,7 +127,7 @@ public class ECPixels {
     
     public int getPeakThr(String config, int layer) {
         switch (config) {
-        case  "pizero": return  pthrPi0[id][layer-1] ;  
+        case    "phot": return pthrPhot[id][layer-1] ;  
         case    "muon": return pthrMuon[id][layer-1] ; 
         case    "elec": return pthrElec[id][layer-1] ;
         }
@@ -302,16 +302,18 @@ public class ECPixels {
             
             // Reco data
                 id="s"+Integer.toString(is)+"_l"+Integer.toString(4)+"_c";
-                H2_a_Hist.add(is, 4, 0, new H2F("a_reco_"+id+0, 200, 0.,100., 4, 1., 5.));
+                H2_a_Hist.add(is, 4, 0, new H2F("a_reco_"+id+0, 600, 0.,800., 5, 1., 6.));
                 id="s"+Integer.toString(is)+"_l"+Integer.toString(5)+"_c";
-                H2_a_Hist.add(is, 5, 0, new H2F("b_raw_"+id+0,  200, 0.,100., 3, 1., 4.));                
+                H2_a_Hist.add(is, 5, 0, new H2F("b_raw_"+id+0,  600, 0.,300., 3, 1., 4.));                
                 id="s"+Integer.toString(is)+"_l"+Integer.toString(6)+"_c";
-                H2_a_Hist.add(is, 6, 0, new H2F("c_reco_"+id+0, 200, 0.,100., 3, 1., 4.));   
+                H2_a_Hist.add(is, 6, 0, new H2F("c_reco_"+id+0, 600, 0.,300., 3, 1., 4.));   
                 id="s"+Integer.toString(is)+"_l"+Integer.toString(7)+"_c";
                 H2_a_Hist.add(is, 7, 0, new H2F("d_reco_"+id+0, 200, -600., 600., 200, -600., 600.));   
                 H2_a_Hist.add(is, 7, 1, new H2F("e_reco_"+id+0, 200, -600., 600., 200, -600., 600.));   
                 id="s"+Integer.toString(is)+"_l"+Integer.toString(8)+"_c";
                 H2_a_Hist.add(is, 8, 0, new H2F("f_reco_"+id+0, 50, -10., 10., 3, 1., 4.));   
+                id="s"+Integer.toString(is)+"_l"+Integer.toString(9)+"_c";
+                H2_a_Hist.add(is, 9, 0, new H2F("f_reco_"+id+0, 50, -2., 2., 3, 1., 4.));   
                 
             //Pixel based data
             for (int il=1; il<4 ; il++) { 

@@ -38,7 +38,8 @@ public class ECCluster {
         this.WVIEW_ID = w.getOrder();
         
         this.clusterMultiplicity = u.getMultiplicity() + 
-                v.getMultiplicity() + w.getMultiplicity();
+                                   v.getMultiplicity() + 
+                                   w.getMultiplicity();
         this.intersection();
     }
     
@@ -51,24 +52,24 @@ public class ECCluster {
     }
     
     public double getEnergy(){
-        double energy = 0;
-        for(int view = 0; view < 3; view++){
-            energy += this.clusterPeaks.get(view).getEnergy(clusterHitPosition);
-        }
-        return energy;
+        return getEnergy(0)+getEnergy(1)+getEnergy(2);
     }
+    
+    public double getEnergy(int view){
+        return this.clusterPeaks.get(view).getEnergy(clusterHitPosition);
+    }  
     
     public double getTime(){
         return this.clusterPeaks.get(0).getTime();
     }
     
     public double getRawEnergy(){
-        double energy = 0;
-        for(int view = 0; view < 3; view++){
-            energy += this.clusterPeaks.get(view).getEnergy();
-        }
-        return energy;
+        return getRawEnergy(0)+getRawEnergy(1)+getRawEnergy(2);
     }
+    
+    public double getRawEnergy(int view){
+        return  this.clusterPeaks.get(view).getEnergy();
+    } 
     
     public final void   intersection(){
         Line3D uLine  = this.clusterPeaks.get(0).getLine();

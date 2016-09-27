@@ -24,6 +24,10 @@ import org.jlab.utils.groups.IndexedTable;
  */
 public class ECCommon {
     
+    public static int[]  stripThreshold = new int[3];
+    public static int[]   peakThreshold = new int[3];    
+    static int ind[]  = {0,0,0,1,1,1,2,2,2}; 
+    
     /**
      * Returns array of strips for EC given the EC bank, EC detector
      * and constants manager.
@@ -33,8 +37,7 @@ public class ECCommon {
      * @param run
      * @return 
      */    
-    public static List<ECStrip>  initStrips(DataEvent event, 
-            Detector detector, ConstantsManager manager, int run){
+    public static List<ECStrip>  initStrips(DataEvent event, Detector detector, ConstantsManager manager, int run){
                 
         List<ECStrip>  strips = new ArrayList<ECStrip>();
         IndexedTable   atten  = manager.getConstants(run, "/calibration/ec/attenuation");
@@ -44,24 +47,17 @@ public class ECCommon {
             int nrows = ecBank.rows();
             //System.out.println(" BANK EC loaded with ROWS = " + nrows);
             for(int row = 0; row < nrows; row++){
-                /*
-                int sector    = (int) ecBank.getByte("sector", row);
-                int layer     = (int) ecBank.getByte("layer", row);
-                int component = (int) ecBank.getByte("component", row);
-                */
-                int sector = ecBank.getInt("sector", row);
-                int stack  = ecBank.getInt("stack", row);
-                int view   = ecBank.getInt("view", row);
+                int     sector = ecBank.getInt("sector", row);
+                int     stack  = ecBank.getInt("stack", row);
+                int     view   = ecBank.getInt("view", row);
                 int component  = ecBank.getInt("strip", row);
                 
                 int layer  = stack*3 + view;
                 
-                ECStrip strip = new ECStrip(
-                        sector,layer,component
-                );
-                
+                ECStrip strip = new ECStrip(sector,layer,component);                
                 strip.setADC(ecBank.getInt("ADC", row));
                 strip.setTDC(ecBank.getInt("TDC", row));
+                
                 if(atten!=null){
                     //atten.show();
                     strip.setAttenuation(
@@ -80,10 +76,7 @@ public class ECCommon {
                 ScintillatorPaddle paddle = (ScintillatorPaddle) detLayer.getComponent(component-1);
                 strip.getLine().copy(paddle.getLine());
                 //= detector.getSector(sector).getSuperlayer(stack).getLayer(view).getComponent(component);
-                
-                if(strip.getADC()>50){
-                    strips.add(strip);
-                }
+                if(strip.getADC()>ECCommon.stripThreshold[ind[layer-1]]) strips.add(strip);                       
             }
         }
         Collections.sort(strips);
@@ -126,14 +119,15 @@ public class ECCommon {
             EvioDataBank ecBank = (EvioDataBank) event.getBank("PCAL::dgtz");
             int nrows = ecBank.rows();
             for(int row = 0; row < nrows; row++){
-                int sector = ecBank.getInt("sector", row);
-                int stack  = ecBank.getInt("stack", row);
-                int view   = ecBank.getInt("view", row);
+                int     sector = ecBank.getInt("sector", row);
+                int     stack  = ecBank.getInt("stack", row);
+                int     view   = ecBank.getInt("view", row);
                 int component  = ecBank.getInt("strip", row);
+                int     layer  = stack*3 + view;
                 ECStrip  strip = new ECStrip(sector, view, component);
                 strip.setADC(ecBank.getInt("ADC", row));
                 strip.setTDC(ecBank.getInt("TDC", row));
-                if(strip.getADC()>50) strips.add(strip);
+                if(strip.getADC()>ECCommon.stripThreshold[ind[layer-1]]) strips.add(strip);                       
             }
          }
         return strips;
@@ -157,8 +151,7 @@ public class ECCommon {
                 ECStrip  strip = new ECStrip(sector, layer, component);
                 strip.setADC(ecBank.getInt("ADC", row));
                 strip.setTDC(ecBank.getInt("TDC", row));
-                if(strip.getADC()>50)
-                    strips.add(strip);
+                if(strip.getADC()>ECCommon.stripThreshold[ind[layer-1]]) strips.add(strip);                       
             }
          }
         return strips;

@@ -40,7 +40,6 @@ public class ECSingleEventApp extends FCApplication {
    public void updateCanvas(DetectorDescriptor dd) {
 	       
       H1F h,h1,h2;
-      H2F hh;
       
       String otab[][]={{"U ","V ","W "},
               {" U Inner ","V Inner ","W Inner "},
@@ -55,7 +54,7 @@ public class ECSingleEventApp extends FCApplication {
       
       this.getDetIndices(dd);
 		
-      l.divide(3,6); ru.divide(3,2);rd.divide(3,3);
+      l.divide(3,6); ru.divide(3,2); rd.divide(3,3);
       l.setAxisFontSize(14);
       l.setStatBoxFontSize(12);
       
@@ -88,17 +87,14 @@ public class ECSingleEventApp extends FCApplication {
 	  case "phot": xmx1=200.; xmx2=500.; break;
 	  case "elec": xmx1=100.; xmx2=400.;
 	  }
-	  
-	  double xmax[] = {40.,400.}; 
+		  
 	  for(ilm=0; ilm<3; ilm++) {
       for(int il=1;il<4; il++) {
-          l.cd(ii);
-          l.getPad(ii).getAxisX().setRange(0.,xmx1);
+          l.cd(ii); l.getPad(ii).getAxisX().setRange(0.,xmx1);
           h  = ecPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,4,0).sliceY(il-1) ; h.setTitleX(otab[ilm][il-1]+"Peak Energy (MeV)"); h.setFillColor(0);
           h1 = ecPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,5,0).sliceY(il-1) ; h1.setFillColor(34);
           h2 = ecPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,6,0).sliceY(il-1) ; h2.setFillColor(32);
-          l.draw(h); 
-          l.draw(h1,"same"); l.draw(h2,"same");
+          l.draw(h); l.draw(h1,"same"); l.draw(h2,"same");
           ii++;
       }
 	  }
@@ -109,6 +105,7 @@ public class ECSingleEventApp extends FCApplication {
           h.setOptStat(Integer.parseInt("1100")); ru.draw(h);
           jj++;   
 	  }
+	  
 	  ru.cd(jj);  ru.getPad(jj).getAxisX().setRange(0.,xmx2*2); 
       h = ecPix[0].strips.hmap2.get("H2_a_Hist").get(is,4,0).sliceY((int)4) ; h.setTitleX("Total Cluster Energy (MeV)"); h.setFillColor(2);          
       h.setOptStat(Integer.parseInt("1100")); ru.draw(h);
@@ -128,6 +125,7 @@ public class ECSingleEventApp extends FCApplication {
           h = ecPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,9,0).sliceY(1) ; h.setTitleX(dtab[ilm]+"Theta-mcThet"); h.setFillColor(2); 
           h.setOptStat(Integer.parseInt("1100")); h.setTitle(" "); rd.draw(h);
       }
+      
       l.repaint(); ru.repaint(); rd.repaint();
    }
    

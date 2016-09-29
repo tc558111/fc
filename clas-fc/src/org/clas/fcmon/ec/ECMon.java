@@ -12,6 +12,7 @@ import org.root.histogram.*;
 
 //clas12rec
 import org.jlab.detector.base.DetectorDescriptor;
+import org.jlab.io.evio.EvioDataBank;
 import org.jlab.io.evio.EvioDataEvent;
 import org.jlab.io.base.DataEvent;
 
@@ -50,9 +51,10 @@ public class ECMon extends DetectorMonitor {
    
     public boolean             inMC = true;  //true=MC false=DATA
     public boolean            inCRT = false; //true=CRT preinstallation CRT data
-    public boolean            doRec = true;  //true=2.4 EC processor
+    public boolean            doRec = false ; //true=2.4 EC processor
     public boolean            doEng = false; //true=3.0 EC processor
-    public String            config = "phot";//configs: pizero,muon,elec
+    public String            config = "muon";//configs: pizero,muon,elec
+    public int               calRun = 2;
     public int            inProcess = 0;     //0=init 1=processing 2=end-of-run 3=post-run
     int                       detID = 0;
     int                         is1 = 2 ;
@@ -77,7 +79,7 @@ public class ECMon extends DetectorMonitor {
         ecPix[0] = new ECPixels("PCAL");
         ecPix[1] = new ECPixels("ECin");
         ecPix[2] = new ECPixels("ECout");
-        ccdb = new DatabaseConstantProvider(10,"default");
+        ccdb = new DatabaseConstantProvider(calRun,"default");
         ccdb.loadTable("/calibration/ec/attenuation");
         ccdb.disconnect();
     }
@@ -180,6 +182,12 @@ public class ECMon extends DetectorMonitor {
         for (int i=0; i<ecPix.length; i++)   ecPix[i].init();
         ecRecon.init();      
         ecEng.init();
+        ecEng.setStripThresholds(ecPix[0].getStripThr(config, 1),
+                                 ecPix[1].getStripThr(config, 1),
+                                 ecPix[2].getStripThr(config, 1));  
+        ecEng.setPeakThresholds(ecPix[0].getPeakThr(config, 1),
+                                ecPix[1].getPeakThr(config, 1),
+                                ecPix[2].getPeakThr(config, 1));  
         ecRec.init();
         ecRec.setStripThresholds(ecPix[0].getStripThr(config, 1),
                                  ecPix[1].getStripThr(config, 1),
@@ -202,6 +210,7 @@ public class ECMon extends DetectorMonitor {
         putGlob("inMC", inMC);
         putGlob("inCRT",inCRT);
         putGlob("doRec",doRec);
+        putGlob("doEng",doEng);
         putGlob("nsa", nsa);
         putGlob("nsb", nsb);
         putGlob("tet", tet);		
@@ -212,6 +221,7 @@ public class ECMon extends DetectorMonitor {
         putGlob("mondet",mondet);
         putGlob("is1",is1);
         putGlob("config",config);
+        putGlob("calRun",calRun);
     }
     
     @Override
@@ -238,8 +248,8 @@ public class ECMon extends DetectorMonitor {
     @Override
     public void dataEventAction(DataEvent de) {        
       if(doEng) ecEng.processDataEvent(de);
-      if(doRec) ecRec.processEvent((EvioDataEvent) de);
-        ecRecon.addEvent((EvioDataEvent) de);
+      if(doRec) ecRec.processEvent((EvioDataEvent)de);
+                ecRecon.addEvent(de);
     }
     
     @Override    

@@ -29,6 +29,7 @@ import org.jlab.detector.base.DetectorType;
 import org.jlab.geom.prim.Line3D;
 import org.jlab.geom.prim.Point3D;
 import org.jlab.io.evio.EvioDataEvent;
+import org.jlab.io.base.DataEvent;
 import org.jlab.io.evio.EvioDataBank;
 import org.clas.fcmon.detector.view.DetectorShape2D;
 import org.clas.fcmon.jroot.*;
@@ -41,6 +42,7 @@ public class ECReconstructionApp extends FCApplication {
    Boolean           inMC = null;
    Boolean          inCRT = null;
    Boolean          doRec = null;
+   Boolean          doEng = null;
    String          config = null;
    String BankType        = null;
    int              detID = 0;
@@ -74,7 +76,8 @@ public class ECReconstructionApp extends FCApplication {
        mondet =           (String) mon.getGlob().get("mondet");
        inMC   =          (Boolean) mon.getGlob().get("inMC");
        inCRT  =          (Boolean) mon.getGlob().get("inCRT");
-       doRec =           (Boolean) mon.getGlob().get("doRec");
+       doRec  =          (Boolean) mon.getGlob().get("doRec");
+       doEng  =          (Boolean) mon.getGlob().get("doEng");
        config =           (String) mon.getGlob().get("config");
    }
    
@@ -102,14 +105,15 @@ public class ECReconstructionApp extends FCApplication {
       this.pedref = app.mode7Emulation.pedref;
    }
    
-   public void addEvent(EvioDataEvent event) {
+   public void addEvent(DataEvent event) {
+       
       if(inMC==true) {
           this.updateSimulatedData(event);
       } else {
           this.updateRealData(event);         
       }
       
-      if (doRec) this.processECRec(event);
+      if (doRec||doEng) this.processECRec(event);
       
       if (app.isSingleEvent()) {
 //         for (int idet=0; idet<ecPix.length; idet++) findPixels(idet);     // Process all pixels for SED
@@ -130,7 +134,7 @@ public class ECReconstructionApp extends FCApplication {
        return il[layer-1];
     }
      
-   public void updateRealData(EvioDataEvent event){
+   public void updateRealData(DataEvent event){
 
       int adc,npk,ped;
       double tdc=0,tdcf=0;
@@ -212,7 +216,7 @@ public class ECReconstructionApp extends FCApplication {
       }
    }
    
-   public void updateSimulatedData(EvioDataEvent event) {
+   public void updateSimulatedData(DataEvent event) {
        
       float tdcmax=2000000;
       double tmax = 30;
@@ -277,7 +281,7 @@ public class ECReconstructionApp extends FCApplication {
       //System.out.println(" ");
    }
     
-   public void processECRec(EvioDataEvent event) {
+   public void processECRec(DataEvent event) {
        
        if (app.isSingleEvent()) {
            for (int i=0; i<3; i++) app.getDetectorView().getView().removeLayer("L"+i);

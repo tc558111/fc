@@ -51,9 +51,9 @@ public class ECEngine extends ReconstructionEngine {
             System.out.println(p);
         }
         */        
-        List<ECCluster>  cPCAL  = ECCommon.createClusters(ecPeaks,1);
-        List<ECCluster>  cECIN  = ECCommon.createClusters(ecPeaks,4);
-        List<ECCluster>  cECOUT = ECCommon.createClusters(ecPeaks,7);
+        List<ECCluster>  cPCAL  = ECCommon.createClusters(ecPeaksALL,1);
+        List<ECCluster>  cECIN  = ECCommon.createClusters(ecPeaksALL,4);
+        List<ECCluster>  cECOUT = ECCommon.createClusters(ecPeaksALL,7);
         
         List<ECCluster>     cEC = new ArrayList<ECCluster>();
         
@@ -153,7 +153,7 @@ public class ECEngine extends ReconstructionEngine {
             bankD.setDouble("recEW", c, clusters.get(c).getEnergy(2));            
         }
         
-        de.appendBanks(bankS,bankP,bankC,bankD); 
+        de.appendBanks(bankS,bankP,bankC,bankD);        
        
     }
     
@@ -169,6 +169,13 @@ public class ECEngine extends ReconstructionEngine {
         ECCommon.peakThreshold[0] = thr0;
         ECCommon.peakThreshold[1] = thr1;
         ECCommon.peakThreshold[2] = thr2;
+    }   
+    
+    public void setClusterErrors(float err0, float err1, float err2) {
+        System.out.println("ECEngine: Cluster Errors = "+err0+" "+err1+" "+err2);
+        ECCommon.clusterError[0] = err0;
+        ECCommon.clusterError[1] = err1;
+        ECCommon.clusterError[2] = err2;
     }
     
     @Override

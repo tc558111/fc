@@ -25,7 +25,9 @@ import org.jlab.utils.groups.IndexedTable;
 public class ECCommon {
     
     public static int[]  stripThreshold = new int[3];
-    public static int[]   peakThreshold = new int[3];    
+    public static int[]   peakThreshold = new int[3]; 
+    public static float[]  clusterError = new float[3];
+    
     static int ind[]  = {0,0,0,1,1,1,2,2,2}; 
     
     /**
@@ -198,7 +200,8 @@ public class ECCommon {
         List<ECPeak> ecPeaks = new ArrayList<ECPeak>();
         for(ECPeak p : peaks){
             int adc = p.getADC();
-            if(adc>300){
+            int lay = p.getDescriptor().getLayer();
+            if(adc>ECCommon.peakThreshold[ind[lay-1]]){
                 ecPeaks.add(p);
             }
         }
@@ -252,7 +255,7 @@ public class ECCommon {
                             pW.get(bW).redoPeakLine();
                             ECCluster cluster = new ECCluster(
                                     pU.get(bU),pV.get(bV),pW.get(bW));
-                            if(cluster.getHitPositionError()<5.5)
+                            if(cluster.getHitPositionError()<ECCommon.clusterError[ind[startLayer-1]]);
                             //System.out.println(" POSITION ERROR - > " + cluster.getHitPositionError());
                                 clusters.add(cluster);
                         }

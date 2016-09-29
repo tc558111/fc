@@ -94,8 +94,8 @@ public class ECDetectorReconstruction extends DetectorReconstruction {
             ecStore.processGemc(de, this.getGeometry("EC"), this.getConstants("ECCALIB"));
             
             //if(this.debugLevel()>0)
-            //ecStore.showStrips();
-            //ecStore.showPeaks();
+            ecStore.showStrips();
+            ecStore.showPeaks();
             //ecStore.showClusters();
         
             List<ECStrip>  strips = ecStore.getStrips();

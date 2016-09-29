@@ -70,8 +70,7 @@ public class ECStore {
                 );
                 
                 strip.setGain(calib.getDouble("/calibration/ec/gain/gain", index));
-                if(strip.getADC()>ECCommon.stripThreshold[ind[layer-1]])
-                    ecStrips.add(strip);                       
+                if(strip.getADC()>ECCommon.stripThreshold[ind[layer-1]]) ecStrips.add(strip);                       
             }
             
         }
@@ -101,8 +100,7 @@ public class ECStore {
                 );
                 
                 strip.setGain(calib.getDouble("/calibration/ec/gain/gain", index));
-                if(strip.getADC()>ECCommon.stripThreshold[ind[layer-1]])
-                    ecStrips.add(strip);                       
+                if(strip.getADC()>ECCommon.stripThreshold[ind[layer-1]]) ecStrips.add(strip);                       
             }
             
         }        

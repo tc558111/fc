@@ -8,11 +8,15 @@ package org.jlab.service.ec;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clas.reco.ReconstructionEngine;
 import org.jlab.detector.base.DetectorType;
 import org.jlab.detector.base.GeometryFactory;
 import org.jlab.geom.base.ConstantProvider;
 import org.jlab.geom.base.Detector;
+import org.jlab.groot.data.H1F;
+import org.jlab.groot.data.H2F;
 import org.jlab.io.base.DataEvent;
 import org.jlab.io.evio.EvioDataBank;
 import org.jlab.io.evio.EvioDataEvent;
@@ -51,9 +55,9 @@ public class ECEngine extends ReconstructionEngine {
             System.out.println(p);
         }
         */        
-        List<ECCluster>  cPCAL  = ECCommon.createClusters(ecPeaksALL,1);
-        List<ECCluster>  cECIN  = ECCommon.createClusters(ecPeaksALL,4);
-        List<ECCluster>  cECOUT = ECCommon.createClusters(ecPeaksALL,7);
+        List<ECCluster>  cPCAL  = ECCommon.createClusters(ecPeaks,1);
+        List<ECCluster>  cECIN  = ECCommon.createClusters(ecPeaks,4);
+        List<ECCluster>  cECOUT = ECCommon.createClusters(ecPeaks,7);
         
         List<ECCluster>     cEC = new ArrayList<ECCluster>();
         
@@ -178,6 +182,10 @@ public class ECEngine extends ReconstructionEngine {
         ECCommon.clusterError[2] = err2;
     }
     
+    public DetectorCollection<H1F>  getHist() {
+        return ECCommon.H1_ecEng;
+    }
+    
     @Override
     public boolean init() {
         String[]  ecTables = new String[]{
@@ -188,7 +196,7 @@ public class ECEngine extends ReconstructionEngine {
         requireConstants(Arrays.asList(ecTables));
         
         ecDetector =  GeometryFactory.getDetector(DetectorType.EC);
-        
+        ECCommon.initHistos();
         return true;
         //throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }

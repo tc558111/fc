@@ -5,7 +5,8 @@ import java.awt.BorderLayout;
 import javax.swing.JPanel;
 import javax.swing.JSplitPane;
 
-import org.clas.fcmon.tools.FCApplication; 
+import org.clas.fcmon.tools.FCApplication;
+import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.detector.base.DetectorDescriptor;
 import org.jlab.groot.graphics.EmbeddedCanvas;
 import org.jlab.groot.math.F1D;
@@ -41,20 +42,18 @@ public class ECSingleEventApp extends FCApplication {
 	       
       H1F h,h1,h2;
       
-      String otab[][]={{"U ","V ","W "},
-              {" U Inner ","V Inner ","W Inner "},
-              {" U Outer ","V Outer ","W Outer "}};
-
+      String otab[]={"U ","V ","W "};             
       String dtab[]={"PCAL ","EC Inner ","EC Outer "};
       
       int ilm = ilmap;
         
       double   zmax = (double) mon.getGlob().get("PCMon_zmax");
       String config = (String) mon.getGlob().get("config");
+      DetectorCollection<H1F> ecEngHist = (DetectorCollection<H1F>) mon.getGlob().get("ecEng");
       
       this.getDetIndices(dd);
 		
-      l.divide(3,6); ru.divide(3,2); rd.divide(3,3);
+      l.divide(3,6); ru.divide(3,3); rd.divide(3,3);
       l.setAxisFontSize(14);
       l.setStatBoxFontSize(12);
       
@@ -67,16 +66,20 @@ public class ECSingleEventApp extends FCApplication {
          F1D f1 = new F1D("p0","[a]",0.,ecPix[ilm].ec_nstr[il-1]+1); 
          f1.setParameter(0,0.1*ecPix[ilm].getStripThr(config,il));
          f1.setLineColor(4);
+         F1D f2 = new F1D("p0","[a]",0.,ecPix[ilm].ec_nstr[il-1]+1); 
+         f2.setParameter(0,0.1*ecPix[ilm].getPeakThr(config,il));
+         f2.setLineColor(2);
          l.cd(ii); 
          l.getPad(ii).getAxisX().setRange(0.,ecPix[ilm].ec_nstr[il-1]+1);
          l.getPad(ii).getAxisY().setRange(0.,1.2*zmax*app.displayControl.pixMax);
-         h1 = ecPix[ilm].strips.hmap1.get("H1_Stra_Sevd").get(is,il,1); 
-         h2 = ecPix[ilm].strips.hmap1.get("H1_Stra_Sevd").get(is,il,0); 
-         h1.setTitleX(otab[ilm][il-1]+"PMT"); h1.setTitleY(" ");
+         h1 = ecPix[ilm].strips.hmap1.get("H1_Stra_Sevd").get(is,il,1); h1.setFillColor(0);
+         h2 = ecPix[ilm].strips.hmap1.get("H1_Stra_Sevd").get(is,il,0); h2.setFillColor(4); 
+         h1.setTitleX(dtab[ilm]+otab[il-1]+"PMT"); h1.setTitleY(" ");
          if (il==1) h1.setTitleY("Strip Energy (MeV)"); 
-         h1.setFillColor(0); l.draw(h1);
-         h2.setFillColor(4); l.draw(h2,"same"); 
+         l.draw(h1);
+         l.draw(h2,"same"); 
          l.draw(f1,"same");
+         l.draw(f2,"same");
          ii++;
       }
 	  }
@@ -90,13 +93,23 @@ public class ECSingleEventApp extends FCApplication {
 		  
 	  for(ilm=0; ilm<3; ilm++) {
       for(int il=1;il<4; il++) {
-          l.cd(ii); l.getPad(ii).getAxisX().setRange(0.,xmx1);
-          h  = ecPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,4,0).sliceY(il-1) ; h.setTitleX(otab[ilm][il-1]+"Peak Energy (MeV)"); h.setFillColor(0);
+          l.cd(ii); 
+          l.getPad(ii).getAxisX().setRange(0.,xmx1);
+          h  = ecPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,4,0).sliceY(il-1) ;  h.setFillColor(0);
           h1 = ecPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,5,0).sliceY(il-1) ; h1.setFillColor(34);
           h2 = ecPix[ilm].strips.hmap2.get("H2_a_Hist").get(is,6,0).sliceY(il-1) ; h2.setFillColor(32);
+          h.setTitleX(dtab[ilm]+otab[il-1]+"Peak Energy (MeV)");          
           l.draw(h); l.draw(h1,"same"); l.draw(h2,"same");
           ii++;
       }
+	  }
+	  
+	  for(ilm=0; ilm<3; ilm++) {
+          ru.cd(jj); ru.getPad(jj).getAxisX().setRange(-100.,100.);
+          h=ecEngHist.get(is,ilm+1,0); ; h.setTitleX(dtab[ilm]+"Cluster Error (cm)"); h.setFillColor(0);
+          h.setOptStat(Integer.parseInt("1100")); ru.draw(h);
+          h=ecEngHist.get(is,ilm+1,1); ; h.setFillColor(2); ru.draw(h,"same");
+	      jj++;
 	  }
 	  
 	  for(ilm=0; ilm<3; ilm++) {

@@ -109,8 +109,11 @@ public class ECPeak {
         double logSumm = 0.0;
         for(int i = 0; i < this.peakStrips.size(); i++){
             Line3D line = this.peakStrips.get(i).getLine();
+            
             double energy = this.peakStrips.get(i).getEnergy();
-            double le = Math.log(energy);
+//            double     le = Math.log(energy);
+            double     le = energy;
+                       
             pointOrigin.setX(pointOrigin.x()+line.origin().x()*le);
             pointOrigin.setY(pointOrigin.y()+line.origin().y()*le);
             pointOrigin.setZ(pointOrigin.z()+line.origin().z()*le);

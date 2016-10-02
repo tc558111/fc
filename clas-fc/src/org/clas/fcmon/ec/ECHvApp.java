@@ -34,12 +34,12 @@ public class ECHvApp extends FCEpics {
         super(name, det);
     }
     
-    public void init(int is1, int is2) {
-        this.is1=is1+1; //tmp
-        this.is2=is2+1; //tmp
+    public void init() {
+        this.is1=ECConstants.IS1;
+        this.is2=ECConstants.IS2; 
         setPvNames(this.detName,0);
         setCaNames(this.detName,0);
-        sectorSelected=is1+1;
+        sectorSelected=is1;
         layerSelected=1;
         channelSelected=1;
         initHistos();

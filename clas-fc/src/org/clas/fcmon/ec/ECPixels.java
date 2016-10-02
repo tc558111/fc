@@ -77,13 +77,17 @@ public class ECPixels {
     double  tdcr[][][] = new double[6][3][68]; 	
     
     int[][] sthrMuon = {{15,15,15},{20,20,20},{20,20,20}};
-    int[][] sthrPhot = {{10,10,10},{10,10,10},{10,10,10}};
+    int[][] sthrPhot = {{10,10,10},{9,9,9},{8,8,8}};
     int[][] sthrElec = {{10,10,10},{10,10,10},{10,10,10}};
     
     int[][] pthrMuon = {{15,15,15},{20,20,20},{20,20,20}};
-    int[][] pthrPhot = {{30,30,30},{30,30,30},{30,30,30}};
+    int[][] pthrPhot = {{30,30,30},{20,20,20},{15,15,15}};
     int[][] pthrElec = {{30,30,30},{30,30,30},{30,30,30}};
         
+    double[] cerrMuon = {5.5,5.5,5.5};
+    double[] cerrPhot = {5.5,15.,20.};
+    double[] cerrElec = {10.,10.,10.};
+    
 	public int id=0;
     public String detName = null;
 	
@@ -133,6 +137,16 @@ public class ECPixels {
         }
         return 0;
      }
+    
+    public float getClusterErr(String config) {
+        switch (config) {
+        case    "phot": return (float) cerrPhot[id] ;  
+        case    "muon": return (float) cerrMuon[id] ; 
+        case    "elec": return (float) cerrElec[id] ;
+        }
+        return 0;
+     }
+    
     
 	public void pixdef() {
         System.out.println("ECPixels.pixdef(): "+this.detName); 

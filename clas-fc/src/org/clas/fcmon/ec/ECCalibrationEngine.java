@@ -21,7 +21,6 @@ public class ECCalibrationEngine extends CalibrationEngine {
         IndexedList<DataGroup> dataGroups = new IndexedList<DataGroup>(3);
         IndexedList<Double[]> constants = new IndexedList<Double[]>(3);
 
-
         public ECCalibrationEngine() {
             // controlled by calibration application class
         }

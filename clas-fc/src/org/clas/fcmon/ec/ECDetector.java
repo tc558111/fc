@@ -11,11 +11,11 @@ public class ECDetector extends FCDetector {
     
     public ECDetector(String name , ECPixels[] ecPix) {
         super(name, ecPix);       
-     }  
+     }    
     
-    public void init(int is1, int is2) {
-        initDetector(is1,is2);
-   }  
+    public void init() {
+        initDetector(ECConstants.IS1,ECConstants.IS2);
+    }  
   
     public void initButtons() {
         
@@ -35,7 +35,7 @@ public class ECDetector extends FCDetector {
         app.currentView = "PIX";
         
         for(int id=0; id<ecPix.length; id++){
-        System.out.println("ECDetector.initDetector() NSTRIPS="+ecPix[id].ec_nstr[0]);
+        System.out.println("ECDetector.initDetector() is1="+ECConstants.IS1+" is2="+ECConstants.IS2+" NSTRIPS="+ecPix[id].ec_nstr[0]);
         for(int is=is1; is<is2; is++) {      
             for(int ip=0; ip<ecPix[id].ec_nstr[0] ; ip++)             app.getDetectorView().getView().addShape("U"+id,getStrip(id,is,1,ip));
             for(int ip=0; ip<ecPix[id].ec_nstr[1] ; ip++)             app.getDetectorView().getView().addShape("V"+id,getStrip(id,is,2,ip));

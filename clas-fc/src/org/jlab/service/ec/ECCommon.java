@@ -8,11 +8,16 @@ package org.jlab.service.ec;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+
+import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.detector.calib.utils.ConstantsManager;
 import org.jlab.geom.base.Detector;
 import org.jlab.geom.base.Layer;
 import org.jlab.geom.component.ScintillatorPaddle;
 import org.jlab.geom.prim.Line3D;
+import org.jlab.groot.data.H1F;
+import org.jlab.groot.data.H2F;
 import org.jlab.io.base.DataEvent;
 import org.jlab.io.evio.EvioDataBank;
 import org.jlab.service.ec.ECCluster.ECClusterIndex;
@@ -28,6 +33,8 @@ public class ECCommon {
     public static int[]   peakThreshold = new int[3]; 
     public static float[]  clusterError = new float[3];
     
+    public static DetectorCollection<H1F> H1_ecEng = new DetectorCollection<H1F>();
+    
     static int ind[]  = {0,0,0,1,1,1,2,2,2}; 
     
     /**
@@ -39,6 +46,16 @@ public class ECCommon {
      * @param run
      * @return 
      */    
+    
+    public static void initHistos() {
+        for (int is=1; is<7; is++){
+            for (int il=1; il<4; il++) {             
+                H1_ecEng.add(is,il,0, new H1F("Cluster Errors",55,-10.,100.));
+                H1_ecEng.add(is,il,1, new H1F("Cluster Errors",55,-10.,100.));
+            }
+        }
+    }
+    
     public static List<ECStrip>  initStrips(DataEvent event, Detector detector, ConstantsManager manager, int run){
                 
         List<ECStrip>  strips = new ArrayList<ECStrip>();
@@ -253,11 +270,12 @@ public class ECCommon {
                             pU.get(bU).redoPeakLine();
                             pV.get(bV).redoPeakLine();
                             pW.get(bW).redoPeakLine();
-                            ECCluster cluster = new ECCluster(
-                                    pU.get(bU),pV.get(bV),pW.get(bW));
-                            if(cluster.getHitPositionError()<ECCommon.clusterError[ind[startLayer-1]]);
-                            //System.out.println(" POSITION ERROR - > " + cluster.getHitPositionError());
+                            ECCluster cluster = new ECCluster(pU.get(bU),pV.get(bV),pW.get(bW));
+                            H1_ecEng.get(sector,ind[startLayer-1]+1,0).fill(cluster.getHitPositionError());
+                            if(cluster.getHitPositionError()<ECCommon.clusterError[ind[startLayer-1]]) {
+                                H1_ecEng.get(sector,ind[startLayer-1]+1,1).fill(cluster.getHitPositionError());
                                 clusters.add(cluster);
+                            }
                         }
                     }
                 }

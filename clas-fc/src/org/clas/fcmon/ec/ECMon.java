@@ -52,8 +52,8 @@ public class ECMon extends DetectorMonitor {
     public boolean             inMC = true;  //true=MC false=DATA
     public boolean            inCRT = false; //true=CRT preinstallation CRT data
     public boolean            doRec = false ; //true=2.4 EC processor
-    public boolean            doEng = false; //true=3.0 EC processor
-    public String            config = "muon";//configs: pizero,muon,elec
+    public boolean            doEng = true; //true=3.0 EC processor
+    public String            config = "phot";//configs: phot,muon,elec
     public int               calRun = 2;
     public int            inProcess = 0;     //0=init 1=processing 2=end-of-run 3=post-run
     int                       detID = 0;
@@ -91,6 +91,7 @@ public class ECMon extends DetectorMonitor {
         app.getEnv();
         app.makeGUI();
         app.mode7Emulation.init("/daq/fadc/ec",3, 3, 1);
+        monitor.initConstants();
         monitor.initGlob();
         monitor.makeApps();
         monitor.addCanvas();
@@ -99,13 +100,17 @@ public class ECMon extends DetectorMonitor {
         app.init();
         monitor.ecDet.initButtons();
     }
+    
+    public void initConstants() {
+        ECConstants.setSectors(is1,is2);
+    }
 	
     public void initDetector() {
         System.out.println("monitor.initDetector()"); 
         ecDet = new ECDetector("ECDet",ecPix);
         ecDet.setMonitoringClass(this);
         ecDet.setApplicationClass(app);
-        ecDet.init(is1,is2);
+        ecDet.init();
     }
     
     public void makeApps() {
@@ -188,6 +193,10 @@ public class ECMon extends DetectorMonitor {
         ecEng.setPeakThresholds(ecPix[0].getPeakThr(config, 1),
                                 ecPix[1].getPeakThr(config, 1),
                                 ecPix[2].getPeakThr(config, 1));  
+        ecEng.setClusterErrors(ecPix[0].getClusterErr(config),
+                               ecPix[1].getClusterErr(config),
+                               ecPix[2].getClusterErr(config));
+        putGlob("ecEng",ecEng.getHist());
         ecRec.init();
         ecRec.setStripThresholds(ecPix[0].getStripThr(config, 1),
                                  ecPix[1].getStripThr(config, 1),
@@ -198,8 +207,8 @@ public class ECMon extends DetectorMonitor {
         for (int i=0; i<ecPix.length; i++)   ecPix[i].Lmap_a.add(0,0,0, ecRecon.toTreeMap(ecPix[i].ec_cmap));
         for (int i=0; i<ecPix.length; i++)   ecPix[i].Lmap_a.add(0,0,1, ecRecon.toTreeMap(ecPix[i].ec_zmap));
         if (app.doEpics) {
-          ecHv.init(is1,is2);        
-          ecScalers.init(is1,is2); 
+          ecHv.init();        
+          ecScalers.init(); 
         }          
     }
 	
@@ -219,7 +228,7 @@ public class ECMon extends DetectorMonitor {
         putGlob("PCMon_zmax", PCMon_zmax);
         putGlob("fadc",fadc);
         putGlob("mondet",mondet);
-        putGlob("is1",is1);
+        putGlob("is1",ECConstants.IS1);
         putGlob("config",config);
         putGlob("calRun",calRun);
     }
@@ -247,7 +256,7 @@ public class ECMon extends DetectorMonitor {
 
     @Override
     public void dataEventAction(DataEvent de) {        
-      if(doEng) ecEng.processDataEvent(de);
+      if(doEng) ecEng.processDataEvent(de); 
       if(doRec) ecRec.processEvent((EvioDataEvent)de);
                 ecRecon.addEvent(de);
     }

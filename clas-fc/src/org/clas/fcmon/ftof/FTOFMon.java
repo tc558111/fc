@@ -39,22 +39,16 @@ public class FTOFMon extends DetectorMonitor {
     FTOFScalersApp        ftofScalers = null;
     FTOFHvApp                  ftofHv = null;
         
-    public boolean               inMC = false; //true=MC false=DATA
-    public int              inProcess = 0;     //0=init 1=processing 2=end-of-run 3=post-run
+    public boolean               inMC = true; //true=MC false=DATA
+    public int              inProcess = 0;    //0=init 1=processing 2=end-of-run 3=post-run
     int                         detID = 0;
-    int                           is1 = 2;
+    int                           is1 = 2;    //All sectors: is1=1 is2=7  Single sector: is1=s is2=s+1
     int                           is2 = 3; 
     int      nsa,nsb,tet,p1,p2,pedref = 0;
     double                 PCMon_zmin = 0;
     double                 PCMon_zmax = 0;
     
     String mondet                     = "FTOF";
-    
-    DetectorCollection<H1D> H1_a_Sevd = new DetectorCollection<H1D>();
-    DetectorCollection<H1D> H1_t_Sevd = new DetectorCollection<H1D>();
-    DetectorCollection<H2D> H2_a_Hist = new DetectorCollection<H2D>();
-    DetectorCollection<H2D> H2_t_Hist = new DetectorCollection<H2D>();
-    DetectorCollection<H2D> H2_a_Sevd = new DetectorCollection<H2D>();
 	
     DetectorCollection<TreeMap<Integer,Object>> Lmap_a = new DetectorCollection<TreeMap<Integer,Object>>();	 
 	
@@ -260,10 +254,8 @@ public class FTOFMon extends DetectorMonitor {
           String hipoFileName = app.hipoPath+"/"+mondet+idet+"_"+app.calibRun+".hipo";
           System.out.println("Saving Histograms to "+hipoFileName);
           HipoFile histofile = new HipoFile(hipoFileName);
-//          H2_a_Hist = ftofPix[idet].strips.hmap2.get("H2_a_Hist");
-//          H2_t_Hist = ftofPix[idet].strips.hmap2.get("H2_t_Hist");
-          histofile.addToMap("H2_a_Hist", H2_a_Hist);
-          histofile.addToMap("H2_t_Hist", H2_t_Hist);
+          histofile.addToMap("H2_a_Hist",ftofPix[idet].strips.hmap2.get("H2_a_Hist"));
+          histofile.addToMap("H2_t_Hist",ftofPix[idet].strips.hmap2.get("H2_t_Hist"));
           histofile.writeHipoFile(hipoFileName);
         }
        // histofile.browseFile(hipoFileName);     

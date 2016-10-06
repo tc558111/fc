@@ -8,8 +8,7 @@ import org.jlab.clas.detector.DetectorCollection;
 import org.jlab.clasrec.utils.DatabaseConstantProvider;
 import org.jlab.groot.data.H1F;
 import org.jlab.groot.data.H2F;
-//import org.root.histogram.H1D;
-//import org.root.histogram.H2D;
+
 
 public class FTOFPixels {
 	

@@ -9,11 +9,9 @@ import static java.lang.Integer.parseInt;
 import java.util.ArrayList;
 import java.util.TreeMap;
 import org.jlab.clas.detector.DetectorCollection;
-import org.root.func.F1D;
-import org.root.group.TDirectory;
-import org.root.histogram.GraphErrors;
-import org.root.histogram.H1D;
-import org.root.histogram.H2D;
+import org.jlab.groot.data.H1F;
+import org.jlab.groot.data.H2F;
+import org.jlab.groot.data.GraphErrors;
 
 /**
  *
@@ -37,26 +35,22 @@ public class FCCalibrationData {
     	}    
     return DC;
 }    
-    
-    
+        
     private String getObjlabel(Object obj){
         String obj_label ="";
-        H1D h_1d; 
-        H2D h_2d;
-        F1D f_1d; 
+        H1F h_1d; 
+        H2F h_2d;
+
         GraphErrors g_err;
-        if(obj instanceof H1D){
-                h_1d = (H1D) obj;
+        if(obj instanceof H1F){
+                h_1d = (H1F) obj;
                 obj_label = h_1d.getName();
         }
-        if(obj instanceof H2D){
-                h_2d = (H2D) obj;
+        if(obj instanceof H2F){
+                h_2d = (H2F) obj;
                 obj_label = h_2d.getName();
         }
-        if(obj instanceof F1D){
-                f_1d = (F1D) obj;
-                obj_label = f_1d.getName();
-        }
+
         if(obj instanceof GraphErrors){
                 g_err = (GraphErrors) obj;
                 obj_label = g_err.getName();

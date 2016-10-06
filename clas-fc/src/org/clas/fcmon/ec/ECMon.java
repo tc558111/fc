@@ -52,7 +52,7 @@ public class ECMon extends DetectorMonitor {
     public boolean             inMC = true;  //true=MC false=DATA
     public boolean            inCRT = false; //true=CRT preinstallation CRT data
     public boolean            doRec = false ; //true=2.4 EC processor
-    public boolean            doEng = true; //true=3.0 EC processor
+    public boolean            doEng = false; //true=3.0 EC processor
     public String            config = "phot";//configs: phot,muon,elec
     public int               calRun = 2;
     public int            inProcess = 0;     //0=init 1=processing 2=end-of-run 3=post-run
@@ -65,11 +65,6 @@ public class ECMon extends DetectorMonitor {
    
     String                   mondet = "EC";
     String                 detnam[] = {"PCAL","ECin","ECout"};
-
-    DetectorCollection<H2F> H2_a_Hist = new DetectorCollection<H2F>();
-    DetectorCollection<H2F> H2_t_Hist = new DetectorCollection<H2F>();
-    DetectorCollection<H1F> H1_a_Maps = new DetectorCollection<H1F>();
-    DetectorCollection<H1F> H1_t_Maps = new DetectorCollection<H1F>();
         
     TreeMap<String,Object> glob = new TreeMap<String,Object>();
    
@@ -328,10 +323,10 @@ public class ECMon extends DetectorMonitor {
             String hipoFileName = app.hipoPath+"/"+mondet+idet+"_"+app.calibRun+".hipo";
             System.out.println("Saving Histograms to "+hipoFileName);
             HipoFile histofile = new HipoFile(hipoFileName);
-            histofile.addToMap("H2_a_Hist", this.H2_a_Hist);
-            histofile.addToMap("H1_a_Maps", this.H1_a_Maps);
-            histofile.addToMap("H2_t_Hist", this.H2_t_Hist);
-            histofile.addToMap("H1_t_Maps", this.H1_t_Maps);
+            histofile.addToMap("H2_a_Hist", ecPix[idet].strips.hmap2.get("H2_a_Hist")); 
+            histofile.addToMap("H1_a_Maps", ecPix[idet].pixels.hmap1.get("H1_a_Maps"));
+            histofile.addToMap("H2_t_Hist", ecPix[idet].strips.hmap2.get("H2_t_Hist"));
+            histofile.addToMap("H1_t_Maps", ecPix[idet].pixels.hmap1.get("H1_t_Maps"));
             histofile.writeHipoFile(hipoFileName);
         }
     }	

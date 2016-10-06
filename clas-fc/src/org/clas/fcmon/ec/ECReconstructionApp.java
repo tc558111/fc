@@ -229,7 +229,7 @@ public class ECReconstructionApp extends FCApplication {
       if (ecPix.length>1)  {detlen=det.length; clear(0); clear(1); clear(2);} 
       if (ecPix.length==1) {detlen=1;          clear(0);}
       
-      System.out.println(" ");
+//      System.out.println(" ");
       
       
       for (int idet=0; idet<detlen; idet++) {
@@ -247,7 +247,7 @@ public class ECReconstructionApp extends FCApplication {
                      if(pcT<tmax){pcx=pcX; pcy=pcY; pcz=pcZ ; tmax = pcT;}
                   }
               }
-              if (idet==0) System.out.println("PCAL x,y,z,t="+pcx+" "+pcy+" "+pcz+" "+tmax);
+              if ((doRec||doEng)&&idet==0) System.out.println("PCAL x,y,z,t="+pcx+" "+pcy+" "+pcz+" "+tmax);
           }
           
           inMC = true; mon.putGlob("inMC",true); 

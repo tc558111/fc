@@ -36,17 +36,7 @@ public class ECCommon {
     public static DetectorCollection<H1F> H1_ecEng = new DetectorCollection<H1F>();
     
     static int ind[]  = {0,0,0,1,1,1,2,2,2}; 
-    
-    /**
-     * Returns array of strips for EC given the EC bank, EC detector
-     * and constants manager.
-     * @param event 
-     * @param detector
-     * @param manager
-     * @param run
-     * @return 
-     */    
-    
+        
     public static void initHistos() {
         for (int is=1; is<7; is++){
             for (int il=1; il<4; il++) {             
@@ -56,54 +46,7 @@ public class ECCommon {
         }
     }
     
-    public static List<ECStrip>  initStrips(DataEvent event, Detector detector, ConstantsManager manager, int run){
-                
-        List<ECStrip>  strips = new ArrayList<ECStrip>();
-        IndexedTable   atten  = manager.getConstants(run, "/calibration/ec/attenuation");
-        
-        if(event.hasBank("EC::dgtz")==true){
-            EvioDataBank ecBank = (EvioDataBank) event.getBank("EC::dgtz");
-            int nrows = ecBank.rows();
-            //System.out.println(" BANK EC loaded with ROWS = " + nrows);
-            for(int row = 0; row < nrows; row++){
-                int     sector = ecBank.getInt("sector", row);
-                int     stack  = ecBank.getInt("stack", row);
-                int     view   = ecBank.getInt("view", row);
-                int component  = ecBank.getInt("strip", row);
-                
-                int layer  = stack*3 + view;
-                
-                ECStrip strip = new ECStrip(sector,layer,component);                
-                strip.setADC(ecBank.getInt("ADC", row));
-                strip.setTDC(ecBank.getInt("TDC", row));
-                
-                if(atten!=null){
-                    //atten.show();
-                    strip.setAttenuation(
-                            atten.getDoubleValue("A", sector,layer,component),
-                            atten.getDoubleValue("B", sector,layer,component),
-                            atten.getDoubleValue("C", sector,layer,component)
-                    );
-                } else {                    
-                    System.out.println(manager.toString());
-                }
-                
-                int superlayer = (layer-1)/3;
-                int clayer     = (layer-1)%3;
-                
-                Layer detLayer = detector.getSector(sector-1).getSuperlayer(superlayer).getLayer(clayer);
-                ScintillatorPaddle paddle = (ScintillatorPaddle) detLayer.getComponent(component-1);
-                strip.getLine().copy(paddle.getLine());
-                //= detector.getSector(sector).getSuperlayer(stack).getLayer(view).getComponent(component);
-                if(strip.getADC()>ECCommon.stripThreshold[ind[layer-1]]) strips.add(strip);                       
-            }
-        }
-        Collections.sort(strips);
-        return strips;
-    }
-    
-    public static List<ECStrip>  initEC(DataEvent event, 
-            Detector detector, ConstantsManager manager, int run){
+    public static List<ECStrip>  initEC(DataEvent event, Detector detector, ConstantsManager manager, int run){
         List<ECStrip>  ecStrips = ECCommon.readStrips(event);
         Collections.sort(ecStrips);
         IndexedTable   atten  = manager.getConstants(run, "/calibration/ec/attenuation");
@@ -121,71 +64,47 @@ public class ECCommon {
             ScintillatorPaddle paddle = (ScintillatorPaddle) detLayer.getComponent(component-1);
             strip.getLine().copy(paddle.getLine());
             strip.setAttenuation( atten.getDoubleValue("A", sector,layer,component),
-                            atten.getDoubleValue("B", sector,layer,component),
-                            atten.getDoubleValue("C", sector,layer,component));
+                                  atten.getDoubleValue("B", sector,layer,component),
+                                  atten.getDoubleValue("C", sector,layer,component));
         }
         return ecStrips;
     }
     
     /**
-     * Read strips from PCAL
+     * Read Strips from PCAL and EC and return all strips
      * @param event
      * @return 
      */
-    public static List<ECStrip>  readPCAL(DataEvent event){
+    public static List<ECStrip> readStrips(DataEvent event){
         List<ECStrip>  strips = new ArrayList<ECStrip>();
-         if(event.hasBank("PCAL::dgtz")==true){
-            EvioDataBank ecBank = (EvioDataBank) event.getBank("PCAL::dgtz");
+        strips.addAll(ECCommon.readEvent("PCAL",event));
+        strips.addAll(ECCommon.readEvent("EC",event));
+        return strips;
+    }
+    
+    /**
+     * Read event data from calorimeters
+     * @param det
+     * @param event
+     * @return 
+     */
+    public static List<ECStrip>  readEvent(String det, DataEvent event){
+        List<ECStrip>  strips = new ArrayList<ECStrip>();
+         if(event.hasBank(det+"::dgtz")==true){
+            EvioDataBank ecBank = (EvioDataBank) event.getBank(det+"::dgtz");
             int nrows = ecBank.rows();
             for(int row = 0; row < nrows; row++){
                 int     sector = ecBank.getInt("sector", row);
-                int     stack  = ecBank.getInt("stack", row);
-                int     view   = ecBank.getInt("view", row);
-                int component  = ecBank.getInt("strip", row);
-                int     layer  = stack*3 + view;
-                ECStrip  strip = new ECStrip(sector, view, component);
-                strip.setADC(ecBank.getInt("ADC", row));
-                strip.setTDC(ecBank.getInt("TDC", row));
-                if(strip.getADC()>ECCommon.stripThreshold[ind[layer-1]]) strips.add(strip);                       
-            }
-         }
-        return strips;
-    }
-    /**
-     * Read EC Bank and
-     * @param event
-     * @return 
-     */
-    public static List<ECStrip>  readEC(DataEvent event){
-        List<ECStrip>  strips = new ArrayList<ECStrip>();
-         if(event.hasBank("EC::dgtz")==true){
-            EvioDataBank ecBank = (EvioDataBank) event.getBank("EC::dgtz");
-            int nrows = ecBank.rows();
-            for(int row = 0; row < nrows; row++){
-                int sector = ecBank.getInt("sector", row);
-                int stack  = ecBank.getInt("stack", row);
-                int view   = ecBank.getInt("view", row);
-                int component  = ecBank.getInt("strip", row);
-                int layer      = (stack)*3 + view;
+                int      stack = det.equals("PCAL") ? 0:ecBank.getInt("stack", row);
+                int       view = ecBank.getInt("view", row);
+                int  component = ecBank.getInt("strip", row);
+                int      layer = stack*3 + view;
                 ECStrip  strip = new ECStrip(sector, layer, component);
                 strip.setADC(ecBank.getInt("ADC", row));
                 strip.setTDC(ecBank.getInt("TDC", row));
                 if(strip.getADC()>ECCommon.stripThreshold[ind[layer-1]]) strips.add(strip);                       
             }
          }
-        return strips;
-    }
-    /**
-     * Read Strips from PCAL and EC and return all
-     * @param event
-     * @return 
-     */
-    public static List<ECStrip> readStrips(DataEvent event){
-        List<ECStrip>  strips = new ArrayList<ECStrip>();
-        List<ECStrip>  pcal   = ECCommon.readPCAL(event);
-        List<ECStrip>  ec     = ECCommon.readEC(event);
-        strips.addAll(pcal);
-        strips.addAll(ec);
         return strips;
     }
     
@@ -242,6 +161,29 @@ public class ECCommon {
         return selected;
     }
     
+    public static void shareClustersEnergy(List<ECCluster> clusters){
+        
+        int nclusters = clusters.size();
+        
+        for(int i = 0; i < nclusters - 1; i++){
+            for(int k = i+1 ; k < nclusters; k++){
+                int sharedView = clusters.get(i).sharedView(clusters.get(k));
+                if(sharedView>=0){
+                    
+                    //System.out.println(" CLUSTERS SHARE VIEW : " + i + " " + k 
+                    //+ "  energy " + clusters.get(i).getEnergy() + "  " + clusters.get(k).getEnergy());
+                    
+                    //System.out.println(clusters.get(i));
+                    //System.out.println(clusters.get(k));
+                    
+                    ECCluster.shareEnergy(clusters.get(i), clusters.get(k), sharedView);
+                    //System.out.println("\t -->  " 
+                    //+ " corrected energy " + clusters.get(i).getEnergy() + "  " + clusters.get(k).getEnergy());
+                }
+            }
+        }
+    }
+    
     public static List<ECCluster>   createClusters(List<ECPeak>  peaks, int startLayer){
 
         List<ECCluster>   clusters = new ArrayList<ECCluster>();
@@ -281,6 +223,15 @@ public class ECCommon {
                 }
             }
         }
+        
+        for(int i = 0 ; i < clusters.size(); i++){
+            clusters.get(i).setEnergy(
+                    clusters.get(i).getEnergy(0) + 
+                    clusters.get(i).getEnergy(1) +
+                    clusters.get(i).getEnergy(2)
+            );
+        }  
+        
         return clusters;
     }    
 }

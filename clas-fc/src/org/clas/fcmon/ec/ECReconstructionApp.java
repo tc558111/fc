@@ -270,7 +270,7 @@ public class ECReconstructionApp extends FCApplication {
                      tdcf = tdcc;
                   if (idet>0&&ic==1) idet=1;
                   if (idet>0&&ic==2) idet=2;
-//                  System.out.println("Sector "+is+" Stack "+ic+" View "+il+" Strip "+ip+" Det "+idet+" ADC "+adc);
+                  //System.out.println("Sector "+is+" Stack "+ic+" View "+il+" Strip "+ip+" Det "+idet+" ADC "+adc);
                   goodstrip= true;
                   if(inCRT&&il==2&&ip==53) goodstrip=false;
                   tdc = ((float)tdcc-tdcmax+1364000)/1000; 

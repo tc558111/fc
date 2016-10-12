@@ -81,11 +81,11 @@ public class ECPixels {
     int[][] sthrElec = {{10,10,10},{10,10,10},{10,10,10}};
     
     int[][] pthrMuon = {{15,15,15},{20,20,20},{20,20,20}};
-    int[][] pthrPhot = {{30,30,30},{20,20,20},{15,15,15}};
+    int[][] pthrPhot = {{18,18,18},{20,20,20},{15,15,15}};
     int[][] pthrElec = {{30,30,30},{30,30,30},{30,30,30}};
         
     double[] cerrMuon = {5.5,5.5,5.5};
-    double[] cerrPhot = {5.5,15.,20.};
+    double[] cerrPhot = {6.5,15.,20.};
     double[] cerrElec = {10.,10.,10.};
     
 	public int id=0;

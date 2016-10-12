@@ -18,6 +18,7 @@ import org.jlab.groot.data.IDataSet;
 import org.jlab.groot.data.DataSetSerializer;
 import org.jlab.groot.data.GraphErrors;
 import org.jlab.groot.data.TDirectory;
+import org.jlab.groot.ui.TBrowser;
 import org.jlab.hipo.data.HipoEvent;
 import org.jlab.hipo.io.HipoReader;
 
@@ -151,6 +152,13 @@ public class HipoFile {
                 hdirr.addDataSet(h1);
             }
         }
+        
+//        startBrowser(hdirr);
+    }
+    
+    public void startBrowser(TDirectory dir) {
+        TBrowser br = new TBrowser();
+        br.setDirectory(dir);
     }
     
     private void fillPathMaps() {

@@ -42,19 +42,18 @@ public class ECEngine extends ReconstructionEngine {
         List<ECPeak> ecPeaksALL = ECCommon.createPeaks(ecStrips);
         List<ECPeak>    ecPeaks = ECCommon.processPeaks(ecPeaksALL);
         int       peaksOriginal = ecPeaks.size();
-        System.out.println(" PEAKS  SIZE = " + ecPeaksALL.size());
+        System.out.println(" ORIGINAL PEAKS  SIZE = " + ecPeaksALL.size());
         for(ECPeak p : ecPeaksALL){ System.out.println(p);}
-        /*
+        
         ECPeakAnalysis.splitPeaks(ecPeaks);
         int peaksOriginalSplit = ecPeaks.size();
-        System.out.println(String.format("SPLIT PROCEDURE %8d %8d",peaksOriginal,
-                peaksOriginalSplit));
+        System.out.println(String.format("SPLIT PROCEDURE %8d %8d",peaksOriginal,peaksOriginalSplit));
                
         for(ECPeak p : ecPeaks){
-            //p.redoPeakLine();
-            System.out.println(p);
+            p.redoPeakLine();
+//            System.out.println(p);
         }
-        */        
+                
         List<ECCluster>  cPCAL  = ECCommon.createClusters(ecPeaks,1);
         List<ECCluster>  cECIN  = ECCommon.createClusters(ecPeaks,4);
         List<ECCluster>  cECOUT = ECCommon.createClusters(ecPeaks,7);
@@ -65,6 +64,8 @@ public class ECEngine extends ReconstructionEngine {
         cEC.addAll(cECIN);
         cEC.addAll(cECOUT);
         
+        ECCommon.shareClustersEnergy(cEC);  
+        
         System.out.println("\n\n\n\n\nEC CLUSTERS SIZE = " + cEC.size());
         if(cEC.size()==2){
             for(ECCluster c : cEC){            
@@ -72,7 +73,7 @@ public class ECEngine extends ReconstructionEngine {
             }
         }
         
-        writeBanks(de,ecStrips,ecPeaksALL,cEC);
+        writeBanks(de,ecStrips,ecPeaks,cEC);
         
         //for(ECPeak p : ecPeaks){ System.out.println(p);}
         /*
@@ -93,8 +94,8 @@ public class ECEngine extends ReconstructionEngine {
     }
     
     public void writeBanks(DataEvent de, 
-                           List<ECStrip> strips, 
-                           List<ECPeak> peaks, 
+                           List<ECStrip>   strips, 
+                           List<ECPeak>    peaks, 
                            List<ECCluster> clusters) {
 
         EvioDataBank bankS = (EvioDataBank) EvioFactory.createBank("ECDetector::hits", strips.size());

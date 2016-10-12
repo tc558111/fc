@@ -22,10 +22,10 @@ public class JCSG {
    
     ECDetector    detector = new ECFactory().createDetectorCLAS(cp2);
     String name[]={"PCAL","ECin","ECout"};
-    int istrip[]={1,1};
+    int istrip[]={59,36};
     public JCSG() {};
     
-    private void doECVert(int unit) {
+    private void doCJVert(int unit) {
         
         ECLayer  ecLayer;
         Point3D point1 = new Point3D();
@@ -86,8 +86,8 @@ public class JCSG {
     JCSG jcsg = new JCSG();
     
     jcsg.doJCSGVert();    
-    jcsg.doECVert(0);
-    jcsg.doECVert(1);
+    jcsg.doCJVert(0);
+    jcsg.doCJVert(1);
     
     }
     

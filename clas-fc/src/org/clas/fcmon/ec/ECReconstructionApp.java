@@ -2,16 +2,22 @@ package org.clas.fcmon.ec;
 
 import static java.lang.System.out;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Scanner;
 import java.util.TreeMap;
 
+
+
+
+import org.clas.fcmon.tools.CalDrawDB;
 //clas12
 import org.clas.fcmon.tools.FADCFitter;
 import org.clas.fcmon.tools.FCApplication;
 import org.jlab.clas.detector.DetectorCollection;
-
 import org.jlab.clas12.detector.FADCConfigLoader;
 //import org.root.histogram.H1D;
 //import org.root.histogram.H2D;
@@ -47,6 +53,18 @@ public class ECReconstructionApp extends FCApplication {
    String BankType        = null;
    int              detID = 0;
    double pcx,pcy,pcz;
+   
+   double genuA[] = new double[68]; //
+   double genuB[] = new double[68]; //
+   double genuC[] = new double[68]; //
+   
+   double genvA[] = new double[62]; //
+   double genvB[] = new double[62]; //
+   double genvC[] = new double[62]; //
+   
+   double genwA[] = new double[62]; //
+   double genwB[] = new double[62]; //
+   double genwC[] = new double[62];
    
    CodaEventDecoder            newdecoder = new CodaEventDecoder();
    DetectorEventDecoder   detectorDecoder = new DetectorEventDecoder();
@@ -550,12 +568,65 @@ public class ECReconstructionApp extends FCApplication {
 
         
    public void processPixels(int idet) {
+	   
+	   int stripnum = 0;
+	   	int ijunk;
+	   	int counter = 0;
+	       Scanner scanner;
+	       //generted values
+	       try 
+			{
+	       	scanner = new Scanner(new File("/home/chetry/PCAL/TayaPCAL/src/org/jlab/calib/AttenCoeffm5run4294.dat"));
+				while(scanner.hasNextInt())
+				{
+					if(counter < 68)
+					{
+						ijunk = scanner.nextInt();
+						stripnum = scanner.nextInt();
+						//umaxX[stripnum - 1] = scanner.nextDouble();
+						genuA[stripnum - 1] = scanner.nextDouble();
+						genuB[stripnum - 1] = scanner.nextDouble();
+						genuC[stripnum - 1] = scanner.nextDouble();
+						ijunk = scanner.nextInt();
+					}
+					else if(counter < 130)
+					{
+						ijunk = scanner.nextInt();
+						stripnum = scanner.nextInt();
+						//vmaxX[stripnum - 1] = scanner.nextDouble();
+						genvA[stripnum - 1] = scanner.nextDouble();
+						genvB[stripnum - 1] = scanner.nextDouble();
+						genvC[stripnum - 1] = scanner.nextDouble();
+						ijunk = scanner.nextInt();
+					}
+					else
+					{
+						ijunk = scanner.nextInt();
+						stripnum = scanner.nextInt();
+						//wmaxX[stripnum - 1] = scanner.nextDouble();
+						genwA[stripnum - 1] = scanner.nextDouble();
+						genwB[stripnum - 1] = scanner.nextDouble();
+						genwC[stripnum - 1] = scanner.nextDouble();
+						ijunk = scanner.nextInt();
+					}
+					++counter;
+					
+				}
+				scanner.close();
+			}
+			catch (FileNotFoundException e1) 
+			{
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
 
        boolean good_ua, good_va, good_wa, good_uvwa;
        boolean[] good_pix = {false,false,false};
        boolean good_ut, good_vt, good_wt, good_uvwt;
        boolean good_dalitz=false, good_pixel;
        int pixel;
+       int tpixel;
+  	
 
        TreeMap<Integer, Object> map= (TreeMap<Integer, Object>) ecPix[idet].Lmap_a.get(0,0,1); 
        float pixelLength[] = (float[]) map.get(1);
@@ -568,12 +639,15 @@ public class ECReconstructionApp extends FCApplication {
                
                good_uvwa = good_ua && good_va && good_wa; //Multiplicity test (NU=NV=NW=1)
                
-               good_pix[0] = good_ua&&ecPix[idet].adcr[is][1][0]>35&&ecPix[idet].adcr[is][2][0]>35;
-               good_pix[1] = good_va&&ecPix[idet].adcr[is][0][0]>35&&ecPix[idet].adcr[is][2][0]>35; 
-               good_pix[2] = good_wa&&ecPix[idet].adcr[is][0][0]>35&&ecPix[idet].adcr[is][1][0]>35;  
+               //here the cut is made!!
+               good_pix[0] = good_ua && ecPix[idet].adcr[is][1][0] > 35 && ecPix[idet].adcr[is][2][0] > 35;
+               good_pix[1] = good_va && ecPix[idet].adcr[is][0][0] > 35 && ecPix[idet].adcr[is][2][0] > 35; 
+               good_pix[2] = good_wa && ecPix[idet].adcr[is][0][0] > 35 && ecPix[idet].adcr[is][1][0] > 35;  
 
                if (idet>0)   good_dalitz = (ecPix[idet].uvwa[is]-2.0)>0.02 && (ecPix[idet].uvwa[is]-2.0)<0.056; //EC               
                if (idet==0 ) good_dalitz = Math.abs(ecPix[idet].uvwa[is]-2.0)<0.1; //PCAL
+               
+               
                
                pixel = ecPix[idet].pixels.getPixelNumber(ecPix[idet].strra[is][0][0],ecPix[idet].strra[is][1][0],ecPix[idet].strra[is][2][0]);
                good_pixel = pixel!=0;
@@ -581,7 +655,72 @@ public class ECReconstructionApp extends FCApplication {
                               ecPix[idet].strips.hmap2.get("H2_PC_Stat").get(is+1,0,3).fill(ecPix[idet].uvwa[is]-2.0,1.,1.);
                if (good_uvwa) ecPix[idet].strips.hmap2.get("H2_PC_Stat").get(is+1,0,3).fill(ecPix[idet].uvwa[is]-2.0,2.,1.);
                
-               if (good_dalitz && good_pixel && good_uvwa) { 
+               /* 
+                * 
+                * ecPix[idet].adcr[is][0][0] == adu
+                * ecPix[idet].adcr[is][1][0] == adv
+                * ecPix[idet].adcr[is][2][0] == adw
+                * 
+                * ecPix[idet].strra[is][0][0] == uStripNum
+                * ecPix[idet].strra[is][1][0] == vStripNum
+                * ecPix[idet].strra[is][2][0] == wStripNum
+                * 
+                * 
+                *  */
+
+               /*if (is == 2 && idet == 0 && good_pixel){
+            	   tpixel = ecPix[idet].pixels.getPixelNumber(ecPix[idet].strra[is][0][0],ecPix[idet].strra[is][1][0],ecPix[idet].strra[is][2][0]);
+                System.out.println(
+                		"uStrip = " + (ecPix[idet].strra[is][0][0]-1) + "      " + 
+                		"vStrip = " + (ecPix[idet].strra[is][1][0]-1) + "      " +
+                		"wStrip = " + (ecPix[idet].strra[is][2][0]-1)
+                		);
+                System.out.println(
+                		"u distance = " + ecPix[idet].pixels.getUdist(tpixel) + "      " +
+                		"v distance = " + ecPix[idet].pixels.getVdist(tpixel) + "      " +
+                		"w distance = " + ecPix[idet].pixels.getWdist(tpixel)
+                		);
+               }*/
+
+               if (idet == 0 && is == 2 && good_pixel)
+               {
+            	   tpixel = ecPix[idet].pixels.getPixelNumber(ecPix[idet].strra[is][0][0],ecPix[idet].strra[is][1][0],ecPix[idet].strra[is][2][0]);
+            	   
+	               if(Math.abs(ecPix[idet].adcr[is][1][0] - (genvA[ecPix[idet].strra[is][1][0] -1]*Math.exp(genvB[ecPix[idet].strra[is][1][0] - 1] * 
+	            		   ecPix[idet].calDB.getVPixelDistance(ecPix[idet].strra[is][0][0], ecPix[idet].strra[is][1][0], ecPix[idet].strra[is][2][0]) + 
+	            		   genvC[ecPix[idet].strra[is][1][0] - 1]))) < 100.0
+	   	           && Math.abs(ecPix[idet].adcr[is][2][0] - (genwA[ecPix[idet].strra[is][2][0] -1]*Math.exp(genwB[ecPix[idet].strra[is][2][0] - 1] *  
+	   	        		   ecPix[idet].calDB.getWPixelDistance(ecPix[idet].strra[is][0][0], ecPix[idet].strra[is][1][0], ecPix[idet].strra[is][2][0]) + 
+	   	        		   genwC[ecPix[idet].strra[is][2][0] - 1]))) < 100.0)
+	            	   ijunk = 1;
+	               else
+	            	   good_pix[0] = false;
+	               
+	               if(Math.abs(ecPix[idet].adcr[is][0][0] - (genuA[ecPix[idet].strra[is][0][0] -1]*Math.exp(genuB[ecPix[idet].strra[is][0][0] - 1] *  
+	            		   ecPix[idet].calDB.getUPixelDistance(ecPix[idet].strra[is][0][0], ecPix[idet].strra[is][1][0], ecPix[idet].strra[is][2][0]) + 
+	            		   genuC[ecPix[idet].strra[is][0][0] - 1]))) < 100.0
+	    	   	   && Math.abs(ecPix[idet].adcr[is][2][0] - (genwA[ecPix[idet].strra[is][2][0] -1]*Math.exp(genwB[ecPix[idet].strra[is][2][0] - 1] *  
+	    	   			   ecPix[idet].calDB.getWPixelDistance(ecPix[idet].strra[is][0][0], ecPix[idet].strra[is][1][0], ecPix[idet].strra[is][2][0]) + 
+	    	   			   genwC[ecPix[idet].strra[is][2][0] - 1]))) < 100.0)
+	            	   ijunk = 1;
+	               else
+	            	   good_pix[1] = false;
+	               
+	               if(Math.abs(ecPix[idet].adcr[is][0][0] - (genuA[ecPix[idet].strra[is][0][0] -1]*Math.exp(genuB[ecPix[idet].strra[is][0][0] - 1] *  
+	            		   ecPix[idet].calDB.getUPixelDistance(ecPix[idet].strra[is][0][0], ecPix[idet].strra[is][1][0], ecPix[idet].strra[is][2][0]) + 
+	            		   genuC[ecPix[idet].strra[is][0][0] - 1]))) < 100.0
+	    	   	   && Math.abs(ecPix[idet].adcr[is][1][0] - (genvA[ecPix[idet].strra[is][1][0] -1]*Math.exp(genvB[ecPix[idet].strra[is][1][0] - 1] *  
+	    	   			   ecPix[idet].calDB.getVPixelDistance(ecPix[idet].strra[is][0][0], ecPix[idet].strra[is][1][0], ecPix[idet].strra[is][2][0]) + 
+	    	   			   genwC[ecPix[idet].strra[is][1][0] - 1]))) < 100.0 )
+	            	   ijunk = 1;
+	               else
+	            	   good_pix[2] = false;
+               }
+   	          
+            
+               
+               
+               if (good_dalitz && good_pixel && good_uvwa && idet == 0) { 
                    
                    double area = ecPix[idet].pixels.getZoneNormalizedArea(pixel);
                    int    zone = ecPix[idet].pixels.getZone(pixel);
@@ -704,8 +843,62 @@ public class ECReconstructionApp extends FCApplication {
            h3.setBinContent(bin, numer.number());
            h3.setBinError(bin, numer.error());
        }
-   }   
+   }
    
+   /*public void getAttenuationCoefficients()
+   {
+   	int stripnum = 0;
+   	int ijunk;
+   	int counter = 0;
+       Scanner scanner;
+       //generted values
+       try 
+		{
+       	scanner = new Scanner(new File("/home/chetry/PCAL/TayaPCAL/src/org/jlab/calib/AttenCoeffm5run4294.dat"));
+			while(scanner.hasNextInt())
+			{
+				if(counter < 68)
+				{
+					ijunk = scanner.nextInt();
+					stripnum = scanner.nextInt();
+					//umaxX[stripnum - 1] = scanner.nextDouble();
+					genuA[stripnum - 1] = scanner.nextDouble();
+					genuB[stripnum - 1] = scanner.nextDouble();
+					genuC[stripnum - 1] = scanner.nextDouble();
+					ijunk = scanner.nextInt();
+				}
+				else if(counter < 130)
+				{
+					ijunk = scanner.nextInt();
+					stripnum = scanner.nextInt();
+					//vmaxX[stripnum - 1] = scanner.nextDouble();
+					genvA[stripnum - 1] = scanner.nextDouble();
+					genvB[stripnum - 1] = scanner.nextDouble();
+					genvC[stripnum - 1] = scanner.nextDouble();
+					ijunk = scanner.nextInt();
+				}
+				else
+				{
+					ijunk = scanner.nextInt();
+					stripnum = scanner.nextInt();
+					//wmaxX[stripnum - 1] = scanner.nextDouble();
+					genwA[stripnum - 1] = scanner.nextDouble();
+					genwB[stripnum - 1] = scanner.nextDouble();
+					genwC[stripnum - 1] = scanner.nextDouble();
+					ijunk = scanner.nextInt();
+				}
+				++counter;
+				
+			}
+			scanner.close();
+		}
+		catch (FileNotFoundException e1) 
+		{
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+   }
+   */
 }
     
     

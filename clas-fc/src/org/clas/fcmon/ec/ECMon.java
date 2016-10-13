@@ -50,15 +50,15 @@ public class ECMon extends DetectorMonitor {
     DatabaseConstantProvider   ccdb = null;
    
     public boolean             inMC = true;   //true=MC false=DATA
-    public boolean            inCRT = false;  //true=CRT preinstallation CRT data
+    public boolean            inCRT = true;  //true=CRT preinstallation CRT data
     public boolean            doRec = false ; //true=2.4 EC processor
     public boolean            doEng = false;   //true=3.0 EC processor
     public String            config = "muon"; //configs: phot,muon,elec
     public int               calRun = 2;
     public int            inProcess = 0;      //0=init 1=processing 2=end-of-run 3=post-run
     int                       detID = 0;
-    int                         is1 = 2 ;
-    int                         is2 = 3 ;  
+    int                         is1 = 3 ;	//start sector
+    int                         is2 = 4 ;  //end sector
     int    nsa,nsb,tet,p1,p2,pedref = 0;
     double               PCMon_zmin = 0;
     double               PCMon_zmax = 0;
@@ -77,6 +77,7 @@ public class ECMon extends DetectorMonitor {
         ccdb = new DatabaseConstantProvider(calRun,"default");
         ccdb.loadTable("/calibration/ec/attenuation");
         ccdb.disconnect();
+        CalDrawDB calDB = new CalDrawDB();
     }
 	
     public static void main(String[] args){

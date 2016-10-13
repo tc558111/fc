@@ -367,7 +367,7 @@ public class ECCalibrationApp extends FCApplication implements CalibrationConsta
                      cl.draw(fit.get(is+ilmap*10,il,pixStrip).getFitGraph(0),"same");                      
                      cl.draw(fit.get(is+ilmap*10,il,pixStrip).getFunc(0),"same");
 
-                     if (isPix) {                                 
+                     if (isPix) {                
                          cl.draw(pixGraph,"same");                     
                          pixADC.setTitleX("Sector "+is+otab[ilmap][il-1]+pixStrip+" Pixel "+(ic+1)+" ADC");
                          cl.cd(1); pixADC.setOptStat(Integer.parseInt("110")); pixADC.setTitle(""); cl.draw(pixADC);
